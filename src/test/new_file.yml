@@ -1,0 +1,109 @@
+:analysis_configuration:
+  :algorithm:
+    :eta: 3.0
+    :minimize_objectives:
+    - cost_utility_neb_total_cost_per_m_sq
+    - cost_equipment_total_cost_per_m_sq
+    :n_generations: 2
+    :population: 30
+    :prob: 0.85
+    :type: nsga2
+  :analysis_name: example_analysis
+  :btap_costing_branch: nrcan_302
+  :compute_environment: aws_batch
+  :database_type: postgresql
+  :enable_costing: true
+  :image_name: btap_private_cli
+  :no_of_threads: null
+  :nocache: false
+  :os_standards_branch: nrcan_302
+  :os_version: 3.0.1
+  :run_annual_simulation: true
+  :s3_bucket: '834599497928'
+:building_options:
+  :adv_dx_units:
+  - NECB_Default
+  :boiler_eff:
+  - NECB_Default
+  :building_type:
+  - FullServiceRestaurant
+  :daylighting_type:
+  - NECB_Default
+  :dcv_type:
+  - NECB_Default
+  :door_construction_cond:
+  - NECB_Default
+  :ecm_system_name:
+  - NECB_Default
+  :epw_file:
+  - CAN_QC_Montreal-Trudeau.Intl.AP.716270_CWEC2016.epw
+  - CAN_NS_Halifax.Dockyard.713280_CWEC2016.epw
+  - CAN_AB_Edmonton.Intl.AP.711230_CWEC2016.epw
+  - CAN_BC_Vancouver.Intl.AP.718920_CWEC2016.epw
+  - CAN_AB_Calgary.Intl.AP.718770_CWEC2016.epw
+  - CAN_ON_Toronto.Pearson.Intl.AP.716240_CWEC2016.epw
+  - CAN_YT_Whitehorse.Intl.AP.719640_CWEC2016.epw
+  :erv_package:
+  - NECB_Default
+  :ext_floor_cond:
+  - NECB_Default
+  :ext_roof_cond:
+  - NECB_Default
+  :ext_wall_cond:
+  - NECB_Default
+  :fdwr_set:
+  - NECB_Default
+  :fixed_wind_solar_trans:
+  - NECB_Default
+  :fixed_window_cond:
+  - NECB_Default
+  :furnace_eff:
+  - NECB_Default
+  :glass_door_cond:
+  - NECB_Default
+  :glass_door_solar_trans:
+  - NECB_Default
+  :ground_floor_cond:
+  - NECB_Default
+  :ground_roof_cond:
+  - NECB_Default
+  :ground_wall_cond:
+  - NECB_Default
+  :lights_scale:
+  - NECB_Default
+  :lights_type:
+  - NECB_Default
+  :overhead_door_cond:
+  - NECB_Default
+  :primary_heating_fuel:
+  - Electricity
+  - NaturalGas
+  - FuelOilNo2
+  :pv_ground_azimuth_angle:
+  - NECB_Default
+  :pv_ground_module_description:
+  - NECB_Default
+  :pv_ground_tilt_angle:
+  - NECB_Default
+  :pv_ground_total_area_pv_panels_m2:
+  - NECB_Default
+  :pv_ground_type:
+  - NECB_Default
+  :rotation_degrees:
+  - NECB_Default
+  :scale_x:
+  - NECB_Default
+  :scale_y:
+  - NECB_Default
+  :scale_z:
+  - NECB_Default
+  :shw_eff:
+  - NECB_Default
+  :skylight_cond:
+  - NECB_Default
+  :skylight_solar_trans:
+  - NECB_Default
+  :srr_set:
+  - NECB_Default
+  :template:
+  - NECB2017
