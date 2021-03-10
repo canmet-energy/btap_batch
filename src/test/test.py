@@ -20,7 +20,7 @@ optimization = {
 logging.basicConfig(level=logging.ERROR)
 
 # Your git token.. Do not commit this!
-git_api_token = ""
+git_api_token = os.environ['GIT_API_TOKEN']
 
 # Set input file path.
 # Use file in example folder for tests.
@@ -31,31 +31,31 @@ new_file = os.path.join(os.path.dirname(os.path.realpath(__file__)),'new_file.ym
 analysis = btap_batch.btap_batch( analysis_config_file=input_file, git_api_token=git_api_token)
 analysis.run()
 
-# Local Optimization Test
-with open(input_file, 'r') as stream:
-    analysis = yaml.safe_load(stream)
-analysis[':analysis_configuration'][':algorithm'] = optimization
-with open(new_file, 'w') as outfile:
-    yaml.dump(analysis, outfile)
-analysis = btap_batch.btap_batch( analysis_config_file=new_file, git_api_token=git_api_token)
-analysis.run()
-
-# AWS Parametric Test
-with open(input_file, 'r') as stream:
-    analysis = yaml.safe_load(stream)
-# Set to run on aws.
-analysis[':analysis_configuration'][':compute_environment'] = 'aws_batch'
-with open(new_file, 'w') as outfile:
-    yaml.dump(analysis, outfile)
-analysis = btap_batch.btap_batch( analysis_config_file=new_file, git_api_token=git_api_token)
-analysis.run()
-
-# AWS Optimization Test
-with open(input_file, 'r') as stream:
-    analysis = yaml.safe_load(stream)
-analysis[':analysis_configuration'][':compute_environment'] = 'aws_batch'
-analysis[':analysis_configuration'][':algorithm'] = optimization
-with open(new_file, 'w') as outfile:
-    yaml.dump(analysis, outfile)
-analysis = btap_batch.btap_batch( analysis_config_file=new_file, git_api_token=git_api_token)
-analysis.run()
+# # Local Optimization Test
+# with open(input_file, 'r') as stream:
+#     analysis = yaml.safe_load(stream)
+# analysis[':analysis_configuration'][':algorithm'] = optimization
+# with open(new_file, 'w') as outfile:
+#     yaml.dump(analysis, outfile)
+# analysis = btap_batch.btap_batch( analysis_config_file=new_file, git_api_token=git_api_token)
+# analysis.run()
+#
+# # AWS Parametric Test
+# with open(input_file, 'r') as stream:
+#     analysis = yaml.safe_load(stream)
+# # Set to run on aws.
+# analysis[':analysis_configuration'][':compute_environment'] = 'aws_batch'
+# with open(new_file, 'w') as outfile:
+#     yaml.dump(analysis, outfile)
+# analysis = btap_batch.btap_batch( analysis_config_file=new_file, git_api_token=git_api_token)
+# analysis.run()
+#
+# # AWS Optimization Test
+# with open(input_file, 'r') as stream:
+#     analysis = yaml.safe_load(stream)
+# analysis[':analysis_configuration'][':compute_environment'] = 'aws_batch'
+# analysis[':analysis_configuration'][':algorithm'] = optimization
+# with open(new_file, 'w') as outfile:
+#     yaml.dump(analysis, outfile)
+# analysis = btap_batch.btap_batch( analysis_config_file=new_file, git_api_token=git_api_token)
+# analysis.run()

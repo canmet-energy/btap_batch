@@ -6,7 +6,7 @@ import logging
 logging.basicConfig(level=logging.ERROR)
 
 # Your git token.. Do not commit this!
-git_api_token = ""
+git_api_token = os.environ['GIT_API_TOKEN']
 
 # Set input file path.
 input_file = os.path.join(os.path.dirname(os.path.realpath(__file__)),'example.yml')
