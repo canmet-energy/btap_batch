@@ -27,8 +27,7 @@ takes advantage of Amazons cost-effective batch queue system to complete simulat
 * Pycharms (Optional)
 
 ## Configuration
-
-0. Initialize your windows system to work with conda-python environments using windows powershell. Type this in a windows 
+1. Initialize your windows system to work with conda-python environments using windows powershell. Type this in a windows 
 powershell console.
 ```
 conda init powershell
@@ -38,38 +37,32 @@ conda init powershell
 git clone https://github.com/canmet-energy/btap_batch
 cd btap_batch
 ```
-2. Set up your conda/python environment 'btap_batch_env. This will download all required packages to your system.  
+1. Set up your conda/python environment 'btap_batch_env. This will download all required packages to your system.  
 For those familiar with Ruby, this is similar to a Gemfile/Bundle environment. This includes Jupyter Lab. 
 ```
 conda env create -f environment.yml
 ```
-
-3. Activate your conda environment. 
+1. Activate your conda environment. 
 ```
 conda activate btap_batch_env
 ```
-
-4. Make this environment available to Jupyter (Optional)
+1. Make this environment available to Jupyter (Optional)
 ```
 python -m ipykernel install --user --name=btap_batch_env
 ```
-
 ## QuickStart Command Line 
-
 ### Parametric Analysis Local Machine
 1. To run a parametric analysis, go to the example.yml analysis file in the 'example' folder. Each 
 parameter is explained in that file. Ensure that parametric analysis is a reasonable size for your system. Ensure that 
 the ':compute_environment' variable is set to local. 
-
-2. Open the example.py file in the same folder. Edit the file to add you git_api_token. The comments in the file will
+1. Open the example.py file in the same folder. Edit the file to add you git_api_token. The comments in the file will
 indicate which switches do what. Do not commit your git token. 
-
-3. Run the example.py file from the root of the btap_batch project folder. On Windows you will need to set the 
+1. Run the example.py file from the root of the btap_batch project folder. On Windows you will need to set the 
 PYTHONPATH to the to that folder. Please ensure that the btap_batch_env environment is active. 
 ```
 set PYTHONPATH=%cd% && python example\example.py
 ```
-4. Simulation should start to run. A folder will be created in parametric folder with the variable name you set 
+1. Simulation should start to run. A folder will be created in parametric folder with the variable name you set 
 ':analysis_name' in the yml file. It will create a unique folder under this based on a random UUID for this analysis. In 
 that folder you will see two folders, 'input' and 'output'. 
 
@@ -134,5 +127,5 @@ database is 'docker'. You can also optionally build a viewer via a Jupyter Note 
 If you are running on aws-batch. You can monitor the simulation in the AWS Batch Dashboard and the compute resources 
 being used in the EC2 dashboard. 
 
-# PowerBI / Tableau
+### PowerBI / Tableau
 Through the postgresSQL server you can connect and update live data using either of these tools. 
