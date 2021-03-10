@@ -74,6 +74,7 @@ run_options.yml file. This contains the selections created for that particular r
 with high level information from all the simulations. 
 
 ## Parametric AWS
+1. Ensure you are not connected to a VPN and do not connect while running simulations.
 1. Update your AWS credentials to ensure it is up to date. 
 1. Change ':compute_environment' to aws_batch.
 1. Follow the same Local instruction above 1-4. 
