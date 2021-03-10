@@ -21,6 +21,7 @@ takes advantage of Amazons cost-effective batch queue system to complete simulat
 * A git [client](https://git-scm.com/downloads)
 * A high speed internet connection.
 * A github account and [git-token](https://docs.github.com/en/github/authenticating-to-github/creating-a-personal-access-token)
+* Add the github token as a user windows/linux environment variable as GIT_API_TOKEN
 * Permissions to access canmet-energy repositories from phylroy.lopez@canada.ca
 * [NRCan btap_dev AWS account credentials set up on your computer](https://docs.aws.amazon.com/cli/latest/userguide/cli-configure-files.html) for Amazon HPC runs. 
 * Jupyter Lab (Optional)
