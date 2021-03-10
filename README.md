@@ -55,9 +55,7 @@ python -m ipykernel install --user --name=btap_batch_env
 ### Parametric Analysis Local Machine
 1. To run a parametric analysis, go to the example.yml analysis file in the 'example' folder. Each 
 parameter is explained in that file. Ensure that parametric analysis is a reasonable size for your system. Ensure that 
-the ':compute_environment' variable is set to local. 
-1. Open the example.py file in the same folder. Edit the file to add you git_api_token. The comments in the file will
-indicate which switches do what. Do not commit your git token. 
+the ':compute_environment' variable is set to local.  
 1. Run the example.py file from the root of the btap_batch project folder. On Windows you will need to set the 
 PYTHONPATH to the to that folder. Please ensure that the btap_batch_env environment is active. 
 ```
