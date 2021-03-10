@@ -99,9 +99,9 @@ def get_pc_chart(df, color=None, par_coord_data=None):
 
     )
     fig.update_traces(labelangle=20, selector=dict(type='parcoords'))
-    fig.update_traces(labelfont_size=10, selector=dict(type='parcoords'))
-    fig.update_traces(rangefont_size=1, selector=dict(type='parcoords'))
-    fig.update_traces(tickfont_size=5, selector=dict(type='parcoords'))
+    #fig.update_traces(labelfont_size=10, selector=dict(type='parcoords'))
+    #fig.update_traces(rangefont_size=5, selector=dict(type='parcoords'))
+    #fig.update_traces(tickfont_size=5, selector=dict(type='parcoords'))
     #fig.update_traces(tickfont_color='white', selector=dict(type='parcoords'))
     #fig.update_traces(line_colorbar_tickfont_size=100, selector=dict(type='parcoords'))
     #fig.update_traces(labelside='bottom', selector=dict(type='parcoords'))
@@ -147,8 +147,8 @@ def get_scatter_graph(df_filt, xy_scatter_color_dropdown, xy_scatter_x_axis_drop
             x=xy_scatter_x_axis_dropdown,
             y=xy_scatter_y_axis_dropdown,
             color=xy_scatter_color_dropdown,
-            marginal_y="histogram",
-            marginal_x="histogram"
+            #marginal_y="histogram",
+            #marginal_x="histogram"
         )
     return scatter_graph
 
@@ -228,7 +228,7 @@ metrics = [
     {'domain': 'envelope', 'label': 'RoofConductance', 'col_name': 'env_outdoor_roofs_average_conductance-w_per_m_sq_k'},
     {'domain': 'envelope', 'label': 'WallConductance.', 'col_name': 'env_outdoor_walls_average_conductance-w_per_m_sq_k'},
     {'domain': 'envelope', 'label': 'WindowConductance.', 'col_name': 'env_outdoor_windows_average_conductance-w_per_m_sq_k'},
-    {'domain': 'load', 'label': 'DaylightControl', 'col_name': ':dcv_type'},
+    {'domain': 'load', 'label': 'DaylightControl', 'col_name': ':daylighting_type'},
     {'domain': 'load', 'label': 'LightingType', 'col_name': ':lights_type'},
     {'domain': 'hvac', 'label': 'HVAC System', 'col_name': ':ecm_system_name'},
     {'domain': 'hvac', 'label': 'Demand Control Ventilation', 'col_name': ':dcv_type'},
@@ -254,8 +254,9 @@ app = dash.Dash(
 # This is required due to a bug in the data_table. https://github.com/plotly/dash-table/issues/436
 start_table_df = pd.DataFrame(columns=['Start Column'])
 # Basic HTMl Bootstrap / Layout
-app.layout = html.Div(
-    [
+app.layout = html.Div([
+    dcc.Tabs([
+        dcc.Tab(label='Design Contraints', children=[
         # PC Chart layout
         dbc.Row(
             dbc.Col(
@@ -267,8 +268,9 @@ app.layout = html.Div(
                 ],
                 align="center",
             )
-        ),
+        )]),
         # Scatter Graph Layout
+        dcc.Tab(label='Performance Analysis', children=[
         dbc.Row(
             [
                 dbc.Col(
@@ -301,7 +303,8 @@ app.layout = html.Div(
                     md=10)
             ],
             align="center",
-        ),
+        )]),
+        dcc.Tab(label='Solution Sets', children=[
         # Datatable Layout
         dbc.Row(
             [
@@ -313,7 +316,7 @@ app.layout = html.Div(
                 )
             ],
             align="center",
-        ),
+        )])])
     ],
     style={'padding': '20px 20px 20px 20px'} # Added in style padding to ignore the cutoffs
 )
