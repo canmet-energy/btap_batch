@@ -25,7 +25,6 @@ import boto3
 import botocore
 import os
 import time
-from halo import Halo
 import uuid
 import datetime
 import sys
@@ -33,7 +32,6 @@ import pandas as pd
 from sqlalchemy import create_engine
 import sqlalchemy.types
 import re
-import matplotlib.pyplot as plt
 import glob
 from functools import wraps
 import logging
@@ -79,14 +77,16 @@ class S3:
         self.s3 = boto3.client('s3')
     # Method to delete a bucket.
     def delete_bucket(self, bucket_name):
-        spinner = Halo(text=f'Deleting S3 {bucket_name}', spinner='dots')
-        spinner.start()
+        message = f'Deleting S3 {bucket_name}'
+        print(message)
+        logging.info(message)
         self.s3.delete_bucket(Bucket=bucket_name)
-        spinner.succeed()
+
     # Method to create a bucket.
     def create_bucket(self, bucket_name):
-        spinner = Halo(text=f'Creating S3 {bucket_name}', spinner='dots')
-        spinner.start()
+        message =f'Creating S3 {bucket_name}'
+        print(message)
+        logging.info(message)
         response = self.s3.create_bucket(
             ACL='private',
             Bucket=bucket_name,
@@ -95,7 +95,6 @@ class S3:
             },
             ObjectLockEnabledForBucket=False
         )
-        spinner.succeed()
     # Method to download folder.
     def download_s3_folder(self, bucket_name, s3_folder, local_dir=None):
         """
@@ -540,8 +539,9 @@ class AWSBatch:
 
     def delete_compute_environment(self):
         # Inform user starting to create CE.
-        spinner = Halo(text=f'Disable Compute Environment {self.compute_environment_id}', spinner='dots')
-        spinner.start()
+        message =f'Disable Compute Environment {self.compute_environment_id}'
+        print(message)
+        logging.info(message)
 
         # First Disable CE.
         # https://boto3.amazonaws.com/v1/documentation/api/latest/reference/services/batch.html#Batch.Client.update_compute_environment
@@ -555,30 +555,29 @@ class AWSBatch:
             state = computeEnvironment['state']
             status = computeEnvironment['status']
             if state == 'DISABLED' and status == 'VALID':
-                spinner.succeed()
                 break
             elif status == 'INVALID':
                 reason = computeEnvironment['statusReason']
-                spinner.fail()
                 raise Exception('Failed to create compute environment is invalid state: %s' % (reason))
             time.sleep(1)
         # Delete CE
-        spinner = Halo(text=f'Deleting Compute Environment {self.compute_environment_id}', spinner='dots')
-        spinner.start()
+        message=f'Deleting Compute Environment {self.compute_environment_id}'
+        print(message)
+        logging.info(message)
         self.batch.delete_compute_environment(computeEnvironment=self.compute_environment_id)
         # Wait until CE is disabled.
         while True:
             describe = self.batch.describe_compute_environments(computeEnvironments=[self.compute_environment_id])
             if not describe['computeEnvironments']:
-                spinner.succeed()
                 break
             time.sleep(1)
 
     def delete_job_queue(self):
         # Disable Queue
         # Tell user
-        spinner = Halo(text=f'Disable Job Queue {self.job_queue_id}', spinner='dots')
-        spinner.start()
+        message = f'Disable Job Queue {self.job_queue_id}'
+        print(message)
+        logging.info(message)
         # See https://boto3.amazonaws.com/v1/documentation/api/latest/reference/services/batch.html#Batch.Client.update_job_queue
         self.batch.update_job_queue(jobQueue=self.job_queue_id, state='DISABLED')
         while True:
@@ -588,18 +587,17 @@ class AWSBatch:
             state = item['state']
             status = item['status']
             if state == 'DISABLED' and status == 'VALID':
-                spinner.succeed()
                 break
             elif status == 'INVALID':
                 reason = item['statusReason']
-                spinner.fail()
                 raise Exception('Failed to job queue is invalid state: %s' % (reason))
             time.sleep(1)
         # Delete Queue
 
         # Tell user.
-        spinner = Halo(text=f'Delete Job Queue {self.job_queue_id}', spinner='dots')
-        spinner.start()
+        message = f'Delete Job Queue {self.job_queue_id}'
+        print(message)
+        logging.info(message)
 
         # See https://boto3.amazonaws.com/v1/documentation/api/latest/reference/services/batch.html#Batch.Client.delete_job_queue
         response = self.batch.delete_job_queue(jobQueue=self.job_queue_id)
@@ -608,20 +606,19 @@ class AWSBatch:
             # See https://boto3.amazonaws.com/v1/documentation/api/latest/reference/services/batch.html#Batch.Client.describe_job_queues
             describe = self.batch.describe_job_queues(jobQueues=[self.job_queue_id])
             if not describe['jobQueues']:
-                spinner.succeed()
                 break
             time.sleep(1)
         return response
 
     def delete_job_definition(self):
-        spinner = Halo(text=f'Disable Job Definition {self.job_def_id}', spinner='dots')
-        spinner.start()
+        message = f'Disable Job Definition {self.job_def_id}'
+        print(message)
+        logging.info(message)
         # https://boto3.amazonaws.com/v1/documentation/api/latest/reference/services/batch.html#Batch.Client.describe_job_definitions
         describe = self.batch.describe_job_definitions(jobDefinitionName=self.job_def_id)
         # See https://boto3.amazonaws.com/v1/documentation/api/latest/reference/services/batch.html#Batch.Client.deregister_job_definition
         response = self.batch.deregister_job_definition(
             jobDefinition=describe['jobDefinitions'][0]['jobDefinitionArn'])
-        spinner.succeed()
         return response
 
     def create_job_queue(self):
@@ -1356,11 +1353,11 @@ class BTAPParametric(BTAPAnalysis):
 
 
 
-                #Update user with spinner.
+                #Update user.
                 message = f'TotalRuns:{self.file_number}\tCompleted:{self.database.get_num_of_runs_completed()}\tFailed:{self.database.get_num_of_runs_failed()}\tElapsed Time: {str(datetime.timedelta(seconds=round(time.time() - threaded_start)))}'
                 logging.info(message)
                 print(message)
-        # At end of runs update spinner for users.
+        # At end of runs update for users.
         message = f'{self.file_number} Simulations completed. No. of failures = {self.database.get_num_of_runs_failed()} Total Time: {str(datetime.timedelta(seconds=round(time.time() - threaded_start)))}'
         logging.info(message)
         print(message)
