@@ -28,7 +28,7 @@ takes advantage of Amazons cost-effective batch queue system to complete simulat
 * Pycharms (Optional)
 
 ## Configuration
-1. Open a miniconda promtp (Start->Anaconda3(64-bit)->Anaconda Prompt) Not Powershell!
+1. Open a miniconda prompt (Start->Anaconda3(64-bit)->Anaconda Prompt) Not Powershell!
 
 2. Clone this repository to your computer and change into the project folder using windows powershell.
 ```
