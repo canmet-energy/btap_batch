@@ -28,35 +28,29 @@ takes advantage of Amazons cost-effective batch queue system to complete simulat
 * Pycharms (Optional)
 
 ## Configuration
-1. Initialize your windows system to work with conda-python environments using windows powershell. Type this in a windows 
-powershell console.
-```
-conda init powershell
-```
-1. Clone this repository to your computer and change into the project folder using windows powershell.
+1. Open a miniconda promtp (Start->Anaconda3(64-bit)->Anaconda Prompt) Not Powershell!
+
+2. Clone this repository to your computer and change into the project folder using windows powershell.
 ```
 git clone https://github.com/canmet-energy/btap_batch
 cd btap_batch
 ```
-1. Set up your conda/python environment 'btap_batch_env. This will download all required packages to your system.  
+3. Set up your conda/python environment 'btap_batch_env. This will download all required packages to your system.  
 For those familiar with Ruby, this is similar to a Gemfile/Bundle environment. This includes Jupyter Lab. 
 ```
 conda env create -f environment.yml
 ```
-1. Activate your conda environment. 
+4. Activate your conda environment. 
 ```
-conda activate btap_batch_env
+conda activate btap_batch
 ```
-1. Make this environment available to Jupyter (Optional)
-```
-python -m ipykernel install --user --name=btap_batch_env
-```
+
 ## QuickStart Command Line 
 ### Parametric Analysis Local Machine
 1. To run a parametric analysis, go to the example.yml analysis file in the 'example' folder. Each 
-parameter is explained in that file. Ensure that parametric analysis is a reasonable size for your system. Ensure that 
-the ':compute_environment' variable is set to local.  
-1. Run the example.py file from the root of the btap_batch project folder. On Windows you will need to set the 
+parameter is explained in that file. Ensure that parametric analysis is a reasonable size for your system (i.e. Do not 
+run millions of simulations on your 2 core laptop). Ensure that the ':compute_environment' variable is set to local.  
+2. Run the example.py file from the root of the btap_batch project folder. On Windows you will need to set the 
 PYTHONPATH to the to that folder. Please ensure that the btap_batch_env environment is active. 
 ```
 set PYTHONPATH=%cd% && python example\example.py
