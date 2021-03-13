@@ -13,9 +13,6 @@
   # H&B default bucket is '834599497928' for the btap_dev account.
   :s3_bucket: '834599497928'
 
-  # DO NOT CHANGE: Currently fixed to postgresql.
-  :database_type: postgresql
-
   # DO NOT CHANGE: Docker image to build and use. Contains standards and btap_costing.
   :image_name: 'btap_private_cli'
 
@@ -25,10 +22,10 @@
   :nocache: false
 
   # Branch from https://github.com/NREL/openstudio-standards. Typically 'nrcan' branch.
-  :os_standards_branch: 'nrcan_302'
+  :os_standards_branch: 'nrcan_prod'
 
   # Branch from https://github.com/canmet-energy/btap_costing. Typically 'master'
-  :btap_costing_branch: 'nrcan_302'
+  :btap_costing_branch: 'production'
 
   # DO NOT CHANGE: Openstudio Version only 3.0.1 available
   :os_version: '3.0.1'

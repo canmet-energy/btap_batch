@@ -128,7 +128,7 @@ class S3:
             logging.info(message)
 
             self.s3.upload_file(file, bucket_name, target_path)
-# Class to helf authenticate to AWS>
+# Class to authenticate to AWS.
 class AWSCredentials:
     # Initialize with required clients.
     def __init__(self):
@@ -1253,7 +1253,7 @@ class BTAPParametric(BTAPAnalysis):
         super().__init__(analysis_config_file, git_api_token)
 
     def run(self):
-        # Computer all the scenarios for paramteric run.
+        # Compute all the scenarios for paramteric run.
         self.compute_scenarios()
         try:
             # Run parametric analysis
@@ -1688,7 +1688,6 @@ class BTAPDatabase:
                     ":adv_dx_units" TEXT, 
                     ":compute_environment" TEXT, 
                     ":s3_bucket" TEXT, 
-                    ":database_type" TEXT, 
                     ":image_name" TEXT, 
                     ":nocache" BOOLEAN, 
                     ":os_standards_branch" TEXT, 

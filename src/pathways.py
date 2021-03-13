@@ -25,7 +25,7 @@ def create_conditional_style(df):
 # string values into numeric to make it easy to graph.
 def load_dataframe(file_url="../data/btap/primary_school.csv"):
     #df = pd.read_csv(file_url)
-    df = pd.read_excel(open(r'C:\Users\plopez\PycharmProjects\BRG_Data\Utils\Python\BTAP\Test\AWS_Opt_Posterity_MidRise_Elec_2021_03_04\a702d3ca-4be0-48ca-a7a0-0cea22a5df20\output\MidRise_elec.xlsx', 'rb'),
+    df = pd.read_excel(open(r'C:\Users\plopez\test\btap_batch\example\posterity_mid_rise_elec_montreal\7576173d-48f4-47c6-a3aa-81381b9947bb\output\output.xlsx', 'rb'),
                   sheet_name='btap_data')
     # Round to 3 decimal places
     df = df.round(3)
@@ -242,8 +242,10 @@ metrics = [
 # Create a hash from the metrics data so it can be easily used.
 labels = {d['col_name']: d['label'] for d in metrics}
 
-# Sort columns
+# Sort columns...not used?
 labelsrev = {v: k for k, v in labels.items()}
+
+
 
 # Set up app and use standard BOOTSTRAP theme.
 app = dash.Dash(
