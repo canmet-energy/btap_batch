@@ -17,7 +17,7 @@ takes advantage of Amazons cost-effective batch queue system to complete simulat
 ## Requirements
 * Windows 10 Professional version 1909 or greater
 * [Docker](https://docs.docker.com/docker-for-windows/install/) running on your computer.
-* A python **miniconda** environment [3.8](https://docs.conda.io/en/latest/miniconda.html)
+* A python **miniconda** environment [3.8](https://docs.conda.io/en/latest/miniconda.html). use Windows installers.
 * A git [client](https://git-scm.com/downloads)
 * A high speed internet connection.
 * A github account and [git-token](https://docs.github.com/en/github/authenticating-to-github/creating-a-personal-access-token)
@@ -28,40 +28,34 @@ takes advantage of Amazons cost-effective batch queue system to complete simulat
 * Pycharms (Optional)
 
 ## Configuration
-1. Initialize your windows system to work with conda-python environments using windows powershell. Type this in a windows 
-powershell console.
-```
-conda init powershell
-```
-1. Clone this repository to your computer and change into the project folder using windows powershell.
+1. Open a miniconda prompt (Start->Anaconda3(64-bit)->Anaconda Prompt) Not Powershell!
+
+2. Clone this repository to your computer and change into the project folder using windows powershell.
 ```
 git clone https://github.com/canmet-energy/btap_batch
 cd btap_batch
 ```
-1. Set up your conda/python environment 'btap_batch_env. This will download all required packages to your system.  
+3. Set up your conda/python environment 'btap_batch'. This will download all required packages to your system.  
 For those familiar with Ruby, this is similar to a Gemfile/Bundle environment. This includes Jupyter Lab. 
 ```
 conda env create -f environment.yml
 ```
-1. Activate your conda environment. 
+4. Activate your conda environment. 
 ```
-conda activate btap_batch_env
+conda activate btap_batch
 ```
-1. Make this environment available to Jupyter (Optional)
-```
-python -m ipykernel install --user --name=btap_batch_env
-```
+
 ## QuickStart Command Line 
 ### Parametric Analysis Local Machine
 1. To run a parametric analysis, go to the example.yml analysis file in the 'example' folder. Each 
-parameter is explained in that file. Ensure that parametric analysis is a reasonable size for your system. Ensure that 
-the ':compute_environment' variable is set to local.  
-1. Run the example.py file from the root of the btap_batch project folder. On Windows you will need to set the 
-PYTHONPATH to the to that folder. Please ensure that the btap_batch_env environment is active. 
+parameter is explained in that file. Ensure that parametric analysis is a reasonable size for your system (i.e. Do not 
+run millions of simulations on your 2 core laptop). Ensure that the ':compute_environment' variable is set to local.  
+2. Run the example.py file from the root of the btap_batch project folder. On Windows you will need to set the 
+PYTHONPATH to that folder. Please ensure that the btap_batch environment is active. 
 ```
 set PYTHONPATH=%cd% && python example\example.py
 ```
-1. Simulation should start to run. A folder will be created in parametric folder with the variable name you set 
+3. Simulation should start to run. A folder will be created in parametric folder with the variable name you set 
 ':analysis_name' in the yml file. It will create a unique folder under this based on a random UUID for this analysis. In 
 that folder you will see two folders, 'input' and 'output'. 
 
@@ -74,19 +68,25 @@ with high level information from all the simulations.
 
 ## Parametric AWS
 1. Ensure you are not connected to a VPN and do not connect while running simulations.
-1. Update your AWS credentials to ensure it is up to date. 
-1. Change ':compute_environment' to aws_batch.
-1. Follow the same Local instruction above 1-4. 
+2. Change ':compute_environment' to aws_batch (note that ':compute_environment' is in example.yml analysis file in the 'example' folder).
+3. Update your AWS credentials to ensure it is up to date through your AWS Account -> btap-dev -> Command line and programmatic Access. Copy the Text in 'Option 2'.
+4. Use your updated AWS credentials in '.aws/credentials' file in your user folder.
+*Note*: If you have not previously installed AWS CLI on Windows, install the AWS CLI version 2 on Windows (https://docs.aws.amazon.com/cli/latest/userguide/install-cliv2-windows.html\). Navigate to '.aws' folder in your user folder using windows powershell. Run the command: ```$ aws configure```. Set the default region name to ca-central-1, and output format to json. Then, open the generated credentials file in '.aws' folder in your user folder. Use your updated AWS credentials in the credentials file. Replace the first line that looks something like this [834599497928_PowerUser] to [default] and save the file.
+5. Run the example.py file from the root of the btap_batch project folder. On Windows you will need to set the 
+PYTHONPATH to that folder. Please ensure that the btap_batch environment is active. 
+```
+set PYTHONPATH=%cd% && python example\example.py
+```
 
 The output of the runs is not stored all locally, but on the S3 Bucket,  the ':analysis_name' you chose and the analysis_id 
-generated by the script. For example, if you ran the analysis with the analysis_name: set to 'example_analysis' and the default 
-:s3_bucket is your aws username is 'phylroy.lopez'. The runs would be kept on S3 in a path like
+generated by the script. For example, if you ran the analysis with the analysis_name: set to 'example_analysis', the default 
+:s3_bucket is '834599497928' for the 'btap_dev' account, and your aws username is 'phylroy.lopez'. The runs would be kept on S3 in a path like
 ```
 s3://<:s3_bucket_name>/<your_user_name>/<:analysis_name>/<:analysis_id>/
 ```
 *Note*: This script will not delete anything from S3. So you must delete your S3 folders yourself.
 
-The excel output will be save on your local machine in the output folder for the run. 
+The excel output will be saved on your local machine in the output folder for the run. 
 
 ## Optimization
 To perform an optimization run. 
@@ -113,7 +113,7 @@ from a local parametric run. However most of the time the above variables would 
 
 For more details on the nsga algorithm please visit the pymoo website. 
 
-To run the optimization, follow the steps 1-4 as above. 
+To run the optimization, follow the steps explained above under 'Parametric Analysis Local Machine'or 'Parametric AWS' depending on whether you run locally or on cloud. 
 
 ## Monitoring the Analysis
 While the program will output items to the console, there are a few other ways to monitor the results if you wish 
