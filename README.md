@@ -15,7 +15,7 @@ Using AWS batch also reduces the cost of simulations and enables researchers to 
 takes advantage of Amazons cost-effective batch queue system to complete simulations. 
  
 ## Requirements
-* Windows 10 Professional version 1909 or greater (As a  workaround. if you are using 1709, make sure your git repository is cloned into C:/users/your-user-name/btap_batch) Performance will not be optimimal however. 
+* Windows 10 Professional version 1909 or greater (As a  workaround. if you are using 1709, make sure your git repository is cloned into C:/users/your-user-name/btap_batch) Performance however will not be optimal and will not use all available ram. 
 * [Docker](https://docs.docker.com/docker-for-windows/install/) running on your computer.
 * A python **miniconda** environment [3.8](https://docs.conda.io/en/latest/miniconda.html). use Windows installers.
 * A git [client](https://git-scm.com/downloads)
