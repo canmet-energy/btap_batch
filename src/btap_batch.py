@@ -56,8 +56,10 @@ CONTAINER_MEMORY = 2000
 CONTAINER_STORAGE = 100
 
 
-#Location of Dockerfiles to create images locally and on AWS.
+#Location of Resources relative to this file.
 DOCKERFILES_FOLDER = os.path.join(os.path.dirname(os.path.realpath(__file__)), 'Dockerfiles')
+BASELINE_RESULTS = os.path.join(os.path.dirname(os.path.realpath(__file__)),'resources', 'baselines.xlsx')
+CER_UTILITY_COSTS = os.path.join(os.path.dirname(os.path.realpath(__file__)),'resources', 'ceb_fuel_end_use_prices.csv')
 
 # These resources were created either by hand or default from the AWS web console. If moving this to another aws account,
 # recreate these 3 items in the new account. Also create s3 bucket to use named based account id like we did here.
@@ -1192,6 +1194,9 @@ class BTAPAnalysis():
             excel_path = os.path.join(self.output_folder, 'output.xlsx')
             writer = pd.ExcelWriter(excel_path)
 
+            # PostProcess comparison to baselines.
+            self.btap_data_df = PostProcessResults().baseline_comparisons(btap_data_df=self.btap_data_df)
+
 
             # btap_data from sql to excel writer
             if isinstance(self.btap_data_df, pd.DataFrame):
@@ -1215,6 +1220,8 @@ class BTAPAnalysis():
                 logging.info(message)
                 print(message)
         return self.btap_data_df,self.failed_df
+
+
 
     def initialize_aws_batch(self, git_api_token):
         # create aws image, set up aws compute env and create workflow queue.
@@ -1246,6 +1253,12 @@ class BTAPAnalysis():
         if self.database != None:
             print("Killing Database Server.")
             self.database.kill_database()
+
+
+        # Load baseline run data into dataframe.
+        # Add eui_reference to analsys_df
+
+
 # Class to Manage parametric runs.
 class BTAPParametric(BTAPAnalysis):
     def __init__(self, analysis_config_file=None, git_api_token=None):
@@ -1846,3 +1859,70 @@ def btap_batch(analysis_config_file=None, git_api_token=None):
         logging.error(message)
         exit(1)
 
+# This class processed the btap_batch file to add columns as needed. This is a separate class as this can be applied
+# independant of simulation runs and optionally at simulation time as well if desired,but may have to make this
+# thread-safe if we do.
+class PostProcessResults:
+    def baseline_comparisons(self,
+                baseline=BASELINE_RESULTS,
+                btap_data_df=r'C:\Users\plopez\test\btap_batch\example\posterity_mid_rise_elec_montreal\7576173d-48f4-47c6-a3aa-81381b9947bb\output\AWS_Opt_Posterity_MidRise_Elec.xlsx',
+        ):
+            if isinstance(btap_data_df, pd.DataFrame):
+                analysis_df = btap_data_df
+            else:
+                analysis_df = pd.read_excel(open(btap_data_df, 'rb'), sheet_name='btap_data')
+
+            baseline_df = pd.read_excel(open(baseline, 'rb'), sheet_name='btap_data')
+            ceb_fuel_df = pd.read_csv(CER_UTILITY_COSTS)
+            merge_columns = [':building_type', ':template', ':primary_heating_fuel', ':epw_file']
+            df = pd.merge(analysis_df, baseline_df, how='left', left_on=merge_columns, right_on=merge_columns)
+
+            analysis_df['baseline_savings_energy_cost_per_m_sq'] = round(
+                (df['cost_utility_neb_total_cost_per_m_sq_x'] - df[
+                    'cost_utility_neb_total_cost_per_m_sq_y']), 1)
+
+            analysis_df['baseline_difference_cost_equipment_total_cost_per_m_sq'] = round(
+                (df['cost_utility_neb_total_cost_per_m_sq_x'] - df[
+                    'cost_utility_neb_total_cost_per_m_sq_y']), 1)
+
+            analysis_df['baseline_simple_payback_years'] = round(
+                (analysis_df['baseline_difference_cost_equipment_total_cost_per_m_sq'] / analysis_df[
+                    'baseline_savings_energy_cost_per_m_sq']), 1)
+
+            analysis_df['baseline_peak_electric_percent_better'] = round(((df['energy_peak_electric_w_per_m_sq_y'] - df[
+                'energy_peak_electric_w_per_m_sq_x']) * 100.0 / df['energy_peak_electric_w_per_m_sq_y']), 1)
+
+            analysis_df['baseline_energy_percent_better'] = round(((df['energy_eui_total_gj_per_m_sq_y'] - df[
+                'energy_eui_total_gj_per_m_sq_x']) * 100 / df['energy_eui_total_gj_per_m_sq_y']), 1)
+
+            analysis_df['baseline_necb_tier'] = pd.cut(analysis_df['baseline_energy_percent_better'],
+                                                       bins=[-1000.0, -0.001, 25.00, 50.00, 60.00, 1000.0],
+                                                       labels=['non_compliant', 'tier_1', 'tier_2', 'tier_3', 'tier_4'])
+
+            analysis_df['baseline_ghg_percent_better'] = round(((df['cost_utility_ghg_total_kg_per_m_sq_y'] - df[
+                'cost_utility_ghg_total_kg_per_m_sq_x']) * 100 / df['cost_utility_ghg_total_kg_per_m_sq_y']), 1)
+            # NPV commented out for now.
+            # province = 'Quebec'
+            # npv_end_year = 2050
+            # ngas_rate = ceb_fuel_df.loc[(ceb_fuel_df['province'] == province) & (ceb_fuel_df['fuel_type'] == 'Natural Gas'),str(npv_start_year):str(npv_end_year)].iloc[0].reset_index(drop=True,name='values')
+            # elec_rate = ceb_fuel_df.loc[(ceb_fuel_df['province'] == province) & (ceb_fuel_df['fuel_type'] == 'Electricity'),str(npv_start_year):str(npv_end_year)].iloc[0].reset_index(drop=True, name='values')
+            # fueloil_rate = ceb_fuel_df.loc[(ceb_fuel_df['province'] == province) & (ceb_fuel_df['fuel_type'] == 'Oil'),str(npv_start_year):str(npv_end_year)].iloc[0].reset_index(drop=True, name='values')
+            #
+            # df = pd.concat([ngas_rate,elec_rate,fueloil_rate], axis=1,keys=['ngas_cost_per_gj','elec_cost_per_gj','oil_cost_per_gj'])
+            # df['saving_ngas_gj_per_m2'] = 50.0
+            # df['saving_elec_gj_per_m2'] = 50.0
+            # df['saving_oil_gj_per_m2'] = 50.0
+            # df['ngas_saving_per_m2'] = df['ngas_cost_per_gj'] * df['saving_ngas_gj_per_m2']
+            # df['elec_saving_per_m2'] = df['elec_cost_per_gj'] * df['saving_elec_gj_per_m2']
+            # df['oil_saving_per_m2'] =  df['oil_cost_per_gj'] * df['saving_oil_gj_per_m2']
+            # df['total_savings_per_m2'] = df['ngas_saving_per_m2'] + df['oil_saving_per_m2'] +df['oil_saving_per_m2']
+            # df['total_discounted_savings_per_m2'] = pv(rate=npv_discount_rate, pmt=0, nper=df.index, fv=-df['total_savings_per_m2'])
+            # df['total_cumulative_dicounted_savings_per_m2'] = np.cumsum(df['total_discounted_savings_per_m2'])
+            # print(df)
+            #
+            # final_full_year = df[df['total_cumulative_dicounted_savings_per_m2'] < 0].index.values.max()
+            # fractional_yr = -df['total_cumulative_dicounted_savings_per_m2'][final_full_year] / df['total_discounted_savings_per_m2'][final_full_year + 1]
+            # payback_period = final_full_year + fractional_yr
+            # print(payback_period)
+
+            return analysis_df

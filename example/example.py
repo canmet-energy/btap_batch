@@ -20,7 +20,3 @@ bb = btap_batch.btap_batch(
 
 # Run the analysis
 bb.run()
-# print dataframe
-print(bb.btap_data_df)
-# print failed simulations, if any.
-print(bb.failed_df)
