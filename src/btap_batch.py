@@ -151,26 +151,29 @@ class AWSCredentials:
                 print("Unexpected error: %s" % e)
         self.user_id = self.sts.get_caller_identity()["UserId"]
         #get aws username from userid.
-        self.user_name = re.compile(".*:(.*)@.*").search(self.user_id)[1]
+        if re.compile(".*:(.*)@.*").search(self.user_id) is None:
+            self.user_name = 'osdev'
+        else:
+            self.user_name = re.compile(".*:(.*)@.*").search(self.user_id)[1]
 
         self.user_arn = self.sts.get_caller_identity()["Arn"]
         self.region_name = boto3.Session().region_name
-        self.aws_cred_path = None
-        if os.name == 'nt':
-            # Load credential file.
-            self.aws_cred_path = (f'{os.environ["USERPROFILE"]}\.aws\credentials')
-        if os.name == 'posix':
-            self.aws_cred_path = (f'~/.aws/credentials')
-        # parse credentials file.
-        with open(self.aws_cred_path, "r") as infile:
-            for line in infile:
-                values = line.split(" = ")
-                if values[0].strip() == 'aws_access_key_id':
-                    self.aws_access_key_id = values[1].strip()
-                if values[0].strip() == 'aws_secret_access_key':
-                    self.aws_secret_access_key = values[1].strip()
-                if values[0].strip() == 'aws_session_token':
-                    self.aws_session_token = values[1].strip()
+        # self.aws_cred_path = None
+        # if os.name == 'nt':
+        #     # Load credential file.
+        #     self.aws_cred_path = (f'{os.environ["USERPROFILE"]}\.aws\credentials')
+        # if os.name == 'posix':
+        #     self.aws_cred_path = (f'~/.aws/credentials')
+        # # parse credentials file.
+        # with open(self.aws_cred_path, "r") as infile:
+        #     for line in infile:
+        #         values = line.split(" = ")
+        #         if values[0].strip() == 'aws_access_key_id':
+        #             self.aws_access_key_id = values[1].strip()
+        #         if values[0].strip() == 'aws_secret_access_key':
+        #             self.aws_secret_access_key = values[1].strip()
+        #         if values[0].strip() == 'aws_session_token':
+        #             self.aws_session_token = values[1].strip()
 
         # Store the aws service role arn for AWSBatchServiceRole. This role is created by default when AWSBatch
         # compute environment is created for the first time via the web console automatically.
