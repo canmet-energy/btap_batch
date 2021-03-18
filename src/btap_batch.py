@@ -130,6 +130,11 @@ class S3:
             logging.info(message)
 
             self.s3.upload_file(file, bucket_name, target_path)
+
+    def upload_file(self,file, bucket_name, target_path):
+        logging.info(f"uploading {file} to s3 bucket {bucket_name} target {target_path}")
+        self.s3.upload_file(file, bucket_name, target_path)
+
 # Class to authenticate to AWS.
 class AWSCredentials:
     # Initialize with required clients.
@@ -1219,6 +1224,15 @@ class BTAPAnalysis():
                 message = f'Excel Output: {excel_path}'
                 logging.info(message)
                 print(message)
+
+        # If this is an aws_batch run, copy the excel file to s3 for storage.
+            if self.analysis_config[':compute_environment'] == 'aws_batch':
+                target_path = os.path.join(AWSCredentials().user_name,self.analysis_config[':analysis_name'],self.analysis_config[':analysis_id'],'output','output.xlsx')
+                # s3 likes forward slashes.
+                target_path = target_path.replace('\\', '/')
+                message = "Uploading %s..." % target_path
+                logging.info(message)
+                S3().upload_file(excel_path, self.analysis_config[':s3_bucket'], target_path)
         return self.btap_data_df,self.failed_df
 
 
