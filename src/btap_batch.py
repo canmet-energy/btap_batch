@@ -520,7 +520,7 @@ class AWSBatch:
             serviceRole=self.aws_batch_service_role,
             computeResources={
                 'type': 'EC2',
-                'allocationStrategy': 'BEST_FIT',
+                'allocationStrategy': 'BEST_FIT_PROGRESSIVE',
                 'minvCpus': MIN_AWS_VCPUS,
                 'maxvCpus': MAX_AWS_VCPUS,
                 'desiredvCpus': DESIRED_AWS_VCPUS,
