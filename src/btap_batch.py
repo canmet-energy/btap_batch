@@ -523,7 +523,7 @@ class AWSBatch:
                 'allocationStrategy': 'BEST_FIT_PROGRESSIVE',
                 'minvCpus': MIN_AWS_VCPUS,
                 'maxvCpus': MAX_AWS_VCPUS,
-                'desiredvCpus': DESIRED_AWS_VCPUS,
+                #'desiredvCpus': DESIRED_AWS_VCPUS,
                 'instanceTypes': ['optimal'],
                 'imageId': 'ami-0a06b44c462364156',  # Using Amazon Linux 2 to make use of overlay disk storage.
                 'subnets': self.subnet_id_list,
