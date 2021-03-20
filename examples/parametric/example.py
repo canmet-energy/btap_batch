@@ -1,4 +1,4 @@
-import src.btap_batch as btap_batch
+import src.btap_batch as btap
 import os
 import logging
 
@@ -12,7 +12,7 @@ git_api_token = os.environ['GIT_API_TOKEN']
 input_file = os.path.join(os.path.dirname(os.path.realpath(__file__)),'example.yml')
 
 # Initialize the analysis object.
-bb = btap_batch.btap_batch(
+bb = btap.btap_batch(
     # Input file.
     analysis_config_file=input_file,
     git_api_token=git_api_token
@@ -20,3 +20,9 @@ bb = btap_batch.btap_batch(
 
 # Run the analysis
 bb.run()
+
+
+#output all data from database.
+database = btap.BTAPDatabase()
+output_folder = os.path.join(os.path.dirname(os.path.realpath(__file__)))
+database.generate_output_files( analysis_id = None, output_folder = output_folder)

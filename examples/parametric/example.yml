@@ -7,7 +7,7 @@
   # Choices are:
   #       local : Run locally.. Good to test out runs on small batches before sending to AWS.
   #       aws_batch: use for analyses with > 1000 simulations
-  :compute_environment: aws_batch
+  :compute_environment: local
 
   # DO NOT CHANGE: S3 Bucket...Must be created ahead of time. Must be a STRING.
   # H&B default bucket is '834599497928' for the btap_dev account.
@@ -32,13 +32,16 @@
 
   # The name of the analysis. Can be a user friendly name. This is how it will appear on your local system or on the S3
   # bucket. for example on s3 the analysis run input/output files will be here. s3://834599497928/phylroy.lopez/example_analysis
-  :analysis_name: 'test'
+  :analysis_name: 'example_parametric'
 
   # Currently fixed to true. DO NOT CHANGE
   :run_annual_simulation: true
 
   # Currently fixed to true. DO NOT CHANGE
   :enable_costing: true
+
+  # Currently fixed to true. DO NOT CHANGE
+  :kill_database: true
 
     #########################################  Algorithm  ###########################################################
   :algorithm:

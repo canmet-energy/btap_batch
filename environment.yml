@@ -11,6 +11,7 @@ dependencies:
   - pandas
   - sqlalchemy
   - psycopg2
+  - openpyxl
+  - pip
   - pip:
     - pymoo
-prefix: /home/osdev/miniconda3
