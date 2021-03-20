@@ -1481,6 +1481,9 @@ class BTAPOptimization(BTAPAnalysis):
         eta = self.analysis_config[':algorithm'][':eta']
         # initialize the pool
         pool = ThreadPool(self.get_threads())
+        message = f'Using {self.get_threads()} threads.'
+        logging.info(message)
+        print(message)
         # Create pymoo problem. Pass self for helper methods and set up a starmap multithread pool.
         problem = BTAPProblem(btap_optimization=self, parallelization=('starmap', pool.starmap))
         # configure the algorithm.
