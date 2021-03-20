@@ -1450,12 +1450,8 @@ class BTAPOptimization(BTAPAnalysis):
                     return cpus
 
             elif self.analysis_config[':compute_environment'] == 'aws_batch':
-                threads = MAX_AWS_VCPUS
-                population = self.analysis_config[':algorithm'][':population']
-                if threads > population:
-                    return population
-                else:
-                    return population
+                return MAX_AWS_VCPUS
+
         else:
             return self.analysis_config[':no_of_threads']
 
