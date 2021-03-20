@@ -49,29 +49,4 @@ with open(new_file, 'w') as outfile:
 analysis = btap_batch.btap_batch( analysis_config_file=new_file, git_api_token=git_api_token)
 analysis.run()
 
-# AWS Parametric Test
-test_name = 'test_parametric_aws_batch'
-with open(input_file, 'r') as stream:
-    analysis = yaml.safe_load(stream)
-analysis[':analysis_configuration'][':analysis_name'] = test_name
-analysis[':analysis_configuration'][':compute_environment'] = 'aws_batch'
-new_file = os.path.join(os.path.dirname(os.path.realpath(__file__)),f'{test_name}.yml')
-with open(new_file, 'w') as outfile:
-    yaml.dump(analysis, outfile)
-analysis = btap_batch.btap_batch( analysis_config_file=new_file, git_api_token=git_api_token)
-analysis.run()
-
-# AWS Parametric Test
-test_name = 'test_optimization_aws_batch'
-with open(input_file, 'r') as stream:
-    analysis = yaml.safe_load(stream)
-analysis[':analysis_configuration'][':algorithm'] = optimization
-analysis[':analysis_configuration'][':analysis_name'] = test_name
-analysis[':analysis_configuration'][':compute_environment'] = 'aws_batch'
-new_file = os.path.join(os.path.dirname(os.path.realpath(__file__)),f'{test_name}.yml')
-with open(new_file, 'w') as outfile:
-    yaml.dump(analysis, outfile)
-analysis = btap_batch.btap_batch( analysis_config_file=new_file, git_api_token=git_api_token)
-analysis.run()
-
 
