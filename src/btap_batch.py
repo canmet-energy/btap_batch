@@ -713,7 +713,8 @@ class AWSBatch:
 
         jobId = submitJobResponse['jobId']
         message = f"Submitted job_id {jobId} with job name {jobName} to the job queue {self.job_queue_id}"
-
+        logging.info(message)
+        print(message)
         running = False
         startTime = 0
         logGroupName = '/aws/batch/job'
@@ -726,6 +727,7 @@ class AWSBatch:
             if status == 'SUCCEEDED':
                 message = 'SUCCEEDED - Job [%s - %s] %s' % (jobName, jobId, status)
                 logging.info(message)
+                print(message)
                 result = 'SUCCEEDED'
                 break
             elif status == 'FAILED':
