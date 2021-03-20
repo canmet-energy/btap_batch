@@ -885,6 +885,10 @@ class Docker:
 
 
         # Run the simulation
+        jobName = f"{run_options[':analysis_id']}-{run_options[':datapoint_id']}"
+        message = f"Submitting job {jobName}"
+        logging.info(message)
+        print(message)
         result = self.docker_client.containers.run(
                                                     # Local image name to use.
                                                     image='btap_private_cli',

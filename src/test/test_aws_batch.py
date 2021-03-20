@@ -23,10 +23,9 @@ optimization = {
 }
 
 # Set input file path.
-# Use file in example folder for tests.
-input_file = os.path.join(os.path.dirname(os.path.realpath(__file__)),'..','..','examples','parametric','example.yml')
 
 # AWS Parametric Test
+input_file = os.path.join(os.path.dirname(os.path.realpath(__file__)),'..','..','examples','parametric','example.yml')
 test_name = 'test_parametric_aws_batch'
 with open(input_file, 'r') as stream:
     analysis = yaml.safe_load(stream)
@@ -39,6 +38,7 @@ analysis = btap_batch.btap_batch( analysis_config_file=new_file, git_api_token=g
 analysis.run()
 
 # AWS Parametric Test
+input_file = os.path.join(os.path.dirname(os.path.realpath(__file__)),'..','..','examples','multi_analyses','options.yml')
 test_name = 'test_optimization_aws_batch'
 with open(input_file, 'r') as stream:
     analysis = yaml.safe_load(stream)

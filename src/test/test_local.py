@@ -39,6 +39,7 @@ analysis.run()
 
 # Local Optimization Test
 test_name = 'test_optimization_local'
+input_file = os.path.join(os.path.dirname(os.path.realpath(__file__)),'..','..','examples','multi_analyses','options.yml')
 with open(input_file, 'r') as stream:
     analysis = yaml.safe_load(stream)
 analysis[':analysis_configuration'][':algorithm'] = optimization
