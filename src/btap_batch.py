@@ -826,6 +826,18 @@ class Docker:
         logging.info(f"OS_STANDARDS:{self.os_standards_branch}")
         logging.info(f"Dockerfolder being use to build image:{self.dockerfile}")
 
+        buildargs = {
+            # Git token to access private repositories.
+            'GIT_API_TOKEN': self.git_api_token,
+            # Openstudio version.... like '3.0.1'
+            'OPENSTUDIO_VERSION': self.os_version,
+            # BTAP costing branch. Usually 'master'
+            'BTAP_COSTING_BRANCH': self.btap_costing_branch,
+            # Openstudio standards branch Usually 'nrcan'
+            'OS_STANDARDS_BRANCH': self.os_standards_branch
+        }
+        print(buildargs)
+
         # Will build image if does not already exist or if nocache is set true.
         self.image, json_log = self.docker_client.images.build(
                                                                 # Path to docker file.
@@ -835,16 +847,7 @@ class Docker:
                                                                 # nocache flag to build use cache or build from scratch.
                                                                 nocache=self.nocache,
                                                                 # ENV variables used in Dockerfile.
-                                                                buildargs={
-                                                                            # Git token to access private repositories.
-                                                                            'GIT_API_TOKEN': self.git_api_token,
-                                                                            # Openstudio version.... like '3.0.1'
-                                                                            'OPENSTUDIO_VERSION': self.os_version,
-                                                                            # BTAP costing branch. Usually 'master'
-                                                                            'BTAP_COSTING_BRANCH': self.btap_costing_branch,
-                                                                            # Openstudio standards branch Usually 'nrcan'
-                                                                            'OS_STANDARDS_BRANCH': self.os_standards_branch
-                                                                          }
+                                                                buildargs=buildargs
                                                                )
 
         # let use know that the image built sucessfully.
