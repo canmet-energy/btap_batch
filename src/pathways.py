@@ -1,14 +1,16 @@
 import pandas as pd
 import numpy as np
+import dash
 import plotly.express as px
 import plotly.graph_objects as go
-import dash
 import dash_table
 import dash_html_components as html
 import dash_core_components as dcc
 from dash.dependencies import Input, Output, State
 import dash_bootstrap_components as dbc
 from sklearn.preprocessing import LabelEncoder
+
+OUTPUT_XLSX = r'C:\Users\plopez\test\btap_batch\src\test\test_optimization_local\04d8bfe7-5cc7-4d85-82e1-684b76605e41\output\output.xlsx'
 
 # This method tries to guess the width of the columns in the data-table figure.
 def create_conditional_style(df):
@@ -23,9 +25,8 @@ def create_conditional_style(df):
 
 # This loads the information from the BTAPBatch Excel output. It strips the headers col names, rounds the floats, and  encodes
 # string values into numeric to make it easy to graph.
-def load_dataframe(file_url="../data/btap/primary_school.csv"):
-    #df = pd.read_csv(file_url)
-    df = pd.read_excel(open(r'C:\Users\plopez\test\btap_batch\example\posterity_mid_rise_elec_montreal\7576173d-48f4-47c6-a3aa-81381b9947bb\output\output.xlsx', 'rb'),
+def load_dataframe():
+    df = pd.read_excel(open(OUTPUT_XLSX, 'rb'),
                   sheet_name='btap_data')
     # Round to 3 decimal places
     df = df.round(3)
@@ -222,7 +223,7 @@ def get_data_table(id='data-table'):
 # Load Sample data used by dash library.
 df = load_dataframe()
 
-# List of metrics
+# List of metrics add/ change based on btap_data.json file top level fields.
 metrics = [
     {'domain': 'output', 'label': 'Index', 'col_name': 'index'},
     {'domain': 'envelope', 'label': 'RoofConductance', 'col_name': 'env_outdoor_roofs_average_conductance-w_per_m_sq_k'},

@@ -2,16 +2,16 @@ name: btap_batch
 channels:
   - defaults
 dependencies:
-  - conda
-  - python=3.8
-  - scikit-learn
-  - docker-py
-  - pyyaml
-  - boto3
-  - pandas
   - sqlalchemy
+  - pandas
+  - dash
   - psycopg2
-  - openpyxl
+  - conda
+  - scikit-learn
   - pip
-  - pip:
-    - pymoo
+  - pyyaml
+  - python=3.8
+  - docker-py
+  - openpyxl
+  - boto3
+  - dash-bootstrap-components

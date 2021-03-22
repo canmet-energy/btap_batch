@@ -40,7 +40,9 @@
   # Currently fixed to true. DO NOT CHANGE
   :enable_costing: true
 
-  # Currently fixed to true. DO NOT CHANGE
+  # DO NOT CHANGE. Will keep the postgresql running after the analysis is complete. Turn this on if you wish to monitor the
+  # results in real-time or wish to append subsequent analyses to the database. To kill the database manually type
+  # 'docker kill btap_postgres' at any command prompt on your host system.
   :kill_database: true
 
     #########################################  Algorithm  ###########################################################

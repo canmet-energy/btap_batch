@@ -24,8 +24,7 @@ takes advantage of Amazons cost-effective batch queue system to complete simulat
 * Add the github token as a user windows/linux environment variable as GIT_API_TOKEN
 * Permissions to access canmet-energy repositories from phylroy.lopez@canada.ca
 * [NRCan btap_dev AWS account credentials set up on your computer](https://docs.aws.amazon.com/cli/latest/userguide/cli-configure-files.html) for Amazon HPC runs. 
-* Jupyter Lab (Optional)
-* Pycharms (Optional)
+
 
 ## Configuration
 1. Open a miniconda prompt (Start->Anaconda3(64-bit)->Anaconda Prompt) Not Powershell!
@@ -47,7 +46,7 @@ conda activate btap_batch
 
 ## QuickStart Command Line 
 ### Parametric Analysis Local Machine
-1. To run a parametric analysis, go to the example.yml analysis file in the 'example' folder. Each 
+1. To run a parametric analysis, go to the example.yml analysis file in the 'examples/parametric' folder. Each 
 parameter is explained in that file. Ensure that parametric analysis is a reasonable size for your system (i.e. Do not 
 run millions of simulations on your 2 core laptop). Ensure that the ':compute_environment' variable is set to local.  
 2. Run the example.py file from the root of the btap_batch project folder. On Windows you will need to set the 
