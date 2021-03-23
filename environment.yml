@@ -1,6 +1,7 @@
 name: btap_batch
 channels:
   - defaults
+  - conda-forge
 dependencies:
   - sqlalchemy
   - pandas
@@ -15,3 +16,5 @@ dependencies:
   - openpyxl
   - boto3
   - dash-bootstrap-components
+  - pip:
+      - pymoo
