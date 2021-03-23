@@ -1,6 +1,10 @@
 ---
 # Run configuration
 :analysis_configuration:
+
+  # BTAP Batch version
+  :btap_batch_version: 1.0.002
+
   # DO NOT CHANGE
   :no_of_threads:
 
@@ -32,13 +36,18 @@
 
   # The name of the analysis. Can be a user friendly name. This is how it will appear on your local system or on the S3
   # bucket. for example on s3 the analysis run input/output files will be here. s3://834599497928/phylroy.lopez/example_analysis
-  :analysis_name: 'example_analysis'
+  :analysis_name: 'example_parametric'
 
   # Currently fixed to true. DO NOT CHANGE
   :run_annual_simulation: true
 
   # Currently fixed to true. DO NOT CHANGE
   :enable_costing: true
+
+  # DO NOT CHANGE. Will keep the postgresql running after the analysis is complete. Turn this on if you wish to monitor the
+  # results in real-time or wish to append subsequent analyses to the database. To kill the database manually type
+  # 'docker kill btap_postgres' at any command prompt on your host system.
+  :kill_database: true
 
     #########################################  Algorithm  ###########################################################
   :algorithm:
@@ -48,29 +57,29 @@
 # Building options
 :building_options:
   :building_type: [
-    #  'SecondarySchool',
-    # 'PrimarySchool',
-    # 'SmallOffice',
-    # 'MediumOffice',
-    # 'LargeOffice',
-    # 'SmallHotel',
-    # 'LargeHotel',
-    # 'Warehouse',
-    # 'RetailStandalone',
-    # 'RetailStripmall',
-    # 'QuickServiceRestaurant',
-      'FullServiceRestaurant',
-    # 'MidriseApartment',
-    # 'HighriseApartment',
-    # 'Hospital',
-    # 'Outpatient'
+#     'SecondarySchool',
+#     'PrimarySchool',
+#     'SmallOffice',
+#     'MediumOffice',
+#     'LargeOffice',
+#     'SmallHotel',
+#     'LargeHotel',
+#     'Warehouse',
+#     'RetailStandalone',
+#     'RetailStripmall',
+#     'QuickServiceRestaurant',
+     'FullServiceRestaurant',
+#     'MidriseApartment',
+#     'HighriseApartment',
+#     'Hospital',
+#     'Outpatient'
   ]
   # The standard template to use for baseline assumptions.
   :template: [
     #  'BTAPPRE1980',
     #  'BTAP1980TO2010',
-    #  'NECB2011',
-    #  'NECB2015',
+    #   'NECB2011',
+    #   'NECB2015',
        'NECB2017'
   ]
   :epw_file: [
@@ -85,7 +94,7 @@
   :primary_heating_fuel: [
        'Electricity',
        'NaturalGas',
-       'FuelOilNo2'
+ #      'FuelOilNo2'
   ]
   :dcv_type: [
        'NECB_Default',

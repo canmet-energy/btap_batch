@@ -23,9 +23,9 @@ takes advantage of Amazons cost-effective batch queue system to complete simulat
 * A github account and [git-token](https://docs.github.com/en/github/authenticating-to-github/creating-a-personal-access-token)
 * Add the github token as a user windows/linux environment variable as GIT_API_TOKEN
 * Permissions to access canmet-energy repositories from phylroy.lopez@canada.ca
+* [AWS CLI on Windows, install the AWS CLI version 2 on Windows](https://docs.aws.amazon.com/cli/latest/userguide/install-cliv2-windows.html).
 * [NRCan btap_dev AWS account credentials set up on your computer](https://docs.aws.amazon.com/cli/latest/userguide/cli-configure-files.html) for Amazon HPC runs. 
-* Jupyter Lab (Optional)
-* Pycharms (Optional)
+
 
 ## Configuration
 1. Open a miniconda prompt (Start->Anaconda3(64-bit)->Anaconda Prompt) Not Powershell!
@@ -36,7 +36,7 @@ git clone https://github.com/canmet-energy/btap_batch
 cd btap_batch
 ```
 3. Set up your conda/python environment 'btap_batch'. This will download all required packages to your system.  
-For those familiar with Ruby, this is similar to a Gemfile/Bundle environment. This includes Jupyter Lab. 
+For those familiar with Ruby, this is similar to a Gemfile/Bundle environment. 
 ```
 conda env create -f environment.yml
 ```
@@ -47,7 +47,7 @@ conda activate btap_batch
 
 ## QuickStart Command Line 
 ### Parametric Analysis Local Machine
-1. To run a parametric analysis, go to the example.yml analysis file in the 'example' folder. Each 
+1. To run a parametric analysis, go to the example.yml analysis file in the 'examples/parametric' folder. Each 
 parameter is explained in that file. Ensure that parametric analysis is a reasonable size for your system (i.e. Do not 
 run millions of simulations on your 2 core laptop). Ensure that the ':compute_environment' variable is set to local.  
 2. Run the example.py file from the root of the btap_batch project folder. On Windows you will need to set the 
@@ -71,7 +71,7 @@ with high level information from all the simulations.
 2. Change ':compute_environment' to aws_batch (note that ':compute_environment' is in example.yml analysis file in the 'example' folder).
 3. Update your AWS credentials to ensure it is up to date through your AWS Account -> btap-dev -> Command line and programmatic Access. Copy the Text in 'Option 2'.
 4. Use your updated AWS credentials in '.aws/credentials' file in your user folder.
-*Note*: If you have not previously installed AWS CLI on Windows, install the AWS CLI version 2 on Windows (https://docs.aws.amazon.com/cli/latest/userguide/install-cliv2-windows.html\). Navigate to '.aws' folder in your user folder using windows powershell. Run the command: ```$ aws configure```. Set the default region name to ca-central-1, and output format to json. Then, open the generated credentials file in '.aws' folder in your user folder. Use your updated AWS credentials in the credentials file. Replace the first line that looks something like this [834599497928_PowerUser] to [default] and save the file.
+*Note*:  Navigate to '.aws' folder in your user folder using windows powershell. Run the command: ```$ aws configure```. Set the default region name to ca-central-1, and output format to json. Then, open the generated credentials file in '.aws' folder in your user folder. Use your updated AWS credentials in the credentials file. Replace the first line that looks something like this [834599497928_PowerUser] to [default] and save the file.
 5. Run the example.py file from the root of the btap_batch project folder. On Windows you will need to set the 
 PYTHONPATH to that folder. Please ensure that the btap_batch environment is active. 
 ```
@@ -87,6 +87,10 @@ s3://<:s3_bucket_name>/<your_user_name>/<:analysis_name>/<:analysis_id>/
 *Note*: This script will not delete anything from S3. So you must delete your S3 folders yourself.
 
 The excel output will be saved on your local machine in the output folder for the run. 
+
+6. Run the command 'docker kill btap_postgres' when you are done with your analysis. If btap_batch crashed or 
+:kill_database was set to false. The database may still be running on your local system. Just in case, execute this command. 
+
 
 ## Optimization
 To perform an optimization run. 
