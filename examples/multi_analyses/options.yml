@@ -2,6 +2,9 @@
 ###########################################ANALYSIS CONFIGURATION#######################################################
 # Run configuration
 :analysis_configuration:
+  # BTAP Batch version
+  :btap_batch_version: 1.0.002
+
   # DO NOT CHANGE
   :no_of_threads:
 
@@ -42,7 +45,7 @@
   # Currently fixed to true. DO NOT CHANGE
   :enable_costing: true
 
-  # Currently fixed to true. DO NOT CHANGE
+  # Currently fixed to false for multi-analysis. This allows multi-analysis to be saved to the same database.
   :kill_database: false
 
 ###########################################     ALGORITHM        #######################################################
@@ -75,9 +78,9 @@
     # "RetailStandalone",
     # "RetailStripmall",
     # "QuickServiceRestaurant",
-    # "FullServiceRestaurant",
-      "MidriseApartment",
-  #    "HighriseApartment",
+     "FullServiceRestaurant",
+    #  "MidriseApartment",
+    #  "HighriseApartment",
     #"Hospital",
     #"Outpatient"
   ]

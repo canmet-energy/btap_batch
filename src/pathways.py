@@ -10,7 +10,62 @@ from dash.dependencies import Input, Output, State
 import dash_bootstrap_components as dbc
 from sklearn.preprocessing import LabelEncoder
 
-OUTPUT_XLSX = r'C:\Users\plopez\test\btap_batch\src\test\test_optimization_local\04d8bfe7-5cc7-4d85-82e1-684b76605e41\output\output.xlsx'
+#Enter in the full path to your Excel analysis output file.
+OUTPUT_XLSX = r'C:\Users\plopez\test\btap_batch\src\test\test_optimization_local\d11c4dbe-53b6-4632-9117-2963e024d000\output\output.xlsx'
+
+# List of metrics add/ change based on btap_data.json file top level fields. Comment out / add items as you see fit for your
+# analysis.
+metrics = [
+    {'domain': 'output', 'label': 'Index', 'col_name': 'index'},
+    # Building Selection
+    #{'domain': 'input', 'label': 'Building Type', 'col_name': ':building_type'},
+    #{'domain': 'input', 'label': 'Template', 'col_name': ':template'},
+    #{'domain': 'input', 'label': 'Baseline Heating Fuel', 'col_name': ':primary_heating_fuel'},
+
+
+    # Envelope metrics
+    {'domain': 'envelope', 'label': 'RoofConductance', 'col_name': 'env_outdoor_roofs_average_conductance-w_per_m_sq_k'},
+    {'domain': 'envelope', 'label': 'WallConductance.', 'col_name': 'env_outdoor_walls_average_conductance-w_per_m_sq_k'},
+    {'domain': 'envelope', 'label': 'WindowConductance.', 'col_name': 'env_outdoor_windows_average_conductance-w_per_m_sq_k'},
+    {'domain': 'envelope', 'label': 'Window SHGC.', 'col_name': ':fixed_wind_solar_trans-w_per_m_sq_k'},
+
+    # Load Metrics
+    {'domain': 'load', 'label': 'DaylightControl', 'col_name': ':daylighting_type'},
+    {'domain': 'load', 'label': 'LightingType', 'col_name': ':lights_type'},
+    {'domain': 'load', 'label': 'Light Scaling', 'col_name': ':lights_scale'},
+
+    # HVAC Metrics
+    {'domain': 'hvac', 'label': 'HVAC System', 'col_name': ':ecm_system_name'},
+    {'domain': 'hvac', 'label': 'Demand Control Ventilation', 'col_name': ':dcv_type'},
+    {'domain': 'hvac', 'label': 'ERV', 'col_name': ':erv_package'},
+    {'domain': 'hvac', 'label': 'Boiler Package', 'col_name': ':boiler_eff'},
+    {'domain': 'hvac', 'label': 'Furnace Package', 'col_name': ':furnace_eff'},
+    {'domain': 'hvac', 'label': 'SHW Package', 'col_name': ':shw_eff'},
+
+    # Economics
+    {'domain': 'output', 'label': 'Material Cost ($/m2)', 'col_name': 'cost_equipment_total_cost_per_m_sq'},
+    {'domain': 'output', 'label': 'Util Cost ($/m2)', 'col_name': 'cost_utility_neb_total_cost_per_m_sq'},
+    {'domain': 'output', 'label': 'Simple Payback', 'col_name': 'baseline_simple_payback_years'},
+
+    # Energy
+    {'domain': 'output', 'label': 'EUI GJ/m2', 'col_name': 'energy_eui_total_gj_per_m_sq'},
+    {'domain': 'output', 'label': 'EUI% Better', 'col_name': 'baseline_energy_percent_better'},
+
+    # GHGs
+    {'domain': 'output', 'label': 'GHG kg/m2', 'col_name': 'cost_utility_ghg_electricity_kg_per_m_sq'},
+    {'domain': 'output', 'label': 'GHG% Better', 'col_name': 'baseline_ghg_percent_better'},
+
+    # Peak
+    {'domain': 'output', 'label': 'ElecPeak W/m2', 'col_name': 'energy_peak_electric_w_per_m_sq'},
+    {'domain': 'output', 'label': 'ElecPeak % Better', 'col_name': 'baseline_peak_electric_percent_better'},
+
+    # Code Tiers
+    {'domain': 'output', 'label': 'Tier Level', 'col_name': 'baseline_necb_tier'},
+
+]
+
+# Please do not modify anything below.
+
 
 # This method tries to guess the width of the columns in the data-table figure.
 def create_conditional_style(df):
@@ -223,22 +278,7 @@ def get_data_table(id='data-table'):
 # Load Sample data used by dash library.
 df = load_dataframe()
 
-# List of metrics add/ change based on btap_data.json file top level fields.
-metrics = [
-    {'domain': 'output', 'label': 'Index', 'col_name': 'index'},
-    {'domain': 'envelope', 'label': 'RoofConductance', 'col_name': 'env_outdoor_roofs_average_conductance-w_per_m_sq_k'},
-    {'domain': 'envelope', 'label': 'WallConductance.', 'col_name': 'env_outdoor_walls_average_conductance-w_per_m_sq_k'},
-    {'domain': 'envelope', 'label': 'WindowConductance.', 'col_name': 'env_outdoor_windows_average_conductance-w_per_m_sq_k'},
-    {'domain': 'load', 'label': 'DaylightControl', 'col_name': ':daylighting_type'},
-    {'domain': 'load', 'label': 'LightingType', 'col_name': ':lights_type'},
-    {'domain': 'hvac', 'label': 'HVAC System', 'col_name': ':ecm_system_name'},
-    {'domain': 'hvac', 'label': 'Demand Control Ventilation', 'col_name': ':dcv_type'},
-    {'domain': 'output', 'label': 'Material Cost ($/m2)', 'col_name': 'cost_equipment_total_cost_per_m_sq'},
-    {'domain': 'output', 'label': 'Util Cost ($/m2)', 'col_name': 'cost_utility_neb_total_cost_per_m_sq'},
-    {'domain': 'output', 'label': 'EUI GJ/m2', 'col_name': 'energy_eui_total_gj_per_m_sq'},
-    {'domain': 'output', 'label': 'GHG kg/m2', 'col_name': 'cost_utility_ghg_electricity_kg_per_m_sq'},
-    {'domain': 'output', 'label': 'ElecPeak W/m2', 'col_name': 'energy_peak_electric_w_per_m_sq'},
-]
+
 
 # Create a hash from the metrics data so it can be easily used.
 labels = {d['col_name']: d['label'] for d in metrics}
