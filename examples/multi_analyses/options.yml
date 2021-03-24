@@ -51,7 +51,7 @@
 ###########################################     ALGORITHM        #######################################################
   :algorithm:
     :type: nsga2 # nsga2 , parametric
-    :population: 175
+    :population: 3
     :n_generations: 3
     :prob: 0.85
     :eta: 3.0
