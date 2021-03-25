@@ -26,6 +26,7 @@ import datetime
 import sys
 import pandas as pd
 from sqlalchemy import create_engine
+from sqlalchemy.orm import sessionmaker
 import sqlalchemy.types
 import re
 import glob
@@ -1213,18 +1214,22 @@ class BTAPAnalysis():
             #Convert dp_values to dataframe and add to sql table named 'btap_data'
             logging.info(f'obtained dp_values= {dp_values}')
             df = pd.DataFrame([dp_values])
-            sql_engine = self.database.get_engine()
-            sql_connection = sql_engine.connect()
-            df.to_sql('btap_data', sql_connection, if_exists='append')
-            sql_connection.close()
+
+
+
+            Session = sessionmaker(bind=self.database.get_engine())
+            session = Session()
+            df.to_sql('btap_data', con=session.get_bind(), if_exists='append', index=False)
+            session.close()
+
         else:
             # If simulation failed, save failure information for user to debug to database
             # Convert failed results to dataframe and save to sql 'failed_runs' table.
             df = pd.DataFrame([results])
-            sql_engine = self.database.get_engine()
-            sql_connection = sql_engine.connect()
-            df.to_sql('failed_runs', sql_connection, if_exists='append', dtype = {':algorithm':sqlalchemy.types.JSON})
-            sql_connection.close()
+            Session = sessionmaker(bind=self.database.get_engine())
+            session = Session()
+            df.to_sql('failed_runs', con=session.get_bind(), if_exists='append', dtype = {':algorithm':sqlalchemy.types.JSON})
+            session.close()
             raise FailedSimulationException(f'This scenario failed. dp_values= {results}')
         return results
 
