@@ -22,7 +22,3 @@ bb = btap.btap_batch(
 bb.run()
 
 
-#output all data from database.
-database = btap.BTAPDatabase()
-output_folder = os.path.join(os.path.dirname(os.path.realpath(__file__)))
-database.generate_output_files( analysis_id = None, output_folder = output_folder)
