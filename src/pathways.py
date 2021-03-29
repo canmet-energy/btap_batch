@@ -9,60 +9,68 @@ import dash_core_components as dcc
 from dash.dependencies import Input, Output, State
 import dash_bootstrap_components as dbc
 from sklearn.preprocessing import LabelEncoder
+import copy
 
 #Enter in the full path to your Excel analysis output file.
-OUTPUT_XLSX = r'C:\Users\plopez\test\btap_batch\src\test\test_optimization_local\d11c4dbe-53b6-4632-9117-2963e024d000\output\output.xlsx'
+OUTPUT_XLSX = r'C:\Users\plopez\test\btap_batch\posterity_montreal.xlsx'
 
 # List of metrics add/ change based on btap_data.json file top level fields. Comment out / add items as you see fit for your
 # analysis.
 metrics = [
     {'domain': 'output', 'label': 'Index', 'col_name': 'index'},
+
+    # Code Tiers
+    {'domain': 'output', 'label': 'Tier Level', 'col_name': 'baseline_necb_tier'},
+
+    # Economics
+    {'domain': 'output', 'label': 'Material Cost ($/m2)', 'col_name': 'cost_equipment_total_cost_per_m_sq'},
+    #{'domain': 'output', 'label': 'Util Cost ($/m2)', 'col_name': 'cost_utility_neb_total_cost_per_m_sq'},
+    {'domain': 'output', 'label': 'Util Cost Savings ($/m2)', 'col_name': 'baseline_savings_energy_cost_per_m_sq'},
+
+    # Energy
+    #{'domain': 'output', 'label': 'EUI GJ/m2', 'col_name': 'energy_eui_total_gj_per_m_sq'},
+    {'domain': 'output', 'label': 'EUI% Better', 'col_name': 'baseline_energy_percent_better'},
+
+    # GHGs
+    #{'domain': 'output', 'label': 'GHG kg/m2', 'col_name': 'cost_utility_ghg_total_kg_per_m_sq'},
+    {'domain': 'output', 'label': 'GHG% Better', 'col_name': 'baseline_ghg_percent_better'},
+
+    # Peak
+    #{'domain': 'output', 'label': 'ElecPeak W/m2', 'col_name': 'energy_peak_electric_w_per_m_sq'},
+    {'domain': 'output', 'label': 'ElecPeak % Better', 'col_name': 'baseline_peak_electric_percent_better'},
+
     # Building Selection
-    #{'domain': 'input', 'label': 'Building Type', 'col_name': ':building_type'},
+    {'domain': 'input', 'label': 'Building Type', 'col_name': ':building_type'},
     #{'domain': 'input', 'label': 'Template', 'col_name': ':template'},
-    #{'domain': 'input', 'label': 'Baseline Heating Fuel', 'col_name': ':primary_heating_fuel'},
+    {'domain': 'input', 'label': 'Baseline Heating Fuel', 'col_name': ':primary_heating_fuel'},
 
 
     # Envelope metrics
     {'domain': 'envelope', 'label': 'RoofConductance', 'col_name': 'env_outdoor_roofs_average_conductance-w_per_m_sq_k'},
     {'domain': 'envelope', 'label': 'WallConductance.', 'col_name': 'env_outdoor_walls_average_conductance-w_per_m_sq_k'},
     {'domain': 'envelope', 'label': 'WindowConductance.', 'col_name': 'env_outdoor_windows_average_conductance-w_per_m_sq_k'},
-    {'domain': 'envelope', 'label': 'Window SHGC.', 'col_name': ':fixed_wind_solar_trans-w_per_m_sq_k'},
+    #{'domain': 'envelope', 'label': 'Window SHGC.', 'col_name': ':fixed_wind_solar_trans-w_per_m_sq_k'},
 
     # Load Metrics
     {'domain': 'load', 'label': 'DaylightControl', 'col_name': ':daylighting_type'},
     {'domain': 'load', 'label': 'LightingType', 'col_name': ':lights_type'},
-    {'domain': 'load', 'label': 'Light Scaling', 'col_name': ':lights_scale'},
+    #{'domain': 'load', 'label': 'Light Scaling', 'col_name': ':lights_scale'},
 
     # HVAC Metrics
     {'domain': 'hvac', 'label': 'HVAC System', 'col_name': ':ecm_system_name'},
     {'domain': 'hvac', 'label': 'Demand Control Ventilation', 'col_name': ':dcv_type'},
     {'domain': 'hvac', 'label': 'ERV', 'col_name': ':erv_package'},
-    {'domain': 'hvac', 'label': 'Boiler Package', 'col_name': ':boiler_eff'},
-    {'domain': 'hvac', 'label': 'Furnace Package', 'col_name': ':furnace_eff'},
-    {'domain': 'hvac', 'label': 'SHW Package', 'col_name': ':shw_eff'},
+    #{'domain': 'hvac', 'label': 'Boiler Package', 'col_name': ':boiler_eff'},
+    #{'domain': 'hvac', 'label': 'Furnace Package', 'col_name': ':furnace_eff'},
+    #{'domain': 'hvac', 'label': 'SHW Package', 'col_name': ':shw_eff'},
 
-    # Economics
-    {'domain': 'output', 'label': 'Material Cost ($/m2)', 'col_name': 'cost_equipment_total_cost_per_m_sq'},
-    {'domain': 'output', 'label': 'Util Cost ($/m2)', 'col_name': 'cost_utility_neb_total_cost_per_m_sq'},
-    {'domain': 'output', 'label': 'Simple Payback', 'col_name': 'baseline_simple_payback_years'},
-
-    # Energy
-    {'domain': 'output', 'label': 'EUI GJ/m2', 'col_name': 'energy_eui_total_gj_per_m_sq'},
-    {'domain': 'output', 'label': 'EUI% Better', 'col_name': 'baseline_energy_percent_better'},
-
-    # GHGs
-    {'domain': 'output', 'label': 'GHG kg/m2', 'col_name': 'cost_utility_ghg_electricity_kg_per_m_sq'},
-    {'domain': 'output', 'label': 'GHG% Better', 'col_name': 'baseline_ghg_percent_better'},
-
-    # Peak
-    {'domain': 'output', 'label': 'ElecPeak W/m2', 'col_name': 'energy_peak_electric_w_per_m_sq'},
-    {'domain': 'output', 'label': 'ElecPeak % Better', 'col_name': 'baseline_peak_electric_percent_better'},
 
     # Code Tiers
-    {'domain': 'output', 'label': 'Tier Level', 'col_name': 'baseline_necb_tier'},
-
+    #{'domain': 'output', 'label': 'URL', 'col_name': 'datapoint_output_url'},
 ]
+
+table_metrics = copy.deepcopy(metrics)
+table_metrics.append({'domain': 'output', 'label': 'Link', 'col_name': 'link', 'type':'text','presentation':'markdown'})
 
 # Please do not modify anything below.
 
@@ -100,6 +108,18 @@ def load_dataframe():
     for col_name in [col for col, dt in df.dtypes.items() if dt == object]:
         if not col_name in ['run_options']:
             df[f'{col_name}_code'] = LabelEncoder().fit_transform(df[col_name])
+
+    # Create markdown hyperlink column from url.
+    #format dataframe column of urls so that it displays as hyperlink
+    def display_links(df):
+        links = df['datapoint_output_url'].to_list()
+        rows = []
+        for x in links:
+            link = '[Link](' +str(x) + ')'
+            rows.append(link)
+        return rows
+
+    df['link'] = display_links(df)
 
     # Done configuring dataframe. Return it.
     return df
@@ -248,9 +268,8 @@ def get_scatter_graph_form_group():
     return children
 
 def get_data_table(id='data-table'):
-    data_table = dash_table.DataTable(
-        data=start_table_df.to_dict('records'),  ####### inserted line
-        columns=[{'id': c, 'name': c} for c in start_table_df.columns],  ####### inserted line
+    data_table = dash_table.DataTable(data=start_table_df.to_dict('records'),
+        columns=[{'id': c, 'name': c} for c in start_table_df.columns],
         id=id,
         style_table={
             'overflowY': 'scroll',
@@ -400,8 +419,8 @@ def update_graphs(restyledata,
     return [
         scatter_graph,  # Scatter figure
         [
-            {"name": i['label'], "id": i['col_name'], "deletable": True, "selectable": True} for i in
-            metrics
+            {"name": i['label'], "id": i['col_name'], "deletable": True, "selectable": True, 'type':'text','presentation':'markdown'} for i in
+            table_metrics
         ],  # data-table columns
         df_filt.to_dict('records'),  # data-table filtered data
         create_conditional_style(df_filt),  # col width based on column name.
