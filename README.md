@@ -53,7 +53,7 @@ run millions of simulations on your 2 core laptop). Ensure that the ':compute_en
 2. Run the example.py file from the root of the btap_batch project folder. On Windows you will need to set the 
 PYTHONPATH to that folder. Please ensure that the btap_batch environment is active. 
 ```
-set PYTHONPATH=%cd% && python example\example.py
+set PYTHONPATH=%cd% && python examples\parametric\example.py
 ```
 3. Simulation should start to run. A folder will be created in parametric folder with the variable name you set 
 ':analysis_name' in the yml file. It will create a unique folder under this based on a random UUID for this analysis. In 
@@ -75,7 +75,7 @@ with high level information from all the simulations.
 5. Run the example.py file from the root of the btap_batch project folder. On Windows you will need to set the 
 PYTHONPATH to that folder. Please ensure that the btap_batch environment is active. 
 ```
-set PYTHONPATH=%cd% && python example\example.py
+set PYTHONPATH=%cd% && python examples\parametric\example.py
 ```
 
 The output of the runs is not stored all locally, but on the S3 Bucket,  the ':analysis_name' you chose and the analysis_id 
@@ -117,7 +117,10 @@ from a local parametric run. However most of the time the above variables would 
 
 For more details on the nsga algorithm please visit the pymoo website. 
 
-To run the optimization, follow the steps explained above under 'Parametric Analysis Local Machine'or 'Parametric AWS' depending on whether you run locally or on cloud. 
+To run the optimization, follow the steps explained above under 'Parametric Analysis Local Machine'or 'Parametric AWS' depending on whether you run locally or on cloud, except for Step 5 for which, run the below file:
+```
+set PYTHONPATH=%cd% && python examples\multi_analyses\multi_analyses.py
+```
 
 ## Monitoring the Analysis
 While the program will output items to the console, there are a few other ways to monitor the results if you wish 
@@ -133,3 +136,8 @@ being used in the EC2 dashboard.
 
 ### PowerBI / Tableau
 Through the postgresSQL server you can connect and update live data using either of these tools. 
+
+## How to update input arguments
+1.	Add columns to the sql database schema with the input argument name for each argument in 'src/btap_batch.py'. Note the convention to have a ':' for input variables. They should be all "TEXT" type.
+2.	Update the example input files of 'examples/multi_analyses/options.yml' and 'examples/parametric/example.yml' to include the new input arguments. 
+3.	Run the btap_batch tests. This will run both locally and on AWS. To run only locally or on AWS, comment the appropriate line under the 'compute_environment' loop in the test file of 'src/test/test_btap_batch.py'.
