@@ -293,8 +293,8 @@
       #'add_nv'
   ]
   :nv_opening_fraction: [ 'NECB_Default' ] #options: (1) nil/none/false (2) 'NECB_Default' (i.e. 0.1)
-  :nv_Tout_min: [ 'NECB_Default' ] #options: (1) nil/none/false(2) 'NECB_Default' (i.e. 13.0 based on inputs from Michel Tardif re a real school in QC)
-  :nv_Delta_Tin_Tout: [ 'NECB_Default' ] #options: (1) nil/none/false (2) 'NECB_Default' (i.e. 1.0 based on inputs from Michel Tardif re a real school in QC)
+  :nv_temp_out_min: [ 'NECB_Default' ] #options: (1) nil/none/false(2) 'NECB_Default' (i.e. 13.0 based on inputs from Michel Tardif re a real school in QC)
+  :nv_delta_temp_in_out: [ 'NECB_Default' ] #options: (1) nil/none/false (2) 'NECB_Default' (i.e. 1.0 based on inputs from Michel Tardif re a real school in QC)
   :occupancy_loads_scale: [ 'NECB_Default' ]
   :electrical_loads_scale: [ 'NECB_Default' ]
   :oa_scale: [ 'NECB_Default' ]
