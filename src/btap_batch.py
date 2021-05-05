@@ -1949,6 +1949,100 @@ class BTAPDatabase:
     def kill_database(self):
         self.container.remove(force=True)
 
+################################################
+import copy
+class BTAPElimination(BTAPParametric):
+
+    def __init__(self, analysis_config_file=None, git_api_token=None):
+        # Run super initializer to set up default variables.
+        super().__init__(analysis_config_file, git_api_token)
+        self.scenarios = []
+
+    def compute_scenarios(self):
+        self.elimination_parameters = [
+            [':electrical_loads_scale', '0.0'],
+            [':infiltration_scale', '0.0'],
+            [':lights_scale', '0.0'],
+            [':oa_scale', '0.0'],
+            [':occupancy_loads_scale', '0.0'],
+            [':electrical_loads_scale', '0.0'],
+            [':ext_floor_cond', '0.0'],
+            [':ext_wall_cond', '0.0'],
+            [':ext_roof_cond', '0.0'],
+            [':ext_roof_cond', '0.0'],
+            [':fixed_wind_solar_trans', '0.0']
+        ]
+
+        building_options = copy.deepcopy(self.building_options)
+        for key, value in building_options.items():
+            if isinstance(value, list) and len(value) >= 1:
+                building_options[key] = value[0]
+
+        for elimination_parameter in self.elimination_parameters:
+            run_option = copy.deepcopy(building_options)
+            run_option[elimination_parameter[0]] = elimination_parameter[1]
+            #print(run_option)
+            self.scenarios.append(run_option)
+
+    def run_all_scenarios(self):
+        # Failed runs counter.
+        failed_datapoints = 0
+
+        # Total number of runs.
+        self.file_number = len(self.scenarios)
+
+        # Keep track of simulation time.
+        threaded_start = time.time()
+        # Using all your processors minus 1.
+        print(f'Using {self.get_threads()} threads.')
+        message = f'{self.database.get_num_of_runs_completed(self.analysis_config[":analysis_id"])} of {self.file_number} simulations completed'
+        logging.info(message)
+        print(message)
+
+        with concurrent.futures.ThreadPoolExecutor(self.get_threads()) as executor:
+            futures = []
+            # go through each option scenario
+            for run_options in self.scenarios:
+                # Create an options hash to store the options
+
+                # Executes docker simulation in a thread
+                futures.append(executor.submit(self.run_datapoint, run_options=run_options))
+            # Bring simulation thread back to main thread
+            for future in concurrent.futures.as_completed(futures):
+                # Save results to database.
+                self.save_results_to_database(future.result())
+
+                # Track failures.
+                if not future.result()['success']:
+                    failed_datapoints += 1
+
+                # Update user.
+                message = f'TotalRuns:{self.file_number}\tCompleted:{self.database.get_num_of_runs_completed(self.analysis_config[":analysis_id"])}\tFailed:{self.database.get_num_of_runs_failed(self.analysis_config[":analysis_id"])}\tElapsed Time: {str(datetime.timedelta(seconds=round(time.time() - threaded_start)))}'
+                logging.info(message)
+                print(message)
+        # At end of runs update for users.
+        message = f'{self.file_number} Simulations completed. No. of failures = {self.database.get_num_of_runs_failed(self.analysis_config[":analysis_id"])} Total Time: {str(datetime.timedelta(seconds=round(time.time() - threaded_start)))}'
+        logging.info(message)
+        print(message)
+
+class BTAPSensitivity(BTAPElimination):
+    def compute_scenarios(self):
+        building_options = copy.deepcopy(self.building_options)
+        for key, value in building_options.items():
+            if isinstance(value, list) and len(value) == 1:
+                run_option = copy.deepcopy(building_options)
+                building_options[key] = value[0]
+            elif isinstance(value, list) and len(value) > 1:
+                for item in value:
+                    run_option = copy.deepcopy(building_options)
+                    run_option[key] = item
+                    self.scenarios.append(run_option)
+            else:
+                run_option = copy.deepcopy(building_options)
+                building_options[key] = 'NECB_Default'
+
+
+
 # Main method that researchers will interface with. If this gets bigger, consider a factory method pattern.
 def btap_batch(analysis_config_file=None, git_api_token=None):
     # Load Analysis File into variable
@@ -1978,11 +2072,26 @@ def btap_batch(analysis_config_file=None, git_api_token=None):
             git_api_token=git_api_token
         )
         return bb
+    elif analysis[':analysis_configuration'][':algorithm'][':type'] == 'elimination':
+        bb = BTAPElimination(
+            # Input file.
+            analysis_config_file=analysis_config_file,
+            git_api_token=git_api_token
+        )
+        return bb
+    elif analysis[':analysis_configuration'][':algorithm'][':type'] == 'sensitivity':
+        bb = BTAPSensitivity(
+            # Input file.
+            analysis_config_file=analysis_config_file,
+            git_api_token=git_api_token
+        )
+        return bb
     else:
         message = f'Unknown algorithm type. Allowed types are nsga2 and parametric. Exiting'
         print(message)
         logging.error(message)
         exit(1)
+
 
 # This class processed the btap_batch file to add columns as needed. This is a separate class as this can be applied
 # independant of simulation runs and optionally at simulation time as well if desired,but may have to make this
