@@ -17,6 +17,7 @@ import json
 import yaml
 import errno
 import boto3
+from botocore.config import Config
 import botocore
 import os
 import time
@@ -25,6 +26,7 @@ import datetime
 import sys
 import pandas as pd
 from sqlalchemy import create_engine
+from sqlalchemy.orm import sessionmaker
 import sqlalchemy.types
 import re
 import glob
@@ -77,6 +79,8 @@ CLOUD_BUILD_SERVICE_ROLE = 'arn:aws:iam::834599497928:role/service-role/codebuil
 # Role to give permissions to jobs to run.
 BATCH_JOB_ROLE = 'arn:aws:iam::834599497928:role/batchJobRole'
 BATCH_SERVICE_ROLE = 'arn:aws:iam::834599497928:role/service-role/AWSBatchServiceRole'
+# Max Retry attemps for aws clients.
+AWS_MAX_RETRIES=12
 
 #Custom exceptions
 class FailedSimulationException(Exception):
@@ -86,7 +90,8 @@ class S3:
     #Constructor
     def __init__(self):
         # Create the s3 client.
-        self.s3 = boto3.client('s3')
+        config = Config(retries={ 'max_attempts': AWS_MAX_RETRIES, 'mode': 'standard'})
+        self.s3 = boto3.client('s3',config=config)
     # Method to delete a bucket.
     def delete_bucket(self, bucket_name):
         message = f'Deleting S3 {bucket_name}'
@@ -149,8 +154,9 @@ class S3:
 class AWSCredentials:
     # Initialize with required clients.
     def __init__(self):
-        self.sts = boto3.client('sts')
-        self.iam = boto3.client('iam')
+        config = Config(retries={ 'max_attempts': AWS_MAX_RETRIES, 'mode': 'standard'})
+        self.sts = boto3.client('sts',config=config)
+        self.iam = boto3.client('iam',config=config)
         try:
             self.account_id = self.sts.get_caller_identity()["Account"]
         except botocore.exceptions.ClientError as e:
@@ -184,14 +190,15 @@ class AWSImage:
                  btap_costing_branch=None,
                  os_standards_branch=None,
                  rebuild=False):
-        self.bucket = AWSCredentials().account_id
+        self.credentials = AWSCredentials()
+        self.bucket = self.credentials.account_id
         self.git_api_token = git_api_token
         self.os_version = os_version
         self.btap_costing_branch = btap_costing_branch
         self.os_standards_branch = os_standards_branch
         self.image_name = image_name
-        self.image_tag = AWSCredentials().user_name
-        self.image_full_name = f'{AWSCredentials().account_id}.dkr.ecr.{AWSCredentials().region_name}.amazonaws.com/' + self.image_name + ':' + self.image_tag
+        self.image_tag = self.credentials.user_name
+        self.image_full_name = f'{self.credentials.account_id}.dkr.ecr.{self.credentials.region_name}.amazonaws.com/' + self.image_name + ':' + self.image_tag
         self.ecr_client = boto3.client('ecr')
         # Todo create cloud build service role.
         self.cloudbuild_service_role = CLOUD_BUILD_SERVICE_ROLE
@@ -236,8 +243,8 @@ class AWSImage:
         # Upload files to S3 using custom s3 class to a user folder.
         s3 = S3()
         source_folder = os.path.join(DOCKERFILES_FOLDER, self.image_name)
-        s3.copy_folder_to_s3(self.bucket, source_folder, AWSCredentials().user_name + '/' + self.image_name)
-        s3_location = 's3://' + self.bucket + '/' + AWSCredentials().user_name + '/' + self.image_name
+        s3.copy_folder_to_s3(self.bucket, source_folder, self.credentials.user_name + '/' + self.image_name)
+        s3_location = 's3://' + self.bucket + '/' + self.credentials.user_name + '/' + self.image_name
         message = f"Copied build configuration files:\n\t from {source_folder}\n to \n\t {s3_location}"
         logging.info(message)
         print(message)
@@ -251,7 +258,7 @@ class AWSImage:
                 description='string',
                 source={
                     'type': 'S3',
-                    'location': self.bucket + '/' + AWSCredentials().user_name + '/' + self.image_name + '/'
+                    'location': self.bucket + '/' + self.credentials.user_name + '/' + self.image_name + '/'
                 },
                 artifacts={
                     'type': 'NO_ARTIFACTS',
@@ -263,11 +270,11 @@ class AWSImage:
                     'environmentVariables': [
                         {
                             "name": "AWS_DEFAULT_REGION",
-                            "value": AWSCredentials().region_name
+                            "value": self.credentials.region_name
                         },
                         {
                             "name": "AWS_ACCOUNT_ID",
-                            "value": AWSCredentials().account_id
+                            "value": self.credentials.account_id
                         },
                         {
                             "name": "IMAGE_REPO_NAME",
@@ -275,7 +282,7 @@ class AWSImage:
                         },
                         {
                             "name": "IMAGE_TAG",
-                            "value": AWSCredentials().user_name
+                            "value": self.credentials.user_name
                         },
                         {
                             "name": "GIT_API_TOKEN",
@@ -311,7 +318,7 @@ class AWSImage:
             },
             {
                 "name": "IMAGE_TAG",
-                "value": AWSCredentials().user_name
+                "value": self.credentials.user_name
             },
             {
                 "name": "GIT_API_TOKEN",
@@ -329,7 +336,7 @@ class AWSImage:
                 "name": "OPENSTUDIO_VERSION",
                 "value": self.os_version
             }]
-        source_location = self.bucket + '/' + AWSCredentials().user_name + '/' + self.image_name + '/'
+        source_location = self.bucket + '/' + self.credentials.user_name + '/' + self.image_name + '/'
         message=f'Code build image env overrides {environmentVariablesOverride}'
         logging.info(message)
 
@@ -381,12 +388,14 @@ class AWSBatch:
                  os_standards_branch=None,
                  threads = 24
                  ):
-        bucket = AWSCredentials().account_id
+        self.credentials = AWSCredentials()
+        bucket = self.credentials.account_id
         # Create the aws clients required.
-        self.ec2 = boto3.client('ec2')
-        self.batch = boto3.client('batch',config=botocore.client.Config(max_pool_connections=threads))
-        self.iam = boto3.client('iam')
-        self.s3 = boto3.client('s3',config=botocore.client.Config(max_pool_connections=threads))
+        config = Config(retries={ 'max_attempts': AWS_MAX_RETRIES, 'mode': 'standard'})
+        self.ec2 = boto3.client('ec2', config = config)
+        self.batch = boto3.client('batch',config=botocore.client.Config(max_pool_connections=threads,retries={'max_attempts': AWS_MAX_RETRIES, 'mode': 'standard'}))
+        self.iam = boto3.client('iam', config = config)
+        self.s3 = boto3.client('s3',config=botocore.client.Config(max_pool_connections=threads,retries={'max_attempts': AWS_MAX_RETRIES, 'mode': 'standard'}))
         self.cloudwatch = boto3.client('logs')
 
         # Create image helper object.
@@ -463,7 +472,7 @@ class AWSBatch:
 
     # Short method that creates a template to increase the disk size of the containers. Default 100GB.
     def add_storage_space_launch_template(self, sizegb=CONTAINER_STORAGE):
-        template_name = f'{AWSCredentials().account_id}_storage'
+        template_name = f'{self.credentials.account_id}_storage'
         launch_template = self.ec2.describe_launch_templates()['LaunchTemplates']
         if next((item for item in launch_template if item["LaunchTemplateName"] == template_name), None) == None:
             message = f'Creating EC2 instance launch template with 100GB of space named {template_name}'
@@ -492,7 +501,7 @@ class AWSBatch:
 
     #
     def delete_storage_space_launch_template(self):
-        template_name = f'{AWSCredentials().account_id}_storage'
+        template_name = f'{self.credentials.account_id}_storage'
         response = self.ec2.delete_launch_template(
             LaunchTemplateName=template_name
         )
@@ -528,7 +537,7 @@ class AWSBatch:
         # Check state of creating CE.
         while True:
             # See https://boto3.amazonaws.com/v1/documentation/api/latest/reference/services/batch.html#Batch.Client.describe_compute_environments
-            describe = self.batch.describe_compute_environments(computeEnvironments=[self.compute_environment_id])
+            describe = self.describe_compute_environments(self.compute_environment_id)
             computeEnvironment = describe['computeEnvironments'][0]
             status = computeEnvironment['status']
             # If CE is in valid state, inform user and break from loop.
@@ -555,7 +564,7 @@ class AWSBatch:
         # Wait until CE is disabled.
         while True:
             # See https://boto3.amazonaws.com/v1/documentation/api/latest/reference/services/batch.html#Batch.Client.describe_compute_environments
-            describe = self.batch.describe_compute_environments(computeEnvironments=[self.compute_environment_id])
+            describe = self.describe_compute_environments(self.compute_environment_id)
             computeEnvironment = describe['computeEnvironments'][0]
             state = computeEnvironment['state']
             status = computeEnvironment['status']
@@ -564,7 +573,7 @@ class AWSBatch:
             elif status == 'INVALID':
                 reason = computeEnvironment['statusReason']
                 raise Exception('Failed to create compute environment is invalid state: %s' % (reason))
-            time.sleep(1)
+            time.sleep(5)
         # Delete CE
         message=f'Deleting Compute Environment {self.compute_environment_id}'
         print(message)
@@ -572,10 +581,10 @@ class AWSBatch:
         self.batch.delete_compute_environment(computeEnvironment=self.compute_environment_id)
         # Wait until CE is disabled.
         while True:
-            describe = self.batch.describe_compute_environments(computeEnvironments=[self.compute_environment_id])
+            describe = self.describe_compute_environments(self.compute_environment_id)
             if not describe['computeEnvironments']:
                 break
-            time.sleep(1)
+            time.sleep(5)
 
     def delete_job_queue(self):
         # Disable Queue
@@ -587,7 +596,7 @@ class AWSBatch:
         self.batch.update_job_queue(jobQueue=self.job_queue_id, state='DISABLED')
         while True:
             # https://boto3.amazonaws.com/v1/documentation/api/latest/reference/services/batch.html#Batch.Client.describe_job_queues
-            describe = self.batch.describe_job_queues(jobQueues=[self.job_queue_id])
+            describe = self.describe_job_queues(self.job_queue_id)
             item = describe['jobQueues'][0]
             state = item['state']
             status = item['status']
@@ -596,7 +605,7 @@ class AWSBatch:
             elif status == 'INVALID':
                 reason = item['statusReason']
                 raise Exception('Failed to job queue is invalid state: %s' % (reason))
-            time.sleep(1)
+            time.sleep(5)
         # Delete Queue
 
         # Tell user.
@@ -609,10 +618,10 @@ class AWSBatch:
         # Wait until queue is deleted.
         while True:
             # See https://boto3.amazonaws.com/v1/documentation/api/latest/reference/services/batch.html#Batch.Client.describe_job_queues
-            describe = self.batch.describe_job_queues(jobQueues=[self.job_queue_id])
+            describe = self.describe_job_queues(self.job_queue_id)
             if not describe['jobQueues']:
                 break
-            time.sleep(1)
+            time.sleep(5)
         return response
 
     def delete_job_definition(self):
@@ -641,7 +650,7 @@ class AWSBatch:
                                                ])
 
         while True:
-            describe = self.batch.describe_job_queues(jobQueues=[self.job_queue_id])
+            describe = self.describe_job_queues(self.job_queue_id)
             jobQueue = describe['jobQueues'][0]
             status = jobQueue['status']
             state = jobQueue['state']
@@ -655,7 +664,7 @@ class AWSBatch:
                 message = f'Failed to create job queue: {reason}'
                 logging.error( message )
                 exit(1)
-            time.sleep(1)
+            time.sleep(5)
 
         return response
 
@@ -769,6 +778,32 @@ class AWSBatch:
             logging.warning(f"Implementing exponential backoff for job {jobId} for {wait_time}s")
             time.sleep( wait_time )
             return self.get_job_status(jobId, n=n+1)
+
+    def describe_job_queues(self, job_queue_id, n=0):
+        try:
+            # See https://boto3.amazonaws.com/v1/documentation/api/latest/reference/services/batch.html#Batch.Client.describe_job_queues
+            return self.batch.describe_job_queues(jobQueues=[job_queue_id])
+        except:
+            if n == 8:
+                raise (
+                    f'Failed to get job Queue status for {job_queue_id} in 7 tries while using exponential backoff.')
+            wait_time = 2 ** n + random()
+            logging.warning(f"Implementing exponential backoff for job {job_queue_id} for {wait_time}s")
+            time.sleep(wait_time)
+            return self.describe_job_queues(job_queue_id, n=n + 1)
+
+    def describe_compute_environments(self, compute_environment_id):
+        try:
+            return self.batch.describe_compute_environments(computeEnvironments=[compute_environment_id])
+        except:
+            if n == 8:
+                raise (
+                    f'Failed to get job Queue status for {compute_environment_id} in 7 tries while using exponential backoff.')
+            wait_time = 2 ** n + random()
+            logging.warning(f"Implementing exponential backoff for job {compute_environment_id} for {wait_time}s")
+            time.sleep(wait_time)
+            return self.describe_compute_environments(compute_environment_id, n=n + 1)
+
 # Class to manage local docker images.
 class Docker:
     def __init__(self,
@@ -914,6 +949,7 @@ class BTAPAnalysis():
 
     # Constructor will
     def __init__(self, analysis_config_file=None, git_api_token=None):
+        self.credentials = AWSCredentials()
         self.aws_batch = None
         self.docker = None
         self.database = None
@@ -1033,7 +1069,7 @@ class BTAPAnalysis():
 
             #S3 paths. Set base to username used in aws.
             if self.analysis_config[':compute_environment'] == 'aws_batch':
-                s3_analysis_folder = os.path.join(AWSCredentials().user_name, run_options[':analysis_name'], run_options[':analysis_id']).replace('\\', '/')
+                s3_analysis_folder = os.path.join(self.credentials.user_name, run_options[':analysis_name'], run_options[':analysis_id']).replace('\\', '/')
                 s3_datapoint_input_folder = os.path.join(s3_analysis_folder, 'input', run_options[':datapoint_id']).replace('\\', '/')
                 s3_output_folder = os.path.join(s3_analysis_folder, 'output').replace('\\', '/')
                 s3_datapoint_output_folder = os.path.join( s3_output_folder, run_options[':datapoint_id']).replace('\\', '/')
@@ -1178,18 +1214,22 @@ class BTAPAnalysis():
             #Convert dp_values to dataframe and add to sql table named 'btap_data'
             logging.info(f'obtained dp_values= {dp_values}')
             df = pd.DataFrame([dp_values])
-            sql_engine = self.database.get_engine()
-            sql_connection = sql_engine.connect()
-            df.to_sql('btap_data', sql_connection, if_exists='append')
-            sql_connection.close()
+
+
+
+            Session = sessionmaker(bind=self.database.get_engine())
+            session = Session()
+            df.to_sql('btap_data', con=session.get_bind(), if_exists='append', index=False)
+            session.close()
+
         else:
             # If simulation failed, save failure information for user to debug to database
             # Convert failed results to dataframe and save to sql 'failed_runs' table.
             df = pd.DataFrame([results])
-            sql_engine = self.database.get_engine()
-            sql_connection = sql_engine.connect()
-            df.to_sql('failed_runs', sql_connection, if_exists='append', dtype = {':algorithm':sqlalchemy.types.JSON})
-            sql_connection.close()
+            Session = sessionmaker(bind=self.database.get_engine())
+            session = Session()
+            df.to_sql('failed_runs', con=session.get_bind(), if_exists='append', dtype = {':algorithm':sqlalchemy.types.JSON})
+            session.close()
             raise FailedSimulationException(f'This scenario failed. dp_values= {results}')
         return results
 
@@ -1426,6 +1466,7 @@ class BTAPOptimization(BTAPAnalysis):
         super().__init__(analysis_config_file, git_api_token)
 
     def run(self):
+        message = "success"
         try:
             # Create options encoder. This method creates an object to translate variable options
             # from a list of object to a list of integers. Pymoo and most optimizers operate on floats and strings.
@@ -1443,6 +1484,7 @@ class BTAPOptimization(BTAPAnalysis):
             logging.error(message)
         finally:
             self.shutdown_analysis()
+            return message
 
     def get_threads(self):
         if self.analysis_config[':no_of_threads'] == None:
@@ -1597,6 +1639,7 @@ class BTAPDatabase:
     def __init__(self,
                  username = 'docker',
                  password = 'docker'):
+        self.credentials = AWSCredentials()
         self.btap_data_df = []
         self.failed_df = []
         # docker run -e POSTGRES_USER=docker -e POSTGRES_PASSWORD=docker -e POSTGRES_DB=btap
@@ -1693,7 +1736,16 @@ class BTAPDatabase:
                     ":pv_ground_tilt_angle" TEXT, 
                     ":pv_ground_azimuth_angle" TEXT, 
                     ":pv_ground_module_description" TEXT,
-                    ":adv_dx_units" TEXT, 
+                    ":adv_dx_units" TEXT,
+                    ":nv_type" TEXT,
+                    ":nv_opening_fraction" TEXT,
+                    ":nv_temp_out_min" TEXT,
+                    ":nv_delta_temp_in_out" TEXT,
+                    ":chiller_type" TEXT,
+                    ":occupancy_loads_scale" TEXT,
+                    ":electrical_loads_scale" TEXT,
+                    ":oa_scale" TEXT,
+                    ":infiltration_scale" TEXT,
                     ":compute_environment" TEXT, 
                     ":s3_bucket" TEXT, 
                     ":image_name" TEXT, 
@@ -1884,7 +1936,7 @@ class BTAPDatabase:
 
     # If this is an aws_batch run, copy the excel file to s3 for storage.
         if compute_environment == 'aws_batch':
-            target_path = os.path.join(AWSCredentials().user_name,analysis_name,analysis_id,'output','output.xlsx')
+            target_path = os.path.join(self.credentials.user_name,analysis_name,analysis_id,'output','output.xlsx')
             # s3 likes forward slashes.
             target_path = target_path.replace('\\', '/')
             message = "Uploading %s..." % target_path
