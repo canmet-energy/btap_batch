@@ -2,6 +2,7 @@
 # Todo: Integrate with Pathways viewer.(Done. works with Excel output. Need to add measures)
 # Todo: Secure local postgre docker container with a better(random) password
 import itertools
+import copy
 import multiprocessing
 import concurrent.futures
 import shutil
@@ -843,8 +844,6 @@ class Docker:
     def build_docker_image(self, nocache=False):
         # Set timer to track how long it took to build.
         start = time.time()
-
-        print(f'Building Image:{self.image_name} will take ~10m ')
         # add info to logger.
         logging.info(f"Building image:{self.image_name}")
         logging.info(f"OS Version:{self.os_version}")
@@ -864,21 +863,41 @@ class Docker:
         }
 
         # Will build image if does not already exist or if nocache is set true.
-        self.image, json_log = self.docker_client.images.build(
-                                                                # Path to docker file.
-                                                                path=self.dockerfile,
-                                                                # Image name
-                                                                tag=self.image_name,
-                                                                # nocache flag to build use cache or build from scratch.
-                                                                nocache=self.nocache,
-                                                                # ENV variables used in Dockerfile.
-                                                                buildargs=buildargs
-                                                               )
 
-        # let use know that the image built sucessfully.
-        message = f'Image built in {time.time() - start}'
-        logging.info(message)
-        print(message)
+        # Get image if it exists.
+        image = None
+        try:
+            image = self.docker_client.images.get(name=self.image_name)
+        except docker.errors.ImageNotFound as err:
+            image = None
+
+        if image == None or self.nocache == True:
+            message = f'Building Image:{self.image_name} will take ~10m '
+            logging.info(message)
+            print(message)
+            image, json_log = self.docker_client.images.build(
+                                                                    # Path to docker file.
+                                                                    path=self.dockerfile,
+                                                                    # Image name
+                                                                    tag=self.image_name,
+                                                                    # nocache flag to build use cache or build from scratch.
+                                                                    nocache=self.nocache,
+                                                                    # ENV variables used in Dockerfile.
+                                                                    buildargs=buildargs
+                                                                   )
+            for chunk in json_log:
+                if 'stream' in chunk:
+                    for line in chunk['stream'].splitlines():
+                        logging.debug(line)
+            # let use know that the image built sucessfully.
+            message = f'Image built in {time.time() - start}'
+            logging.info(message)
+            print(message)
+        else:
+            message = "Using existing image."
+            logging.info(message)
+            print(message)
+        self.image = image
 
         # return image.. also is a part of the object.
         return self.image
@@ -949,7 +968,7 @@ class BTAPAnalysis():
 
     # Constructor will
     def __init__(self, analysis_config_file=None, git_api_token=None):
-        self.credentials = AWSCredentials()
+        self.credentials = None
         self.aws_batch = None
         self.docker = None
         self.database = None
@@ -1069,6 +1088,7 @@ class BTAPAnalysis():
 
             #S3 paths. Set base to username used in aws.
             if self.analysis_config[':compute_environment'] == 'aws_batch':
+                self.credentials = AWSCredentials()
                 s3_analysis_folder = os.path.join(self.credentials.user_name, run_options[':analysis_name'], run_options[':analysis_id']).replace('\\', '/')
                 s3_datapoint_input_folder = os.path.join(s3_analysis_folder, 'input', run_options[':datapoint_id']).replace('\\', '/')
                 s3_output_folder = os.path.join(s3_analysis_folder, 'output').replace('\\', '/')
@@ -1287,6 +1307,7 @@ class BTAPParametric(BTAPAnalysis):
     def __init__(self, analysis_config_file=None, git_api_token=None):
         # Run super initializer to set up default variables.
         super().__init__(analysis_config_file, git_api_token)
+        self.scenarios = []
 
     def run(self):
         # Compute all the scenarios for paramteric run.
@@ -1346,13 +1367,24 @@ class BTAPParametric(BTAPAnalysis):
                 keys.append(key)
 
         # to compute all possible permutations done by a python package called itertools.
-        self.scenarios = list(itertools.product(*l_of_l_of_values))
+        scenarios = list(itertools.product(*l_of_l_of_values))
+        # go through each option scenario
+        for items in scenarios:
+            # Create an options hash to store the options
+            run_options = {}
+
+            # Go through each item
+            for item in items:
+                # Save that charecteristic to the options hash
+                run_options[item[0]] = item[1]
+            self.scenarios.append(run_options)
         return self.scenarios
+
     def run_all_scenarios(self):
         # Failed runs counter.
         failed_datapoints = 0
 
-        #Total number of runs.
+        # Total number of runs.
         self.file_number = len(self.scenarios)
 
         # Keep track of simulation time.
@@ -1366,14 +1398,8 @@ class BTAPParametric(BTAPAnalysis):
         with concurrent.futures.ThreadPoolExecutor(self.get_threads()) as executor:
             futures = []
             # go through each option scenario
-            for items in self.scenarios:
+            for run_options in self.scenarios:
                 # Create an options hash to store the options
-                run_options = {}
-
-                # Go through each item
-                for item in items:
-                    # Save that charecteristic to the options hash
-                    run_options[item[0]] = item[1]
 
                 # Executes docker simulation in a thread
                 futures.append(executor.submit(self.run_datapoint, run_options=run_options))
@@ -1386,9 +1412,7 @@ class BTAPParametric(BTAPAnalysis):
                 if not future.result()['success']:
                     failed_datapoints += 1
 
-
-
-                #Update user.
+                # Update user.
                 message = f'TotalRuns:{self.file_number}\tCompleted:{self.database.get_num_of_runs_completed(self.analysis_config[":analysis_id"])}\tFailed:{self.database.get_num_of_runs_failed(self.analysis_config[":analysis_id"])}\tElapsed Time: {str(datetime.timedelta(seconds=round(time.time() - threaded_start)))}'
                 logging.info(message)
                 print(message)
@@ -1396,6 +1420,7 @@ class BTAPParametric(BTAPAnalysis):
         message = f'{self.file_number} Simulations completed. No. of failures = {self.database.get_num_of_runs_failed(self.analysis_config[":analysis_id"])} Total Time: {str(datetime.timedelta(seconds=round(time.time() - threaded_start)))}'
         logging.info(message)
         print(message)
+
 # Optimization problem definition class.
 class BTAPProblem(Problem):
     # Inspiration for this was drawn from examples:
@@ -1639,7 +1664,7 @@ class BTAPDatabase:
     def __init__(self,
                  username = 'docker',
                  password = 'docker'):
-        self.credentials = AWSCredentials()
+        self.credentials = None
         self.btap_data_df = []
         self.failed_df = []
         # docker run -e POSTGRES_USER=docker -e POSTGRES_PASSWORD=docker -e POSTGRES_DB=btap
@@ -1759,6 +1784,7 @@ class BTAPDatabase:
                     ":enable_costing" BOOLEAN, 
                     ":datapoint_id" TEXT, 
                     ":kill_database" BOOLEAN,
+                    ":scenario" TEXT,
                     bldg_conditioned_floor_area_m_sq FLOAT(53), 
                     bldg_exterior_area_m_sq FLOAT(53), 
                     bldg_fdwr FLOAT(53), 
@@ -1936,6 +1962,7 @@ class BTAPDatabase:
 
     # If this is an aws_batch run, copy the excel file to s3 for storage.
         if compute_environment == 'aws_batch':
+            self.credentials = AWSCredentials()
             target_path = os.path.join(self.credentials.user_name,analysis_name,analysis_id,'output','output.xlsx')
             # s3 likes forward slashes.
             target_path = target_path.replace('\\', '/')
@@ -1950,96 +1977,57 @@ class BTAPDatabase:
         self.container.remove(force=True)
 
 ################################################
-import copy
-class BTAPElimination(BTAPParametric):
 
-    def __init__(self, analysis_config_file=None, git_api_token=None):
-        # Run super initializer to set up default variables.
-        super().__init__(analysis_config_file, git_api_token)
-        self.scenarios = []
+class BTAPElimination(BTAPParametric):
 
     def compute_scenarios(self):
         self.elimination_parameters = [
+            [':default', 'do nothing'],
             [':electrical_loads_scale', '0.0'],
             [':infiltration_scale', '0.0'],
             [':lights_scale', '0.0'],
             [':oa_scale', '0.0'],
             [':occupancy_loads_scale', '0.0'],
-            [':electrical_loads_scale', '0.0'],
-            [':ext_floor_cond', '0.0'],
-            [':ext_wall_cond', '0.0'],
-            [':ext_roof_cond', '0.0'],
-            [':ext_roof_cond', '0.0'],
-            [':fixed_wind_solar_trans', '0.0']
+            [':ext_wall_cond', '0.01'],
+            [':ext_roof_cond', '0.01'],
+            [':ground_floor_cond', '0.01'],
+            [':ground_wall_cond', '0.01'],
+            [':fixed_window_cond', '0.01'],
+            [':fixed_wind_solar_trans', '0.01']
         ]
 
         building_options = copy.deepcopy(self.building_options)
         for key, value in building_options.items():
             if isinstance(value, list) and len(value) >= 1:
                 building_options[key] = value[0]
-
+        #Replace key value with elimination value.
         for elimination_parameter in self.elimination_parameters:
             run_option = copy.deepcopy(building_options)
-            run_option[elimination_parameter[0]] = elimination_parameter[1]
-            #print(run_option)
+            if elimination_parameter[0] != ':default':
+                run_option[elimination_parameter[0]] = elimination_parameter[1]
+            run_option[':scenario'] = elimination_parameter[0]
             self.scenarios.append(run_option)
+        print(self.scenarios)
+        return self.scenarios
 
-    def run_all_scenarios(self):
-        # Failed runs counter.
-        failed_datapoints = 0
 
-        # Total number of runs.
-        self.file_number = len(self.scenarios)
-
-        # Keep track of simulation time.
-        threaded_start = time.time()
-        # Using all your processors minus 1.
-        print(f'Using {self.get_threads()} threads.')
-        message = f'{self.database.get_num_of_runs_completed(self.analysis_config[":analysis_id"])} of {self.file_number} simulations completed'
-        logging.info(message)
-        print(message)
-
-        with concurrent.futures.ThreadPoolExecutor(self.get_threads()) as executor:
-            futures = []
-            # go through each option scenario
-            for run_options in self.scenarios:
-                # Create an options hash to store the options
-
-                # Executes docker simulation in a thread
-                futures.append(executor.submit(self.run_datapoint, run_options=run_options))
-            # Bring simulation thread back to main thread
-            for future in concurrent.futures.as_completed(futures):
-                # Save results to database.
-                self.save_results_to_database(future.result())
-
-                # Track failures.
-                if not future.result()['success']:
-                    failed_datapoints += 1
-
-                # Update user.
-                message = f'TotalRuns:{self.file_number}\tCompleted:{self.database.get_num_of_runs_completed(self.analysis_config[":analysis_id"])}\tFailed:{self.database.get_num_of_runs_failed(self.analysis_config[":analysis_id"])}\tElapsed Time: {str(datetime.timedelta(seconds=round(time.time() - threaded_start)))}'
-                logging.info(message)
-                print(message)
-        # At end of runs update for users.
-        message = f'{self.file_number} Simulations completed. No. of failures = {self.database.get_num_of_runs_failed(self.analysis_config[":analysis_id"])} Total Time: {str(datetime.timedelta(seconds=round(time.time() - threaded_start)))}'
-        logging.info(message)
-        print(message)
-
-class BTAPSensitivity(BTAPElimination):
+class BTAPSensitivity(BTAPParametric):
     def compute_scenarios(self):
-        building_options = copy.deepcopy(self.building_options)
-        for key, value in building_options.items():
-            if isinstance(value, list) and len(value) == 1:
-                run_option = copy.deepcopy(building_options)
-                building_options[key] = value[0]
-            elif isinstance(value, list) and len(value) > 1:
+        #Create default options scenario. Uses first value of all arrays.
+        default_options = copy.deepcopy(self.building_options)
+        for key, value in self.building_options.items():
+                default_options[key] = value[0]
+        #Create scenario
+        for key, value in self.building_options.items():
+            # If more than one option. Iterate, create run_option for each one.
+            if isinstance(value, list) and len(value) > 1:
                 for item in value:
-                    run_option = copy.deepcopy(building_options)
+                    run_option = copy.deepcopy(default_options)
                     run_option[key] = item
+                    run_option[':scenario'] = key
+                    #append scenario to list.
                     self.scenarios.append(run_option)
-            else:
-                run_option = copy.deepcopy(building_options)
-                building_options[key] = 'NECB_Default'
+        return self.scenarios
 
 
 

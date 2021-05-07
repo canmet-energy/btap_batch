@@ -24,9 +24,9 @@ optimization = {
 # Set input file path.
 for compute_environment in [
     'local',
-    'aws_batch'
+    #'aws_batch'
 ]:
-    # AWS Parametric Test
+    # Parametric Test
     input_file = os.path.join(os.path.dirname(os.path.realpath(__file__)), '..', '..', 'examples', 'parametric',
                               'example.yml')
     test_name = f'test_parametric_{compute_environment}'
@@ -41,13 +41,29 @@ for compute_environment in [
     analysis = btap_batch.btap_batch(analysis_config_file=new_file, git_api_token=git_api_token)
     analysis.run()
 
-    # AWS Optimization Test
-    input_file = os.path.join(os.path.dirname(os.path.realpath(__file__)), '..', '..', 'examples', 'multi_analyses',
+    # Optimization Test
+    input_file = os.path.join(os.path.dirname(os.path.realpath(__file__)), '..', '..', 'examples', 'parametric',
                               'options.yml')
     test_name = f'test_optimization_{compute_environment}'
     with open(input_file, 'r') as stream:
         analysis = yaml.safe_load(stream)
     analysis[':analysis_configuration'][':algorithm'] = optimization
+    analysis[':analysis_configuration'][':analysis_name'] = test_name
+    analysis[':analysis_configuration'][':kill_database'] = True
+    analysis[':analysis_configuration'][':compute_environment'] = compute_environment
+    new_file = os.path.join(os.path.dirname(os.path.realpath(__file__)), f'{test_name}.yml')
+    with open(new_file, 'w') as outfile:
+        yaml.dump(analysis, outfile)
+    analysis = btap_batch.btap_batch(analysis_config_file=new_file, git_api_token=git_api_token)
+    analysis.run()
+
+    # Elimination Test
+    input_file = os.path.join(os.path.dirname(os.path.realpath(__file__)), '..', '..', 'examples', 'parametric',
+                              'options.yml')
+    test_name = f'test_elimination_{compute_environment}'
+    with open(input_file, 'r') as stream:
+        analysis = yaml.safe_load(stream)
+    analysis[':analysis_configuration'][':algorithm'] = optimization = {":type": "elimination"}
     analysis[':analysis_configuration'][':analysis_name'] = test_name
     analysis[':analysis_configuration'][':kill_database'] = True
     analysis[':analysis_configuration'][':compute_environment'] = compute_environment
