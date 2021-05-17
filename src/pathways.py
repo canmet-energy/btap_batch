@@ -12,62 +12,86 @@ from sklearn.preprocessing import LabelEncoder
 import copy
 
 #Enter in the full path to your Excel analysis output file.
-OUTPUT_XLSX = r'C:\Users\plopez\test\btap_batch\posterity_montreal.xlsx'
+OUTPUT_XLSX = r'C:\Users\plopez\test\btap_batch\src\resources\output.xlsx'
 
 # List of metrics add/ change based on btap_data.json file top level fields. Comment out / add items as you see fit for your
 # analysis.
 metrics = [
     {'domain': 'output', 'label': 'Index', 'col_name': 'index'},
 
-    # Code Tiers
-    {'domain': 'output', 'label': 'Tier Level', 'col_name': 'baseline_necb_tier'},
+    # Code Tier
+    {'domain': 'targets', 'label': 'Tier Level', 'col_name': 'baseline_necb_tier'},
 
     # Economics
-    {'domain': 'output', 'label': 'Material Cost ($/m2)', 'col_name': 'cost_equipment_total_cost_per_m_sq'},
-    #{'domain': 'output', 'label': 'Util Cost ($/m2)', 'col_name': 'cost_utility_neb_total_cost_per_m_sq'},
-    {'domain': 'output', 'label': 'Util Cost Savings ($/m2)', 'col_name': 'baseline_savings_energy_cost_per_m_sq'},
-
+    {'domain': 'targets', 'label': 'Material Cost ($/m2)', 'col_name': 'cost_equipment_total_cost_per_m_sq'},
+    {'domain': 'targets', 'label': 'Util Cost ($/m2)', 'col_name': 'cost_utility_neb_total_cost_per_m_sq'},
+    {'domain': 'targets', 'label': 'Util Cost Savings ($/m2)', 'col_name': 'baseline_savings_energy_cost_per_m_sq'},
     # Energy
-    #{'domain': 'output', 'label': 'EUI GJ/m2', 'col_name': 'energy_eui_total_gj_per_m_sq'},
-    {'domain': 'output', 'label': 'EUI% Better', 'col_name': 'baseline_energy_percent_better'},
-
+    {'domain': 'targets', 'label': 'EUI GJ/m2', 'col_name': 'energy_eui_total_gj_per_m_sq'},
+    {'domain': 'targets', 'label': 'EUI% Better', 'col_name': 'baseline_energy_percent_better'},
     # GHGs
-    #{'domain': 'output', 'label': 'GHG kg/m2', 'col_name': 'cost_utility_ghg_total_kg_per_m_sq'},
-    {'domain': 'output', 'label': 'GHG% Better', 'col_name': 'baseline_ghg_percent_better'},
-
+    {'domain': 'targets', 'label': 'GHG kg/m2', 'col_name': 'cost_utility_ghg_total_kg_per_m_sq'},
+    {'domain': 'targets', 'label': 'GHG% Better', 'col_name': 'baseline_ghg_percent_better'},
     # Peak
-    #{'domain': 'output', 'label': 'ElecPeak W/m2', 'col_name': 'energy_peak_electric_w_per_m_sq'},
-    {'domain': 'output', 'label': 'ElecPeak % Better', 'col_name': 'baseline_peak_electric_percent_better'},
+    {'domain': 'targets', 'label': 'ElecPeak W/m2', 'col_name': 'energy_peak_electric_w_per_m_sq'},
+    {'domain': 'targets', 'label': 'ElecPeak % Better', 'col_name': 'baseline_peak_electric_percent_better'},
 
     # Building Selection
     {'domain': 'input', 'label': 'Building Type', 'col_name': ':building_type'},
-    #{'domain': 'input', 'label': 'Template', 'col_name': ':template'},
+    {'domain': 'input', 'label': 'Template', 'col_name': ':template'},
     {'domain': 'input', 'label': 'Baseline Heating Fuel', 'col_name': ':primary_heating_fuel'},
 
+    #Geometry
+    {'domain': 'geometry', 'label': 'Rotation', 'col_name': ':rotation_degrees'},
+    {'domain': 'geometry', 'label': 'ScaleX', 'col_name': ':scale_x'},
+    {'domain': 'geometry', 'label': 'ScaleY', 'col_name': ':scale_y'},
+    {'domain': 'geometry', 'label': 'ScaleZ', 'col_name': ':scale_z'},
 
     # Envelope metrics
     {'domain': 'envelope', 'label': 'RoofConductance', 'col_name': 'env_outdoor_roofs_average_conductance-w_per_m_sq_k'},
     {'domain': 'envelope', 'label': 'WallConductance.', 'col_name': 'env_outdoor_walls_average_conductance-w_per_m_sq_k'},
     {'domain': 'envelope', 'label': 'WindowConductance.', 'col_name': 'env_outdoor_windows_average_conductance-w_per_m_sq_k'},
-    #{'domain': 'envelope', 'label': 'Window SHGC.', 'col_name': ':fixed_wind_solar_trans-w_per_m_sq_k'},
-
+    {'domain': 'envelope', 'label': 'GroundWall', 'col_name': ':ground_wall_cond'},
+    {'domain': 'envelope', 'label': 'GroundFloor', 'col_name': ':ground_floor_cond'},
+    {'domain': 'envelope', 'label': 'GroundRoof', 'col_name': ':ground_roof_cond'},
+    {'domain': 'envelope', 'label': 'SkylightConductance', 'col_name': ':skylight_cond'},
+    {'domain': 'envelope', 'label': 'Skylight SHGC', 'col_name': ':fixed_wind_solar_trans'},
+    {'domain': 'envelope', 'label': 'Window SHGC', 'col_name': ':skylight_solar_trans'},
+    {'domain': 'envelope', 'label': 'Skylight-Roof Ratio', 'col_name': ':srr_set'},
+    {'domain': 'envelope', 'label': 'Window-Wall Ratio', 'col_name': ':fdwr_set'},
     # Load Metrics
-    {'domain': 'load', 'label': 'DaylightControl', 'col_name': ':daylighting_type'},
-    {'domain': 'load', 'label': 'LightingType', 'col_name': ':lights_type'},
-    #{'domain': 'load', 'label': 'Light Scaling', 'col_name': ':lights_scale'},
+    {'domain': 'loads', 'label': 'DaylightControl', 'col_name': ':daylighting_type'},
+    {'domain': 'loads', 'label': 'LightingType', 'col_name': ':lights_type'},
+    {'domain': 'loads', 'label': 'Light Scaling', 'col_name': ':lights_scale'},
+    {'domain': 'loads', 'label': 'Occupancy Scale', 'col_name': ':occupancy_loads_scale'},
+    {'domain': 'loads', 'label': 'Occupancy Scale', 'col_name': ':electrical_loads_scale'},
+    {'domain': 'loads', 'label': 'OutdoorAir Scale', 'col_name': ':oa_scale'},
+    {'domain': 'loads', 'label': 'Infiltration Scale', 'col_name': ':infiltration_scale'},
 
     # HVAC Metrics
     {'domain': 'hvac', 'label': 'HVAC System', 'col_name': ':ecm_system_name'},
     {'domain': 'hvac', 'label': 'Demand Control Ventilation', 'col_name': ':dcv_type'},
     {'domain': 'hvac', 'label': 'ERV', 'col_name': ':erv_package'},
-    #{'domain': 'hvac', 'label': 'Boiler Package', 'col_name': ':boiler_eff'},
-    #{'domain': 'hvac', 'label': 'Furnace Package', 'col_name': ':furnace_eff'},
-    #{'domain': 'hvac', 'label': 'SHW Package', 'col_name': ':shw_eff'},
+    {'domain': 'hvac', 'label': 'Boiler Package', 'col_name': ':boiler_eff'},
+    {'domain': 'hvac', 'label': 'Furnace Package', 'col_name': ':furnace_eff'},
+    {'domain': 'hvac', 'label': 'SHW Package', 'col_name': ':shw_eff'},
+    {'domain': 'hvac', 'label': 'Advanced DX', 'col_name': ':adv_dx_units'},
+    {'domain': 'hvac', 'label': 'Chiller Type', 'col_name': ':chiller_type'},
+    {'domain': 'hvac', 'label': 'Natural Ventilation', 'col_name': ':nv_type'},
 
+
+
+
+    #Renewables
+    {'domain': 'renewables', 'label': 'GroundPV', 'col_name': ':pv_ground_type'},
 
     # Code Tiers
     #{'domain': 'output', 'label': 'URL', 'col_name': 'datapoint_output_url'},
 ]
+
+
+
+
 
 table_metrics = copy.deepcopy(metrics)
 table_metrics.append({'domain': 'output', 'label': 'Link', 'col_name': 'link', 'type':'text','presentation':'markdown'})
@@ -93,15 +117,10 @@ def load_dataframe():
                   sheet_name='btap_data')
     # Round to 3 decimal places
     df = df.round(3)
-    print(list(df))
     df.reset_index(drop=True, inplace=True)
+    #create index for easier lookup.
     df['index'] = list(range(len(df.index)))
-    df[':dcv_type'].fillna('NECB_Default', inplace=True)
-    df[':erv_package'].fillna('NECB_Default', inplace=True)
-    df[':lights_type'].fillna('NECB_Default', inplace=True)
-    df[':daylighting_type'].fillna('NECB_Default', inplace=True)
-    df[':adv_dx_units'].fillna('NECB_Default', inplace=True)
-    df[':ecm_system_name'].fillna('NECB_Default', inplace=True)
+
 
     # This piece of code will create numeric map column for each string column. The new column will have the suffix
     # '_code' as the name
@@ -127,6 +146,16 @@ def load_dataframe():
 #### Parallel Coordinates Methods.
 # This method creates the parallel co-ordinate chart.
 def get_pc_chart(df, color=None, par_coord_data=None):
+    pc_metrics = []
+
+    # Eliminate axises with one value.
+
+    for metric in metrics:
+        if metric['col_name'] in df.columns:
+            if df[metric['col_name']].nunique() > 1:
+                pc_metrics.append(metric)
+
+
     if df.index.empty:
         # If empty, let user know and create blank figure.
         scatter_graph = px.scatter()
@@ -148,7 +177,7 @@ def get_pc_chart(df, color=None, par_coord_data=None):
     dimensions = None
     if par_coord_data == None:
         pc_list = []
-        for item in metrics:
+        for item in pc_metrics:
             if item['col_name'] != 'index':
                 if df[item['col_name']].dtypes == object:
                     metric = dict(label=item['label'],
@@ -223,6 +252,14 @@ def get_scatter_graph(df_filt, xy_scatter_color_dropdown, xy_scatter_x_axis_drop
             x=xy_scatter_x_axis_dropdown,
             y=xy_scatter_y_axis_dropdown,
             color=xy_scatter_color_dropdown,
+            hover_data=['index', 'baseline_necb_tier', 'cost_equipment_total_cost_per_m_sq',
+             'cost_utility_neb_total_cost_per_m_sq', 'baseline_savings_energy_cost_per_m_sq',
+             'energy_eui_total_gj_per_m_sq', 'baseline_energy_percent_better', 'cost_utility_ghg_total_kg_per_m_sq',
+             'baseline_ghg_percent_better', 'energy_peak_electric_w_per_m_sq', 'baseline_peak_electric_percent_better',
+             ':building_type', ':template', ':primary_heating_fuel', ':rotation_degrees', ':scale_x', ':scale_y',
+]
+
+        #hover_data=[d['col_name'] for d in metrics if 'col_name' in d]
             #marginal_y="histogram",
             #marginal_x="histogram"
         )

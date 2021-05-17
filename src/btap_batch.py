@@ -715,7 +715,6 @@ class AWSBatch:
         jobId = submitJobResponse['jobId']
         message = f"Submitted job_id {jobId} with job name {jobName} to the job queue {self.job_queue_id}"
         logging.info(message)
-        print(message)
         running = False
         startTime = 0
         logGroupName = '/aws/batch/job'
@@ -890,7 +889,7 @@ class Docker:
                     for line in chunk['stream'].splitlines():
                         logging.debug(line)
             # let use know that the image built sucessfully.
-            message = f'Image built in {time.time() - start}'
+            message = f'Image built in {(time.time() - start)/60}m'
             logging.info(message)
             print(message)
         else:
