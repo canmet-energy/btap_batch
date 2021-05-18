@@ -11,90 +11,90 @@ import dash_bootstrap_components as dbc
 from sklearn.preprocessing import LabelEncoder
 import copy
 
-#Enter in the full path to your Excel analysis output file.
+# Enter in the full path to your Excel analysis output file.
 OUTPUT_XLSX = r'C:\Users\plopez\test\btap_batch\src\resources\output.xlsx'
 
 # List of metrics add/ change based on btap_data.json file top level fields. Comment out / add items as you see fit for your
 # analysis.
 metrics = [
-    {'domain': 'output', 'label': 'Index', 'col_name': 'index'},
+    {'filter': 'all', 'label': 'Index', 'col_name': 'index'},
 
     # Code Tier
-    {'domain': 'targets', 'label': 'Tier Level', 'col_name': 'baseline_necb_tier'},
+    {'filter': 'targets', 'label': 'TierLevel', 'col_name': 'baseline_necb_tier'},
 
     # Economics
-    {'domain': 'targets', 'label': 'Material Cost ($/m2)', 'col_name': 'cost_equipment_total_cost_per_m_sq'},
-    {'domain': 'targets', 'label': 'Util Cost ($/m2)', 'col_name': 'cost_utility_neb_total_cost_per_m_sq'},
-    {'domain': 'targets', 'label': 'Util Cost Savings ($/m2)', 'col_name': 'baseline_savings_energy_cost_per_m_sq'},
+    {'filter': 'targets', 'label': 'MaterialCost($/m2)', 'col_name': 'cost_equipment_total_cost_per_m_sq'},
+    {'filter': 'targets', 'label': 'UtilCost($/m2)', 'col_name': 'cost_utility_neb_total_cost_per_m_sq'},
+    {'filter': 'targets', 'label': 'UtilCostSavings($/m2)', 'col_name': 'baseline_savings_energy_cost_per_m_sq'},
     # Energy
-    {'domain': 'targets', 'label': 'EUI GJ/m2', 'col_name': 'energy_eui_total_gj_per_m_sq'},
-    {'domain': 'targets', 'label': 'EUI% Better', 'col_name': 'baseline_energy_percent_better'},
+    {'filter': 'targets', 'label': 'EUI(GJ/m2)', 'col_name': 'energy_eui_total_gj_per_m_sq'},
+    {'filter': 'targets', 'label': 'EUI%Better', 'col_name': 'baseline_energy_percent_better'},
     # GHGs
-    {'domain': 'targets', 'label': 'GHG kg/m2', 'col_name': 'cost_utility_ghg_total_kg_per_m_sq'},
-    {'domain': 'targets', 'label': 'GHG% Better', 'col_name': 'baseline_ghg_percent_better'},
+    {'filter': 'targets', 'label': 'UtilGHG(kg/m2)', 'col_name': 'cost_utility_ghg_total_kg_per_m_sq'},
+    {'filter': 'targets', 'label': 'UtilGHG%Better', 'col_name': 'baseline_ghg_percent_better'},
     # Peak
-    {'domain': 'targets', 'label': 'ElecPeak W/m2', 'col_name': 'energy_peak_electric_w_per_m_sq'},
-    {'domain': 'targets', 'label': 'ElecPeak % Better', 'col_name': 'baseline_peak_electric_percent_better'},
+    {'filter': 'targets', 'label': 'ElecPeak(W/m2)', 'col_name': 'energy_peak_electric_w_per_m_sq'},
+    {'filter': 'targets', 'label': 'ElecPeak%Better', 'col_name': 'baseline_peak_electric_percent_better'},
 
     # Building Selection
-    {'domain': 'input', 'label': 'Building Type', 'col_name': ':building_type'},
-    {'domain': 'input', 'label': 'Template', 'col_name': ':template'},
-    {'domain': 'input', 'label': 'Baseline Heating Fuel', 'col_name': ':primary_heating_fuel'},
+    {'filter': 'input', 'label': 'BuildingType', 'col_name': ':building_type'},
+    {'filter': 'input', 'label': 'Template', 'col_name': ':template'},
+    {'filter': 'input', 'label': 'BaselineHeatingFuel', 'col_name': ':primary_heating_fuel'},
 
-    #Geometry
-    {'domain': 'geometry', 'label': 'Rotation', 'col_name': ':rotation_degrees'},
-    {'domain': 'geometry', 'label': 'ScaleX', 'col_name': ':scale_x'},
-    {'domain': 'geometry', 'label': 'ScaleY', 'col_name': ':scale_y'},
-    {'domain': 'geometry', 'label': 'ScaleZ', 'col_name': ':scale_z'},
+    # Geometry
+    {'filter': 'geometry', 'label': 'Rotation', 'col_name': ':rotation_degrees'},
+    {'filter': 'geometry', 'label': 'ScaleX', 'col_name': ':scale_x'},
+    {'filter': 'geometry', 'label': 'ScaleY', 'col_name': ':scale_y'},
+    {'filter': 'geometry', 'label': 'ScaleZ', 'col_name': ':scale_z'},
 
     # Envelope metrics
-    {'domain': 'envelope', 'label': 'RoofConductance', 'col_name': 'env_outdoor_roofs_average_conductance-w_per_m_sq_k'},
-    {'domain': 'envelope', 'label': 'WallConductance.', 'col_name': 'env_outdoor_walls_average_conductance-w_per_m_sq_k'},
-    {'domain': 'envelope', 'label': 'WindowConductance.', 'col_name': 'env_outdoor_windows_average_conductance-w_per_m_sq_k'},
-    {'domain': 'envelope', 'label': 'GroundWall', 'col_name': ':ground_wall_cond'},
-    {'domain': 'envelope', 'label': 'GroundFloor', 'col_name': ':ground_floor_cond'},
-    {'domain': 'envelope', 'label': 'GroundRoof', 'col_name': ':ground_roof_cond'},
-    {'domain': 'envelope', 'label': 'SkylightConductance', 'col_name': ':skylight_cond'},
-    {'domain': 'envelope', 'label': 'Skylight SHGC', 'col_name': ':fixed_wind_solar_trans'},
-    {'domain': 'envelope', 'label': 'Window SHGC', 'col_name': ':skylight_solar_trans'},
-    {'domain': 'envelope', 'label': 'Skylight-Roof Ratio', 'col_name': ':srr_set'},
-    {'domain': 'envelope', 'label': 'Window-Wall Ratio', 'col_name': ':fdwr_set'},
+    {'filter': 'envelope', 'label': 'RoofConductance',
+     'col_name': 'env_outdoor_roofs_average_conductance-w_per_m_sq_k'},
+    {'filter': 'envelope', 'label': 'WallConductance.',
+     'col_name': 'env_outdoor_walls_average_conductance-w_per_m_sq_k'},
+    {'filter': 'envelope', 'label': 'WindowConductance.',
+     'col_name': 'env_outdoor_windows_average_conductance-w_per_m_sq_k'},
+    {'filter': 'envelope', 'label': 'GroundWall', 'col_name': ':ground_wall_cond'},
+    {'filter': 'envelope', 'label': 'GroundFloor', 'col_name': ':ground_floor_cond'},
+    {'filter': 'envelope', 'label': 'GroundRoof', 'col_name': ':ground_roof_cond'},
+    {'filter': 'envelope', 'label': 'SkylightConductance', 'col_name': ':skylight_cond'},
+    {'filter': 'envelope', 'label': 'Skylight SHGC', 'col_name': ':fixed_wind_solar_trans'},
+    {'filter': 'envelope', 'label': 'Window SHGC', 'col_name': ':skylight_solar_trans'},
+    {'filter': 'envelope', 'label': 'Skylight-Roof Ratio', 'col_name': ':srr_set'},
+    {'filter': 'envelope', 'label': 'Window-Wall Ratio', 'col_name': ':fdwr_set'},
     # Load Metrics
-    {'domain': 'loads', 'label': 'DaylightControl', 'col_name': ':daylighting_type'},
-    {'domain': 'loads', 'label': 'LightingType', 'col_name': ':lights_type'},
-    {'domain': 'loads', 'label': 'Light Scaling', 'col_name': ':lights_scale'},
-    {'domain': 'loads', 'label': 'Occupancy Scale', 'col_name': ':occupancy_loads_scale'},
-    {'domain': 'loads', 'label': 'Occupancy Scale', 'col_name': ':electrical_loads_scale'},
-    {'domain': 'loads', 'label': 'OutdoorAir Scale', 'col_name': ':oa_scale'},
-    {'domain': 'loads', 'label': 'Infiltration Scale', 'col_name': ':infiltration_scale'},
+    {'filter': 'loads', 'label': 'DaylightControl', 'col_name': ':daylighting_type'},
+    {'filter': 'loads', 'label': 'LightingType', 'col_name': ':lights_type'},
+    {'filter': 'loads', 'label': 'Light Scaling', 'col_name': ':lights_scale'},
+    {'filter': 'loads', 'label': 'Occupancy Scale', 'col_name': ':occupancy_loads_scale'},
+    {'filter': 'loads', 'label': 'Occupancy Scale', 'col_name': ':electrical_loads_scale'},
+    {'filter': 'loads', 'label': 'OutdoorAir Scale', 'col_name': ':oa_scale'},
+    {'filter': 'loads', 'label': 'Infiltration Scale', 'col_name': ':infiltration_scale'},
 
     # HVAC Metrics
-    {'domain': 'hvac', 'label': 'HVAC System', 'col_name': ':ecm_system_name'},
-    {'domain': 'hvac', 'label': 'Demand Control Ventilation', 'col_name': ':dcv_type'},
-    {'domain': 'hvac', 'label': 'ERV', 'col_name': ':erv_package'},
-    {'domain': 'hvac', 'label': 'Boiler Package', 'col_name': ':boiler_eff'},
-    {'domain': 'hvac', 'label': 'Furnace Package', 'col_name': ':furnace_eff'},
-    {'domain': 'hvac', 'label': 'SHW Package', 'col_name': ':shw_eff'},
-    {'domain': 'hvac', 'label': 'Advanced DX', 'col_name': ':adv_dx_units'},
-    {'domain': 'hvac', 'label': 'Chiller Type', 'col_name': ':chiller_type'},
-    {'domain': 'hvac', 'label': 'Natural Ventilation', 'col_name': ':nv_type'},
+    {'filter': 'hvac', 'label': 'HVAC System', 'col_name': ':ecm_system_name'},
+    {'filter': 'hvac', 'label': 'Demand Control Ventilation', 'col_name': ':dcv_type'},
+    {'filter': 'hvac', 'label': 'ERV', 'col_name': ':erv_package'},
+    {'filter': 'hvac', 'label': 'Boiler Package', 'col_name': ':boiler_eff'},
+    {'filter': 'hvac', 'label': 'Furnace Package', 'col_name': ':furnace_eff'},
+    {'filter': 'hvac', 'label': 'SHW Package', 'col_name': ':shw_eff'},
+    {'filter': 'hvac', 'label': 'Advanced DX', 'col_name': ':adv_dx_units'},
+    {'filter': 'hvac', 'label': 'Chiller Type', 'col_name': ':chiller_type'},
+    {'filter': 'hvac', 'label': 'Natural Ventilation', 'col_name': ':nv_type'},
 
-
-
-
-    #Renewables
-    {'domain': 'renewables', 'label': 'GroundPV', 'col_name': ':pv_ground_type'},
+    # Renewables
+    {'filter': 'renewables', 'label': 'GroundPV', 'col_name': ':pv_ground_type'},
 
     # Code Tiers
-    #{'domain': 'output', 'label': 'URL', 'col_name': 'datapoint_output_url'},
+    # {'filter': 'output', 'label': 'URL', 'col_name': 'datapoint_output_url'},
 ]
 
-
-
-
-
 table_metrics = copy.deepcopy(metrics)
-table_metrics.append({'domain': 'output', 'label': 'Link', 'col_name': 'link', 'type':'text','presentation':'markdown'})
+table_metrics.append(
+    {'filter': 'output', 'label': 'Link', 'col_name': 'link', 'type': 'text', 'presentation': 'markdown'})
+
+pc_metrics = []
+
 
 # Please do not modify anything below.
 
@@ -114,13 +114,12 @@ def create_conditional_style(df):
 # string values into numeric to make it easy to graph.
 def load_dataframe():
     df = pd.read_excel(open(OUTPUT_XLSX, 'rb'),
-                  sheet_name='btap_data')
+                       sheet_name='btap_data')
     # Round to 3 decimal places
     df = df.round(3)
     df.reset_index(drop=True, inplace=True)
-    #create index for easier lookup.
+    # create index for easier lookup.
     df['index'] = list(range(len(df.index)))
-
 
     # This piece of code will create numeric map column for each string column. The new column will have the suffix
     # '_code' as the name
@@ -129,37 +128,39 @@ def load_dataframe():
             df[f'{col_name}_code'] = LabelEncoder().fit_transform(df[col_name])
 
     # Create markdown hyperlink column from url.
-    #format dataframe column of urls so that it displays as hyperlink
+    # format dataframe column of urls so that it displays as hyperlink
     def display_links(df):
         links = df['datapoint_output_url'].to_list()
         rows = []
         for x in links:
-            link = '[Link](' +str(x) + ')'
+            link = '[Link](' + str(x) + ')'
             rows.append(link)
         return rows
 
     df['link'] = display_links(df)
-
-    # Done configuring dataframe. Return it.
-    return df
-
-#### Parallel Coordinates Methods.
-# This method creates the parallel co-ordinate chart.
-def get_pc_chart(df, color=None, par_coord_data=None):
-    pc_metrics = []
-
-    # Eliminate axises with one value.
 
     for metric in metrics:
         if metric['col_name'] in df.columns:
             if df[metric['col_name']].nunique() > 1:
                 pc_metrics.append(metric)
 
+    # Done configuring dataframe. Return it.
+    return df
+
+
+#### Parallel Coordinates Methods.
+# This method creates the parallel co-ordinate chart.
+def get_pc_chart(df,
+                 color=None,
+                 par_coord_data=None,
+                 pc_graph_form_domain=None):
+
 
     if df.index.empty:
         # If empty, let user know and create blank figure.
         scatter_graph = px.scatter()
         scatter_graph.layout.annotations = [dict(text='empty dataframe', showarrow=False)]
+        print("empty dataframe")
         return scatter_graph
 
     line = None
@@ -178,17 +179,36 @@ def get_pc_chart(df, color=None, par_coord_data=None):
     if par_coord_data == None:
         pc_list = []
         for item in pc_metrics:
+            visible = True
             if item['col_name'] != 'index':
                 if df[item['col_name']].dtypes == object:
                     metric = dict(label=item['label'],
                                   tickvals=df[item["col_name"] + '_code'].unique(),
                                   ticktext=df[item['col_name']].unique(),
-                                  values=df[item["col_name"] + '_code'])
+                                  values=df[item["col_name"] + '_code'],
+                                  visible=visible)
                 else:
-                    metric = dict(label=item['label'], values=df[item['col_name']])
+                    metric = dict(label=item['label'],
+                                  values=df[item['col_name']],
+                                  visible=visible
+                                  )
                 pc_list.append(metric)
         dimensions = list(pc_list)
     else:
+        # Get labels that should be visible.
+
+        if pc_graph_form_domain == 'all':
+            labels_on = [d['label'] for d in pc_metrics]
+        else:
+            labels_on = [d['label'] for d in pc_metrics if d['filter'] == pc_graph_form_domain]
+
+        for item in par_coord_data['data'][0]['dimensions']:
+            print(item)
+            if item['label'] in labels_on:
+                item['visible'] = True
+            else:
+                item['visible'] = False
+
         dimensions = par_coord_data['data'][0]['dimensions']
 
     # Creates new figure.
@@ -204,15 +224,16 @@ def get_pc_chart(df, color=None, par_coord_data=None):
 
     )
     fig.update_traces(labelangle=20, selector=dict(type='parcoords'))
-    #fig.update_traces(labelfont_size=10, selector=dict(type='parcoords'))
-    #fig.update_traces(rangefont_size=5, selector=dict(type='parcoords'))
-    #fig.update_traces(tickfont_size=5, selector=dict(type='parcoords'))
-    #fig.update_traces(tickfont_color='white', selector=dict(type='parcoords'))
-    #fig.update_traces(line_colorbar_tickfont_size=100, selector=dict(type='parcoords'))
-    #fig.update_traces(labelside='bottom', selector=dict(type='parcoords'))
-    #fig.update_traces(line_colorbar_ticklabelposition='outside', selector=dict(type='parcoords'))
-    #fig.update_traces(line_colorbar_tickformatstops=list(...), selector=dict(type='parcoords'))
+    # fig.update_traces(labelfont_size=10, selector=dict(type='parcoords'))
+    # fig.update_traces(rangefont_size=5, selector=dict(type='parcoords'))
+    # fig.update_traces(tickfont_size=5, selector=dict(type='parcoords'))
+    # fig.update_traces(tickfont_color='white', selector=dict(type='parcoords'))
+    # fig.update_traces(line_colorbar_tickfont_size=100, selector=dict(type='parcoords'))
+    # fig.update_traces(labelside='bottom', selector=dict(type='parcoords'))
+    # fig.update_traces(line_colorbar_ticklabelposition='outside', selector=dict(type='parcoords'))
+    # fig.update_traces(line_colorbar_tickformatstops=list(...), selector=dict(type='parcoords'))
     return fig
+
 
 # This method filters the df based on the par_coords state variable of pc_chart id.. for example...
 # State('pc-graph', 'figure')
@@ -239,7 +260,11 @@ def pc_chart_filter_df(df_filt, par_coord_data):
                 df_filt = df_filt[np.logical_or.reduce(masks)]
     return df_filt
 
-def get_scatter_graph(df_filt, xy_scatter_color_dropdown, xy_scatter_x_axis_dropdown, xy_scatter_y_axis_dropdown):
+
+def get_scatter_graph(df_filt,
+                      xy_scatter_color_dropdown,
+                      xy_scatter_x_axis_dropdown,
+                      xy_scatter_y_axis_dropdown):
     scatter_graph = None
     # Create/Update standard scatter graph with filtered data.
     if df_filt.index.empty:
@@ -253,17 +278,21 @@ def get_scatter_graph(df_filt, xy_scatter_color_dropdown, xy_scatter_x_axis_drop
             y=xy_scatter_y_axis_dropdown,
             color=xy_scatter_color_dropdown,
             hover_data=['index', 'baseline_necb_tier', 'cost_equipment_total_cost_per_m_sq',
-             'cost_utility_neb_total_cost_per_m_sq', 'baseline_savings_energy_cost_per_m_sq',
-             'energy_eui_total_gj_per_m_sq', 'baseline_energy_percent_better', 'cost_utility_ghg_total_kg_per_m_sq',
-             'baseline_ghg_percent_better', 'energy_peak_electric_w_per_m_sq', 'baseline_peak_electric_percent_better',
-             ':building_type', ':template', ':primary_heating_fuel', ':rotation_degrees', ':scale_x', ':scale_y',
-]
+                        'cost_utility_neb_total_cost_per_m_sq', 'baseline_savings_energy_cost_per_m_sq',
+                        'energy_eui_total_gj_per_m_sq', 'baseline_energy_percent_better',
+                        'cost_utility_ghg_total_kg_per_m_sq',
+                        'baseline_ghg_percent_better', 'energy_peak_electric_w_per_m_sq',
+                        'baseline_peak_electric_percent_better',
+                        ':building_type', ':template', ':primary_heating_fuel', ':rotation_degrees', ':scale_x',
+                        ':scale_y',
+                        ]
 
-        #hover_data=[d['col_name'] for d in metrics if 'col_name' in d]
-            #marginal_y="histogram",
-            #marginal_x="histogram"
+            # hover_data=[d['col_name'] for d in metrics if 'col_name' in d]
+            # marginal_y="histogram",
+            # marginal_x="histogram"
         )
     return scatter_graph
+
 
 def get_scatter_graph_form_group():
     options = [
@@ -304,37 +333,60 @@ def get_scatter_graph_form_group():
     ]
     return children
 
+
+def get_pc_graph_form_group():
+
+
+
+    list_of_domains = list(set([d['filter'] for d in pc_metrics]))
+    options = [ {'label': item, 'value': item } for item in list_of_domains]
+
+
+    children = [
+        dbc.FormGroup(
+            [
+                dbc.Label("Filter"),
+                dcc.Dropdown(
+                    id='pc_graph_form_domain',
+                    options=options,
+                    value="all"
+                )
+            ]
+        )
+    ]
+    return children
+
+
 def get_data_table(id='data-table'):
     data_table = dash_table.DataTable(data=start_table_df.to_dict('records'),
-        columns=[{'id': c, 'name': c} for c in start_table_df.columns],
-        id=id,
-        style_table={
-            'overflowY': 'scroll',
-            'overflowX': 'scroll',
-            'height': 600,
-        },
-        fixed_rows={'headers': True},
-        editable=True,
-        filter_action="native",
-        sort_action="native",
-        sort_mode="multi",
-        column_selectable="single",
-        row_selectable="multi",
-        row_deletable=True,
-        selected_columns=[],
-        selected_rows=[],
-        page_action="native",
-        export_format="csv",
+                                      columns=[{'id': c, 'name': c} for c in start_table_df.columns],
+                                      id=id,
+                                      style_table={
+                                          'overflowY': 'scroll',
+                                          'overflowX': 'scroll',
+                                          'height': 600,
+                                      },
+                                      fixed_rows={'headers': True},
+                                      editable=True,
+                                      filter_action="native",
+                                      sort_action="native",
+                                      sort_mode="multi",
+                                      column_selectable="single",
+                                      row_selectable="multi",
+                                      row_deletable=True,
+                                      selected_columns=[],
+                                      selected_rows=[],
+                                      page_action="native",
+                                      export_format="csv",
 
-    )
+                                      )
     return data_table
+
 
 #### Main
 
 # Load Sample data used by dash library.
 df = load_dataframe()
-
-
 
 # Create a hash from the metrics data so it can be easily used.
 labels = {d['col_name']: d['label'] for d in metrics}
@@ -342,82 +394,98 @@ labels = {d['col_name']: d['label'] for d in metrics}
 # Sort columns...not used?
 labelsrev = {v: k for k, v in labels.items()}
 
-
-
 # Set up app and use standard BOOTSTRAP theme.
 app = dash.Dash(
     external_stylesheets=[dbc.themes.BOOTSTRAP]
 )
 
-
 # This is required due to a bug in the data_table. https://github.com/plotly/dash-table/issues/436
 start_table_df = pd.DataFrame(columns=['Start Column'])
 # Basic HTMl Bootstrap / Layout
 app.layout = html.Div([
-    dcc.Tabs([
-        dcc.Tab(label='Design Contraints', children=[
-        # PC Chart layout
-        dbc.Row(
-            dbc.Col(
-                [
-                    html.H3(children='Select Design Contraints'),
-                    dcc.Graph(
-                        id='pc-graph'
+    dcc.Tabs(
+        [
+            dcc.Tab(
+                label='Design Contraints',
+                children=[
+                    dbc.Row(
+                    dbc.Col(
+                        children=[
+                            dbc.Card(
+                                id='pc-graph-form',
+                                children=get_pc_graph_form_group(),
+                                body=True,
+                            )
+                        ],
+                        md=2
                     )
-                ],
-                align="center",
-            )
-        )]),
-        # Scatter Graph Layout
-        dcc.Tab(label='Performance Analysis', children=[
-        dbc.Row(
-            [
-                dbc.Col(
-                    children=[
-                        html.H3(
-                            children='X-Y Scatter Viewer'
+                    ),
+
+
+                    # PC Chart layout
+                    dbc.Row(
+                        dbc.Col(
+                            [
+                                html.H3(children='Select Design Contraints'),
+                                dcc.Graph(
+                                    id='pc-graph'
+                                )
+                            ],
+                            align="center",
+                        )
+                    )
+                ]
+            ),
+            # Scatter Graph Layout
+            dcc.Tab(label='Performance Analysis', children=[
+                dbc.Row(
+                    [
+                        dbc.Col(
+                            children=[
+                                html.H3(
+                                    children='X-Y Scatter Viewer'
+                                )
+                            ],
+                            md=10
                         )
                     ],
-                    md=10
-                )
-            ],
-            align="center",
-        ),
-        dbc.Row(
-            [
-                dbc.Col(
-                    children=[
-                        dbc.Card(
-                            id='scatter-graph-form',
-                            children=get_scatter_graph_form_group(),
-                            body=True,
-                        )
-                    ],
-                    md=2
+                    align="center",
                 ),
-                dbc.Col(
-                    children=[
-                        dcc.Graph(id='scatter-graph')
+                dbc.Row(
+                    [
+                        dbc.Col(
+                            children=[
+                                dbc.Card(
+                                    id='scatter-graph-form',
+                                    children=get_scatter_graph_form_group(),
+                                    body=True,
+                                )
+                            ],
+                            md=2
+                        ),
+                        dbc.Col(
+                            children=[
+                                dcc.Graph(id='scatter-graph')
+                            ],
+                            md=10)
                     ],
-                    md=10)
-            ],
-            align="center",
-        )]),
-        dcc.Tab(label='Solution Sets', children=[
-        # Datatable Layout
-        dbc.Row(
-            [
-                dbc.Col(
-                    children=[
-                        get_data_table(id='data-table')
+                    align="center",
+                )]),
+            dcc.Tab(label='Solution Sets', children=[
+                # Datatable Layout
+                dbc.Row(
+                    [
+                        dbc.Col(
+                            children=[
+                                get_data_table(id='data-table')
+                            ],
+                            md=12
+                        )
                     ],
-                    md=12
-                )
-            ],
-            align="center",
-        )])])
-    ],
-    style={'padding': '20px 20px 20px 20px'} # Added in style padding to ignore the cutoffs
+                    align="center",
+                )])])
+],
+    style={'padding': '20px 20px 20px 20px'}  # Added in style padding to ignore the cutoffs
 )
 
 
@@ -432,19 +500,21 @@ app.layout = html.Div([
     Input('xy_scatter_x_axis_dropdown', 'value'),
     Input('xy_scatter_y_axis_dropdown', 'value'),
     Input('xy_scatter_color_dropdown', 'value'),
+    Input('pc_graph_form_domain', 'value'),
     State('pc-graph', 'figure'),
 )
 def update_graphs(restyledata,
                   xy_scatter_x_axis_dropdown,
                   xy_scatter_y_axis_dropdown,
                   xy_scatter_color_dropdown,
+                  pc_graph_form_domain,
                   par_coord_data
                   ):
     # Copy original dataframe.
     df_filt = df.copy()
 
     # Create/Update pc_chart from original df.
-    pc_fig = get_pc_chart(df=df, par_coord_data=par_coord_data)
+    pc_fig = get_pc_chart(df=df, par_coord_data=par_coord_data,pc_graph_form_domain=pc_graph_form_domain)
 
     # Filter copy of dataframe based on paracoords selections
     df_filt = pc_chart_filter_df(df_filt, par_coord_data)
@@ -452,11 +522,13 @@ def update_graphs(restyledata,
     # Chart scatter plot with filtered dataframe.
     scatter_graph = get_scatter_graph(df_filt, xy_scatter_color_dropdown, xy_scatter_x_axis_dropdown,
                                       xy_scatter_y_axis_dropdown)
+    print(f'updated {pc_graph_form_domain}')
 
     return [
         scatter_graph,  # Scatter figure
         [
-            {"name": i['label'], "id": i['col_name'], "deletable": True, "selectable": True, 'type':'text','presentation':'markdown'} for i in
+            {"name": i['label'], "id": i['col_name'], "deletable": True, "selectable": True, 'type': 'text',
+             'presentation': 'markdown'} for i in
             table_metrics
         ],  # data-table columns
         df_filt.to_dict('records'),  # data-table filtered data
