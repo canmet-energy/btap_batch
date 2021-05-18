@@ -357,6 +357,16 @@ def get_pc_graph_form_group():
     return children
 
 
+def get_solutions_counter():
+    children = [
+        dbc.FormGroup(
+            [
+                dbc.Label("Filter"),
+            ]
+        )
+    ]
+
+
 def get_data_table(id='data-table'):
     data_table = dash_table.DataTable(data=start_table_df.to_dict('records'),
                                       columns=[{'id': c, 'name': c} for c in start_table_df.columns],
@@ -426,7 +436,8 @@ app.layout = html.Div([
                     dbc.Row(
                         dbc.Col(
                             [
-                                html.H3(children='Select Design Contraints'),
+
+                                html.Div(id='scenario_count'),
                                 dcc.Graph(
                                     id='pc-graph'
                                 )
@@ -491,16 +502,17 @@ app.layout = html.Div([
 
 ## Callback / Updates
 @app.callback(
-    Output('scatter-graph', 'figure'),
-    Output('data-table', component_property='columns'),
-    Output('data-table', component_property='data'),
-    Output('data-table', component_property='style_cell_conditional'),
-    Output('pc-graph', 'figure'),
-    Input('pc-graph', 'restyleData'),  # Needed for event call.
-    Input('xy_scatter_x_axis_dropdown', 'value'),
-    Input('xy_scatter_y_axis_dropdown', 'value'),
-    Input('xy_scatter_color_dropdown', 'value'),
-    Input('pc_graph_form_domain', 'value'),
+    Output(component_id='scatter-graph', component_property='figure'),
+    Output(component_id='data-table', component_property='columns'),
+    Output(component_id='data-table', component_property='data'),
+    Output(component_id='data-table', component_property='style_cell_conditional'),
+    Output(component_id='pc-graph', component_property='figure'),
+    Output(component_id='scenario_count', component_property='children'),
+    Input(component_id='pc-graph', component_property='restyleData'),  # Needed for event call.
+    Input(component_id='xy_scatter_x_axis_dropdown', component_property='value'),
+    Input(component_id='xy_scatter_y_axis_dropdown', component_property='value'),
+    Input(component_id='xy_scatter_color_dropdown', component_property='value'),
+    Input(component_id='pc_graph_form_domain', component_property='value'),
     State('pc-graph', 'figure'),
 )
 def update_graphs(restyledata,
@@ -523,6 +535,7 @@ def update_graphs(restyledata,
     scatter_graph = get_scatter_graph(df_filt, xy_scatter_color_dropdown, xy_scatter_x_axis_dropdown,
                                       xy_scatter_y_axis_dropdown)
     print(f'updated {pc_graph_form_domain}')
+    records = df_filt.to_dict('records')
 
     return [
         scatter_graph,  # Scatter figure
@@ -531,9 +544,10 @@ def update_graphs(restyledata,
              'presentation': 'markdown'} for i in
             table_metrics
         ],  # data-table columns
-        df_filt.to_dict('records'),  # data-table filtered data
+        records,  # data-table filtered data
         create_conditional_style(df_filt),  # col width based on column name.
-        pc_fig  # pc-chart
+        pc_fig,  # pc-chart
+        'Scenarios: {}'.format(len(records))
     ]
 
 
