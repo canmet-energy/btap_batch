@@ -11,92 +11,164 @@ import dash_bootstrap_components as dbc
 from sklearn.preprocessing import LabelEncoder
 import copy
 
-# Enter in the full path to your Excel analysis output file.
-OUTPUT_XLSX = r'C:\Users\plopez\test\btap_batch\src\resources\output.xlsx'
 
-# List of metrics add/ change based on btap_data.json file top level fields. Comment out / add items as you see fit for your
-# analysis.
-metrics = [
-    {'filter': 'all', 'label': 'Index', 'col_name': 'index'},
+class Data:
+    def __init__(self):
 
-    # Code Tier
-    {'filter': 'targets', 'label': 'TierLevel', 'col_name': 'baseline_necb_tier'},
+        self.table_metrics = None
+        self.pc_metrics = []
+        self.metrics = [
+            {'filter': 'all', 'label': 'Index', 'col_name': 'index'},
 
-    # Economics
-    {'filter': 'targets', 'label': 'MaterialCost($/m2)', 'col_name': 'cost_equipment_total_cost_per_m_sq'},
-    {'filter': 'targets', 'label': 'UtilCost($/m2)', 'col_name': 'cost_utility_neb_total_cost_per_m_sq'},
-    {'filter': 'targets', 'label': 'UtilCostSavings($/m2)', 'col_name': 'baseline_savings_energy_cost_per_m_sq'},
-    # Energy
-    {'filter': 'targets', 'label': 'EUI(GJ/m2)', 'col_name': 'energy_eui_total_gj_per_m_sq'},
-    {'filter': 'targets', 'label': 'EUI%Better', 'col_name': 'baseline_energy_percent_better'},
-    # GHGs
-    {'filter': 'targets', 'label': 'UtilGHG(kg/m2)', 'col_name': 'cost_utility_ghg_total_kg_per_m_sq'},
-    {'filter': 'targets', 'label': 'UtilGHG%Better', 'col_name': 'baseline_ghg_percent_better'},
-    # Peak
-    {'filter': 'targets', 'label': 'ElecPeak(W/m2)', 'col_name': 'energy_peak_electric_w_per_m_sq'},
-    {'filter': 'targets', 'label': 'ElecPeak%Better', 'col_name': 'baseline_peak_electric_percent_better'},
+            # Code Tier
+            {'filter': 'targets', 'label': 'TierLevel', 'col_name': 'baseline_necb_tier'},
 
-    # Building Selection
-    {'filter': 'input', 'label': 'BuildingType', 'col_name': ':building_type'},
-    {'filter': 'input', 'label': 'Template', 'col_name': ':template'},
-    {'filter': 'input', 'label': 'BaselineHeatingFuel', 'col_name': ':primary_heating_fuel'},
+            # Economics
+            {'filter': 'targets', 'label': 'MaterialCost($/m2)', 'col_name': 'cost_equipment_total_cost_per_m_sq'},
+            {'filter': 'targets', 'label': 'UtilCost($/m2)', 'col_name': 'cost_utility_neb_total_cost_per_m_sq'},
+            {'filter': 'targets', 'label': 'UtilCostSavings($/m2)',
+             'col_name': 'baseline_savings_energy_cost_per_m_sq'},
+            # Energy
+            {'filter': 'targets', 'label': 'EUI(GJ/m2)', 'col_name': 'energy_eui_total_gj_per_m_sq'},
+            {'filter': 'targets', 'label': 'EUI%Better', 'col_name': 'baseline_energy_percent_better'},
+            # GHGs
+            {'filter': 'targets', 'label': 'UtilGHG(kg/m2)', 'col_name': 'cost_utility_ghg_total_kg_per_m_sq'},
+            {'filter': 'targets', 'label': 'UtilGHG%Better', 'col_name': 'baseline_ghg_percent_better'},
+            # Peak
+            {'filter': 'targets', 'label': 'ElecPeak(W/m2)', 'col_name': 'energy_peak_electric_w_per_m_sq'},
+            {'filter': 'targets', 'label': 'ElecPeak%Better', 'col_name': 'baseline_peak_electric_percent_better'},
 
-    # Geometry
-    {'filter': 'geometry', 'label': 'Rotation', 'col_name': ':rotation_degrees'},
-    {'filter': 'geometry', 'label': 'ScaleX', 'col_name': ':scale_x'},
-    {'filter': 'geometry', 'label': 'ScaleY', 'col_name': ':scale_y'},
-    {'filter': 'geometry', 'label': 'ScaleZ', 'col_name': ':scale_z'},
+            # Building Selection
+            {'filter': 'input', 'label': 'BuildingType', 'col_name': ':building_type'},
+            {'filter': 'input', 'label': 'Template', 'col_name': ':template'},
+            {'filter': 'input', 'label': 'BaselineHeatingFuel', 'col_name': ':primary_heating_fuel'},
 
-    # Envelope metrics
-    {'filter': 'envelope', 'label': 'RoofConductance',
-     'col_name': 'env_outdoor_roofs_average_conductance-w_per_m_sq_k'},
-    {'filter': 'envelope', 'label': 'WallConductance.',
-     'col_name': 'env_outdoor_walls_average_conductance-w_per_m_sq_k'},
-    {'filter': 'envelope', 'label': 'WindowConductance.',
-     'col_name': 'env_outdoor_windows_average_conductance-w_per_m_sq_k'},
-    {'filter': 'envelope', 'label': 'GroundWall', 'col_name': ':ground_wall_cond'},
-    {'filter': 'envelope', 'label': 'GroundFloor', 'col_name': ':ground_floor_cond'},
-    {'filter': 'envelope', 'label': 'GroundRoof', 'col_name': ':ground_roof_cond'},
-    {'filter': 'envelope', 'label': 'SkylightConductance', 'col_name': ':skylight_cond'},
-    {'filter': 'envelope', 'label': 'Skylight SHGC', 'col_name': ':fixed_wind_solar_trans'},
-    {'filter': 'envelope', 'label': 'Window SHGC', 'col_name': ':skylight_solar_trans'},
-    {'filter': 'envelope', 'label': 'Skylight-Roof Ratio', 'col_name': ':srr_set'},
-    {'filter': 'envelope', 'label': 'Window-Wall Ratio', 'col_name': ':fdwr_set'},
-    # Load Metrics
-    {'filter': 'loads', 'label': 'DaylightControl', 'col_name': ':daylighting_type'},
-    {'filter': 'loads', 'label': 'LightingType', 'col_name': ':lights_type'},
-    {'filter': 'loads', 'label': 'Light Scaling', 'col_name': ':lights_scale'},
-    {'filter': 'loads', 'label': 'Occupancy Scale', 'col_name': ':occupancy_loads_scale'},
-    {'filter': 'loads', 'label': 'Occupancy Scale', 'col_name': ':electrical_loads_scale'},
-    {'filter': 'loads', 'label': 'OutdoorAir Scale', 'col_name': ':oa_scale'},
-    {'filter': 'loads', 'label': 'Infiltration Scale', 'col_name': ':infiltration_scale'},
+            # Geometry
+            {'filter': 'geometry', 'label': 'Rotation', 'col_name': ':rotation_degrees'},
+            {'filter': 'geometry', 'label': 'ScaleX', 'col_name': ':scale_x'},
+            {'filter': 'geometry', 'label': 'ScaleY', 'col_name': ':scale_y'},
+            {'filter': 'geometry', 'label': 'ScaleZ', 'col_name': ':scale_z'},
 
-    # HVAC Metrics
-    {'filter': 'hvac', 'label': 'HVAC System', 'col_name': ':ecm_system_name'},
-    {'filter': 'hvac', 'label': 'Demand Control Ventilation', 'col_name': ':dcv_type'},
-    {'filter': 'hvac', 'label': 'ERV', 'col_name': ':erv_package'},
-    {'filter': 'hvac', 'label': 'Boiler Package', 'col_name': ':boiler_eff'},
-    {'filter': 'hvac', 'label': 'Furnace Package', 'col_name': ':furnace_eff'},
-    {'filter': 'hvac', 'label': 'SHW Package', 'col_name': ':shw_eff'},
-    {'filter': 'hvac', 'label': 'Advanced DX', 'col_name': ':adv_dx_units'},
-    {'filter': 'hvac', 'label': 'Chiller Type', 'col_name': ':chiller_type'},
-    {'filter': 'hvac', 'label': 'Natural Ventilation', 'col_name': ':nv_type'},
+            # Envelope metrics
+            {'filter': 'envelope', 'label': 'RoofConductance',
+             'col_name': 'env_outdoor_roofs_average_conductance-w_per_m_sq_k'},
+            {'filter': 'envelope', 'label': 'WallConductance.',
+             'col_name': 'env_outdoor_walls_average_conductance-w_per_m_sq_k'},
+            {'filter': 'envelope', 'label': 'WindowConductance.',
+             'col_name': 'env_outdoor_windows_average_conductance-w_per_m_sq_k'},
+            {'filter': 'envelope', 'label': 'GroundWall', 'col_name': ':ground_wall_cond'},
+            {'filter': 'envelope', 'label': 'GroundFloor', 'col_name': ':ground_floor_cond'},
+            {'filter': 'envelope', 'label': 'GroundRoof', 'col_name': ':ground_roof_cond'},
+            {'filter': 'envelope', 'label': 'SkylightConductance', 'col_name': ':skylight_cond'},
+            {'filter': 'envelope', 'label': 'Skylight SHGC', 'col_name': ':fixed_wind_solar_trans'},
+            {'filter': 'envelope', 'label': 'Window SHGC', 'col_name': ':skylight_solar_trans'},
+            {'filter': 'envelope', 'label': 'Skylight-Roof Ratio', 'col_name': ':srr_set'},
+            {'filter': 'envelope', 'label': 'Window-Wall Ratio', 'col_name': ':fdwr_set'},
+            # Load Metrics
+            {'filter': 'loads', 'label': 'DaylightControl', 'col_name': ':daylighting_type'},
+            {'filter': 'loads', 'label': 'LightingType', 'col_name': ':lights_type'},
+            {'filter': 'loads', 'label': 'Light Scaling', 'col_name': ':lights_scale'},
+            {'filter': 'loads', 'label': 'Occupancy Scale', 'col_name': ':occupancy_loads_scale'},
+            {'filter': 'loads', 'label': 'Occupancy Scale', 'col_name': ':electrical_loads_scale'},
+            {'filter': 'loads', 'label': 'OutdoorAir Scale', 'col_name': ':oa_scale'},
+            {'filter': 'loads', 'label': 'Infiltration Scale', 'col_name': ':infiltration_scale'},
 
-    # Renewables
-    {'filter': 'renewables', 'label': 'GroundPV', 'col_name': ':pv_ground_type'},
+            # HVAC Metrics
+            {'filter': 'hvac', 'label': 'HVAC System', 'col_name': ':ecm_system_name'},
+            {'filter': 'hvac', 'label': 'Demand Control Ventilation', 'col_name': ':dcv_type'},
+            {'filter': 'hvac', 'label': 'ERV', 'col_name': ':erv_package'},
+            {'filter': 'hvac', 'label': 'Boiler Package', 'col_name': ':boiler_eff'},
+            {'filter': 'hvac', 'label': 'Furnace Package', 'col_name': ':furnace_eff'},
+            {'filter': 'hvac', 'label': 'SHW Package', 'col_name': ':shw_eff'},
+            {'filter': 'hvac', 'label': 'Advanced DX', 'col_name': ':adv_dx_units'},
+            {'filter': 'hvac', 'label': 'Chiller Type', 'col_name': ':chiller_type'},
+            {'filter': 'hvac', 'label': 'Natural Ventilation', 'col_name': ':nv_type'},
 
-    # Code Tiers
-    # {'filter': 'output', 'label': 'URL', 'col_name': 'datapoint_output_url'},
-]
+            # Renewables
+            {'filter': 'renewables', 'label': 'GroundPV', 'col_name': ':pv_ground_type'},
 
-table_metrics = copy.deepcopy(metrics)
-table_metrics.append(
-    {'filter': 'output', 'label': 'Link', 'col_name': 'link', 'type': 'text', 'presentation': 'markdown'})
+            # Code Tiers
+            # {'filter': 'output', 'label': 'URL', 'col_name': 'datapoint_output_url'},
+        ]
 
-pc_metrics = []
+        # Enter in the full path to your Excel analysis output file.
+        OUTPUT_XLSX = r'C:\Users\plopez\test\btap_batch\src\resources\output.xlsx'
 
+        # This loads the information from the BTAPBatch Excel output. It strips the headers col names, rounds the floats, and  encodes
+        # string values into numeric to make it easy to graph.
+        self.df = pd.read_excel(open(OUTPUT_XLSX, 'rb'),
+                                sheet_name='btap_data')
+        # Round to 3 decimal places
+        self.df = self.df.round(3)
+        self.df.reset_index(drop=True, inplace=True)
+        # create index for easier lookup.
+        self.df['index'] = list(range(len(self.df.index)))
 
-# Please do not modify anything below.
+        # This piece of code will create numeric map column for each string column. The new column will have the suffix
+        # '_code' as the name
+        for col_name in [col for col, dt in self.df.dtypes.items() if dt == object]:
+            if not col_name in ['run_options']:
+                self.df[f'{col_name}_code'] = LabelEncoder().fit_transform(self.df[col_name])
+
+        # Create markdown hyperlink column from url.
+        # format dataframe column of urls so that it displays as hyperlink
+        def display_links(df):
+            links = df['datapoint_output_url'].to_list()
+            rows = []
+            for x in links:
+                link = '[Link](' + str(x) + ')'
+                rows.append(link)
+            return rows
+
+        self.df['link'] = display_links(self.df)
+
+        # Create a hash from the metrics data so it can be easily used.
+        self.labels = {d['col_name']: d['label'] for d in self.metrics}
+
+    def get_pc_metrics(self):
+        pc_metrics = []
+        for metric in self.metrics:
+            if metric['col_name'] in self.df.columns:
+                if self.df[metric['col_name']].nunique() > 1:
+                    pc_metrics.append(metric)
+        return pc_metrics
+
+    def get_table_metrics(self):
+        self.table_metrics = copy.deepcopy(self.metrics)
+        self.table_metrics.append(
+            {'filter': 'output', 'label': 'Link', 'col_name': 'link', 'type': 'text', 'presentation': 'markdown'})
+        return self.table_metrics
+
+    def get_table_columns(self):
+        columns = []
+        #print(self.table_metrics)
+        for i in self.get_table_metrics():
+            columns.append ({"name": i['label'], "id": i['col_name'], "deletable": True, "selectable": True, 'type': 'text', 'presentation': 'markdown'})
+        return columns
+
+    def update_filtered_data(self, par_coord_data):
+        self.df_filt = self.df.copy()
+        # Skip if state does not exist. This will happen on initialization of graph.
+        if par_coord_data != None and 'data' in par_coord_data:
+            # Create Filter data based on PC dimension contraints.
+            # Iterate through all dimensions in pc chart.
+            for d in par_coord_data['data'][0]['dimensions']:
+                # Determine if there are constraints on dimension.
+                if 'constraintrange' in d:
+                    # Create mask dataframe for item that are selected.
+                    crs = np.array(d['constraintrange'])
+                    if crs.ndim == 1:
+                        crs = [crs]
+                    masks = []
+                    for cr in crs:
+                        key = {v: k for k, v in self.labels.items()}[d['label']]
+                        # If a string coverted column, use the *_code version.
+                        if self.df_filt[key].dtypes == object:
+                            key = key + '_code'
+                        masks.append(self.df_filt[key].between(*cr))
+                    # Apply mask to our cloned dataframe.
+                    self.df_filt = self.df_filt[np.logical_or.reduce(masks)]
+        return self.df_filt
 
 
 # This method tries to guess the width of the columns in the data-table figure.
@@ -110,63 +182,23 @@ def create_conditional_style(df):
     return style
 
 
-# This loads the information from the BTAPBatch Excel output. It strips the headers col names, rounds the floats, and  encodes
-# string values into numeric to make it easy to graph.
-def load_dataframe():
-    df = pd.read_excel(open(OUTPUT_XLSX, 'rb'),
-                       sheet_name='btap_data')
-    # Round to 3 decimal places
-    df = df.round(3)
-    df.reset_index(drop=True, inplace=True)
-    # create index for easier lookup.
-    df['index'] = list(range(len(df.index)))
-
-    # This piece of code will create numeric map column for each string column. The new column will have the suffix
-    # '_code' as the name
-    for col_name in [col for col, dt in df.dtypes.items() if dt == object]:
-        if not col_name in ['run_options']:
-            df[f'{col_name}_code'] = LabelEncoder().fit_transform(df[col_name])
-
-    # Create markdown hyperlink column from url.
-    # format dataframe column of urls so that it displays as hyperlink
-    def display_links(df):
-        links = df['datapoint_output_url'].to_list()
-        rows = []
-        for x in links:
-            link = '[Link](' + str(x) + ')'
-            rows.append(link)
-        return rows
-
-    df['link'] = display_links(df)
-
-    for metric in metrics:
-        if metric['col_name'] in df.columns:
-            if df[metric['col_name']].nunique() > 1:
-                pc_metrics.append(metric)
-
-    # Done configuring dataframe. Return it.
-    return df
-
-
 #### Parallel Coordinates Methods.
 # This method creates the parallel co-ordinate chart.
-def get_pc_chart(df,
+def get_pc_chart(data,
                  color=None,
                  par_coord_data=None,
                  pc_graph_form_domain=None):
-
-
-    if df.index.empty:
+    if data.df.index.empty:
         # If empty, let user know and create blank figure.
         scatter_graph = px.scatter()
         scatter_graph.layout.annotations = [dict(text='empty dataframe', showarrow=False)]
-        print("empty dataframe")
+        #print("empty dataframe")
         return scatter_graph
 
     line = None
     if color == None:
         line = dict(
-            color=df['energy_eui_total_gj_per_m_sq'],
+            color=data.df['energy_eui_total_gj_per_m_sq'],
             colorscale=[
                 [0, 'green'],
                 [0.5, 'yellow'],
@@ -178,18 +210,18 @@ def get_pc_chart(df,
     dimensions = None
     if par_coord_data == None:
         pc_list = []
-        for item in pc_metrics:
+        for item in data.get_pc_metrics():
             visible = True
             if item['col_name'] != 'index':
-                if df[item['col_name']].dtypes == object:
+                if data.df[item['col_name']].dtypes == object:
                     metric = dict(label=item['label'],
-                                  tickvals=df[item["col_name"] + '_code'].unique(),
-                                  ticktext=df[item['col_name']].unique(),
-                                  values=df[item["col_name"] + '_code'],
+                                  tickvals=data.df[item["col_name"] + '_code'].unique(),
+                                  ticktext=data.df[item['col_name']].unique(),
+                                  values=data.df[item["col_name"] + '_code'],
                                   visible=visible)
                 else:
                     metric = dict(label=item['label'],
-                                  values=df[item['col_name']],
+                                  values=data.df[item['col_name']],
                                   visible=visible
                                   )
                 pc_list.append(metric)
@@ -198,12 +230,12 @@ def get_pc_chart(df,
         # Get labels that should be visible.
 
         if pc_graph_form_domain == 'all':
-            labels_on = [d['label'] for d in pc_metrics]
+            labels_on = [d['label'] for d in data.get_pc_metrics()]
         else:
-            labels_on = [d['label'] for d in pc_metrics if d['filter'] == pc_graph_form_domain]
+            labels_on = [d['label'] for d in data.get_pc_metrics() if d['filter'] == pc_graph_form_domain]
 
         for item in par_coord_data['data'][0]['dimensions']:
-            print(item)
+            #print(item)
             if item['label'] in labels_on:
                 item['visible'] = True
             else:
@@ -237,28 +269,6 @@ def get_pc_chart(df,
 
 # This method filters the df based on the par_coords state variable of pc_chart id.. for example...
 # State('pc-graph', 'figure')
-def pc_chart_filter_df(df_filt, par_coord_data):
-    # Skip if state does not exist. This will happen on initialization of graph.
-    if par_coord_data != None and 'data' in par_coord_data:
-        # Create Filter data based on PC dimension contraints.
-        # Iterate through all dimensions in pc chart.
-        for d in par_coord_data['data'][0]['dimensions']:
-            # Determine if there are constraints on dimension.
-            if 'constraintrange' in d:
-                # Create mask dataframe for item that are selected.
-                crs = np.array(d['constraintrange'])
-                if crs.ndim == 1:
-                    crs = [crs]
-                masks = []
-                for cr in crs:
-                    key = {v: k for k, v in labels.items()}[d['label']]
-                    # If a string coverted column, use the *_code version.
-                    if df_filt[key].dtypes == object:
-                        key = key + '_code'
-                    masks.append(df_filt[key].between(*cr))
-                # Apply mask to our cloned dataframe.
-                df_filt = df_filt[np.logical_or.reduce(masks)]
-    return df_filt
 
 
 def get_scatter_graph(df_filt,
@@ -291,12 +301,16 @@ def get_scatter_graph(df_filt,
             # marginal_y="histogram",
             # marginal_x="histogram"
         )
+        scatter_graph.update_traces(marker=dict(size=12,
+                                                line=dict(width=2,
+                                                          color='DarkSlateGrey')),
+                                    selector=dict(mode='markers'))
     return scatter_graph
 
 
-def get_scatter_graph_form_group():
+def get_scatter_graph_form_group(data):
     options = [
-        {'label': d['label'], 'value': d['col_name']} for d in metrics
+        {'label': d['label'], 'value': d['col_name']} for d in data.metrics
         if 'col_name' in d
     ]
     children = [
@@ -334,12 +348,11 @@ def get_scatter_graph_form_group():
     return children
 
 
-def get_pc_graph_form_group():
-
-
-
-    list_of_domains = list(set([d['filter'] for d in pc_metrics]))
-    options = [ {'label': item, 'value': item } for item in list_of_domains]
+def get_pc_graph_form_group(data):
+    list_of_domains = list(set([d['filter'] for d in data.get_pc_metrics()]))
+    options = [{'label': item, 'value': item} for item in list_of_domains]
+    print(f"get_pc_metrics = {data.get_pc_metrics()}")
+    print(f"options = {options}")
 
 
     children = [
@@ -367,7 +380,8 @@ def get_solutions_counter():
     ]
 
 
-def get_data_table(id='data-table'):
+def init_data_table(id='data-table'):
+    start_table_df = pd.DataFrame(columns=['Start Column'])
     data_table = dash_table.DataTable(data=start_table_df.to_dict('records'),
                                       columns=[{'id': c, 'name': c} for c in start_table_df.columns],
                                       id=id,
@@ -396,13 +410,15 @@ def get_data_table(id='data-table'):
 #### Main
 
 # Load Sample data used by dash library.
-df = load_dataframe()
+data = Data()
+print(f"get_pc_metrics = {data.get_pc_metrics()}")
+print(f"get_table_metrics = {data.get_table_metrics()}")
+print(f"get_table_columns = {data.get_table_columns()}")
+
+
 
 # Create a hash from the metrics data so it can be easily used.
-labels = {d['col_name']: d['label'] for d in metrics}
 
-# Sort columns...not used?
-labelsrev = {v: k for k, v in labels.items()}
 
 # Set up app and use standard BOOTSTRAP theme.
 app = dash.Dash(
@@ -410,7 +426,7 @@ app = dash.Dash(
 )
 
 # This is required due to a bug in the data_table. https://github.com/plotly/dash-table/issues/436
-start_table_df = pd.DataFrame(columns=['Start Column'])
+
 # Basic HTMl Bootstrap / Layout
 app.layout = html.Div([
     dcc.Tabs(
@@ -419,18 +435,17 @@ app.layout = html.Div([
                 label='Design Contraints',
                 children=[
                     dbc.Row(
-                    dbc.Col(
-                        children=[
-                            dbc.Card(
-                                id='pc-graph-form',
-                                children=get_pc_graph_form_group(),
-                                body=True,
-                            )
-                        ],
-                        md=2
-                    )
+                        dbc.Col(
+                            children=[
+                                dbc.Card(
+                                    id='pc-graph-form',
+                                    children=get_pc_graph_form_group(data),
+                                    body=True,
+                                )
+                            ],
+                            md=2
+                        )
                     ),
-
 
                     # PC Chart layout
                     dbc.Row(
@@ -468,7 +483,7 @@ app.layout = html.Div([
                             children=[
                                 dbc.Card(
                                     id='scatter-graph-form',
-                                    children=get_scatter_graph_form_group(),
+                                    children=get_scatter_graph_form_group(data),
                                     body=True,
                                 )
                             ],
@@ -488,7 +503,7 @@ app.layout = html.Div([
                     [
                         dbc.Col(
                             children=[
-                                get_data_table(id='data-table')
+                                init_data_table(id='data-table')
                             ],
                             md=12
                         )
@@ -502,12 +517,18 @@ app.layout = html.Div([
 
 ## Callback / Updates
 @app.callback(
+    # Update XY Scatter Graph.
     Output(component_id='scatter-graph', component_property='figure'),
+    # Update columns, data and style in datatable.
     Output(component_id='data-table', component_property='columns'),
     Output(component_id='data-table', component_property='data'),
     Output(component_id='data-table', component_property='style_cell_conditional'),
+    # Update PC figure.
     Output(component_id='pc-graph', component_property='figure'),
+    # Update Scenario Count.
     Output(component_id='scenario_count', component_property='children'),
+
+    # Inputs
     Input(component_id='pc-graph', component_property='restyleData'),  # Needed for event call.
     Input(component_id='xy_scatter_x_axis_dropdown', component_property='value'),
     Input(component_id='xy_scatter_y_axis_dropdown', component_property='value'),
@@ -523,13 +544,12 @@ def update_graphs(restyledata,
                   par_coord_data
                   ):
     # Copy original dataframe.
-    df_filt = df.copy()
 
     # Create/Update pc_chart from original df.
-    pc_fig = get_pc_chart(df=df, par_coord_data=par_coord_data,pc_graph_form_domain=pc_graph_form_domain)
+    pc_fig = get_pc_chart(data=data, par_coord_data=par_coord_data, pc_graph_form_domain=pc_graph_form_domain)
 
     # Filter copy of dataframe based on paracoords selections
-    df_filt = pc_chart_filter_df(df_filt, par_coord_data)
+    df_filt = data.update_filtered_data(par_coord_data)
 
     # Chart scatter plot with filtered dataframe.
     scatter_graph = get_scatter_graph(df_filt, xy_scatter_color_dropdown, xy_scatter_x_axis_dropdown,
@@ -539,11 +559,7 @@ def update_graphs(restyledata,
 
     return [
         scatter_graph,  # Scatter figure
-        [
-            {"name": i['label'], "id": i['col_name'], "deletable": True, "selectable": True, 'type': 'text',
-             'presentation': 'markdown'} for i in
-            table_metrics
-        ],  # data-table columns
+        data.get_table_columns(),  # data-table columns
         records,  # data-table filtered data
         create_conditional_style(df_filt),  # col width based on column name.
         pc_fig,  # pc-chart
