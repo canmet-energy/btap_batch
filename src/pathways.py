@@ -15,6 +15,7 @@ import copy
 class Data:
     def __init__(self):
 
+        self.par_coord_data = None
         self.table_metrics = None
         self.pc_metrics = []
         self.metrics = [
@@ -141,18 +142,72 @@ class Data:
 
     def get_table_columns(self):
         columns = []
-        #print(self.table_metrics)
+        # print(self.table_metrics)
         for i in self.get_table_metrics():
-            columns.append ({"name": i['label'], "id": i['col_name'], "deletable": True, "selectable": True, 'type': 'text', 'presentation': 'markdown'})
+            columns.append(
+                {"name": i['label'], "id": i['col_name'], "deletable": True, "selectable": True, 'type': 'text',
+                 'presentation': 'markdown'})
         return columns
 
-    def update_filtered_data(self, par_coord_data):
+    def get_pc_dimensions(self):
+        # sets up initial state of figure or passes the existing state to new figure object.
+        dimensions = None
+        # If there are no selections yet.. Show all scenarios.
+        if self.par_coord_data == None:
+            pc_list = []
+            for item in data.get_pc_metrics():
+                visible = True
+                if item['col_name'] != 'index':
+                    if self.df[item['col_name']].dtypes == object:
+                        metric = dict(label=item['label'],
+                                      tickvals=self.df[item["col_name"] + '_code'].unique(),
+                                      ticktext=self.df[item['col_name']].unique(),
+                                      values=self.df[item["col_name"] + '_code'],
+                                      visible=visible)
+                    else:
+                        metric = dict(label=item['label'],
+                                      values=self.df[item['col_name']],
+                                      visible=visible
+                                      )
+                    pc_list.append(metric)
+            dimensions = list(pc_list)
+        else:
+            # Get labels that should be visible.
+
+            if self.pc_graph_form_domain == 'all':
+                labels_on = [d['label'] for d in self.get_pc_metrics()]
+            else:
+                labels_on = [d['label'] for d in self.get_pc_metrics() if d['filter'] == data.pc_graph_form_domain]
+
+            for item in self.par_coord_data['data'][0]['dimensions']:
+                # print(item)
+                if item['label'] in labels_on:
+                    item['visible'] = True
+                else:
+                    item['visible'] = False
+
+            dimensions = self.par_coord_data['data'][0]['dimensions']
+        return dimensions
+
+    def update_datamodel(self,
+                         xy_scatter_x_axis_dropdown=None,
+                         xy_scatter_y_axis_dropdown=None,
+                         xy_scatter_color_dropdown=None,
+                         pc_graph_form_domain=None,
+                         par_coord_data=None):
+        if xy_scatter_x_axis_dropdown != None: self.xy_scatter_x_axis_dropdown = xy_scatter_x_axis_dropdown
+        if xy_scatter_y_axis_dropdown != None: self.xy_scatter_y_axis_dropdown = xy_scatter_y_axis_dropdown
+        if xy_scatter_color_dropdown != None: self.xy_scatter_color_dropdown = xy_scatter_color_dropdown
+        if pc_graph_form_domain != None: self.pc_graph_form_domain = pc_graph_form_domain
+        if par_coord_data != None: self.par_coord_data = par_coord_data
+
+    def get_pc_filtered_data(self):
         self.df_filt = self.df.copy()
         # Skip if state does not exist. This will happen on initialization of graph.
-        if par_coord_data != None and 'data' in par_coord_data:
+        if self.par_coord_data != None and 'data' in self.par_coord_data:
             # Create Filter data based on PC dimension contraints.
             # Iterate through all dimensions in pc chart.
-            for d in par_coord_data['data'][0]['dimensions']:
+            for d in self.par_coord_data['data'][0]['dimensions']:
                 # Determine if there are constraints on dimension.
                 if 'constraintrange' in d:
                     # Create mask dataframe for item that are selected.
@@ -170,78 +225,32 @@ class Data:
                     self.df_filt = self.df_filt[np.logical_or.reduce(masks)]
         return self.df_filt
 
-
-# This method tries to guess the width of the columns in the data-table figure.
-def create_conditional_style(df):
-    style = []
-    for col in df.columns:
-        name_length = len(col)
-        pixel = 50 + round(name_length * 8)
-        pixel = str(pixel) + "px"
-        style.append({'if': {'column_id': col}, 'minWidth': pixel})
-    return style
-
-
 #### Parallel Coordinates Methods.
-# This method creates the parallel co-ordinate chart.
-def get_pc_chart(data,
-                 color=None,
-                 par_coord_data=None,
-                 pc_graph_form_domain=None):
+def get_pc_graph_form_group(data):
+    list_of_domains = list(set([d['filter'] for d in data.get_pc_metrics()]))
+    options = [{'label': item, 'value': item} for item in list_of_domains]
+
+    children = [
+        dbc.FormGroup(
+            [
+                dbc.Label("Filter"),
+                dcc.Dropdown(
+                    id='pc_graph_form_domain',
+                    options=options,
+                    value="all"
+                )
+            ]
+        )
+    ]
+    return children
+
+def get_pc_chart(data):
+    # If no data show nothing.
     if data.df.index.empty:
         # If empty, let user know and create blank figure.
         scatter_graph = px.scatter()
         scatter_graph.layout.annotations = [dict(text='empty dataframe', showarrow=False)]
-        #print("empty dataframe")
         return scatter_graph
-
-    line = None
-    if color == None:
-        line = dict(
-            color=data.df['energy_eui_total_gj_per_m_sq'],
-            colorscale=[
-                [0, 'green'],
-                [0.5, 'yellow'],
-                [1.0, 'red']
-            ]
-        )
-
-    # sets up initial state of figure or passes the existing state to new figure object.
-    dimensions = None
-    if par_coord_data == None:
-        pc_list = []
-        for item in data.get_pc_metrics():
-            visible = True
-            if item['col_name'] != 'index':
-                if data.df[item['col_name']].dtypes == object:
-                    metric = dict(label=item['label'],
-                                  tickvals=data.df[item["col_name"] + '_code'].unique(),
-                                  ticktext=data.df[item['col_name']].unique(),
-                                  values=data.df[item["col_name"] + '_code'],
-                                  visible=visible)
-                else:
-                    metric = dict(label=item['label'],
-                                  values=data.df[item['col_name']],
-                                  visible=visible
-                                  )
-                pc_list.append(metric)
-        dimensions = list(pc_list)
-    else:
-        # Get labels that should be visible.
-
-        if pc_graph_form_domain == 'all':
-            labels_on = [d['label'] for d in data.get_pc_metrics()]
-        else:
-            labels_on = [d['label'] for d in data.get_pc_metrics() if d['filter'] == pc_graph_form_domain]
-
-        for item in par_coord_data['data'][0]['dimensions']:
-            #print(item)
-            if item['label'] in labels_on:
-                item['visible'] = True
-            else:
-                item['visible'] = False
-
-        dimensions = par_coord_data['data'][0]['dimensions']
 
     # Creates new figure.
     fig = go.Figure(
@@ -250,10 +259,17 @@ def get_pc_chart(data,
             height=600,  # px
         ),
         data=go.Parcoords(
-            line=line,
-            dimensions=dimensions,
+            # Color lines based on eui.
+            line=dict(
+                color=data.df['energy_eui_total_gj_per_m_sq'],
+                colorscale=[
+                    [0, 'green'],
+                    [0.5, 'yellow'],
+                    [1.0, 'red']
+                ]
+            ),
+            dimensions=data.get_pc_dimensions(),
         ),
-
     )
     fig.update_traces(labelangle=20, selector=dict(type='parcoords'))
     # fig.update_traces(labelfont_size=10, selector=dict(type='parcoords'))
@@ -266,24 +282,22 @@ def get_pc_chart(data,
     # fig.update_traces(line_colorbar_tickformatstops=list(...), selector=dict(type='parcoords'))
     return fig
 
+#### Scatter Plot Methods
+def get_scatter_graph(data=None):
+    pc_filtered_data = data.get_pc_filtered_data()
+    xy_scatter_color_dropdown = data.xy_scatter_color_dropdown
+    xy_scatter_x_axis_dropdown = data.xy_scatter_x_axis_dropdown
+    xy_scatter_y_axis_dropdown = data.xy_scatter_y_axis_dropdown
 
-# This method filters the df based on the par_coords state variable of pc_chart id.. for example...
-# State('pc-graph', 'figure')
-
-
-def get_scatter_graph(df_filt,
-                      xy_scatter_color_dropdown,
-                      xy_scatter_x_axis_dropdown,
-                      xy_scatter_y_axis_dropdown):
     scatter_graph = None
     # Create/Update standard scatter graph with filtered data.
-    if df_filt.index.empty:
+    if pc_filtered_data.index.empty:
         # If empty, let user know and create blank figure.
         scatter_graph = px.scatter()
         scatter_graph.layout.annotations = [dict(text='filtering results in empty dataframe', showarrow=False)]
     else:
         scatter_graph = px.scatter(
-            data_frame=df_filt,
+            data_frame=pc_filtered_data,
             x=xy_scatter_x_axis_dropdown,
             y=xy_scatter_y_axis_dropdown,
             color=xy_scatter_color_dropdown,
@@ -307,8 +321,7 @@ def get_scatter_graph(df_filt,
                                     selector=dict(mode='markers'))
     return scatter_graph
 
-
-def get_scatter_graph_form_group(data):
+def get_scatter_graph_form_group(data=None):
     options = [
         {'label': d['label'], 'value': d['col_name']} for d in data.metrics
         if 'col_name' in d
@@ -347,43 +360,19 @@ def get_scatter_graph_form_group(data):
     ]
     return children
 
-
-def get_pc_graph_form_group(data):
-    list_of_domains = list(set([d['filter'] for d in data.get_pc_metrics()]))
-    options = [{'label': item, 'value': item} for item in list_of_domains]
-    print(f"get_pc_metrics = {data.get_pc_metrics()}")
-    print(f"options = {options}")
-
-
-    children = [
-        dbc.FormGroup(
-            [
-                dbc.Label("Filter"),
-                dcc.Dropdown(
-                    id='pc_graph_form_domain',
-                    options=options,
-                    value="all"
-                )
-            ]
-        )
-    ]
-    return children
-
-
-def get_solutions_counter():
-    children = [
-        dbc.FormGroup(
-            [
-                dbc.Label("Filter"),
-            ]
-        )
-    ]
-
-
-def init_data_table(id='data-table'):
+#### DataTable
+def init_data_table(id='data-table',data=None):
     start_table_df = pd.DataFrame(columns=['Start Column'])
+
+    style_cell_conditional = []
+    for col in data.df.columns:
+        name_length = len(col)
+        pixel = 50 + round(name_length * 8)
+        pixel = str(pixel) + "px"
+        style_cell_conditional.append({'if': {'column_id': col}, 'minWidth': pixel})
+
     data_table = dash_table.DataTable(data=start_table_df.to_dict('records'),
-                                      columns=[{'id': c, 'name': c} for c in start_table_df.columns],
+                                      columns=data.get_table_columns(),
                                       id=id,
                                       style_table={
                                           'overflowY': 'scroll',
@@ -402,8 +391,10 @@ def init_data_table(id='data-table'):
                                       selected_rows=[],
                                       page_action="native",
                                       export_format="csv",
-
+                                      style_cell_conditional=style_cell_conditional
                                       )
+
+
     return data_table
 
 
@@ -411,21 +402,11 @@ def init_data_table(id='data-table'):
 
 # Load Sample data used by dash library.
 data = Data()
-print(f"get_pc_metrics = {data.get_pc_metrics()}")
-print(f"get_table_metrics = {data.get_table_metrics()}")
-print(f"get_table_columns = {data.get_table_columns()}")
-
-
-
-# Create a hash from the metrics data so it can be easily used.
-
 
 # Set up app and use standard BOOTSTRAP theme.
 app = dash.Dash(
     external_stylesheets=[dbc.themes.BOOTSTRAP]
 )
-
-# This is required due to a bug in the data_table. https://github.com/plotly/dash-table/issues/436
 
 # Basic HTMl Bootstrap / Layout
 app.layout = html.Div([
@@ -503,7 +484,7 @@ app.layout = html.Div([
                     [
                         dbc.Col(
                             children=[
-                                init_data_table(id='data-table')
+                                init_data_table(id='data-table',data=data)
                             ],
                             md=12
                         )
@@ -520,9 +501,7 @@ app.layout = html.Div([
     # Update XY Scatter Graph.
     Output(component_id='scatter-graph', component_property='figure'),
     # Update columns, data and style in datatable.
-    Output(component_id='data-table', component_property='columns'),
     Output(component_id='data-table', component_property='data'),
-    Output(component_id='data-table', component_property='style_cell_conditional'),
     # Update PC figure.
     Output(component_id='pc-graph', component_property='figure'),
     # Update Scenario Count.
@@ -543,27 +522,18 @@ def update_graphs(restyledata,
                   pc_graph_form_domain,
                   par_coord_data
                   ):
-    # Copy original dataframe.
-
-    # Create/Update pc_chart from original df.
-    pc_fig = get_pc_chart(data=data, par_coord_data=par_coord_data, pc_graph_form_domain=pc_graph_form_domain)
-
-    # Filter copy of dataframe based on paracoords selections
-    df_filt = data.update_filtered_data(par_coord_data)
-
-    # Chart scatter plot with filtered dataframe.
-    scatter_graph = get_scatter_graph(df_filt, xy_scatter_color_dropdown, xy_scatter_x_axis_dropdown,
-                                      xy_scatter_y_axis_dropdown)
-    print(f'updated {pc_graph_form_domain}')
-    records = df_filt.to_dict('records')
+    # Update the datamodel.
+    data.update_datamodel(xy_scatter_x_axis_dropdown=xy_scatter_x_axis_dropdown,
+                          xy_scatter_y_axis_dropdown=xy_scatter_y_axis_dropdown,
+                          xy_scatter_color_dropdown=xy_scatter_color_dropdown,
+                          pc_graph_form_domain=pc_graph_form_domain,
+                          par_coord_data=par_coord_data)
 
     return [
-        scatter_graph,  # Scatter figure
-        data.get_table_columns(),  # data-table columns
-        records,  # data-table filtered data
-        create_conditional_style(df_filt),  # col width based on column name.
-        pc_fig,  # pc-chart
-        'Scenarios: {}'.format(len(records))
+        get_scatter_graph(data),  # Scatter figure
+        data.get_pc_filtered_data().to_dict('records'),  # Update Datatable with records that may be filtered.
+        get_pc_chart(data=data),  # Parallel Coords Figure
+        'Scenarios: {}'.format(len(data.get_pc_filtered_data().to_dict('records')))
     ]
 
 
