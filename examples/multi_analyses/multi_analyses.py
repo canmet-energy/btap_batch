@@ -14,7 +14,7 @@ import concurrent.futures
 #
 # Displays logging.. Set to INFO or DEBUG for a more verbose output.
 logging.basicConfig(level=logging.ERROR)
-OPTIONS_FILE = os.path.join(os.path.dirname(os.path.realpath(__file__)), 'options.yml')
+OPTIONS_FILE = os.path.join(os.path.dirname(os.path.realpath(__file__)), 'multi_analyses.yml')
 building_types = [
     #     'SecondarySchool',
     #     'PrimarySchool',

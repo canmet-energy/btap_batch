@@ -24,20 +24,20 @@
   # Set to True if you wish to build the image from scratch with the below branches fresh,
   # pulling from the most recent branches indicated below. If set to false, it will use the last version built locally or
   # on AWS. This can save time (~10minute) if set to false when you have already built the image and expect no changes.
-  :nocache: false
+  :nocache: true
 
   # Branch from https://github.com/NREL/openstudio-standards. Typically 'nrcan' branch.
-  :os_standards_branch: 'nrcan_320'
+  :os_standards_branch: 'nrcan'
 
   # Branch from https://github.com/canmet-energy/btap_costing. Typically 'master'
-  :btap_costing_branch: 'master'
+  :btap_costing_branch: 'production'
 
   # DO NOT CHANGE: Openstudio Version only 3.0.1 available
   :os_version: '3.0.1'
 
   # The name of the analysis. Can be a user friendly name. This is how it will appear on your local system or on the S3
   # bucket. for example on s3 the analysis run input/output files will be here. s3://834599497928/phylroy.lopez/example_analysis
-  :analysis_name: 'elimination_example'
+  :analysis_name: 'optimization_example'
 
   # Currently fixed to true. DO NOT CHANGE
   :run_annual_simulation: true
@@ -46,11 +46,21 @@
   :enable_costing: true
 
   # Currently fixed to false for multi-analysis. This allows multi-analysis to be saved to the same database.
-  :kill_database: false
+  :kill_database: true
 
 ###########################################     ALGORITHM        #######################################################
   :algorithm:
-    :type: elimination
+    :type: nsga2 # nsga2 , parametric
+    :population: 40
+    :n_generations: 2
+    :prob: 0.85
+    :eta: 3.0
+    :minimize_objectives: [
+#        "cost_utility_ghg_total_kg_per_m_sq",
+        "cost_utility_neb_total_cost_per_m_sq",
+#        "energy_eui_total_gj_per_m_sq",
+        "cost_equipment_total_cost_per_m_sq"
+    ]
 
 
 #########################################  BUILDING OPTIONS  ###########################################################
@@ -68,10 +78,10 @@
     # "RetailStandalone",
     # "RetailStripmall",
     # "QuickServiceRestaurant",
-    # "FullServiceRestaurant",
+     "FullServiceRestaurant",
     # "MidriseApartment",
     # "HighriseApartment",
-     "LowriseApartment",
+    # "LowriseApartment",
     #"Hospital",
     #"Outpatient"
   ]
@@ -99,34 +109,33 @@
   ]
   :dcv_type: [
       'NECB_Default',
-#      'No_DCV',
-#      'Occupancy_based_DCV',
-#      'CO2_based_DCV'
+      'No_DCV',
+      'Occupancy_based_DCV',
+      'CO2_based_DCV'
   ]
   :lights_type: [
       'NECB_Default',
-#      'LED'
+      'LED'
   ]
-  :lights_scale: [
-      'NECB_Default',
+  :lights_scale: [ 'NECB_Default',
     # '0.5',
     # '0.01'
   ]
   # Is this different from the LED option?
   :daylighting_type: [ 'NECB_Default',
-#                       'add_daylighting_controls'
+                       'add_daylighting_controls'
   ]
   :ecm_system_name: [ 'NECB_Default',
-       #               'HS09_CCASHPSys',
-       #               'HS08_VRFZonal'
+                      'HS09_CCASHPSys',
+                      'HS08_VRFZonal'
   ]
 
   :erv_package: [ 'NECB_Default',
-#                  "NECB_Default_All",
-#                  "Plate-All",
-#                 "Plate-Existing",
-#                 "Rotary-All",
-#                 "Rotary-Existing"
+                  "NECB_Default_All",
+                  "Plate-All",
+      #            "Plate-Existing",
+                  "Rotary-All",
+      #            "Rotary-Existing"
   ]
   # What are the existing vs all versions?
   :boiler_eff: [
@@ -148,62 +157,61 @@
                     '0.314',
       #              '0.278',
       #              '0.247',
-#                    '0.210',
-#                    '0.183'
+                    '0.210',
+                    '0.183'
   ]
 
   :ext_floor_cond: [ 'NECB_Default',
-#                     '0.227',
-#                     '0.183',
-#                     '0.162',
-#                     '0.142'
+                     '0.227',
+                     '0.183',
+      #               '0.162',
+                     '0.142'
   ]
   :ext_roof_cond: [ 'NECB_Default',
-#                    '0.227',
-#                    '0.193',
-#                    '0.183',
-#                    '0.162',
-#                    '0.142',
-#                    '0.138',
-#                    '0.121'
+                    '0.227',
+      #              '0.193',
+      #              '0.183',
+                    '0.162',
+      #              '0.142',
+      #              '0.138',
+                    '0.121'
   ]
   :ground_wall_cond: [ 'NECB_Default',
-#                       '0.568',
-#                       '0.379',
-#                       '0.284',
-#                       '0.210'
+                       '0.568',
+      #                 '0.379',
+                       '0.284',
+                       '0.210'
   ]
 
   :ground_floor_cond: [ 'NECB_Default',
-#                        '0.758',
-#                        '0.379'
+                        '0.758',
+                        '0.379'
   ]
 
   :ground_roof_cond: [ 'NECB_Default',
-#                       '0.568',
-#                       '0.379' ,
-#                       '0.284',
-#                       '0.210'
-  ]
+                       '0.568',
+      #                 '0.379' ,
+                       '0.284',
+                       '0.210' ]
   :door_construction_cond: [ 'NECB_Default',
-#                             '2.4',
-#                             '2.2',
-#                             '1.6'
+                             '2.4',
+                             '2.2',
+                             '1.6'
   ]
   :fixed_window_cond: [ 'NECB_Default',
-#                        '2.4',
-#                        '2.2',
-#                        '1.6'
+                        '2.4',
+                        '2.2',
+                        '1.6'
   ]
   :glass_door_cond: [ 'NECB_Default',
-#                      '2.4',
-#                      '2.2',
-#                      '1.6'
+                      '2.4',
+                      '2.2',
+                      '1.6'
   ]
   :overhead_door_cond: [ 'NECB_Default',
-#                         '2.4',
-#                         '2.2',
-#                         '1.6'
+                         '2.4',
+                         '2.2',
+                         '1.6'
   ]
   :skylight_cond: [ 'NECB_Default',
       #              '2.4',
@@ -214,11 +222,11 @@
   #'0.05', '0.95'
   ]
   :fixed_wind_solar_trans: [ 'NECB_Default',
-#  '0.2',
-#  '0.3',
-#  '0.4',
-#  '0.5',
-#  '0.6'
+  '0.2',
+  '0.3',
+  '0.4',
+  '0.5',
+  '0.6'
   ]
   # This is the same as SHGC
   :skylight_solar_trans: [ 'NECB_Default',
@@ -226,13 +234,10 @@
   ]
   :fdwr_set: [ 'NECB_Default']
   # Should we optimize for FDWR? Probably not. Better to assume default, since it will just pick lowest WWR which isn't realistic.
-  :srr_set: [ 'NECB_Default'
-  #            '0.0'
-  ]
+  :srr_set: [ '0.0' ]
   :rotation_degrees: [
-  'NECB_Default',
-#  '45.0',
-#  '90.0'
+  #'NECB_Default', '45.0',
+  '90.0'
   #, '135.0','180.0','225.0', '270.0', '315.0','360.0'
    ]
   # Picking the worst orientation (major axis of building oriented N-S)
@@ -253,7 +258,7 @@
   ]
   :adv_dx_units: [
       'NECB_Default',
-#      'Carrier WeatherExpert'
+      'Carrier WeatherExpert'
   ]
   :nv_type: [  # Two options: (1) nil/none/false/'NECB_Default', (2) 'add_nv'
     'NECB_Default',

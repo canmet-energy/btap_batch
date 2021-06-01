@@ -14,15 +14,25 @@ import copy
 
 class Data:
     def __init__(self):
+        # Enter in the full path to your Excel analysis output file.
+        OUTPUT_XLSX = r'C:\Users\plopez\test\btap_batch\src\resources\all_dressed.xlsx'
 
+        # Variable to store the para cords state.
         self.par_coord_data = None
-        self.table_metrics = None
-        self.pc_metrics = []
+        # Variable to store scatter graph inputs.
+        self.xy_scatter_x_axis_dropdown = None
+        self.xy_scatter_y_axis_dropdown = None
+        self.xy_scatter_color_dropdown = None
+        # Variable to store pc graph filter domain input
+        self.pc_graph_form_domain = None
+        # Optimized filtered dataframe
+        self.opt_df = None
+        # Metrics to be used by dashboard. Columns should match excel/btap_data.json column names
         self.metrics = [
             {'filter': 'all', 'label': 'Index', 'col_name': 'index'},
 
             # Code Tier
-            {'filter': 'targets', 'label': 'TierLevel', 'col_name': 'baseline_necb_tier'},
+            {'filter': 'targets', 'label': 'NECB\'17 Tier', 'col_name': 'baseline_necb_tier'},
 
             # Economics
             {'filter': 'targets', 'label': 'MaterialCost($/m2)', 'col_name': 'cost_equipment_total_cost_per_m_sq'},
@@ -92,20 +102,19 @@ class Data:
             # {'filter': 'output', 'label': 'URL', 'col_name': 'datapoint_output_url'},
         ]
 
-        # Enter in the full path to your Excel analysis output file.
-        OUTPUT_XLSX = r'C:\Users\plopez\test\btap_batch\src\resources\output.xlsx'
-
         # This loads the information from the BTAPBatch Excel output. It strips the headers col names, rounds the floats, and  encodes
         # string values into numeric to make it easy to graph.
         self.df = pd.read_excel(open(OUTPUT_XLSX, 'rb'),
                                 sheet_name='btap_data')
         # Round to 3 decimal places
         self.df = self.df.round(3)
+        # Reset index
         self.df.reset_index(drop=True, inplace=True)
         # create index for easier lookup.
         self.df['index'] = list(range(len(self.df.index)))
 
-        # This piece of code will create numeric map column for each string column. The new column will have the suffix
+        # This piece of code will create numeric map column for each string
+        # column. The new column will have the suffix
         # '_code' as the name
         for col_name in [col for col, dt in self.df.dtypes.items() if dt == object]:
             if not col_name in ['run_options']:
@@ -126,23 +135,30 @@ class Data:
         # Create a hash from the metrics data so it can be easily used.
         self.labels = {d['col_name']: d['label'] for d in self.metrics}
 
+    def get_opt_df(self):
+        if not isinstance(self.opt_df, pd.DataFrame):
+            self.opt_df = self.df.copy()
+            #filter by optimized runs.
+            self.opt_df = self.opt_df.loc[self.opt_df[':scenario'] == 'optimize']
+        return self.opt_df
+
+
     def get_pc_metrics(self):
         pc_metrics = []
         for metric in self.metrics:
-            if metric['col_name'] in self.df.columns:
-                if self.df[metric['col_name']].nunique() > 1:
+            if metric['col_name'] in self.get_opt_df().columns:
+                if self.get_opt_df()[metric['col_name']].nunique() > 1:
                     pc_metrics.append(metric)
         return pc_metrics
 
     def get_table_metrics(self):
-        self.table_metrics = copy.deepcopy(self.metrics)
-        self.table_metrics.append(
+        table_metrics = copy.deepcopy(self.metrics)
+        table_metrics.append(
             {'filter': 'output', 'label': 'Link', 'col_name': 'link', 'type': 'text', 'presentation': 'markdown'})
-        return self.table_metrics
+        return table_metrics
 
     def get_table_columns(self):
         columns = []
-        # print(self.table_metrics)
         for i in self.get_table_metrics():
             columns.append(
                 {"name": i['label'], "id": i['col_name'], "deletable": True, "selectable": True, 'type': 'text',
@@ -158,21 +174,21 @@ class Data:
             for item in data.get_pc_metrics():
                 visible = True
                 if item['col_name'] != 'index':
-                    if self.df[item['col_name']].dtypes == object:
+                    if self.get_opt_df()[item['col_name']].dtypes == object:
                         metric = dict(label=item['label'],
-                                      tickvals=self.df[item["col_name"] + '_code'].unique(),
-                                      ticktext=self.df[item['col_name']].unique(),
-                                      values=self.df[item["col_name"] + '_code'],
+                                      tickvals=self.get_opt_df()[item["col_name"] + '_code'].unique(),
+                                      ticktext=self.get_opt_df()[item['col_name']].unique(),
+                                      values=self.get_opt_df()[item["col_name"] + '_code'],
                                       visible=visible)
                     else:
                         metric = dict(label=item['label'],
-                                      values=self.df[item['col_name']],
+                                      values=self.get_opt_df()[item['col_name']],
                                       visible=visible
                                       )
                     pc_list.append(metric)
             dimensions = list(pc_list)
         else:
-            # Get labels that should be visible.
+            # Get labels that should be visible in graph.
 
             if self.pc_graph_form_domain == 'all':
                 labels_on = [d['label'] for d in self.get_pc_metrics()]
@@ -201,8 +217,8 @@ class Data:
         if pc_graph_form_domain != None: self.pc_graph_form_domain = pc_graph_form_domain
         if par_coord_data != None: self.par_coord_data = par_coord_data
 
-    def get_pc_filtered_data(self):
-        self.df_filt = self.df.copy()
+    def get_spreadsheet_data(self):
+        self.df_filt = self.get_opt_df().copy()
         # Skip if state does not exist. This will happen on initialization of graph.
         if self.par_coord_data != None and 'data' in self.par_coord_data:
             # Create Filter data based on PC dimension contraints.
@@ -225,278 +241,260 @@ class Data:
                     self.df_filt = self.df_filt[np.logical_or.reduce(masks)]
         return self.df_filt
 
-#### Parallel Coordinates Methods.
-def get_pc_graph_form_group(data):
-    list_of_domains = list(set([d['filter'] for d in data.get_pc_metrics()]))
-    options = [{'label': item, 'value': item} for item in list_of_domains]
+    def xy_scatter_options(self):
+        return [{'label': d['label'], 'value': d['col_name']} for d in self.metrics if 'col_name' in d]
 
-    children = [
-        dbc.FormGroup(
-            [
-                dbc.Label("Filter"),
-                dcc.Dropdown(
-                    id='pc_graph_form_domain',
-                    options=options,
-                    value="all"
-                )
-            ]
+    def pc_filter_options(self):
+        return [{'label': item, 'value': item} for item in list(set([d['filter'] for d in data.get_pc_metrics()]))]
+
+    def get_building_types(self):
+        return [{'label': d, 'value': d} for d in self.df[':building_type'].unique().tolist()]
+
+    def get_epw_locations(self):
+        return [{'label': d, 'value': d} for d in self.df[':epw_file'].unique().tolist()]
+
+    def get_epw_locations(self):
+        return [{'label': d, 'value': d} for d in self.df[':epw_file'].unique().tolist()]
+
+    def get_primary_heating_fuels(self):
+        return [{'label': d, 'value': d} for d in self.df[':primary_heating_fuel'].unique().tolist()]
+
+
+class Figures:
+
+    #### Parallel Coordinates Methods.
+
+    def get_pc_chart(self, data=None):
+        # If no data show nothing.
+        if data.df.index.empty:
+            # If empty, let user know and create blank figure.
+            scatter_graph = px.scatter()
+            scatter_graph.layout.annotations = [dict(text='empty dataframe', showarrow=False)]
+            return scatter_graph
+
+        # Creates new figure.
+        fig = go.Figure(
+            layout=go.Layout(
+                title=go.layout.Title(text="Scenario Pathways", font=dict(size=25, color='white')),
+                height=600,  # px
+            ),
+            data=go.Parcoords(
+                # Color lines based on eui.
+                line=dict(
+                    color=data.get_opt_df()['energy_eui_total_gj_per_m_sq'],
+                    colorscale=[
+                        [0, 'green'],
+                        [0.5, 'yellow'],
+                        [1.0, 'red']
+                    ]
+                ),
+                dimensions=data.get_pc_dimensions(),
+            ),
         )
-    ]
-    return children
+        fig.update_traces(labelangle=20, selector=dict(type='parcoords'))
+        # fig.update_traces(labelfont_size=10, selector=dict(type='parcoords'))
+        # fig.update_traces(rangefont_size=5, selector=dict(type='parcoords'))
+        # fig.update_traces(tickfont_size=5, selector=dict(type='parcoords'))
+        # fig.update_traces(tickfont_color='white', selector=dict(type='parcoords'))
+        # fig.update_traces(line_colorbar_tickfont_size=100, selector=dict(type='parcoords'))
+        # fig.update_traces(labelside='bottom', selector=dict(type='parcoords'))
+        # fig.update_traces(line_colorbar_ticklabelposition='outside', selector=dict(type='parcoords'))
+        # fig.update_traces(line_colorbar_tickformatstops=list(...), selector=dict(type='parcoords'))
+        return fig
 
-def get_pc_chart(data):
-    # If no data show nothing.
-    if data.df.index.empty:
-        # If empty, let user know and create blank figure.
-        scatter_graph = px.scatter()
-        scatter_graph.layout.annotations = [dict(text='empty dataframe', showarrow=False)]
+    #### Scatter Plot Methods
+    def get_scatter_graph(self, data=None):
+        pc_filtered_data = data.get_spreadsheet_data()
+        xy_scatter_color_dropdown = data.xy_scatter_color_dropdown
+        xy_scatter_x_axis_dropdown = data.xy_scatter_x_axis_dropdown
+        xy_scatter_y_axis_dropdown = data.xy_scatter_y_axis_dropdown
+
+        scatter_graph = None
+        # Create/Update standard scatter graph with filtered data.
+        if pc_filtered_data.index.empty:
+            # If empty, let user know and create blank figure.
+            scatter_graph = px.scatter()
+            scatter_graph.layout.annotations = [dict(text='filtering results in empty dataframe', showarrow=False)]
+        else:
+            scatter_graph = px.scatter(
+                data_frame=pc_filtered_data,
+                x=xy_scatter_x_axis_dropdown,
+                y=xy_scatter_y_axis_dropdown,
+                color=xy_scatter_color_dropdown,
+                # hover_data=[d['col_name'] for d in data.metrics if 'col_name' in d],
+                hover_data=[pc_filtered_data['index']],
+                marginal_y="histogram",
+                marginal_x="histogram"
+            )
+            scatter_graph.update_traces(marker=dict(size=12,
+                                                    line=dict(width=2,
+                                                              color='DarkSlateGrey')),
+                                        selector=dict(mode='markers'))
         return scatter_graph
 
-    # Creates new figure.
-    fig = go.Figure(
-        layout=go.Layout(
-            title=go.layout.Title(text="Scenario Pathways", font=dict(size=25, color='white')),
-            height=600,  # px
-        ),
-        data=go.Parcoords(
-            # Color lines based on eui.
-            line=dict(
-                color=data.df['energy_eui_total_gj_per_m_sq'],
-                colorscale=[
-                    [0, 'green'],
-                    [0.5, 'yellow'],
-                    [1.0, 'red']
-                ]
-            ),
-            dimensions=data.get_pc_dimensions(),
-        ),
-    )
-    fig.update_traces(labelangle=20, selector=dict(type='parcoords'))
-    # fig.update_traces(labelfont_size=10, selector=dict(type='parcoords'))
-    # fig.update_traces(rangefont_size=5, selector=dict(type='parcoords'))
-    # fig.update_traces(tickfont_size=5, selector=dict(type='parcoords'))
-    # fig.update_traces(tickfont_color='white', selector=dict(type='parcoords'))
-    # fig.update_traces(line_colorbar_tickfont_size=100, selector=dict(type='parcoords'))
-    # fig.update_traces(labelside='bottom', selector=dict(type='parcoords'))
-    # fig.update_traces(line_colorbar_ticklabelposition='outside', selector=dict(type='parcoords'))
-    # fig.update_traces(line_colorbar_tickformatstops=list(...), selector=dict(type='parcoords'))
-    return fig
+    #### DataTable
+    def init_data_table(self, id='data-table', data=None):
+        start_table_df = pd.DataFrame(columns=['Start Column'])
 
-#### Scatter Plot Methods
-def get_scatter_graph(data=None):
-    pc_filtered_data = data.get_pc_filtered_data()
-    xy_scatter_color_dropdown = data.xy_scatter_color_dropdown
-    xy_scatter_x_axis_dropdown = data.xy_scatter_x_axis_dropdown
-    xy_scatter_y_axis_dropdown = data.xy_scatter_y_axis_dropdown
+        style_cell_conditional = []
+        for col in data.df.columns:
+            name_length = len(col)
+            pixel = 50 + round(name_length * 8)
+            pixel = str(pixel) + "px"
+            style_cell_conditional.append({'if': {'column_id': col}, 'minWidth': pixel})
 
-    scatter_graph = None
-    # Create/Update standard scatter graph with filtered data.
-    if pc_filtered_data.index.empty:
-        # If empty, let user know and create blank figure.
-        scatter_graph = px.scatter()
-        scatter_graph.layout.annotations = [dict(text='filtering results in empty dataframe', showarrow=False)]
-    else:
-        scatter_graph = px.scatter(
-            data_frame=pc_filtered_data,
-            x=xy_scatter_x_axis_dropdown,
-            y=xy_scatter_y_axis_dropdown,
-            color=xy_scatter_color_dropdown,
-            hover_data=['index', 'baseline_necb_tier', 'cost_equipment_total_cost_per_m_sq',
-                        'cost_utility_neb_total_cost_per_m_sq', 'baseline_savings_energy_cost_per_m_sq',
-                        'energy_eui_total_gj_per_m_sq', 'baseline_energy_percent_better',
-                        'cost_utility_ghg_total_kg_per_m_sq',
-                        'baseline_ghg_percent_better', 'energy_peak_electric_w_per_m_sq',
-                        'baseline_peak_electric_percent_better',
-                        ':building_type', ':template', ':primary_heating_fuel', ':rotation_degrees', ':scale_x',
-                        ':scale_y',
-                        ]
+        data_table = dash_table.DataTable(data=start_table_df.to_dict('records'),
+                                          columns=data.get_table_columns(),
+                                          id=id,
+                                          style_table={
+                                              'overflowY': 'scroll',
+                                              'overflowX': 'scroll',
+                                              'height': 600,
+                                          },
+                                          fixed_rows={'headers': True},
+                                          editable=True,
+                                          filter_action="native",
+                                          sort_action="native",
+                                          sort_mode="multi",
+                                          column_selectable="single",
+                                          row_selectable="multi",
+                                          row_deletable=True,
+                                          selected_columns=[],
+                                          selected_rows=[],
+                                          page_action="native",
+                                          export_format="csv",
+                                          style_cell_conditional=style_cell_conditional
+                                          )
 
-            # hover_data=[d['col_name'] for d in metrics if 'col_name' in d]
-            # marginal_y="histogram",
-            # marginal_x="histogram"
-        )
-        scatter_graph.update_traces(marker=dict(size=12,
-                                                line=dict(width=2,
-                                                          color='DarkSlateGrey')),
-                                    selector=dict(mode='markers'))
-    return scatter_graph
+        return data_table
 
-def get_scatter_graph_form_group(data=None):
-    options = [
-        {'label': d['label'], 'value': d['col_name']} for d in data.metrics
-        if 'col_name' in d
-    ]
-    children = [
-        dbc.FormGroup(
-            [
-                dbc.Label("Color variable"),
-                dcc.Dropdown(
-                    id='xy_scatter_color_dropdown',
-                    options=options,
-                    value=":dcv_type"
-                )
-            ]
-        ),
-        dbc.FormGroup(
-            [
-                dbc.Label("X-Axis"),
-                dcc.Dropdown(
-                    id='xy_scatter_x_axis_dropdown',
-                    options=options,
-                    value="energy_eui_total_gj_per_m_sq"
-                )
-            ]
-        ),
-        dbc.FormGroup(
-            [
-                dbc.Label("Y-Axis"),
-                dcc.Dropdown(
-                    id='xy_scatter_y_axis_dropdown',
-                    options=options,
-                    value="cost_equipment_total_cost_per_m_sq"
-                )
-            ]
-        )
-    ]
-    return children
+    def get_elimination_figure(self, id='elimination_stacked_bar', data=None):
+        elim_df = copy.deepcopy(data.df)
+        # Filter by :analysis_name = elimination
+        # :scenario
+        elim_df = elim_df.loc[elim_df[':analysis_name'] == 'elimination_example']
+        if elim_df.empty:
+            fig = px.bar()
+            fig.layout.annotations = [dict(text='Elimination data not available.', showarrow=False)]
+            return fig
 
-#### DataTable
-def init_data_table(id='data-table',data=None):
-    start_table_df = pd.DataFrame(columns=['Start Column'])
+        fig = px.bar(elim_df,
+                     x=":scenario",
+                     y=['energy_eui_additional_fuel_gj_per_m_sq',
+                        'energy_eui_cooling_gj_per_m_sq',
+                        'energy_eui_district_cooling_gj_per_m_sq',
+                        'energy_eui_district_heating_gj_per_m_sq',
+                        'energy_eui_fans_gj_per_m_sq',
+                        'energy_eui_heat recovery_gj_per_m_sq',
+                        'energy_eui_heating_gj_per_m_sq',
+                        'energy_eui_interior equipment_gj_per_m_sq',
+                        'energy_eui_interior lighting_gj_per_m_sq',
+                        'energy_eui_pumps_gj_per_m_sq',
+                        'energy_eui_water systems_gj_per_m_sq'],
+                     title="Elimination Analysis"
+                     )
+        fig.update_layout(xaxis={'categoryorder': 'total descending'})
+        return fig
 
-    style_cell_conditional = []
-    for col in data.df.columns:
-        name_length = len(col)
-        pixel = 50 + round(name_length * 8)
-        pixel = str(pixel) + "px"
-        style_cell_conditional.append({'if': {'column_id': col}, 'minWidth': pixel})
+    def get_sensitivity_figure(self, id='sensitivity_xy_scatter', data=None):
+        from plotly.subplots import make_subplots
+        import plotly.graph_objects as go
+        elim_df = copy.deepcopy(data.df)
+        # Filter by sensitivity
+        elim_df = elim_df.loc[elim_df[':analysis_name'] == 'sensitivity_example']
+        # If there is no sensitivity analysis.
+        if elim_df.empty:
+            fig = px.bar()
+            fig.layout.annotations = [dict(text='Sensitivity data not available.', showarrow=False)]
+            return fig
+        ecm_list = elim_df[':scenario'].unique().tolist()
+        children = []
 
-    data_table = dash_table.DataTable(data=start_table_df.to_dict('records'),
-                                      columns=data.get_table_columns(),
-                                      id=id,
-                                      style_table={
-                                          'overflowY': 'scroll',
-                                          'overflowX': 'scroll',
-                                          'height': 600,
-                                      },
-                                      fixed_rows={'headers': True},
-                                      editable=True,
-                                      filter_action="native",
-                                      sort_action="native",
-                                      sort_mode="multi",
-                                      column_selectable="single",
-                                      row_selectable="multi",
-                                      row_deletable=True,
-                                      selected_columns=[],
-                                      selected_rows=[],
-                                      page_action="native",
-                                      export_format="csv",
-                                      style_cell_conditional=style_cell_conditional
-                                      )
+        for ecm in ecm_list:
+            # Filter by ecm
+            ecm_df = elim_df.loc[elim_df[':scenario'] == ecm]
 
+            fig = px.scatter(ecm_df,
+                y='cost_equipment_total_cost_per_m_sq',
+                x="baseline_energy_percent_better",
+                color=ecm,
+                title=ecm
+            )
+            #Update size of point/markers.
+            fig.update_traces(marker={'size': 15})
+            children.append(dcc.Graph(id=ecm, figure=fig))
 
-    return data_table
+        return children
 
 
 #### Main
 
 # Load Sample data used by dash library.
 data = Data()
-
+figures = Figures()
 # Set up app and use standard BOOTSTRAP theme.
-app = dash.Dash(
-    external_stylesheets=[dbc.themes.BOOTSTRAP]
-)
+app = dash.Dash("Example",
+                external_stylesheets=[dbc.themes.SIMPLEX]
+                )
+
+# User Inputs.
+
+# Building and Location Selection
+
+input_building_type = dbc.FormGroup([dbc.Label("Building Type"),
+                                     dcc.Dropdown(id='building_type', options=data.get_building_types(),
+                                                  value=data.get_building_types()[0]['value'])])
+input_weather = dbc.FormGroup([dbc.Label("Weather"),
+                               dcc.Dropdown(id='weather', options=data.get_epw_locations(),
+                                            value=data.get_epw_locations()[0]['value'])])
+
+input_primary_heating_fuels = dbc.FormGroup([dbc.Label("Baseline Heating Fuel"),
+                                             dcc.Dropdown(id='primary_heating_fuel',
+                                                          options=data.get_primary_heating_fuels(),
+                                                          value=data.get_primary_heating_fuels()[0]['value'])])
+
+# XY Scatter.
+input_scatter_y_axis = dbc.FormGroup([dbc.Label("Y-Axis"),
+                                      dcc.Dropdown(id='xy_scatter_y_axis_dropdown', options=data.xy_scatter_options(),
+                                                   value="cost_equipment_total_cost_per_m_sq")])
+input_scatter_x_axis = dbc.FormGroup([dbc.Label("X-Axis"),
+                                      dcc.Dropdown(id='xy_scatter_x_axis_dropdown', options=data.xy_scatter_options(),
+                                                   value="energy_eui_total_gj_per_m_sq")])
+input_scatter_color_dropdown = dbc.FormGroup([dbc.Label("Color"), dcc.Dropdown(id='xy_scatter_color_dropdown',
+                                                                               options=data.xy_scatter_options(),
+                                                                               value=":dcv_type")])
+# PC Inputs
+input_pc_filter = dbc.FormGroup(
+    [dbc.Label("Filter"), dcc.Dropdown(id='pc_graph_form_domain', options=data.pc_filter_options(), value="all")])
+
+# scenario_counter = dbc.Card( dbc.CardBody([html.H2(id='number_of_scenarios'),]))
+scenario_counter = dbc.Button([dbc.Badge("0", color="light", id='number_of_scenarios')], color="primary", )
 
 # Basic HTMl Bootstrap / Layout
-app.layout = html.Div([
-    dcc.Tabs(
-        [
-            dcc.Tab(
-                label='Design Contraints',
-                children=[
-                    dbc.Row(
-                        dbc.Col(
-                            children=[
-                                dbc.Card(
-                                    id='pc-graph-form',
-                                    children=get_pc_graph_form_group(data),
-                                    body=True,
-                                )
-                            ],
-                            md=2
-                        )
-                    ),
-
-                    # PC Chart layout
-                    dbc.Row(
-                        dbc.Col(
-                            [
-
-                                html.Div(id='scenario_count'),
-                                dcc.Graph(
-                                    id='pc-graph'
-                                )
-                            ],
-                            align="center",
-                        )
-                    )
-                ]
-            ),
-            # Scatter Graph Layout
-            dcc.Tab(label='Performance Analysis', children=[
-                dbc.Row(
-                    [
-                        dbc.Col(
-                            children=[
-                                html.H3(
-                                    children='X-Y Scatter Viewer'
-                                )
-                            ],
-                            md=10
-                        )
-                    ],
-                    align="center",
-                ),
-                dbc.Row(
-                    [
-                        dbc.Col(
-                            children=[
-                                dbc.Card(
-                                    id='scatter-graph-form',
-                                    children=get_scatter_graph_form_group(data),
-                                    body=True,
-                                )
-                            ],
-                            md=2
-                        ),
-                        dbc.Col(
-                            children=[
-                                dcc.Graph(id='scatter-graph')
-                            ],
-                            md=10)
-                    ],
-                    align="center",
-                )]),
-            dcc.Tab(label='Solution Sets', children=[
-                # Datatable Layout
-                dbc.Row(
-                    [
-                        dbc.Col(
-                            children=[
-                                init_data_table(id='data-table',data=data)
-                            ],
-                            md=12
-                        )
-                    ],
-                    align="center",
-                )])])
-],
-    style={'padding': '20px 20px 20px 20px'}  # Added in style padding to ignore the cutoffs
-)
+app.layout = dbc.Container(fluid=True, children=[
+    html.Div([
+        dbc.Tabs(
+            [
+                dbc.Tab(label='Building Baseline Selection',
+                        children=[input_building_type, input_weather, input_primary_heating_fuels]),
+                dbc.Tab(label='Elimination Analysis', children=[dcc.Graph(id='elimination_stacked_bar')]),
+                dbc.Tab(id='sensitivity_analysis_tab',
+                        label='Sensitivity Analysis',
+                        children=[]),
+                dbc.Tab(label='Design Constraints', children=[dbc.Row(
+                    [dbc.Col(md=6, children=[input_pc_filter]),
+                     dbc.Col(md=6, children=[scenario_counter])]), dcc.Graph(id='pc-graph')]),
+                dbc.Tab(label='Data Analysis', children=[dbc.Row(
+                    [dbc.Col(md=3, children=[input_scatter_x_axis, input_scatter_y_axis, input_scatter_color_dropdown]),
+                     dbc.Col(md=9, children=[dcc.Graph(id='scatter-graph')])])]),
+                dbc.Tab(label='Solution Sets', children=[figures.init_data_table(data=data)])
+            ]
+        )
+    ])
+])
 
 
-## Callback / Updates
+## Callback / Interactive Updates
 @app.callback(
     # Update XY Scatter Graph.
     Output(component_id='scatter-graph', component_property='figure'),
@@ -505,7 +503,11 @@ app.layout = html.Div([
     # Update PC figure.
     Output(component_id='pc-graph', component_property='figure'),
     # Update Scenario Count.
-    Output(component_id='scenario_count', component_property='children'),
+    Output(component_id='number_of_scenarios', component_property='children'),
+    # Update Elimination Figure
+    Output(component_id='elimination_stacked_bar', component_property='figure'),
+    # Update Sensitivity Figure
+    Output(component_id='sensitivity_analysis_tab', component_property='children'),
 
     # Inputs
     Input(component_id='pc-graph', component_property='restyleData'),  # Needed for event call.
@@ -530,10 +532,12 @@ def update_graphs(restyledata,
                           par_coord_data=par_coord_data)
 
     return [
-        get_scatter_graph(data),  # Scatter figure
-        data.get_pc_filtered_data().to_dict('records'),  # Update Datatable with records that may be filtered.
-        get_pc_chart(data=data),  # Parallel Coords Figure
-        'Scenarios: {}'.format(len(data.get_pc_filtered_data().to_dict('records')))
+        figures.get_scatter_graph(data=data),  # Scatter figure
+        data.get_spreadsheet_data().to_dict('records'),  # Update Datatable with records that may be filtered.
+        figures.get_pc_chart(data=data),  # Parallel Coords Figure
+        ['Selected Scenarios: {}'.format(len(data.get_spreadsheet_data().to_dict('records')))],
+        figures.get_elimination_figure(data=data),
+        figures.get_sensitivity_figure(data=data)
     ]
 
 

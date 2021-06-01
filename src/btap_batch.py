@@ -1646,6 +1646,7 @@ class BTAPOptimization(BTAPAnalysis):
             # get the actual value for the run_options
             run_options[key_name] = str(encoder.inverse_transform([x_option])[0])
         # Tell user the options through std out.
+        run_options[':scenario'] = 'optimize'
         message = f"Running Option Variables {run_options}"
         logging.info(message)
         # Add the constants to the run options dict.
@@ -1981,7 +1982,7 @@ class BTAPElimination(BTAPParametric):
 
     def compute_scenarios(self):
         self.elimination_parameters = [
-            [':default', 'do nothing'],
+            [':reference', 'do nothing'],
             [':electrical_loads_scale', '0.0'],
             [':infiltration_scale', '0.0'],
             [':lights_scale', '0.0'],
@@ -2002,7 +2003,7 @@ class BTAPElimination(BTAPParametric):
         #Replace key value with elimination value.
         for elimination_parameter in self.elimination_parameters:
             run_option = copy.deepcopy(building_options)
-            if elimination_parameter[0] != ':default':
+            if elimination_parameter[0] != ':reference':
                 run_option[elimination_parameter[0]] = elimination_parameter[1]
             run_option[':scenario'] = elimination_parameter[0]
             self.scenarios.append(run_option)
