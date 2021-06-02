@@ -38,6 +38,14 @@ from pymoo.visualization.scatter import Scatter
 # seed the pseudorandom number generator
 from random import seed
 from random import random
+import numpy as np
+np.random.seed(123)
+import matplotlib.pyplot as plt
+from skopt.space import Space
+from skopt.sampler import Sobol
+from skopt.sampler import Lhs
+import traceback
+
 seed(1)
 
 
@@ -1300,6 +1308,87 @@ class BTAPAnalysis():
         # Load baseline run data into dataframe.
         # Add eui_reference to analsys_df
 
+    # This method creates a encoder and decoder of the simulation options to integers.  The ML and AI routines use float,
+    # conventionally for optimization problems. Since most of the analysis that we do are discrete options for designers
+    # we need to convert all inputs, string, float or int, into  to enumerated integer representations for the optimizer to
+    # work.
+    def create_options_encoder(self):
+        # Determine options the users defined and contants and variable for the analysis. Options / lists that the user
+        # provided only one options (a list of size 1) in the analysis input file are to be consider constants in the simulation.
+        # this may simplify the calculations that the optimizer has to conduct.
+
+        # Create a dict of the constants.
+        self.constants = {}
+        # Create a dict of encoders/decoders.
+        self.option_encoder = {}
+
+        # Keep track of total possible scenarios to tell user.
+        self.number_of_possible_designs = 1
+        # Interate through all the building_options contained in the analysis input yml file.
+        for key, value in self.building_options.items():
+            # If the options for that building charecteristic are > 1 it is a variable to be take part in optimization.
+            if isinstance(value, list) and len(value) > 1:
+                self.number_of_possible_designs *= len(value)
+                # Create the encoder for the building option / key.
+                self.option_encoder[key] = {}
+                self.option_encoder[key]['encoder'] = preprocessing.LabelEncoder().fit(value)
+            elif isinstance(value, list) and len(value) == 1:
+                # add the constant to the constant hash.
+                self.constants[key] = value[0]
+            else:
+                # Otherwise warn user that nothing was provided.
+                raise (f"building option {key} was set to empty. Pleace enter a value for it.")
+
+        #Return the variables.. but the return value is not really use since these are access via the object variable self anyways.
+        return self.constants, self.option_encoder
+
+    # convieniance interface to get number of variables.
+    def number_of_variables(self):
+        # Returns the number of variables Note this is not a class variable self like the others. That is because this method is used in the
+        # problem definition and we need to avoid thread variable issues.
+        return len(self.option_encoder)
+
+
+    # Convience variable to get the upper limit integers of all the variable as an ordered list.
+    def x_u(self):
+        # Set up return list.
+        x_u = []
+        # iterage throug each key in the encoder list.
+        for key in self.option_encoder:
+            # get the max value, which is the length minus 1 since the enumeration starts at 0.
+            x_u.append(len(self.option_encoder[key]['encoder'].classes_) - 1)
+        # Returns the list of max values.. Note this is not a class variable self like the others. That is because this method is used in the
+        # problem definition and we need to avoid thread variable issues.
+        return x_u
+
+    # This method takes an ordered list of ints and converts it to a run_options input file.
+    def generate_run_option_file(self, x):
+        # Create dict that will be the basis of the run_options.yml file.
+        run_options = {}
+        # Make sure options are the same length as the encoder.
+        if len(x) != len(self.option_encoder):
+            raise ('input is larger than the encoder was set to.')
+
+        # interate though both the encoder key and x input list at the same time
+        for key_name, x_option in zip(self.option_encoder.keys(), x):
+            # encoder/decoder for the building option key.
+            encoder = self.option_encoder[key_name]['encoder']
+            # get the actual value for the run_options
+            run_options[key_name] = str(encoder.inverse_transform([x_option])[0])
+        # Tell user the options through std out.
+        run_options[':scenario'] = 'optimize'
+        message = f"Running Option Variables {run_options}"
+        logging.info(message)
+        # Add the constants to the run options dict.
+        run_options.update(self.constants)
+        # Add the analysis setting to the run options dict.
+        run_options.update(self.analysis_config)
+
+
+        # Returns the dict.. Note this is not a class variable self like the others. That is because this method is used in the
+        # problem definition and we need to avoid thread variable issues.
+        return run_options
+
 
 # Class to Manage parametric runs.
 class BTAPParametric(BTAPAnalysis):
@@ -1482,6 +1571,7 @@ class BTAPProblem(Problem):
         for objective in self.btap_optimization.analysis_config[':algorithm'][':minimize_objectives']:
             objectives.append(results[objective])
         out["F"] = np.column_stack(objectives)
+
 # Class to manage optimization runs.
 class BTAPOptimization(BTAPAnalysis):
     def __init__(self, analysis_config_file=None, git_api_token=None):
@@ -1498,13 +1588,16 @@ class BTAPOptimization(BTAPAnalysis):
             self.create_options_encoder()
 
             # Run optimization. This will create all the input files, run and gather the results to sql.
-            self.run_optimization()
+            self.run_analysis()
 
         except FailedSimulationException as err:
             message = f"Simulation(s) failed. Optimization cannot continue. Please review failed simulations to determine cause of error in Excel output or if possible the simulation datapoint files. \nLast failure had these inputs:\n\t {err}"
             logging.error(message)
         except botocore.exceptions.SSLError as err:
             message = f"Certificate Failure. This error occurs when AWS does not trust your security certificate. Either because you are using a VPN or your network is otherwise spoofing IPs. Please ensure that you are not on a VPN or contact your network admin. Error: {err}"
+            logging.error(message)
+        except Exception as err:
+            message = f"Unknown Error.{err} {traceback.format_exc()}"
             logging.error(message)
         finally:
             self.shutdown_analysis()
@@ -1526,7 +1619,7 @@ class BTAPOptimization(BTAPAnalysis):
         else:
             return self.analysis_config[':no_of_threads']
 
-    def run_optimization(self):
+    def run_analysis(self):
         print(f"Running Algorithm {self.analysis_config[':algorithm']}")
         print(f"Number of Variables: {self.number_of_variables()}")
         print(f"Number of minima objectives: {self.number_of_minimize_objectives()}")
@@ -1573,45 +1666,9 @@ class BTAPOptimization(BTAPAnalysis):
         # shut down the pool and threads.
         pool.close()
 
-    # This method creates a encoder and decoder of the simulation options to integers.  The ML and AI routines use float,
-    # conventionally for optimization problems. Since most of the analysis that we do are discrete options for designers
-    # we need to convert all inputs, string, float or int, into  to enumerated integer representations for the optimizer to
-    # work.
-    def create_options_encoder(self):
-        # Determine options the users defined and contants and variable for the analysis. Options / lists that the user
-        # provided only one options (a list of size 1) in the analysis input file are to be consider constants in the simulation.
-        # this may simplify the calculations that the optimizer has to conduct.
 
-        # Create a dict of the constants.
-        self.constants = {}
-        # Create a dict of encoders/decoders.
-        self.option_encoder = {}
 
-        # Keep track of total possible scenarios to tell user.
-        self.number_of_possible_designs = 1
-        # Interate through all the building_options contained in the analysis input yml file.
-        for key, value in self.building_options.items():
-            # If the options for that building charecteristic are > 1 it is a variable to be take part in optimization.
-            if isinstance(value, list) and len(value) > 1:
-                self.number_of_possible_designs *= len(value)
-                # Create the encoder for the building option / key.
-                self.option_encoder[key] = {}
-                self.option_encoder[key]['encoder'] = preprocessing.LabelEncoder().fit(value)
-            elif isinstance(value, list) and len(value) == 1:
-                # add the constant to the constant hash.
-                self.constants[key] = value[0]
-            else:
-                # Otherwise warn user that nothing was provided.
-                raise (f"building option {key} was set to empty. Pleace enter a value for it.")
 
-        #Return the variables.. but the return value is not really use since these are access via the object variable self anyways.
-        return self.constants, self.option_encoder
-
-    # convieniance interface to get number of variables.
-    def number_of_variables(self):
-        # Returns the number of variables Note this is not a class variable self like the others. That is because this method is used in the
-        # problem definition and we need to avoid thread variable issues.
-        return len(self.option_encoder)
 
     # convieniance interface to get number of minimized objectives.
     def number_of_minimize_objectives(self):
@@ -1619,45 +1676,28 @@ class BTAPOptimization(BTAPAnalysis):
         # problem definition and we need to avoid thread variable issues.
         return len(self.analysis_config[':algorithm'][':minimize_objectives'])
 
-    # Convience variable to get the upper limit integers of all the variable as an ordered list.
-    def x_u(self):
-        # Set up return list.
-        x_u = []
-        # iterage throug each key in the encoder list.
-        for key in self.option_encoder:
-            # get the max value, which is the length minus 1 since the enumeration starts at 0.
-            x_u.append(len(self.option_encoder[key]['encoder'].classes_) - 1)
-        # Returns the list of max values.. Note this is not a class variable self like the others. That is because this method is used in the
-        # problem definition and we need to avoid thread variable issues.
-        return x_u
-
-    # This method takes an ordered list of ints and converts it to a run_options input file.
-    def generate_run_option_file(self, x):
-        # Create dict that will be the basis of the run_options.yml file.
-        run_options = {}
-        # Make sure options are the same length as the encoder.
-        if len(x) != len(self.option_encoder):
-            raise ('input is larger than the encoder was set to.')
-
-        # interate though both the encoder key and x input list at the same time
-        for key_name, x_option in zip(self.option_encoder.keys(), x):
-            # encoder/decoder for the building option key.
-            encoder = self.option_encoder[key_name]['encoder']
-            # get the actual value for the run_options
-            run_options[key_name] = str(encoder.inverse_transform([x_option])[0])
-        # Tell user the options through std out.
-        run_options[':scenario'] = 'optimize'
-        message = f"Running Option Variables {run_options}"
-        logging.info(message)
-        # Add the constants to the run options dict.
-        run_options.update(self.constants)
-        # Add the analysis setting to the run options dict.
-        run_options.update(self.analysis_config)
+# Class to manage lhs runs.
+class BTAPSamplingLHS(BTAPParametric):
+    def compute_scenarios(self):
+        # This method converts the options for each ecm as an int. This allows for strings and numbers to use the same
+        # approach for optimization.
+        self.create_options_encoder()
+        xl = [0] * self.number_of_variables()
+        xu = self.x_u()
+        items = list(map(lambda x, y: (x, y), xl, xu))
+        space = Space(list(map(lambda x, y: (x, y), xl, xu)))
+        lhs = Lhs(lhs_type="classic", criterion=None)
+        samples = lhs.generate(space.dimensions, n_samples=10)
+        for x in samples:
+            # Converts discrete integers contains in x argument back into values that btap understands. So for example. if x was a list
+            # of zeros, it would convert this to the dict of the first item in each list of the variables in the building_options
+            # section of the input yml file.
+            run_options = self.generate_run_option_file(x)
+            print(run_options)
+            self.scenarios.append(run_options)
+        return self.scenarios
 
 
-        # Returns the dict.. Note this is not a class variable self like the others. That is because this method is used in the
-        # problem definition and we need to avoid thread variable issues.
-        return run_options
 # Class to manage local postgres database.
 class BTAPDatabase:
     #Contructor sets up paths and database options.
@@ -2044,6 +2084,17 @@ def btap_batch(analysis_config_file=None, git_api_token=None):
 
     print(f"Compute Environment:{analysis[':analysis_configuration'][':compute_environment']}")
     print(f"Analysis Type:{analysis[':analysis_configuration'][':algorithm'][':type']}")
+
+    # If nsga2 optimization
+    if analysis[':analysis_configuration'][':algorithm'][':type'] == 'sampling-lhs':
+        opt = BTAPSamplingLHS(
+            # Input file.
+            analysis_config_file=analysis_config_file ,
+            git_api_token=git_api_token
+        )
+        return opt
+
+
 
     # If nsga2 optimization
     if analysis[':analysis_configuration'][':algorithm'][':type'] == 'nsga2':

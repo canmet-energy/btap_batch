@@ -19,5 +19,6 @@ dependencies:
   - dash-bootstrap-components
   - dash-table
   - dash-renderer
+  - scikit-optimize
   - pip:
       - pymoo

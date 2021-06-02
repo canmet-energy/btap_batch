@@ -24,7 +24,7 @@
   # Set to True if you wish to build the image from scratch with the below branches fresh,
   # pulling from the most recent branches indicated below. If set to false, it will use the last version built locally or
   # on AWS. This can save time (~10minute) if set to false when you have already built the image and expect no changes.
-  :nocache: true
+  :nocache: false
 
   # Branch from https://github.com/NREL/openstudio-standards. Typically 'nrcan' branch.
   :os_standards_branch: 'nrcan'
