@@ -974,6 +974,13 @@ class BTAPAnalysis():
     def get_threads(self):
         return multiprocessing.cpu_count() - 2
 
+    def get_local_osm_files(self):
+        osm_list = {}
+        for file in os.listdir(self.project_root):
+            if file.endswith(".osm"):
+                osm_list[os.path.splitext(file)[0]] = os.path.join(self.project_root, file)
+        return osm_list
+
     # Constructor will
     def __init__(self, analysis_config_file=None, git_api_token=None):
         self.credentials = None
@@ -1119,6 +1126,11 @@ class BTAPAnalysis():
             with open(local_run_option_file, 'w') as outfile:
                 yaml.dump(run_options, outfile, encoding=('utf-8'))
 
+            #Save custom osm file if required.
+            local_osm_dict = self.get_local_osm_files()
+            if run_options[':building_type'] in local_osm_dict:
+                #copy osm file into input folder.
+                shutil.copy(local_osm_dict[run_options[':building_type']], local_datapoint_input_folder)
 
             if run_options[':compute_environment'] == 'aws_batch':
 
