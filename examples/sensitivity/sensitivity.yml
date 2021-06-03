@@ -257,26 +257,23 @@
   ]
   :rotation_degrees: [
       'NECB_Default',
-      '45.0',
-      '90.0',
-      '135.0',
-      '180.0',
-      '225.0',
-      '270.0',
-      '315.0'
+      #'45.0',
+      #'90.0',
+      #'135.0',
+      #'180.0',
+      #'225.0',
+      #'270.0',
+      #'315.0'
   ]
   # Picking the worst orientation (major axis of building oriented N-S)
   :scale_x: [
       'NECB_Default',
-      '0.5'
   ]
   :scale_y: [
       'NECB_Default',
-      '0.5'
   ]
   :scale_z: [
       'NECB_Default',
-      '0.5'
   ]
   :pv_ground_type: [ # Two options: (1) nil/none/false/'NECB_Default', (2) 'add_pv_ground'
       'NECB_Default',

@@ -36,7 +36,7 @@
 
   # The name of the analysis. Can be a user friendly name. This is how it will appear on your local system or on the S3
   # bucket. for example on s3 the analysis run input/output files will be here. s3://834599497928/phylroy.lopez/example_analysis
-  :analysis_name: 'baseline_2020_03_27'
+  :analysis_name: 'parametric_example'
 
   # Currently fixed to true. DO NOT CHANGE
   :run_annual_simulation: true
@@ -77,10 +77,10 @@
   ]
   # The standard template to use for baseline assumptions.
   :template: [
-    #  'BTAPPRE1980',
-    #  'BTAP1980TO2010',
-    #   'NECB2011',
-    #   'NECB2015',
+       'BTAPPRE1980',
+       'BTAP1980TO2010',
+       'NECB2011',
+       'NECB2015',
        'NECB2017'
   ]
   :epw_file: [

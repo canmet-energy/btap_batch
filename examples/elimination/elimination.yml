@@ -53,11 +53,11 @@
     :type: elimination
 
 
-#########################################  BUILDING OPTIONS  ###########################################################
-# Building options
+#########################################  BUILDING Identity  ###########################################################
+# Building identity
 :building_options:
   :building_type: [
-    #  "SecondarySchool",
+    # "SecondarySchool",
     # "PrimarySchool",
     # "SmallOffice",
     # "MediumOffice",
@@ -68,10 +68,10 @@
     # "RetailStandalone",
     # "RetailStripmall",
     # "QuickServiceRestaurant",
-    # "FullServiceRestaurant",
+     "FullServiceRestaurant",
     # "MidriseApartment",
     # "HighriseApartment",
-     "LowriseApartment",
+    # "LowriseApartment",
     #"Hospital",
     #"Outpatient"
   ]
@@ -92,6 +92,9 @@
       #'CAN_ON_Toronto.Pearson.Intl.AP.716240_CWEC2016.epw',
       #'CAN_YT_Whitehorse.Intl.AP.719640_CWEC2016.epw'
   ]
+
+  #########################################  BUILDING Identity  ###########################################################
+  # Building identity
   :primary_heating_fuel: [
       "Electricity",
      # "NaturalGas",

@@ -1,74 +1,47 @@
-import src.btap_batch as btap_batch
+import unittest
+import src.btap_batch as btap
 import os
 import logging
 import yaml
 
-# Displays logging.. Set to INFO or DEBUG for a more verbose output.
-logging.basicConfig(level=logging.ERROR)
 
-# Your git token.. Do not commit this!
-git_api_token = os.environ['GIT_API_TOKEN']
 
-# Optimization data block.
-optimization = {
-    ":type": "nsga2",
-    ":population": 10,
-    ":n_generations": 2,
-    ":prob": 0.85,
-    ":eta": 3.0,
-    ":minimize_objectives": [
-        "cost_utility_neb_total_cost_per_m_sq",
-        "cost_equipment_total_cost_per_m_sq"]
-}
+class TestBTAPBatch(unittest.TestCase):
+    def setUp(self):
 
-# Set input file path.
-for compute_environment in [
-    'local',
-    #'aws_batch'
-]:
-    # Parametric Test
-    input_file = os.path.join(os.path.dirname(os.path.realpath(__file__)), '..', '..', 'examples', 'parametric',
-                              'example.yml')
-    test_name = f'test_parametric_{compute_environment}'
-    with open(input_file, 'r') as stream:
-        analysis = yaml.safe_load(stream)
-    analysis[':analysis_configuration'][':analysis_name'] = test_name
-    analysis[':analysis_configuration'][':kill_database'] = True
-    analysis[':analysis_configuration'][':compute_environment'] = compute_environment
-    new_file = os.path.join(os.path.dirname(os.path.realpath(__file__)), f'{test_name}.yml')
-    with open(new_file, 'w') as outfile:
-        yaml.dump(analysis, outfile)
-    analysis = btap_batch.btap_batch(analysis_config_file=new_file, git_api_token=git_api_token)
-    analysis.run()
+        # Displays logging.. Set to INFO or DEBUG for a more verbose output.
+        logging.basicConfig(level=logging.ERROR)
 
-    # Optimization Test
-    input_file = os.path.join(os.path.dirname(os.path.realpath(__file__)), '..', '..', 'examples', 'parametric',
-                              'options.yml')
-    test_name = f'test_optimization_{compute_environment}'
-    with open(input_file, 'r') as stream:
-        analysis = yaml.safe_load(stream)
-    analysis[':analysis_configuration'][':algorithm'] = optimization
-    analysis[':analysis_configuration'][':analysis_name'] = test_name
-    analysis[':analysis_configuration'][':kill_database'] = True
-    analysis[':analysis_configuration'][':compute_environment'] = compute_environment
-    new_file = os.path.join(os.path.dirname(os.path.realpath(__file__)), f'{test_name}.yml')
-    with open(new_file, 'w') as outfile:
-        yaml.dump(analysis, outfile)
-    analysis = btap_batch.btap_batch(analysis_config_file=new_file, git_api_token=git_api_token)
-    analysis.run()
+        # Your git token.. Do not commit this!
+        self.git_api_token = os.environ['GIT_API_TOKEN']
 
-    # Elimination Test
-    input_file = os.path.join(os.path.dirname(os.path.realpath(__file__)), '..', '..', 'examples', 'parametric',
-                              'options.yml')
-    test_name = f'test_elimination_{compute_environment}'
-    with open(input_file, 'r') as stream:
-        analysis = yaml.safe_load(stream)
-    analysis[':analysis_configuration'][':algorithm'] = optimization = {":type": "elimination"}
-    analysis[':analysis_configuration'][':analysis_name'] = test_name
-    analysis[':analysis_configuration'][':kill_database'] = True
-    analysis[':analysis_configuration'][':compute_environment'] = compute_environment
-    new_file = os.path.join(os.path.dirname(os.path.realpath(__file__)), f'{test_name}.yml')
-    with open(new_file, 'w') as outfile:
-        yaml.dump(analysis, outfile)
-    analysis = btap_batch.btap_batch(analysis_config_file=new_file, git_api_token=git_api_token)
-    analysis.run()
+    def run_analysis(self, input_file=None):
+        # Displays logging.. Set to INFO or DEBUG for a more verbose output.
+        logging.basicConfig(level=logging.ERROR)
+
+        # Your git token.. Do not commit this!
+        git_api_token = os.environ['GIT_API_TOKEN']
+
+        # Initialize the analysis object and run.
+        btap.btap_batch( analysis_config_file=input_file, git_api_token=git_api_token).run()
+
+    def test_elimination(self):
+        self.run_analysis(input_file=os.path.join(os.path.dirname(os.path.realpath(__file__)),'..','..','examples','elimination', 'elimination.yml'))
+    #
+    # def test_sensitivity(self):
+    #     self.run_analysis(input_file=os.path.join(os.path.dirname(os.path.realpath(__file__)),'..','..','examples','sensitivity', 'sensitivity.yml'))
+    #
+    # def test_optimization(self):
+    #     self.run_analysis(input_file=os.path.join(os.path.dirname(os.path.realpath(__file__)),'..','..','examples','optimization', 'optimization.yml'))
+    #
+    # def test_parametric(self):
+    #     self.run_analysis(input_file=os.path.join(os.path.dirname(os.path.realpath(__file__)),'..','..','examples','parametric', 'parametric.yml'))
+    #
+    # def test_sample_lhs(self):
+    #     self.run_analysis(input_file=os.path.join(os.path.dirname(os.path.realpath(__file__)),'..','..','examples','sample_lhs', 'sample_lhs.yml'))
+
+if __name__ == '__main__':
+    unittest.main()
+
+
+

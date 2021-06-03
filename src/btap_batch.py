@@ -800,7 +800,7 @@ class AWSBatch:
             time.sleep(wait_time)
             return self.describe_job_queues(job_queue_id, n=n + 1)
 
-    def describe_compute_environments(self, compute_environment_id):
+    def describe_compute_environments(self, compute_environment_id, n=0):
         try:
             return self.batch.describe_compute_environments(computeEnvironments=[compute_environment_id])
         except:
@@ -967,6 +967,7 @@ class Docker:
            )
 
         return result
+
 # Parent Analysis class.
 class BTAPAnalysis():
 
@@ -1165,7 +1166,9 @@ class BTAPAnalysis():
                 btap_data.update(run_options)
 
                 # Open the btap Data file in analysis dict.
-                btap_data.update(json.load(open(local_btap_data_path, 'r')))
+                file = open(local_btap_data_path, 'r')
+                btap_data.update(json.load(file))
+                file.close()
 
                 # save output url.
                 btap_data['datapoint_output_url'] = 'file:///' + os.path.join(local_datapoint_output_folder)
@@ -1259,9 +1262,6 @@ class BTAPAnalysis():
             session.close()
             raise FailedSimulationException(f'This scenario failed. dp_values= {results}')
         return results
-
-
-
 
     def initialize_aws_batch(self, git_api_token):
         # create aws image, set up aws compute env and create workflow queue.
@@ -2019,6 +2019,7 @@ class BTAPDatabase:
             message = "Uploading %s..." % target_path
             logging.info(message)
             S3().upload_file(excel_path, s3_bucket, target_path)
+        writer.close()
         return self.btap_data_df,self.failed_df
 
 
@@ -2026,7 +2027,6 @@ class BTAPDatabase:
     def kill_database(self):
         self.container.remove(force=True)
 
-################################################
 
 class BTAPElimination(BTAPParametric):
 
@@ -2160,7 +2160,9 @@ class PostProcessResults:
             return analysis_df
 
     def economics(self, analysis_df, baseline):
-        baseline_df = pd.read_excel(open(baseline, 'rb'), sheet_name='btap_data')
+        file = open(baseline, 'rb')
+        baseline_df = pd.read_excel(file, sheet_name='btap_data')
+        file.close()
         ceb_fuel_df = pd.read_csv(CER_UTILITY_COSTS)
         merge_columns = [':building_type', ':template', ':primary_heating_fuel', ':epw_file']
         df = pd.merge(analysis_df, baseline_df, how='left', left_on=merge_columns, right_on=merge_columns)
