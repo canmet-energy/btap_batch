@@ -15,8 +15,7 @@ import copy
 class Data:
     def __init__(self):
         # Enter in the full path to your Excel analysis output file.
-        OUTPUT_XLSX = r'C:\Users\plopez\test\btap_batch\src\resources\all_dressed.xlsx'
-
+        OUTPUT_XLSX = r'C:\Users\plopez\test\btap_batch\examples\output.xlsx'
         # Variable to store the para cords state.
         self.par_coord_data = None
         # Variable to store scatter graph inputs.
@@ -138,10 +137,9 @@ class Data:
     def get_opt_df(self):
         if not isinstance(self.opt_df, pd.DataFrame):
             self.opt_df = self.df.copy()
-            #filter by optimized runs.
-            self.opt_df = self.opt_df.loc[self.opt_df[':scenario'] == 'optimize']
+            # filter by optimized or parametric runs.
+            self.opt_df = self.opt_df.loc[self.opt_df[':algorithm_type'] == 'nsga2']
         return self.opt_df
-
 
     def get_pc_metrics(self):
         pc_metrics = []
@@ -372,7 +370,7 @@ class Figures:
         elim_df = copy.deepcopy(data.df)
         # Filter by :analysis_name = elimination
         # :scenario
-        elim_df = elim_df.loc[elim_df[':analysis_name'] == 'elimination_example']
+        elim_df = elim_df.loc[elim_df[':algorithm_type'] == 'elimination']
         if elim_df.empty:
             fig = px.bar()
             fig.layout.annotations = [dict(text='Elimination data not available.', showarrow=False)]
@@ -401,7 +399,7 @@ class Figures:
         import plotly.graph_objects as go
         elim_df = copy.deepcopy(data.df)
         # Filter by sensitivity
-        elim_df = elim_df.loc[elim_df[':analysis_name'] == 'sensitivity_example']
+        elim_df = elim_df.loc[elim_df[':algorithm_type'] == 'sensitivity']
         # If there is no sensitivity analysis.
         if elim_df.empty:
             fig = px.bar()
@@ -415,12 +413,12 @@ class Figures:
             ecm_df = elim_df.loc[elim_df[':scenario'] == ecm]
 
             fig = px.scatter(ecm_df,
-                y='cost_equipment_total_cost_per_m_sq',
-                x="baseline_energy_percent_better",
-                color=ecm,
-                title=ecm
-            )
-            #Update size of point/markers.
+                             y='cost_equipment_total_cost_per_m_sq',
+                             x="baseline_energy_percent_better",
+                             color=ecm,
+                             title=ecm
+                             )
+            # Update size of point/markers.
             fig.update_traces(marker={'size': 15})
             children.append(dcc.Graph(id=ecm, figure=fig))
 

@@ -1,6 +1,7 @@
 # Todo: Build Elimination and Sensitivity Analysis workflows to inform Optimization and Parametric Workflows.
 # Todo: Integrate with Pathways viewer.(Done. works with Excel output. Need to add measures)
 # Todo: Secure local postgre docker container with a better(random) password
+# docker kill btap_postgres
 import itertools
 import copy
 import multiprocessing
@@ -1389,6 +1390,7 @@ class BTAPAnalysis():
             run_options[key_name] = str(encoder.inverse_transform([x_option])[0])
         # Tell user the options through std out.
         run_options[':scenario'] = 'optimize'
+        run_options[':algorithm_type'] = self.analysis_config[':algorithm'][':type']
         message = f"Running Option Variables {run_options}"
         logging.info(message)
         # Add the constants to the run options dict.
@@ -1477,7 +1479,11 @@ class BTAPParametric(BTAPAnalysis):
             for item in items:
                 # Save that charecteristic to the options hash
                 run_options[item[0]] = item[1]
+            run_options[':algorithm_type'] = self.analysis_config[':algorithm'][':type']
             self.scenarios.append(run_options)
+            message = f'Number of Scenarios {len(self.scenarios)}'
+            logging.info(message)
+
         return self.scenarios
 
     def run_all_scenarios(self):
@@ -1720,6 +1726,66 @@ class BTAPSamplingLHS(BTAPParametric):
         return self.scenarios
 
 
+class BTAPIntegratedDesignProcess:
+    def __init__(self, analysis_config_file=None, git_api_token=None):
+        self.analysis_config_file = analysis_config_file
+        self.project_root = os.path.dirname(analysis_config_file)
+        self.git_api_token = git_api_token
+
+    def run(self):
+        # Create Database
+        database = BTAPDatabase()
+
+        # Load Analysis File into variable
+        if not os.path.isfile(self.analysis_config_file):
+            logging.error(f"could not find analysis input file at {self.analysis_config_file}. Exiting")
+            exit(1)
+        # Open the yaml in analysis dict.
+        with open(self.analysis_config_file, 'r') as stream:
+            analysis = yaml.safe_load(stream)
+        # Run elimination
+        # Change analysis type and options
+        config = copy.deepcopy(analysis)
+        config[':analysis_configuration'][':algorithm'][':type'] = 'elimination'
+        config[':analysis_configuration'][':analysis_name'] = config[':analysis_configuration'][
+                                                                  ':analysis_name'] + '_elim'
+        config[':analysis_configuration'][':kill_database'] = False
+
+        config_file_name = os.path.join(self.project_root, 'elimination.yml')
+        with open(config_file_name, 'w') as file:
+            yaml.dump(config, file)
+        bb = BTAPElimination(analysis_config_file=config_file_name, git_api_token=self.git_api_token)
+        print("running elimination stage")
+        bb.run()
+        # Run sensitivity
+        # Change analysis type and options
+        config = copy.deepcopy(analysis)
+        config[':analysis_configuration'][':algorithm'][':type'] = 'sensitivity'
+        config[':analysis_configuration'][':analysis_name'] = config[':analysis_configuration'][
+                                                                  ':analysis_name'] + '_sens'
+        config[':analysis_configuration'][':kill_database'] = False
+        config[':analysis_configuration'][':nocache'] = False
+        config_file_name = os.path.join(self.project_root, 'sensitivity.yml')
+        with open(config_file_name, 'w') as file:
+            yaml.dump(config, file)
+        bb = BTAPSensitivity(analysis_config_file=config_file_name, git_api_token=self.git_api_token)
+        bb.run()
+        # Run optimization
+        # Change analysis type and options
+        config = copy.deepcopy(analysis)
+        config[':analysis_configuration'][':algorithm'][':type'] = 'nsga2'
+        config[':analysis_configuration'][':nocache'] = False
+        config[':analysis_configuration'][':analysis_name'] = config[':analysis_configuration'][
+                                                                  ':analysis_name'] + '_opt'
+        config_file_name = os.path.join(self.project_root, 'optimization.yml')
+        with open(config_file_name, 'w') as file:
+            yaml.dump(config, file)
+        bb = BTAPOptimization(analysis_config_file=config_file_name, git_api_token=self.git_api_token)
+        bb.run()
+        # Output results from all analysis into
+        database.generate_output_files(analysis_id=None, output_folder=self.project_root)
+
+
 # Class to manage local postgres database.
 class BTAPDatabase:
     #Contructor sets up paths and database options.
@@ -1784,6 +1850,7 @@ class BTAPDatabase:
     def create_btap_data_table(self):
         sql_command = '''CREATE TABLE btap_data (
                     index BIGINT, 
+                    ":algorithm_type" TEXT,
                     ":no_of_threads" TEXT,
                     ":dcv_type" TEXT, 
                     ":lights_type" TEXT, 
@@ -2031,7 +2098,8 @@ class BTAPDatabase:
             message = "Uploading %s..." % target_path
             logging.info(message)
             S3().upload_file(excel_path, s3_bucket, target_path)
-        writer.close()
+
+
         return self.btap_data_df,self.failed_df
 
 
@@ -2065,11 +2133,13 @@ class BTAPElimination(BTAPParametric):
         #Replace key value with elimination value.
         for elimination_parameter in self.elimination_parameters:
             run_option = copy.deepcopy(building_options)
+            run_option[':algorithm_type'] = self.analysis_config[':algorithm'][':type']
             if elimination_parameter[0] != ':reference':
                 run_option[elimination_parameter[0]] = elimination_parameter[1]
             run_option[':scenario'] = elimination_parameter[0]
             self.scenarios.append(run_option)
-        print(self.scenarios)
+        message = f'Number of Scenarios {len(self.scenarios)}'
+        logging.info(message)
         return self.scenarios
 
 
@@ -2085,10 +2155,13 @@ class BTAPSensitivity(BTAPParametric):
             if isinstance(value, list) and len(value) > 1:
                 for item in value:
                     run_option = copy.deepcopy(default_options)
+                    run_option[':algorithm_type'] = self.analysis_config[':algorithm'][':type']
                     run_option[key] = item
                     run_option[':scenario'] = key
                     #append scenario to list.
                     self.scenarios.append(run_option)
+        message = f'Number of Scenarios {len(self.scenarios)}'
+        logging.info(message)
         return self.scenarios
 
 
@@ -2142,6 +2215,13 @@ def btap_batch(analysis_config_file=None, git_api_token=None):
         return bb
     elif analysis[':analysis_configuration'][':algorithm'][':type'] == 'sensitivity':
         bb = BTAPSensitivity(
+            # Input file.
+            analysis_config_file=analysis_config_file,
+            git_api_token=git_api_token
+        )
+        return bb
+    elif analysis[':analysis_configuration'][':algorithm'][':type'] == 'idp':
+        bb = BTAPIntegratedDesignProcess(
             # Input file.
             analysis_config_file=analysis_config_file,
             git_api_token=git_api_token
