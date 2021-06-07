@@ -111,7 +111,7 @@ To run the optimization, follow the steps explained above under 'Parametric Anal
 set PYTHONPATH=%cd% && python examples\optimization\optimization.py
 ```
 
-# Elimination Analysis
+## Elimination Analysis
 BTAP allows you to quickly perform an elimination analysis. This will set various aspects of the building to effectively
  'zero' to examine the maximum saving theoretically possible. For example one simulation will set the roof insulation to a very large number
  to while keeping the rest of the building the same. This will show the maximum possible savings from roof insulation. We currents examine these
@@ -136,14 +136,14 @@ as the parametric analysis. The key difference is the :analysis_configuration->:
 'elimination'. Note: It will use the first value in each measure in the YML file as the basecase..so you can customized the 
 basecase to something other than 'NECB_Default' if you wish. 
 
-# Sensitivity Analysis
+## Sensitivity Analysis
 BTAP allows you to quickly perform an sensitivity analysis on all the measures available. It will go through each measure value
 and change only those values, this effectively creates a sensitivity run for each measure. 
 
 To run an elimination analysis, you can review the examples/elimination folder. You run the analysis in the same manner 
 as the parametric analysis. The key difference is the :analysis_configuration->:algorithm->:type is set to 'sensitivity'.
 
-# Latin Hypercube Sampling (LHS)
+## Latin Hypercube Sampling (LHS)
 There are times that a sampling of the solution space is required to inform machine learning algorithms. BTAPBatch 
 supports the 
 [Scipy implementation](https://scikit-optimize.github.io/stable/auto_examples/sampler/initial-sampling-method.html) the
@@ -157,7 +157,7 @@ supports the
 
 
 
-# Custom OSM file. 
+## Custom OSM file. 
 There are some instances where we would like to perform an analysis on an osm file not in the default btap library. In 
 these situations you can load a local file to the analysis. You simple add the osm file(s) that you wish to examine in 
 the same folder as the py and yml file. Then you can use the custom osm file by identifying it in the
