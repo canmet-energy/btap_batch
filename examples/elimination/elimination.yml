@@ -46,7 +46,7 @@
   :enable_costing: true
 
   # Currently fixed to false for multi-analysis. This allows multi-analysis to be saved to the same database.
-  :kill_database: false
+  :kill_database: true
 
 ###########################################     ALGORITHM        #######################################################
   :algorithm:
