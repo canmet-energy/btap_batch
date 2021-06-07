@@ -4,8 +4,6 @@ import os
 import logging
 import yaml
 
-
-
 class TestBTAPBatch(unittest.TestCase):
     def setUp(self):
 
@@ -27,18 +25,18 @@ class TestBTAPBatch(unittest.TestCase):
 
     def test_elimination(self):
         self.run_analysis(input_file=os.path.join(os.path.dirname(os.path.realpath(__file__)),'..','..','examples','elimination', 'elimination.yml'))
-    #
-    # def test_sensitivity(self):
-    #     self.run_analysis(input_file=os.path.join(os.path.dirname(os.path.realpath(__file__)),'..','..','examples','sensitivity', 'sensitivity.yml'))
-    #
-    # def test_optimization(self):
-    #     self.run_analysis(input_file=os.path.join(os.path.dirname(os.path.realpath(__file__)),'..','..','examples','optimization', 'optimization.yml'))
-    #
-    # def test_parametric(self):
-    #     self.run_analysis(input_file=os.path.join(os.path.dirname(os.path.realpath(__file__)),'..','..','examples','parametric', 'parametric.yml'))
-    #
-    # def test_sample_lhs(self):
-    #     self.run_analysis(input_file=os.path.join(os.path.dirname(os.path.realpath(__file__)),'..','..','examples','sample_lhs', 'sample_lhs.yml'))
+
+    def test_sensitivity(self):
+        self.run_analysis(input_file=os.path.join(os.path.dirname(os.path.realpath(__file__)),'..','..','examples','sensitivity', 'sensitivity.yml'))
+
+    def test_optimization(self):
+        self.run_analysis(input_file=os.path.join(os.path.dirname(os.path.realpath(__file__)),'..','..','examples','optimization', 'optimization.yml'))
+
+    def test_parametric(self):
+        self.run_analysis(input_file=os.path.join(os.path.dirname(os.path.realpath(__file__)),'..','..','examples','parametric', 'parametric.yml'))
+
+    def test_sample_lhs(self):
+        self.run_analysis(input_file=os.path.join(os.path.dirname(os.path.realpath(__file__)),'..','..','examples','sample-lhs', 'sample-lhs.yml'))
 
 if __name__ == '__main__':
     unittest.main()
