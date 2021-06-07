@@ -26,10 +26,10 @@
   :nocache: false
 
   # Branch from https://github.com/NREL/openstudio-standards. Typically 'nrcan' branch.
-  :os_standards_branch: 'nrcan_320'
+  :os_standards_branch: 'nrcan'
 
   # Branch from https://github.com/canmet-energy/btap_costing. Typically 'master'
-  :btap_costing_branch: 'nrcan_320'
+  :btap_costing_branch: 'master'
 
   # DO NOT CHANGE: Openstudio Version only 3.0.1 available
   :os_version: '3.0.1'

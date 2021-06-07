@@ -53,7 +53,7 @@ run millions of simulations on your 2 core laptop). Ensure that the ':compute_en
 2. Run the example.py file from the root of the btap_batch project folder. On Windows you will need to set the 
 PYTHONPATH to that folder. Please ensure that the btap_batch environment is active. 
 ```
-set PYTHONPATH=%cd% && python examples\parametric\example.py
+set PYTHONPATH=%cd% && python examples\parametric\parametric.py
 ```
 3. Simulation should start to run. A folder will be created in parametric folder with the variable name you set 
 ':analysis_name' in the yml file. It will create a unique folder under this based on a random UUID for this analysis. In 
@@ -66,7 +66,7 @@ run_options.yml file. This contains the selections created for that particular r
 * The output folder contains full output runs for all the local simulation. This also contains the output.xlsx file 
 with high level information from all the simulations. 
 
-## Parametric AWS
+## Using Amazon AWS for analysis
 1. Ensure you are not connected to a VPN and do not connect while running simulations.
 2. Change ':compute_environment' to aws_batch (note that ':compute_environment' is in example.yml analysis file in the 'example' folder).
 3. Update your AWS credentials to ensure it is up to date through your AWS Account -> btap-dev -> Command line and programmatic Access. Copy the Text in 'Option 2'.
@@ -75,7 +75,7 @@ with high level information from all the simulations.
 5. Run the example.py file from the root of the btap_batch project folder. On Windows you will need to set the 
 PYTHONPATH to that folder. Please ensure that the btap_batch environment is active. 
 ```
-set PYTHONPATH=%cd% && python examples\parametric\example.py
+set PYTHONPATH=%cd% && python examples\parametric\parametric.py
 ```
 
 The output of the runs is not stored all locally, but on the S3 Bucket,  the ':analysis_name' you chose and the analysis_id 
@@ -92,35 +92,80 @@ The excel output will be saved on your local machine in the output folder for th
 :kill_database was set to false. The database may still be running on your local system. Just in case, execute this command. 
 
 
-## Optimization
-To perform an optimization run. 
-1. Replace the ':algorithm parametric' of information in the example.yml file with this block.
-```
-  :algorithm:
-    :type: nsga2 
-    :population: 100
-    :n_generations: 5
-    :prob: 0.85
-    :eta: 3.0
-    :minimize_objectives: [
-#       "cost_utility_ghg_total_kg_per_m_sq",
-#       "energy_eui_total_gj_per_m_sq",
-        "cost_utility_neb_total_cost_per_m_sq",
-        "cost_equipment_total_cost_per_m_sq"
-    ]
-```
-The algorithm type is always nsga2. The number of population and generations determin how big the simulation will be. 
-For example,  the above optimization will run 100 individuals for 5 generations, for a possible maximum of 500. 
+## Optimization 
+To perform an optimization run you can review the example contained in examples/optimiztion. The .yml file contains all the 
+options for the analysis. 
 
-The minimized_objectives can be anything in the btap_data.json file. You can view the output of a btap_data.json file 
+* The :analysis_configuration->:algorithm->:type should be set to nsga2.
+* The :analysis_configuration->:algorithm->:population should be set to the number of threads that you have available on your system. 
+* The :analysis_configuration->:algorithm->:n_generations determine how many generations to run. This defines how long your simulation will take n* time to run a single simulaiton. 
+* The :analysis_configuration->:algorithm->:prob is set to 0.85. Please see pymoo docs if you wish to change this. 
+* The :analysis_configuration->:algorithm->:eta is set to 3.0. Please see pymoo docs if you wish to change this.  
+* The :analysis_configuration->:algorithm->:minimize_objectives: is set to  [ "energy_eui_total_gj_per_m_sq","cost_equipment_total_cost_per_m_sq"] for most optimization problems. The :minimized_objectives can be anything in the btap_data.json file. You can view the output of a btap_data.json file 
 from a local parametric run. However most of the time the above variables would be sufficient to optimize building designs.
 
 For more details on the nsga algorithm please visit the pymoo website. 
 
 To run the optimization, follow the steps explained above under 'Parametric Analysis Local Machine'or 'Parametric AWS' depending on whether you run locally or on cloud, except for Step 5 for which, run the below file:
 ```
-set PYTHONPATH=%cd% && python examples\multi_analyses\multi_analyses.py
+set PYTHONPATH=%cd% && python examples\optimization\optimization.py
 ```
+
+# Elimination Analysis
+BTAP allows you to quickly perform an elimination analysis. This will set various aspects of the building to effectively
+ 'zero' to examine the maximum saving theoretically possible. For example one simulation will set the roof insulation to a very large number
+ to while keeping the rest of the building the same. This will show the maximum possible savings from roof insulation. We currents examine these
+ measures as part of elimination. 
+ ```json
+[
+    [':electrical_loads_scale', '0.0'],
+    [':infiltration_scale', '0.0'],
+    [':lights_scale', '0.0'],
+    [':oa_scale', '0.0'],
+    [':occupancy_loads_scale', '0.0'],
+    [':ext_wall_cond', '0.01'],
+    [':ext_roof_cond', '0.01'],
+    [':ground_floor_cond', '0.01'],
+    [':ground_wall_cond', '0.01'],
+    [':fixed_window_cond', '0.01'],
+    [':fixed_wind_solar_trans', '0.01']
+]
+```
+To run an elimination analysis, you can review the examples/elimination folder and yml file as a starting point. You run the analysis in the same manner 
+as the parametric analysis. The key difference is the :analysis_configuration->:algorithm->:type is set to 
+'elimination'. Note: It will use the first value in each measure in the YML file as the basecase..so you can customized the 
+basecase to something other than 'NECB_Default' if you wish. 
+
+# Sensitivity Analysis
+BTAP allows you to quickly perform an sensitivity analysis on all the measures available. It will go through each measure value
+and change only those values, this effectively creates a sensitivity run for each measure. 
+
+To run an elimination analysis, you can review the examples/elimination folder. You run the analysis in the same manner 
+as the parametric analysis. The key difference is the :analysis_configuration->:algorithm->:type is set to 'sensitivity'.
+
+# Latin Hypercube Sampling (LHS)
+There are times that a sampling of the solution space is required to inform machine learning algorithms. BTAPBatch 
+supports the 
+[Scipy implementation](https://scikit-optimize.github.io/stable/auto_examples/sampler/initial-sampling-method.html) the
+ parameters required for LHS are: 
+ * :analysis_configuration->:algorithm->:type is 'sampling-lhs'
+ * :analysis_configuration->:algorithm->:n_samples: is the total number of samples. 
+ * :analysis_configuration->:algorithm->:lhs_type is can be 'classic', 'centered','maximin', 'correlation','ratio'.
+ * :analysis_configuration->:algorithm->:random_seed can in any integer. Used to have consistent random numbers. 
+ 
+ The analysis will use all local cpu cores or any AWS batch resources available to run. 
+
+
+
+# Custom OSM file. 
+There are some instances where we would like to perform an analysis on an osm file not in the default btap library. In 
+these situations you can load a local file to the analysis. You simple add the osm file(s) that you wish to examine in 
+the same folder as the py and yml file. Then you can use the custom osm file by identifying it in the
+ :building_options->:building_type field in the yml file. Note to not add the .osm to the building type name. See the 
+example in examples/custom_osm where we have added test1 and test2 osm file. 
+
+The custom osm file must be defined using NECB2011 spacetypes. 
+
 
 ## Monitoring the Analysis
 While the program will output items to the console, there are a few other ways to monitor the results if you wish 
@@ -137,7 +182,14 @@ being used in the EC2 dashboard.
 ### PowerBI / Tableau
 Through the postgresSQL server you can connect and update live data using either of these tools. 
 
-## How to update input arguments
+# Development Notes
+
+## How to update outputs from btap_data.json to btap_batch. 
+BTAPBatch will complain if it see data in btap_data.json it does not recognize. Please follow the below steps when adding 
+information to btap_data.json top level. Tables in btap_data.json are ignored by BTAPBatch at the moment. 
 1.	Add columns to the sql database schema with the input argument name for each argument in 'src/btap_batch.py'. Note the convention to have a ':' for input variables. They should be all "TEXT" type.
 2.	Update the example input files of 'examples/multi_analyses/options.yml' and 'examples/parametric/example.yml' to include the new input arguments. 
 3.	Run the btap_batch tests. This will run both locally and on AWS. To run only locally or on AWS, comment the appropriate line under the 'compute_environment' loop in the test file of 'src/test/test_btap_batch.py'.
+
+## Testing
+Please run the test in btap_batch\src\test\test_btap_batch.py to ensure the code functions as expected after any development.

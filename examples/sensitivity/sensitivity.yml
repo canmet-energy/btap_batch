@@ -26,7 +26,7 @@
   :nocache: false
 
   # Branch from https://github.com/NREL/openstudio-standards. Typically 'nrcan' branch.
-  :os_standards_branch: 'nrcan_302'
+  :os_standards_branch: 'nrcan'
 
   # Branch from https://github.com/canmet-energy/btap_costing. Typically 'master'
   :btap_costing_branch: 'master'
