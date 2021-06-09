@@ -1015,6 +1015,10 @@ class BTAPAnalysis():
         # Store analysis config and building_options.
         self.analysis_config = analysis[':analysis_configuration']
         self.building_options = analysis[':building_options']
+        
+        # Check user selected public version.. if so force costing to be turned off.
+        if self.analysis_config[':image_name'] == 'btap_public_cli':
+            self.analysis_config[':enable_costing'] = False
 
         # Set up project root.
         self.project_root = os.path.dirname(analysis_config_file)
