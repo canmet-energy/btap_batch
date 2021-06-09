@@ -3,7 +3,7 @@
 :analysis_configuration:
 
   # BTAP Batch version
-  :btap_batch_version: 1.0.002
+  :btap_batch_version: 1.0.003
 
   # DO NOT CHANGE
   :no_of_threads:

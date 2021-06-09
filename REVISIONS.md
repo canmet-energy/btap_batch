@@ -1,3 +1,14 @@
+###2020-02-23: 1.0.003
+Features Added. 
+* Preliminary support for peak, PH, tedi and meui metrics
+* added ability to do run with opensource aspect only. The new image_name btap_public_cli will run everything in standards
+but will not run any costing. 
+* reorganized example to have a folder for each type. Elimination, Sensitivity and IDP have been created.
+* Added latin hypercube sampling workflow similar to NREL's code. 
+* updated the dashboard similar to NREL's code. 
+
+
+
 ###2020-02-23: 1.0.002
 After comments from team yesterday added new features.
 * Reduced DESIRED_AWS_VCPUS for aws_batch from 50 to the default (0). It will take slightly longer to ramp up the cluster. But will save money for smaller runs. 
