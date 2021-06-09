@@ -19,12 +19,12 @@
 
 
   # DO NOT CHANGE: Docker image to build and use. Contains standards and btap_costing.
-  :image_name: 'btap_private_cli'
+  :image_name: 'btap_public_cli'
 
   # Set to True if you wish to build the image from scratch with the below branches fresh,
   # pulling from the most recent branches indicated below. If set to false, it will use the last version built locally or
   # on AWS. This can save time (~10minute) if set to false when you have already built the image and expect no changes.
-  :nocache: false
+  :nocache: true
 
   # Branch from https://github.com/NREL/openstudio-standards. Typically 'nrcan' branch.
   :os_standards_branch: 'nrcan'
@@ -42,8 +42,8 @@
   # Currently fixed to true. DO NOT CHANGE
   :run_annual_simulation: true
 
-  # Currently fixed to true. DO NOT CHANGE
-  :enable_costing: true
+  # If using btap_public_cli as the image.. this must be set to false.
+  :enable_costing: false
 
   # Currently fixed to false for multi-analysis. This allows multi-analysis to be saved to the same database.
   :kill_database: true

@@ -939,6 +939,8 @@ class Docker:
             local_output_folder = os.path.join(self.dir_path, 'output')
 
 
+
+
         # Run the simulation
         jobName = f"{run_options[':analysis_id']}-{run_options[':datapoint_id']}"
         message = f"Submitting job {jobName}"
@@ -946,7 +948,7 @@ class Docker:
         print(message)
         result = self.docker_client.containers.run(
                                                     # Local image name to use.
-                                                    image='btap_private_cli',
+                                                    image=run_options[':image_name'],
 
                                                     # Command issued to container.
                                                     command='bundle exec ruby btap_cli.rb',
@@ -1101,6 +1103,7 @@ class BTAPAnalysis():
             run_options[':enable_costing'] = self.analysis_config[':enable_costing']
             run_options[':compute_environment'] = self.analysis_config[':compute_environment']
             run_options[':s3_bucket'] = self.analysis_config[':s3_bucket']
+            run_options[':image_name'] = self.analysis_config[':image_name']
 
             #S3 paths. Set base to username used in aws.
             if self.analysis_config[':compute_environment'] == 'aws_batch':
@@ -1913,7 +1916,9 @@ class BTAPDatabase:
                     ":enable_costing" BOOLEAN, 
                     ":datapoint_id" TEXT, 
                     ":kill_database" BOOLEAN,  
-                    ":scenario" TEXT,                  
+                    ":scenario" TEXT,
+                    heating_peak_w_per_m_sq FLOAT(53),
+                    cooling_peak_w_per_m_sq FLOAT(53),                  
                     bc_step_code_tedi_kwh_per_m_sq FLOAT(53),
                     bc_step_code_meui_kwh_per_m_sq FLOAT(53),
                     bldg_conditioned_floor_area_m_sq FLOAT(53), 
