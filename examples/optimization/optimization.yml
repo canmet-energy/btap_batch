@@ -3,7 +3,7 @@
 # Run configuration
 :analysis_configuration:
   # BTAP Batch version
-  :btap_batch_version: 1.0.002
+  :btap_batch_version: 1.0.003
 
   # DO NOT CHANGE
   :no_of_threads:
@@ -30,14 +30,14 @@
   :os_standards_branch: 'nrcan'
 
   # Branch from https://github.com/canmet-energy/btap_costing. Typically 'master'
-  :btap_costing_branch: 'production'
+  :btap_costing_branch: 'master'
 
   # DO NOT CHANGE: Openstudio Version only 3.0.1 available
   :os_version: '3.0.1'
 
   # The name of the analysis. Can be a user friendly name. This is how it will appear on your local system or on the S3
   # bucket. for example on s3 the analysis run input/output files will be here. s3://834599497928/phylroy.lopez/example_analysis
-  :analysis_name: 'posterity_mid_rise_gas_montreal'
+  :analysis_name: 'optimization_example'
 
   # Currently fixed to true. DO NOT CHANGE
   :run_annual_simulation: true
@@ -46,13 +46,13 @@
   :enable_costing: true
 
   # Currently fixed to false for multi-analysis. This allows multi-analysis to be saved to the same database.
-  :kill_database: false
+  :kill_database: true
 
 ###########################################     ALGORITHM        #######################################################
   :algorithm:
     :type: nsga2 # nsga2 , parametric
-    :population: 175
-    :n_generations: 3
+    :population: 5
+    :n_generations: 2
     :prob: 0.85
     :eta: 3.0
     :minimize_objectives: [
@@ -78,10 +78,10 @@
     # "RetailStandalone",
     # "RetailStripmall",
     # "QuickServiceRestaurant",
-    # "FullServiceRestaurant",
-     "MidriseApartment",
-     "HighriseApartment",
-     "LowriseApartment",
+     "FullServiceRestaurant",
+    # "MidriseApartment",
+    # "HighriseApartment",
+    # "LowriseApartment",
     #"Hospital",
     #"Outpatient"
   ]
@@ -104,7 +104,7 @@
   ]
   :primary_heating_fuel: [
       "Electricity",
-      "NaturalGas",
+     # "NaturalGas",
      # "FuelOilNo2"
   ]
   :dcv_type: [
@@ -126,8 +126,8 @@
                        'add_daylighting_controls'
   ]
   :ecm_system_name: [ 'NECB_Default',
-       #               'HS09_CCASHPSys',
-       #               'HS08_VRFZonal'
+                      'HS09_CCASHPSys',
+                      'HS08_VRFZonal'
   ]
 
   :erv_package: [ 'NECB_Default',

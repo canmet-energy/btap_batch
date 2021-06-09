@@ -1,7 +1,9 @@
 # Todo: Build Elimination and Sensitivity Analysis workflows to inform Optimization and Parametric Workflows.
 # Todo: Integrate with Pathways viewer.(Done. works with Excel output. Need to add measures)
 # Todo: Secure local postgre docker container with a better(random) password
+# docker kill btap_postgres
 import itertools
+import copy
 import multiprocessing
 import concurrent.futures
 import shutil
@@ -37,6 +39,14 @@ from pymoo.visualization.scatter import Scatter
 # seed the pseudorandom number generator
 from random import seed
 from random import random
+import numpy as np
+np.random.seed(123)
+import matplotlib.pyplot as plt
+from skopt.space import Space
+from skopt.sampler import Sobol
+from skopt.sampler import Lhs
+import traceback
+
 seed(1)
 
 
@@ -714,7 +724,6 @@ class AWSBatch:
         jobId = submitJobResponse['jobId']
         message = f"Submitted job_id {jobId} with job name {jobName} to the job queue {self.job_queue_id}"
         logging.info(message)
-        print(message)
         running = False
         startTime = 0
         logGroupName = '/aws/batch/job'
@@ -792,7 +801,7 @@ class AWSBatch:
             time.sleep(wait_time)
             return self.describe_job_queues(job_queue_id, n=n + 1)
 
-    def describe_compute_environments(self, compute_environment_id):
+    def describe_compute_environments(self, compute_environment_id, n=0):
         try:
             return self.batch.describe_compute_environments(computeEnvironments=[compute_environment_id])
         except:
@@ -843,8 +852,6 @@ class Docker:
     def build_docker_image(self, nocache=False):
         # Set timer to track how long it took to build.
         start = time.time()
-
-        print(f'Building Image:{self.image_name} will take ~10m ')
         # add info to logger.
         logging.info(f"Building image:{self.image_name}")
         logging.info(f"OS Version:{self.os_version}")
@@ -864,21 +871,41 @@ class Docker:
         }
 
         # Will build image if does not already exist or if nocache is set true.
-        self.image, json_log = self.docker_client.images.build(
-                                                                # Path to docker file.
-                                                                path=self.dockerfile,
-                                                                # Image name
-                                                                tag=self.image_name,
-                                                                # nocache flag to build use cache or build from scratch.
-                                                                nocache=self.nocache,
-                                                                # ENV variables used in Dockerfile.
-                                                                buildargs=buildargs
-                                                               )
 
-        # let use know that the image built sucessfully.
-        message = f'Image built in {time.time() - start}'
-        logging.info(message)
-        print(message)
+        # Get image if it exists.
+        image = None
+        try:
+            image = self.docker_client.images.get(name=self.image_name)
+        except docker.errors.ImageNotFound as err:
+            image = None
+
+        if image == None or self.nocache == True:
+            message = f'Building Image:{self.image_name} will take ~10m '
+            logging.info(message)
+            print(message)
+            image, json_log = self.docker_client.images.build(
+                                                                    # Path to docker file.
+                                                                    path=self.dockerfile,
+                                                                    # Image name
+                                                                    tag=self.image_name,
+                                                                    # nocache flag to build use cache or build from scratch.
+                                                                    nocache=self.nocache,
+                                                                    # ENV variables used in Dockerfile.
+                                                                    buildargs=buildargs
+                                                                   )
+            for chunk in json_log:
+                if 'stream' in chunk:
+                    for line in chunk['stream'].splitlines():
+                        logging.debug(line)
+            # let use know that the image built sucessfully.
+            message = f'Image built in {(time.time() - start)/60}m'
+            logging.info(message)
+            print(message)
+        else:
+            message = "Using existing image."
+            logging.info(message)
+            print(message)
+        self.image = image
 
         # return image.. also is a part of the object.
         return self.image
@@ -912,6 +939,8 @@ class Docker:
             local_output_folder = os.path.join(self.dir_path, 'output')
 
 
+
+
         # Run the simulation
         jobName = f"{run_options[':analysis_id']}-{run_options[':datapoint_id']}"
         message = f"Submitting job {jobName}"
@@ -919,7 +948,7 @@ class Docker:
         print(message)
         result = self.docker_client.containers.run(
                                                     # Local image name to use.
-                                                    image='btap_private_cli',
+                                                    image=run_options[':image_name'],
 
                                                     # Command issued to container.
                                                     command='bundle exec ruby btap_cli.rb',
@@ -941,15 +970,23 @@ class Docker:
            )
 
         return result
+
 # Parent Analysis class.
 class BTAPAnalysis():
 
     def get_threads(self):
         return multiprocessing.cpu_count() - 2
 
+    def get_local_osm_files(self):
+        osm_list = {}
+        for file in os.listdir(self.project_root):
+            if file.endswith(".osm"):
+                osm_list[os.path.splitext(file)[0]] = os.path.join(self.project_root, file)
+        return osm_list
+
     # Constructor will
     def __init__(self, analysis_config_file=None, git_api_token=None):
-        self.credentials = AWSCredentials()
+        self.credentials = None
         self.aws_batch = None
         self.docker = None
         self.database = None
@@ -1066,9 +1103,11 @@ class BTAPAnalysis():
             run_options[':enable_costing'] = self.analysis_config[':enable_costing']
             run_options[':compute_environment'] = self.analysis_config[':compute_environment']
             run_options[':s3_bucket'] = self.analysis_config[':s3_bucket']
+            run_options[':image_name'] = self.analysis_config[':image_name']
 
             #S3 paths. Set base to username used in aws.
             if self.analysis_config[':compute_environment'] == 'aws_batch':
+                self.credentials = AWSCredentials()
                 s3_analysis_folder = os.path.join(self.credentials.user_name, run_options[':analysis_name'], run_options[':analysis_id']).replace('\\', '/')
                 s3_datapoint_input_folder = os.path.join(s3_analysis_folder, 'input', run_options[':datapoint_id']).replace('\\', '/')
                 s3_output_folder = os.path.join(s3_analysis_folder, 'output').replace('\\', '/')
@@ -1091,6 +1130,11 @@ class BTAPAnalysis():
             with open(local_run_option_file, 'w') as outfile:
                 yaml.dump(run_options, outfile, encoding=('utf-8'))
 
+            #Save custom osm file if required.
+            local_osm_dict = self.get_local_osm_files()
+            if run_options[':building_type'] in local_osm_dict:
+                #copy osm file into input folder.
+                shutil.copy(local_osm_dict[run_options[':building_type']], local_datapoint_input_folder)
 
             if run_options[':compute_environment'] == 'aws_batch':
 
@@ -1138,7 +1182,9 @@ class BTAPAnalysis():
                 btap_data.update(run_options)
 
                 # Open the btap Data file in analysis dict.
-                btap_data.update(json.load(open(local_btap_data_path, 'r')))
+                file = open(local_btap_data_path, 'r')
+                btap_data.update(json.load(file))
+                file.close()
 
                 # save output url.
                 btap_data['datapoint_output_url'] = 'file:///' + os.path.join(local_datapoint_output_folder)
@@ -1233,9 +1279,6 @@ class BTAPAnalysis():
             raise FailedSimulationException(f'This scenario failed. dp_values= {results}')
         return results
 
-
-
-
     def initialize_aws_batch(self, git_api_token):
         # create aws image, set up aws compute env and create workflow queue.
         aws_batch = AWSBatch(
@@ -1281,12 +1324,95 @@ class BTAPAnalysis():
         # Load baseline run data into dataframe.
         # Add eui_reference to analsys_df
 
+    # This method creates a encoder and decoder of the simulation options to integers.  The ML and AI routines use float,
+    # conventionally for optimization problems. Since most of the analysis that we do are discrete options for designers
+    # we need to convert all inputs, string, float or int, into  to enumerated integer representations for the optimizer to
+    # work.
+    def create_options_encoder(self):
+        # Determine options the users defined and contants and variable for the analysis. Options / lists that the user
+        # provided only one options (a list of size 1) in the analysis input file are to be consider constants in the simulation.
+        # this may simplify the calculations that the optimizer has to conduct.
+
+        # Create a dict of the constants.
+        self.constants = {}
+        # Create a dict of encoders/decoders.
+        self.option_encoder = {}
+
+        # Keep track of total possible scenarios to tell user.
+        self.number_of_possible_designs = 1
+        # Interate through all the building_options contained in the analysis input yml file.
+        for key, value in self.building_options.items():
+            # If the options for that building charecteristic are > 1 it is a variable to be take part in optimization.
+            if isinstance(value, list) and len(value) > 1:
+                self.number_of_possible_designs *= len(value)
+                # Create the encoder for the building option / key.
+                self.option_encoder[key] = {}
+                self.option_encoder[key]['encoder'] = preprocessing.LabelEncoder().fit(value)
+            elif isinstance(value, list) and len(value) == 1:
+                # add the constant to the constant hash.
+                self.constants[key] = value[0]
+            else:
+                # Otherwise warn user that nothing was provided.
+                raise (f"building option {key} was set to empty. Pleace enter a value for it.")
+
+        #Return the variables.. but the return value is not really use since these are access via the object variable self anyways.
+        return self.constants, self.option_encoder
+
+    # convieniance interface to get number of variables.
+    def number_of_variables(self):
+        # Returns the number of variables Note this is not a class variable self like the others. That is because this method is used in the
+        # problem definition and we need to avoid thread variable issues.
+        return len(self.option_encoder)
+
+
+    # Convience variable to get the upper limit integers of all the variable as an ordered list.
+    def x_u(self):
+        # Set up return list.
+        x_u = []
+        # iterage throug each key in the encoder list.
+        for key in self.option_encoder:
+            # get the max value, which is the length minus 1 since the enumeration starts at 0.
+            x_u.append(len(self.option_encoder[key]['encoder'].classes_) - 1)
+        # Returns the list of max values.. Note this is not a class variable self like the others. That is because this method is used in the
+        # problem definition and we need to avoid thread variable issues.
+        return x_u
+
+    # This method takes an ordered list of ints and converts it to a run_options input file.
+    def generate_run_option_file(self, x):
+        # Create dict that will be the basis of the run_options.yml file.
+        run_options = {}
+        # Make sure options are the same length as the encoder.
+        if len(x) != len(self.option_encoder):
+            raise ('input is larger than the encoder was set to.')
+
+        # interate though both the encoder key and x input list at the same time
+        for key_name, x_option in zip(self.option_encoder.keys(), x):
+            # encoder/decoder for the building option key.
+            encoder = self.option_encoder[key_name]['encoder']
+            # get the actual value for the run_options
+            run_options[key_name] = str(encoder.inverse_transform([x_option])[0])
+        # Tell user the options through std out.
+        run_options[':scenario'] = 'optimize'
+        run_options[':algorithm_type'] = self.analysis_config[':algorithm'][':type']
+        message = f"Running Option Variables {run_options}"
+        logging.info(message)
+        # Add the constants to the run options dict.
+        run_options.update(self.constants)
+        # Add the analysis setting to the run options dict.
+        run_options.update(self.analysis_config)
+
+
+        # Returns the dict.. Note this is not a class variable self like the others. That is because this method is used in the
+        # problem definition and we need to avoid thread variable issues.
+        return run_options
+
 
 # Class to Manage parametric runs.
 class BTAPParametric(BTAPAnalysis):
     def __init__(self, analysis_config_file=None, git_api_token=None):
         # Run super initializer to set up default variables.
         super().__init__(analysis_config_file, git_api_token)
+        self.scenarios = []
 
     def run(self):
         # Compute all the scenarios for paramteric run.
@@ -1346,13 +1472,28 @@ class BTAPParametric(BTAPAnalysis):
                 keys.append(key)
 
         # to compute all possible permutations done by a python package called itertools.
-        self.scenarios = list(itertools.product(*l_of_l_of_values))
+        scenarios = list(itertools.product(*l_of_l_of_values))
+        # go through each option scenario
+        for items in scenarios:
+            # Create an options hash to store the options
+            run_options = {}
+
+            # Go through each item
+            for item in items:
+                # Save that charecteristic to the options hash
+                run_options[item[0]] = item[1]
+            run_options[':algorithm_type'] = self.analysis_config[':algorithm'][':type']
+            self.scenarios.append(run_options)
+            message = f'Number of Scenarios {len(self.scenarios)}'
+            logging.info(message)
+
         return self.scenarios
+
     def run_all_scenarios(self):
         # Failed runs counter.
         failed_datapoints = 0
 
-        #Total number of runs.
+        # Total number of runs.
         self.file_number = len(self.scenarios)
 
         # Keep track of simulation time.
@@ -1366,14 +1507,8 @@ class BTAPParametric(BTAPAnalysis):
         with concurrent.futures.ThreadPoolExecutor(self.get_threads()) as executor:
             futures = []
             # go through each option scenario
-            for items in self.scenarios:
+            for run_options in self.scenarios:
                 # Create an options hash to store the options
-                run_options = {}
-
-                # Go through each item
-                for item in items:
-                    # Save that charecteristic to the options hash
-                    run_options[item[0]] = item[1]
 
                 # Executes docker simulation in a thread
                 futures.append(executor.submit(self.run_datapoint, run_options=run_options))
@@ -1386,9 +1521,7 @@ class BTAPParametric(BTAPAnalysis):
                 if not future.result()['success']:
                     failed_datapoints += 1
 
-
-
-                #Update user.
+                # Update user.
                 message = f'TotalRuns:{self.file_number}\tCompleted:{self.database.get_num_of_runs_completed(self.analysis_config[":analysis_id"])}\tFailed:{self.database.get_num_of_runs_failed(self.analysis_config[":analysis_id"])}\tElapsed Time: {str(datetime.timedelta(seconds=round(time.time() - threaded_start)))}'
                 logging.info(message)
                 print(message)
@@ -1396,6 +1529,7 @@ class BTAPParametric(BTAPAnalysis):
         message = f'{self.file_number} Simulations completed. No. of failures = {self.database.get_num_of_runs_failed(self.analysis_config[":analysis_id"])} Total Time: {str(datetime.timedelta(seconds=round(time.time() - threaded_start)))}'
         logging.info(message)
         print(message)
+
 # Optimization problem definition class.
 class BTAPProblem(Problem):
     # Inspiration for this was drawn from examples:
@@ -1458,6 +1592,7 @@ class BTAPProblem(Problem):
         for objective in self.btap_optimization.analysis_config[':algorithm'][':minimize_objectives']:
             objectives.append(results[objective])
         out["F"] = np.column_stack(objectives)
+
 # Class to manage optimization runs.
 class BTAPOptimization(BTAPAnalysis):
     def __init__(self, analysis_config_file=None, git_api_token=None):
@@ -1474,13 +1609,16 @@ class BTAPOptimization(BTAPAnalysis):
             self.create_options_encoder()
 
             # Run optimization. This will create all the input files, run and gather the results to sql.
-            self.run_optimization()
+            self.run_analysis()
 
         except FailedSimulationException as err:
             message = f"Simulation(s) failed. Optimization cannot continue. Please review failed simulations to determine cause of error in Excel output or if possible the simulation datapoint files. \nLast failure had these inputs:\n\t {err}"
             logging.error(message)
         except botocore.exceptions.SSLError as err:
             message = f"Certificate Failure. This error occurs when AWS does not trust your security certificate. Either because you are using a VPN or your network is otherwise spoofing IPs. Please ensure that you are not on a VPN or contact your network admin. Error: {err}"
+            logging.error(message)
+        except Exception as err:
+            message = f"Unknown Error.{err} {traceback.format_exc()}"
             logging.error(message)
         finally:
             self.shutdown_analysis()
@@ -1502,7 +1640,7 @@ class BTAPOptimization(BTAPAnalysis):
         else:
             return self.analysis_config[':no_of_threads']
 
-    def run_optimization(self):
+    def run_analysis(self):
         print(f"Running Algorithm {self.analysis_config[':algorithm']}")
         print(f"Number of Variables: {self.number_of_variables()}")
         print(f"Number of minima objectives: {self.number_of_minimize_objectives()}")
@@ -1549,45 +1687,9 @@ class BTAPOptimization(BTAPAnalysis):
         # shut down the pool and threads.
         pool.close()
 
-    # This method creates a encoder and decoder of the simulation options to integers.  The ML and AI routines use float,
-    # conventionally for optimization problems. Since most of the analysis that we do are discrete options for designers
-    # we need to convert all inputs, string, float or int, into  to enumerated integer representations for the optimizer to
-    # work.
-    def create_options_encoder(self):
-        # Determine options the users defined and contants and variable for the analysis. Options / lists that the user
-        # provided only one options (a list of size 1) in the analysis input file are to be consider constants in the simulation.
-        # this may simplify the calculations that the optimizer has to conduct.
 
-        # Create a dict of the constants.
-        self.constants = {}
-        # Create a dict of encoders/decoders.
-        self.option_encoder = {}
 
-        # Keep track of total possible scenarios to tell user.
-        self.number_of_possible_designs = 1
-        # Interate through all the building_options contained in the analysis input yml file.
-        for key, value in self.building_options.items():
-            # If the options for that building charecteristic are > 1 it is a variable to be take part in optimization.
-            if isinstance(value, list) and len(value) > 1:
-                self.number_of_possible_designs *= len(value)
-                # Create the encoder for the building option / key.
-                self.option_encoder[key] = {}
-                self.option_encoder[key]['encoder'] = preprocessing.LabelEncoder().fit(value)
-            elif isinstance(value, list) and len(value) == 1:
-                # add the constant to the constant hash.
-                self.constants[key] = value[0]
-            else:
-                # Otherwise warn user that nothing was provided.
-                raise (f"building option {key} was set to empty. Pleace enter a value for it.")
 
-        #Return the variables.. but the return value is not really use since these are access via the object variable self anyways.
-        return self.constants, self.option_encoder
-
-    # convieniance interface to get number of variables.
-    def number_of_variables(self):
-        # Returns the number of variables Note this is not a class variable self like the others. That is because this method is used in the
-        # problem definition and we need to avoid thread variable issues.
-        return len(self.option_encoder)
 
     # convieniance interface to get number of minimized objectives.
     def number_of_minimize_objectives(self):
@@ -1595,51 +1697,105 @@ class BTAPOptimization(BTAPAnalysis):
         # problem definition and we need to avoid thread variable issues.
         return len(self.analysis_config[':algorithm'][':minimize_objectives'])
 
-    # Convience variable to get the upper limit integers of all the variable as an ordered list.
-    def x_u(self):
-        # Set up return list.
-        x_u = []
-        # iterage throug each key in the encoder list.
-        for key in self.option_encoder:
-            # get the max value, which is the length minus 1 since the enumeration starts at 0.
-            x_u.append(len(self.option_encoder[key]['encoder'].classes_) - 1)
-        # Returns the list of max values.. Note this is not a class variable self like the others. That is because this method is used in the
-        # problem definition and we need to avoid thread variable issues.
-        return x_u
+# Class to manage lhs runs. Uses Scipy.. Please see link for options explanation
+# https://scikit-optimize.github.io/stable/auto_examples/sampler/initial-sampling-method.html
+class BTAPSamplingLHS(BTAPParametric):
+    def compute_scenarios(self):
+        # This method converts the options for each ecm as an int. This allows for strings and numbers to use the same
+        # approach for optimization.
+        self.create_options_encoder()
+        #lower bound of all options (should be zero)
+        xl = [0] * self.number_of_variables()
+        # Upper bound.
+        xu = self.x_u()
+        #create ranges for each ecm and create the Space object.
+        space = Space(list(map(lambda x, y: (x, y), xl, xu)))
+        #set random seed.
 
-    # This method takes an ordered list of ints and converts it to a run_options input file.
-    def generate_run_option_file(self, x):
-        # Create dict that will be the basis of the run_options.yml file.
-        run_options = {}
-        # Make sure options are the same length as the encoder.
-        if len(x) != len(self.option_encoder):
-            raise ('input is larger than the encoder was set to.')
+        np.random.seed(self.analysis_config[':algorithm'][':random_seed'])
 
-        # interate though both the encoder key and x input list at the same time
-        for key_name, x_option in zip(self.option_encoder.keys(), x):
-            # encoder/decoder for the building option key.
-            encoder = self.option_encoder[key_name]['encoder']
-            # get the actual value for the run_options
-            run_options[key_name] = str(encoder.inverse_transform([x_option])[0])
-        # Tell user the options through std out.
-        message = f"Running Option Variables {run_options}"
-        logging.info(message)
-        # Add the constants to the run options dict.
-        run_options.update(self.constants)
-        # Add the analysis setting to the run options dict.
-        run_options.update(self.analysis_config)
+        # Create the lhs algorithm.
+        lhs = Lhs(lhs_type=self.analysis_config[':algorithm'][':lhs_type'], criterion=None)
+        # Get samples
+        samples = lhs.generate(space.dimensions, n_samples=self.analysis_config[':algorithm'][':n_samples'])
+        # create run_option for each scenario.
+        for x in samples:
+            # Converts discrete integers contains in x argument back into values that btap understands. So for example. if x was a list
+            # of zeros, it would convert this to the dict of the first item in each list of the variables in the building_options
+            # section of the input yml file.
+            run_options = self.generate_run_option_file(x)
+            run_options[':scenario'] = 'lhs'
+            self.scenarios.append(run_options)
+        return self.scenarios
 
 
-        # Returns the dict.. Note this is not a class variable self like the others. That is because this method is used in the
-        # problem definition and we need to avoid thread variable issues.
-        return run_options
+class BTAPIntegratedDesignProcess:
+    def __init__(self, analysis_config_file=None, git_api_token=None):
+        self.analysis_config_file = analysis_config_file
+        self.project_root = os.path.dirname(analysis_config_file)
+        self.git_api_token = git_api_token
+
+    def run(self):
+        # Create Database
+        database = BTAPDatabase()
+
+        # Load Analysis File into variable
+        if not os.path.isfile(self.analysis_config_file):
+            logging.error(f"could not find analysis input file at {self.analysis_config_file}. Exiting")
+            exit(1)
+        # Open the yaml in analysis dict.
+        with open(self.analysis_config_file, 'r') as stream:
+            analysis = yaml.safe_load(stream)
+        # Run elimination
+        # Change analysis type and options
+        config = copy.deepcopy(analysis)
+        config[':analysis_configuration'][':algorithm'][':type'] = 'elimination'
+        config[':analysis_configuration'][':analysis_name'] = config[':analysis_configuration'][
+                                                                  ':analysis_name'] + '_elim'
+        config[':analysis_configuration'][':kill_database'] = False
+
+        config_file_name = os.path.join(self.project_root, 'elimination.yml')
+        with open(config_file_name, 'w') as file:
+            yaml.dump(config, file)
+        bb = BTAPElimination(analysis_config_file=config_file_name, git_api_token=self.git_api_token)
+        print("running elimination stage")
+        bb.run()
+        # Run sensitivity
+        # Change analysis type and options
+        config = copy.deepcopy(analysis)
+        config[':analysis_configuration'][':algorithm'][':type'] = 'sensitivity'
+        config[':analysis_configuration'][':analysis_name'] = config[':analysis_configuration'][
+                                                                  ':analysis_name'] + '_sens'
+        config[':analysis_configuration'][':kill_database'] = False
+        config[':analysis_configuration'][':nocache'] = False
+        config_file_name = os.path.join(self.project_root, 'sensitivity.yml')
+        with open(config_file_name, 'w') as file:
+            yaml.dump(config, file)
+        bb = BTAPSensitivity(analysis_config_file=config_file_name, git_api_token=self.git_api_token)
+        bb.run()
+        # Run optimization
+        # Change analysis type and options
+        config = copy.deepcopy(analysis)
+        config[':analysis_configuration'][':algorithm'][':type'] = 'nsga2'
+        config[':analysis_configuration'][':nocache'] = False
+        config[':analysis_configuration'][':analysis_name'] = config[':analysis_configuration'][
+                                                                  ':analysis_name'] + '_opt'
+        config_file_name = os.path.join(self.project_root, 'optimization.yml')
+        with open(config_file_name, 'w') as file:
+            yaml.dump(config, file)
+        bb = BTAPOptimization(analysis_config_file=config_file_name, git_api_token=self.git_api_token)
+        bb.run()
+        # Output results from all analysis into
+        database.generate_output_files(analysis_id=None, output_folder=self.project_root)
+
+
 # Class to manage local postgres database.
 class BTAPDatabase:
     #Contructor sets up paths and database options.
     def __init__(self,
                  username = 'docker',
                  password = 'docker'):
-        self.credentials = AWSCredentials()
+        self.credentials = None
         self.btap_data_df = []
         self.failed_df = []
         # docker run -e POSTGRES_USER=docker -e POSTGRES_PASSWORD=docker -e POSTGRES_DB=btap
@@ -1697,6 +1853,7 @@ class BTAPDatabase:
     def create_btap_data_table(self):
         sql_command = '''CREATE TABLE btap_data (
                     index BIGINT, 
+                    ":algorithm_type" TEXT,
                     ":no_of_threads" TEXT,
                     ":dcv_type" TEXT, 
                     ":lights_type" TEXT, 
@@ -1758,7 +1915,10 @@ class BTAPDatabase:
                     ":run_annual_simulation" BOOLEAN, 
                     ":enable_costing" BOOLEAN, 
                     ":datapoint_id" TEXT, 
-                    ":kill_database" BOOLEAN,                    
+                    ":kill_database" BOOLEAN,  
+                    ":scenario" TEXT,
+                    heating_peak_w_per_m_sq FLOAT(53),
+                    cooling_peak_w_per_m_sq FLOAT(53),                  
                     bc_step_code_tedi_kwh_per_m_sq FLOAT(53),
                     bc_step_code_meui_kwh_per_m_sq FLOAT(53),
                     bldg_conditioned_floor_area_m_sq FLOAT(53), 
@@ -1938,18 +2098,80 @@ class BTAPDatabase:
 
     # If this is an aws_batch run, copy the excel file to s3 for storage.
         if compute_environment == 'aws_batch':
+            self.credentials = AWSCredentials()
             target_path = os.path.join(self.credentials.user_name,analysis_name,analysis_id,'output','output.xlsx')
             # s3 likes forward slashes.
             target_path = target_path.replace('\\', '/')
             message = "Uploading %s..." % target_path
             logging.info(message)
             S3().upload_file(excel_path, s3_bucket, target_path)
+
+
         return self.btap_data_df,self.failed_df
 
 
 
     def kill_database(self):
         self.container.remove(force=True)
+
+
+class BTAPElimination(BTAPParametric):
+
+    def compute_scenarios(self):
+        self.elimination_parameters = [
+            [':reference', 'do nothing'],
+            [':electrical_loads_scale', '0.0'],
+            [':infiltration_scale', '0.0'],
+            [':lights_scale', '0.0'],
+            [':oa_scale', '0.0'],
+            [':occupancy_loads_scale', '0.0'],
+            [':ext_wall_cond', '0.01'],
+            [':ext_roof_cond', '0.01'],
+            [':ground_floor_cond', '0.01'],
+            [':ground_wall_cond', '0.01'],
+            [':fixed_window_cond', '0.01'],
+            [':fixed_wind_solar_trans', '0.01']
+        ]
+
+        building_options = copy.deepcopy(self.building_options)
+        for key, value in building_options.items():
+            if isinstance(value, list) and len(value) >= 1:
+                building_options[key] = value[0]
+        #Replace key value with elimination value.
+        for elimination_parameter in self.elimination_parameters:
+            run_option = copy.deepcopy(building_options)
+            run_option[':algorithm_type'] = self.analysis_config[':algorithm'][':type']
+            if elimination_parameter[0] != ':reference':
+                run_option[elimination_parameter[0]] = elimination_parameter[1]
+            run_option[':scenario'] = elimination_parameter[0]
+            self.scenarios.append(run_option)
+        message = f'Number of Scenarios {len(self.scenarios)}'
+        logging.info(message)
+        return self.scenarios
+
+
+class BTAPSensitivity(BTAPParametric):
+    def compute_scenarios(self):
+        #Create default options scenario. Uses first value of all arrays.
+        default_options = copy.deepcopy(self.building_options)
+        for key, value in self.building_options.items():
+                default_options[key] = value[0]
+        #Create scenario
+        for key, value in self.building_options.items():
+            # If more than one option. Iterate, create run_option for each one.
+            if isinstance(value, list) and len(value) > 1:
+                for item in value:
+                    run_option = copy.deepcopy(default_options)
+                    run_option[':algorithm_type'] = self.analysis_config[':algorithm'][':type']
+                    run_option[key] = item
+                    run_option[':scenario'] = key
+                    #append scenario to list.
+                    self.scenarios.append(run_option)
+        message = f'Number of Scenarios {len(self.scenarios)}'
+        logging.info(message)
+        return self.scenarios
+
+
 
 # Main method that researchers will interface with. If this gets bigger, consider a factory method pattern.
 def btap_batch(analysis_config_file=None, git_api_token=None):
@@ -1966,6 +2188,17 @@ def btap_batch(analysis_config_file=None, git_api_token=None):
     print(f"Analysis Type:{analysis[':analysis_configuration'][':algorithm'][':type']}")
 
     # If nsga2 optimization
+    if analysis[':analysis_configuration'][':algorithm'][':type'] == 'sampling-lhs':
+        opt = BTAPSamplingLHS(
+            # Input file.
+            analysis_config_file=analysis_config_file ,
+            git_api_token=git_api_token
+        )
+        return opt
+
+
+
+    # If nsga2 optimization
     if analysis[':analysis_configuration'][':algorithm'][':type'] == 'nsga2':
         opt = BTAPOptimization(
             # Input file.
@@ -1980,11 +2213,33 @@ def btap_batch(analysis_config_file=None, git_api_token=None):
             git_api_token=git_api_token
         )
         return bb
+    elif analysis[':analysis_configuration'][':algorithm'][':type'] == 'elimination':
+        bb = BTAPElimination(
+            # Input file.
+            analysis_config_file=analysis_config_file,
+            git_api_token=git_api_token
+        )
+        return bb
+    elif analysis[':analysis_configuration'][':algorithm'][':type'] == 'sensitivity':
+        bb = BTAPSensitivity(
+            # Input file.
+            analysis_config_file=analysis_config_file,
+            git_api_token=git_api_token
+        )
+        return bb
+    elif analysis[':analysis_configuration'][':algorithm'][':type'] == 'idp':
+        bb = BTAPIntegratedDesignProcess(
+            # Input file.
+            analysis_config_file=analysis_config_file,
+            git_api_token=git_api_token
+        )
+        return bb
     else:
         message = f'Unknown algorithm type. Allowed types are nsga2 and parametric. Exiting'
         print(message)
         logging.error(message)
         exit(1)
+
 
 # This class processed the btap_batch file to add columns as needed. This is a separate class as this can be applied
 # independant of simulation runs and optionally at simulation time as well if desired,but may have to make this
@@ -2004,7 +2259,9 @@ class PostProcessResults:
             return analysis_df
 
     def economics(self, analysis_df, baseline):
-        baseline_df = pd.read_excel(open(baseline, 'rb'), sheet_name='btap_data')
+        file = open(baseline, 'rb')
+        baseline_df = pd.read_excel(file, sheet_name='btap_data')
+        file.close()
         ceb_fuel_df = pd.read_csv(CER_UTILITY_COSTS)
         merge_columns = [':building_type', ':template', ':primary_heating_fuel', ':epw_file']
         df = pd.merge(analysis_df, baseline_df, how='left', left_on=merge_columns, right_on=merge_columns)

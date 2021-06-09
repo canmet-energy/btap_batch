@@ -6,6 +6,7 @@ dependencies:
   - sqlalchemy
   - pandas
   - dash
+  - plotly
   - psycopg2
   - conda
   - scikit-learn
@@ -16,5 +17,8 @@ dependencies:
   - openpyxl
   - boto3
   - dash-bootstrap-components
+  - dash-table
+  - dash-renderer
+  - scikit-optimize
   - pip:
       - pymoo

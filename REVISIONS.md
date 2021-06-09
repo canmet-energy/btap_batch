@@ -1,3 +1,17 @@
+###2020-06-09: 1.0.003
+Features Added. 
+* Added test to help test locally and on aws for various situations. testing is currently done manually. No CircleCI.
+* Preliminary support for peak, PH, tedi and meui metrics.  New outputs include:
+    * heating_peak_w_per_m_sq
+    * cooling_peak_w_per_m_sq                  
+    * bc_step_code_tedi_kwh_per_m_sq
+    * bc_step_code_meui_kwh_per_m_sq
+* added ability to do run with opensource aspect only. The new image_name btap_public_cli will run everything in standards
+but will not run any costing. This is done using docker containers and git token authenication. 
+* reorganized example to have a folder for each type. Elimination, Sensitivity and IDP have been created.
+* Added latin hypercube sampling workflow similar to NREL's code. 
+* updated the dashboard similar to NREL's code. 
+
 ###2020-02-23: 1.0.002
 After comments from team yesterday added new features.
 * Reduced DESIRED_AWS_VCPUS for aws_batch from 50 to the default (0). It will take slightly longer to ramp up the cluster. But will save money for smaller runs. 
@@ -21,8 +35,6 @@ zone cities are supported.
     * baseline_necb_tier: based on necb template chosen. 'tier_1', 'tier_2', 'tier_3', 'tier_4' for 25%,50%,60%,60%+ better.
     Note: this tier is based on the original template selected..not always NECB2017. 
     * baseline_ghg_percent_better: based on necb template chosen.
-    
 
 ###2020-02-19: 1.0.001
-
 Initial commit supporting most ecms. Support running on local and AWS. Linux and Windows. 
