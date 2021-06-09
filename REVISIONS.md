@@ -1,5 +1,6 @@
 ###2020-06-09: 1.0.003
 Features Added. 
+* Added test to help test locally and on aws for various situations. testing is currently done manually. No CircleCI.
 * Preliminary support for peak, PH, tedi and meui metrics.  New outputs include:
     * heating_peak_w_per_m_sq
     * cooling_peak_w_per_m_sq                  

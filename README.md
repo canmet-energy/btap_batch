@@ -286,3 +286,4 @@ information to btap_data.json top level. Tables in btap_data.json are ignored by
 
 ## Testing
 Please run the test in btap_batch\src\test\test_btap_batch.py to ensure the code functions as expected after any development.
+You can adjust the parameters in the test if you wish to examine other scenarios. 
