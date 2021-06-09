@@ -31,7 +31,7 @@ class TestBTAPBatch(unittest.TestCase):
 
         # Set no-cache...in other words do we rebuild the image fresh? Takes an extra 10 minutes. Will only do this once
         # per test suite invocation.
-        self.nocache = True
+        self.nocache = False
 
     def run_analysis(self, input_file=None):
 

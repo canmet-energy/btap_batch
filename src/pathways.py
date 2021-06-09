@@ -15,7 +15,7 @@ import copy
 class Data:
     def __init__(self):
         # Enter in the full path to your Excel analysis output file.
-        OUTPUT_XLSX = r'C:\Users\plopez\test\btap_batch\examples\output.xlsx'
+        OUTPUT_XLSX = r'C:\Users\plopez\test\btap_batch\src\test\test_output\local_elimination\elimination_example\ee4079cc-2961-4fc4-9a4d-7b6454b8cf31\output\output.xlsx'
         # Variable to store the para cords state.
         self.par_coord_data = None
         # Variable to store scatter graph inputs.

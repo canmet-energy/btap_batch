@@ -8,10 +8,6 @@ import itertools
 import multiprocessing
 import concurrent.futures
 
-
-
-
-#
 # Displays logging.. Set to INFO or DEBUG for a more verbose output.
 logging.basicConfig(level=logging.ERROR)
 OPTIONS_FILE = os.path.join(os.path.dirname(os.path.realpath(__file__)), 'multi_analyses.yml')
@@ -70,6 +66,7 @@ def run_analysis(short_city_name,
     # Open the yaml in analysis dict.
     with open(OPTIONS_FILE, 'r') as stream:
         analysis = yaml.safe_load(stream)
+    #Change configuration options.
     analysis[':analysis_configuration'][':compute_environment'] = 'local'
     analysis[':analysis_configuration'][':algorithm'] = optimization
     analysis[':analysis_configuration'][':analysis_name'] = f"{short_city_name}_{building_type}_{primary_heating_fuel}"
@@ -86,12 +83,15 @@ def run_analysis(short_city_name,
     analysis.run()
 
 
-# Create database
+# Create single database
 database = btap.BTAPDatabase()
+# Create parallel analysis in threads.
 with concurrent.futures.ThreadPoolExecutor(14) as executor:
     futures = []
+    # Iterate through different weather files.
     for epw_file in epw_files:
         short_city_name = re.compile("(.*?)\.").search(epw_file)[1]
+        # Iterate through building types.
         for building_type in building_types:
             for primary_heating_fuel in primary_heating_fuels:
                 # Executes docker simulation in a thread

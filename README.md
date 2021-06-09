@@ -3,6 +3,49 @@ BTAP Batch allows you to run paramteric and optimization analysis on your local 
 select the parameters you wish to analyse by modifying an input .yml file, and run the simulation.  BTAP_BATCH will produce the 
 simulation outputs files for each simulation as well as a high level data summary excel file of all the design options.  
 
+## Background
+BTAP is the Building Technology Assesement Platform developed by Natural Resources Canada's research arm CanmetENERGY. It is developed upon the OpenStudio/EnergyPlus open-source framework created by the US DOE and the US National Renewable Energy Laboratory. 
+BTAP can create standard reference building energy models of various vintages quickly for any location in Canada and perform energy efficiency scenario analysis for many building improvement measures such and insulation, windows, and mechanical systems. With its built in costing algorithm, it can perform limited cost-comparison of design scenarios. 
+BTAP leverages data-driven methodology expert system rulesets that adhear to the National Energy Code for buildings as it basis. If it is in the code, it is implmented as accurately as possible. 
+The most common used cases for BTAP is to:
+* examine the cost effective performance of codes and standards across Canada.
+* examine design pathways to Net-Zero Buildings.
+
+BTAP almost exclusively runs on the cloud. There are options ways to run it locally on Linux and Windows systems and via command line. If you are interested in this approach please contact phylroy.lopez@canada.ca .  
+
+### Vintage Supported
+The project currently supports the following vintages for both code rulesets and incremental costing of utility costs and incremental capital costs.  
+* NECB2011
+* NECB2015
+* NECB2017
+
+Note: Work is underway under the General Infrastructure PERD project to add older vintages to the ruleset library. Please contact Chris.Kirney@canada.ca for more details on this initiative. 
+
+### Commercial Building Geometries
+BTAP comes with the standard geometries built-in commercial building spacetype geometric models. The are based on the U.S. DOE reference building archetypes, but gutted of everything except the geometry and space type information. You can find a list of the buildings [here](./docs/BtapBuildingGeometryLibrary.md)
+You can also create your own buildings using the OpenStudio Sketchup Plug-in included in the OpenStudio Installation. Other tools support conversion to an openstudio model including Revit, and eQuest. More information on creating your model is kept [here](todo)
+ 
+### Costed Cities Supported. 
+We use a third party resource to cost aspects of the models that BTAP generates. The cities that are supported are listed [here](./docs/CostingSupportedCities.md).
+If another weather file is selected that is not on this list, BTAP will try to select a city closest to the list below to use for costing. The latitude and longitudes included in the table are used to calculate this. This may produce unexpected results if not aware. 
+
+### Utility Cost Support
+BTAP supports the National Energy Board Utility rates. These are averaged costs per GJ and do not have block or tiered surcharges. BTAP does support block rate structure, however this is advanced and we recommend using NREL's tariff measure that can be found [here](https://bcl.nrel.gov/node/82923] 
+
+### Capital Cost Support
+BTAP will automatically cost materials, equipment and labour. BTAP Costing will only cost items that have energy impact. It will for example cost the wall construction layers, but not the structural components. 
+Some items that BTAP costs are:
+* Labour, Overhead
+* Layer Materials in Constructions and fenestration.
+* Piping, Ductworks, Headers based on actual geometry of the building. This is required when evaluating forces air vs hydronic solutions. 
+* Standard HVAC Equipment, Boilers, Chillers, HeatPumps, Service Hot Water. 
+
+Some examples of items it will not cost are:
+* Internal walls, doors, toilets, structural beams, furniture, etc.   
+
+It will also only cost what is contained with the btap standard measures. For example if you add a measure to add overhangs into the BTAP workflow. It will not cost it. BTAP uses internal naming conventions to cost items and make decisions on how components are costed. This does not mean you cannot use other measures created by other authors on [NREL's Building Component Library](https://bcl.nrel.gov/). It just means it will not be costed. 
+ 
+
 ## Why BTAP Batch?
 BTAP Batch simplifies the process to run parametric and optimization runs. It uses code directly from 
 openstudio-standards and requires no PAT measures. It takes advantage of all the costing and energy conservation development work
@@ -14,6 +57,18 @@ was very difficult to do with NREL's PAT interface.
 Using AWS batch also reduces the cost of simulations and enables researchers to use AWS dashboards to monitor the simulation runs. BTAP_BATCH
 takes advantage of Amazons cost-effective batch queue system to complete simulations. 
  
+# Costing: btap_private_cli vs btap_public_cli engines
+BTAP provide costing for baseline and ecm design scenarios. The cost is unlike most tools where a simple cost-per-area is 
+applied. BTAP take into account the geometry of the buiding, and the occupancy type, and sized to adjust cost for piping, 
+size of ductwork, wiring and other impacts that are critical to costing estimates. Cost is done with help of commercial third
+party data, as such is only contained in the 'btap_private_cli' image_name. To utilize this feature you must have a licence 
+from NRCan's IP office. We will then grant access to you via your github account. 
+
+The non-cost version that is freely available called 'btap_public_cli' is available by changing the :image_name field in the input yml
+file. You will still need a github token set up on your system to run the analysis. This accesses NREL's Openstudio 
+Standards repository that contains the code for most North American building standards including Canada's NECB, as well 
+as an array of energy conservation measures. 
+ 
 ## Requirements
 * Windows 10 Professional version 1909 or greater (As a  workaround. if you are using 1709, make sure your git repository is cloned into C:/users/your-user-name/btap_batch) Performance however will not be optimal and will not use all available ram. 
 * [Docker](https://docs.docker.com/docker-for-windows/install/) running on your computer.
@@ -22,9 +77,13 @@ takes advantage of Amazons cost-effective batch queue system to complete simulat
 * A high speed internet connection.
 * A github account and [git-token](https://docs.github.com/en/github/authenticating-to-github/creating-a-personal-access-token)
 * Add the github token as a user windows/linux environment variable as GIT_API_TOKEN
-* Permissions to access canmet-energy repositories from phylroy.lopez@canada.ca
+* Permissions to access canmet-energy repositories from phylroy.lopez@canada.ca (For use of the btap_private_cli costing image.)
 * [AWS CLI on Windows, install the AWS CLI version 2 on Windows](https://docs.aws.amazon.com/cli/latest/userguide/install-cliv2-windows.html).
-* [NRCan btap_dev AWS account credentials set up on your computer](https://docs.aws.amazon.com/cli/latest/userguide/cli-configure-files.html) for Amazon HPC runs. 
+* [NRCan btap_dev AWS account credentials set up on your computer](https://docs.aws.amazon.com/cli/latest/userguide/cli-configure-files.html) for Amazon HPC runs(Optional). 
+* A powerful multi-core computer to run simulations fast locally. (24 core/48 thread with 32GB+)
+* [Sketchup 2020](https://www.sketchup.com/sketchup/2020/SketchUpPro-exe) (optional) To create custom geometry models.
+* [OpenStudio App 1.0.1](https://github.com/openstudiocoalition/OpenStudioApplication/releases/tag/v1.0.1) (optional) 
+To create custom geometry models. 
 
 
 ## Configuration
@@ -155,8 +214,6 @@ supports the
  
  The analysis will use all local cpu cores or any AWS batch resources available to run. 
 
-
-
 ## Custom OSM file. 
 There are some instances where we would like to perform an analysis on an osm file not in the default btap library. In 
 these situations you can load a local file to the analysis. You simple add the osm file(s) that you wish to examine in 
@@ -164,8 +221,44 @@ the same folder as the py and yml file. Then you can use the custom osm file by 
  :building_options->:building_type field in the yml file. Note to not add the .osm to the building type name. See the 
 example in examples/custom_osm where we have added test1 and test2 osm file. 
 
-The custom osm file must be defined using NECB2011 spacetypes. 
 
+## IDP Workflow
+NREL's [A Handbook for Planning and Conducting Charrettes](https://www.nrel.gov/docs/fy09osti/44051.pdf) details an 
+approach to model buildings to support design charettes and integrated design process. Appendix G of the document details 
+the need for elimination, and sensitivity analysis as part of the modelling process. BTAP batch IDP wrokflow automates a 
+portion of that analysis for early design support by automating the runs for these analysis and provide results. These outputs
+may help validate the initial baseline model and help determine which energy conservation measures to consider.
+
+## Create Custom OSM File
+You can create a custom osm file by using Sketchup 2020 with the OpenStudio Plugin. 
+### Geometry
+You can view the intructional videos on how to create geometric models using sketchup and the openstudio plug-in. 
+Here is a video to perform takeoffs from a DWG file. You can also import PDF files and do the same procedure. 
+[NREL Take-Off Video Part 1](https://www.youtube.com/watch?v=T41MXqlvp0E)
+
+Do not bother to add windows or doors. BTAP will automatically add these to the model based on the vintage template or the inputs in
+the BTAPBatch input yml file. 
+
+### Zone Multipliers
+BTAP supports use of multipliers vertically (i.e by floor). This will help reduce the runtime of the simulation. Please 
+do not use horizontal zone multipliers as this will not work with btap's costing algorithms.  
+
+### Space Types
+Space types must be defined as NECB 2011 spacetypes. BTAP will map these to the template you select in the btap_batch 
+analysis file. You can find the osm library file of the NECB spacetypes in the resources/space_type_library folder that
+ you can import and use in defining the spacetypes in your model. 
+
+### Number of Floors
+BTAP needs to know the number of above and below ground floors. This cannot be interpreted accurately from the geometry
+ for all building types, for example split level models. To identify this, open the 
+ OSM file and find the 'OS:Building' object and add the correct values to  'Standards Number of Stories' and 
+ 'Standards Number of Above Ground Stories'. To be clear, 'Standards Number of Stories' is the total number of 
+ stories in the model including basement levels.  
+## Output
+When the analysis is finished, you can review the output.xlxs file that is created in the output folder in 
+the analysis directory. It will contain all the high level information for each simulation as well as a link to the 
+simulation folder where energyplus ran if you want the raw results. The IDP workflow creates a special summary output.xlsx 
+for all the elimination, sensitivity and optimization runs in the same folder and the yml input file. 
 
 ## Monitoring the Analysis
 While the program will output items to the console, there are a few other ways to monitor the results if you wish 
