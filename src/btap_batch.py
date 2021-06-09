@@ -1778,6 +1778,7 @@ class BTAPIntegratedDesignProcess:
         config = copy.deepcopy(analysis)
         config[':analysis_configuration'][':algorithm'][':type'] = 'nsga2'
         config[':analysis_configuration'][':nocache'] = False
+        config[':analysis_configuration'][':kill_database'] = False
         config[':analysis_configuration'][':analysis_name'] = config[':analysis_configuration'][
                                                                   ':analysis_name'] + '_opt'
         config_file_name = os.path.join(self.project_root, 'optimization.yml')
@@ -1787,6 +1788,10 @@ class BTAPIntegratedDesignProcess:
         bb.run()
         # Output results from all analysis into
         database.generate_output_files(analysis_id=None, output_folder=self.project_root)
+        message = "Killing Database Server."
+        logging.info(message)
+        print(message)
+        database.kill_database()
 
 
 # Class to manage local postgres database.
