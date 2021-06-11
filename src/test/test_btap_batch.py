@@ -4,10 +4,13 @@ import os
 import logging
 import yaml
 from pathlib import Path
+import warnings
 
 
 class TestBTAPBatch(unittest.TestCase):
     def setUp(self):
+        # Workaround for this warning https://github.com/boto/boto3/issues/454
+        warnings.filterwarnings("ignore", category=ResourceWarning, message="unclosed.*<ssl.SSLSocket.*>")
 
         # Displays logging.. Set to INFO or DEBUG for a more verbose output.
         logging.basicConfig(level=logging.ERROR)
@@ -18,16 +21,16 @@ class TestBTAPBatch(unittest.TestCase):
         self.git_api_token = os.environ['GIT_API_TOKEN']
 
         #Change this to aws_batch to run tests on amazon.
-        self.compute_environment = 'local'
+        self.compute_environment = 'aws_batch'
 
         #Change to test on other branches.
-        self.os_standards_branch = 'nrcan'
+        self.os_standards_branch = 'nrcan_prod'
 
         # Branch from https://github.com/canmet-energy/btap_costing. Typically 'master'
-        self.btap_costing_branch = 'master'
+        self.btap_costing_branch = 'nrcan_prod'
 
         # Branch from https://github.com/canmet-energy/btap_costing. Typically 'master'
-        self.image_name = 'btap_private_cli'
+        self.image_name = 'btap_public_cli'
 
         # Set no-cache...in other words do we rebuild the image fresh? Takes an extra 10 minutes. Will only do this once
         # per test suite invocation.

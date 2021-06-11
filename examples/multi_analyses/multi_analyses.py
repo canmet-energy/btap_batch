@@ -8,6 +8,10 @@ import itertools
 import multiprocessing
 import concurrent.futures
 
+# Set this to 1 if running locally...or 14 if running on aws.
+NUMBER_OF_PARALLEL_ANALYSES = 1
+
+
 # Displays logging.. Set to INFO or DEBUG for a more verbose output.
 logging.basicConfig(level=logging.ERROR)
 OPTIONS_FILE = os.path.join(os.path.dirname(os.path.realpath(__file__)), 'multi_analyses.yml')
@@ -86,7 +90,7 @@ def run_analysis(short_city_name,
 # Create single database
 database = btap.BTAPDatabase()
 # Create parallel analysis in threads.
-with concurrent.futures.ThreadPoolExecutor(14) as executor:
+with concurrent.futures.ThreadPoolExecutor(NUMBER_OF_PARALLEL_ANALYSES) as executor:
     futures = []
     # Iterate through different weather files.
     for epw_file in epw_files:

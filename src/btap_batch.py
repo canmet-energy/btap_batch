@@ -1213,6 +1213,7 @@ class BTAPAnalysis():
             print(self.analysis_config)
             if self.analysis_config[':compute_environment'] == 'aws_batch':
                 content_object = boto3.resource('s3').Object(run_options[':s3_bucket'], s3_error_txt_path)
+                print(error_msg)
                 error_msg= content_object.get()['Body'].read().decode('utf-8')
             else:
                 with open(local_error_txt_path, 'r') as file:

@@ -1,4 +1,7 @@
 ###2020-06-09: 1.0.003
+nrcan_prod branches:
+* openstudio_standards revision = 04c220861664566800596666bb98699e4631a394
+* btap_costing revision = 106b02f43d5d76ca66546154cea3dce603e4b201
 Features Added. 
 * Added test to help test locally and on aws for various situations. testing is currently done manually. No CircleCI.
 * Preliminary support for peak, PH, tedi and meui metrics.  New outputs include:
