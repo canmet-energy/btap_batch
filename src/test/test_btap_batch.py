@@ -21,7 +21,7 @@ class TestBTAPBatch(unittest.TestCase):
         self.git_api_token = os.environ['GIT_API_TOKEN']
 
         #Change this to aws_batch to run tests on amazon.
-        self.compute_environment = 'aws_batch'
+        self.compute_environment = 'local'
 
         #Change to test on other branches.
         self.os_standards_branch = 'nrcan_prod'
@@ -85,6 +85,10 @@ class TestBTAPBatch(unittest.TestCase):
 
     def test_sample_lhs(self):
         self.run_analysis(input_file=os.path.join(os.path.dirname(os.path.realpath(__file__)),'..','..','examples','sample-lhs', 'sample-lhs.yml'))
+
+    def test_multi_analysis(self):
+        self.run_analysis(input_file=os.path.join(os.path.dirname(os.path.realpath(__file__)),'..','..','examples','multi_analyses', 'multi_analyses.yml'))
+
 
 if __name__ == '__main__':
     unittest.main()

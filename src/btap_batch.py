@@ -35,6 +35,8 @@ import glob
 from functools import wraps
 import logging
 from pymoo.visualization.scatter import Scatter
+import socket
+import ssl
 
 # seed the pseudorandom number generator
 from random import seed
@@ -169,13 +171,20 @@ class AWSCredentials:
         self.iam = boto3.client('iam',config=config)
         try:
             self.account_id = self.sts.get_caller_identity()["Account"]
+            self.user_id = self.sts.get_caller_identity()["UserId"]
         except botocore.exceptions.ClientError as e:
             if e.response['Error']['Code'] == 'ExpiredToken':
                 logging.error("Your session has expired while running. Please renew your aws credentials and consider running this in an amazon instance if your run is longer than 2 hours")
                 exit(1)
             else:
-                print("Unexpected error: %s" % e)
-        self.user_id = self.sts.get_caller_identity()["UserId"]
+                print("Unexpected botocore.exceptions.ClientError error: %s" % e)
+                exit(1)
+        except botocore.exceptions.SSLError as e:
+            logging.error("SSL validation failed.. This is usually because you are behind a VPN. Please do not use a VPN.")
+            exit(1)
+
+
+
         #get aws username from userid.
         if re.compile(".*:(.*)@.*").search(self.user_id) is None:
             self.user_name = 'osdev'
