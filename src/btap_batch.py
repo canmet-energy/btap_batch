@@ -1572,7 +1572,7 @@ class BTAPProblem(Problem):
             # Tell pymoo to operate on this serially in separate threads since we are using starmap
             elementwise_evaluation=True,
             # Tell pymoo that the variables are discrete integers and not floats as is usually the default.
-            type_var=np.int,
+            type_var=int,
             # options to parent class (not used)
             **kwargs)
 
@@ -2037,7 +2037,7 @@ class BTAPDatabase:
         return self.engine
 
     def get_num_of_runs_completed(self,analysis_id = None):
-        if not self.engine.dialect.has_table(self.engine, 'btap_data'):
+        if not sqlalchemy.inspect(self.engine).has_table('btap_data'):
             return 0
         else:
             if analysis_id == None:
@@ -2049,7 +2049,8 @@ class BTAPDatabase:
             return([dict(row) for row in result][0]['count'])
 
     def get_num_of_runs_failed(self,analysis_id = None):
-        if not self.engine.dialect.has_table(self.engine, 'failed_runs'):
+        #if not self.engine.dialect.has_table(self.engine, 'failed_runs'):
+        if not sqlalchemy.inspect(self.engine).has_table('failed_runs'):
             return 0
         else:
             if analysis_id == None:
@@ -2125,7 +2126,9 @@ class BTAPDatabase:
             logging.info(message)
             S3().upload_file(excel_path, s3_bucket, target_path)
 
-
+        writer.close()
+        #https://stackoverflow.com/questions/56751070/pandas-xlsxwriter-writer-close-does-not-completely-close-the-excel-file
+        writer.handles = None
         return self.btap_data_df,self.failed_df
 
 

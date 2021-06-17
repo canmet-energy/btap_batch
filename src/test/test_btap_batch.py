@@ -6,7 +6,6 @@ import yaml
 from pathlib import Path
 import warnings
 
-
 class TestBTAPBatch(unittest.TestCase):
     def setUp(self):
         # Workaround for this warning https://github.com/boto/boto3/issues/454
