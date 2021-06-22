@@ -52,7 +52,7 @@
   # 'docker kill btap_postgres' at any command prompt on your host system.
   :kill_database: true
 
-###########################################     ALGORITHM        #######################################################
+  ###########################################     ALGORITHM        #######################################################
   :algorithm:
     :type: sampling-lhs # nsga2 , parametric
     # Select number of samples. For testing just use 10.
@@ -78,7 +78,7 @@
     # "RetailStandalone",
     # "RetailStripmall",
     # "QuickServiceRestaurant",
-     "FullServiceRestaurant",
+      "FullServiceRestaurant",
     # "MidriseApartment",
     # "HighriseApartment",
     # "LowriseApartment",
@@ -95,17 +95,17 @@
   ]
   :epw_file: [
       'CAN_QC_Montreal-Trudeau.Intl.AP.716270_CWEC2016.epw',
-      #'CAN_NS_Halifax.Dockyard.713280_CWEC2016.epw',
-      #'CAN_AB_Edmonton.Intl.AP.711230_CWEC2016.epw',
-      #'CAN_BC_Vancouver.Intl.AP.718920_CWEC2016.epw',
-      #'CAN_AB_Calgary.Intl.AP.718770_CWEC2016.epw',
-      #'CAN_ON_Toronto.Pearson.Intl.AP.716240_CWEC2016.epw',
-      #'CAN_YT_Whitehorse.Intl.AP.719640_CWEC2016.epw'
+    #'CAN_NS_Halifax.Dockyard.713280_CWEC2016.epw',
+    #'CAN_AB_Edmonton.Intl.AP.711230_CWEC2016.epw',
+    #'CAN_BC_Vancouver.Intl.AP.718920_CWEC2016.epw',
+    #'CAN_AB_Calgary.Intl.AP.718770_CWEC2016.epw',
+    #'CAN_ON_Toronto.Pearson.Intl.AP.716240_CWEC2016.epw',
+    #'CAN_YT_Whitehorse.Intl.AP.719640_CWEC2016.epw'
   ]
   :primary_heating_fuel: [
       "Electricity",
-     # "NaturalGas",
-     # "FuelOilNo2"
+    # "NaturalGas",
+    # "FuelOilNo2"
   ]
   :dcv_type: [
       'NECB_Default',
@@ -133,30 +133,30 @@
   :erv_package: [ 'NECB_Default',
                   "NECB_Default_All",
                   "Plate-All",
-      #            "Plate-Existing",
+                  "Plate-Existing",
                   "Rotary-All",
-      #            "Rotary-Existing"
+                  "Rotary-Existing"
   ]
   # What are the existing vs all versions?
   :boiler_eff: [
       "NECB_Default",
-     # "NECB 88% Efficient Condensing Boiler",
-     # "Viessmann Vitocrossal 300 CT3-17 96.2% Efficient Condensing Gas Boiler"
+      "NECB 88% Efficient Condensing Boiler",
+      "Viessmann Vitocrossal 300 CT3-17 96.2% Efficient Condensing Gas Boiler"
   ]
   :furnace_eff: [
       "NECB_Default",
-     # "NECB 85% Efficient Condensing Gas Furnace"
+      "NECB 85% Efficient Condensing Gas Furnace"
   ]
   :shw_eff: [
       "NECB_Default",
-     # "Natural Gas Power Vent with Electric Ignition",
-     # "Natural Gas Direct Vent with Electric Ignition"
+      "Natural Gas Power Vent with Electric Ignition",
+      "Natural Gas Direct Vent with Electric Ignition"
   ]
   # Default DHW is consistent with primary heating fuel
   :ext_wall_cond: [ 'NECB_Default',
                     '0.314',
-      #              '0.278',
-      #              '0.247',
+                    '0.278',
+                    '0.247',
                     '0.210',
                     '0.183'
   ]
@@ -164,21 +164,21 @@
   :ext_floor_cond: [ 'NECB_Default',
                      '0.227',
                      '0.183',
-      #               '0.162',
+                     '0.162',
                      '0.142'
   ]
   :ext_roof_cond: [ 'NECB_Default',
                     '0.227',
-      #              '0.193',
-      #              '0.183',
+                    '0.193',
+                    '0.183',
                     '0.162',
-      #              '0.142',
-      #              '0.138',
+                    '0.142',
+                    '0.138',
                     '0.121'
   ]
   :ground_wall_cond: [ 'NECB_Default',
                        '0.568',
-      #                 '0.379',
+                       '0.379',
                        '0.284',
                        '0.210'
   ]
@@ -190,7 +190,7 @@
 
   :ground_roof_cond: [ 'NECB_Default',
                        '0.568',
-      #                 '0.379' ,
+                       '0.379' ,
                        '0.284',
                        '0.210' ]
   :door_construction_cond: [ 'NECB_Default',
@@ -214,64 +214,66 @@
                          '1.6'
   ]
   :skylight_cond: [ 'NECB_Default',
-      #              '2.4',
-      #              '2.2',
-      #              '1.6'
+                    '2.4',
+                    '2.2',
+                    '1.6'
   ]
   :glass_door_solar_trans: [ 'NECB_Default',
-  #'0.05', '0.95'
+                             '0.05',
+                             '0.95'
   ]
   :fixed_wind_solar_trans: [ 'NECB_Default',
-  '0.2',
-  '0.3',
-  '0.4',
-  '0.5',
-  '0.6'
+                             '0.2',
+                             '0.3',
+                             '0.4',
+                             '0.5',
+                             '0.6'
   ]
   # This is the same as SHGC
   :skylight_solar_trans: [ 'NECB_Default',
-  #'0.05', '0.95'
+                           '0.05',
+                           '0.50',
+                           '0.95'
   ]
-  :fdwr_set: [ 'NECB_Default']
-  # Should we optimize for FDWR? Probably not. Better to assume default, since it will just pick lowest WWR which isn't realistic.
-  :srr_set: [ '0.0' ]
-  :rotation_degrees: [
-  #'NECB_Default', '45.0',
-  '90.0'
-  #, '135.0','180.0','225.0', '270.0', '315.0','360.0'
-   ]
+  :fdwr_set: [ 'NECB_Default',
+               '0.2',
+               '0.3',
+               '0.4',
+               '0.5',
+               '0.6',
+               '0.7',
+               '0.8',
+               '0.9'
+  ]
+
+  :srr_set: [ 'NECB_Default',
+              '0.03',
+              '0.05'
+  ]
+  :rotation_degrees: [ 'NECB_Default',
+                       '45.0',
+                       '90.0'
+  ]
   # Picking the worst orientation (major axis of building oriented N-S)
   :scale_x: [ '1.0' ]
   :scale_y: [ '1.0' ]
   :scale_z: [ '1.0' ]
-  :pv_ground_type: [ # Two options: (1) nil/none/false/'NECB_Default', (2) 'add_pv_ground'
-    'NECB_Default',
-    #'add_pv_ground'
+  :pv_ground_type: [ 'NECB_Default', 'add_pv_ground' ]
+  :pv_ground_total_area_pv_panels_m2: [ 'NECB_Default' ]
+  :pv_ground_tilt_angle: [ 'NECB_Default' ]
+  :pv_ground_azimuth_angle: [ 'NECB_Default' ]
+  :pv_ground_module_description: [ 'NECB_Default' ]
+  :adv_dx_units: [ 'NECB_Default', 'Carrier WeatherExpert' ]
+  :nv_type: [ 'NECB_Default',
+              'add_nv'
   ]
-  :pv_ground_total_area_pv_panels_m2: [ 'NECB_Default' ] # Options: (1) nil/none/false, (2) 'NECB_Default' (i.e. building footprint), (3) area value (e.g. 50)
-  :pv_ground_tilt_angle: [ 'NECB_Default' ] # Options: (1) 'NECB_Default' (i.e. latitude), (2) tilt angle value (e.g. 20)
-  :pv_ground_azimuth_angle: [ 'NECB_Default' ] # Options: (1) 'NECB_Default' (i.e. south), (2) azimuth angle value (e.g. 90)
-  :pv_ground_module_description: [ # Options: (1) nil/none/false, (2) 'NECB_Default' (i.e. Standard), (3) other options ('Standard', 'Premium', ThinFilm')
-    'NECB_Default',
-    #'Premium',
-    #'ThinFilm'
-  ]
-  :adv_dx_units: [
-      'NECB_Default',
-      'Carrier WeatherExpert'
-  ]
-  :nv_type: [  # Two options: (1) nil/none/false/'NECB_Default', (2) 'add_nv'
-    'NECB_Default',
-    #'add_nv'
-  ]
-  :nv_opening_fraction: [ 'NECB_Default' ] #options: (1) nil/none/false (2) 'NECB_Default' (i.e. 0.1)
-  :nv_temp_out_min: [ 'NECB_Default' ] #options: (1) nil/none/false(2) 'NECB_Default' (i.e. 13.0 based on inputs from Michel Tardif re a real school in QC)
-  :nv_delta_temp_in_out: [ 'NECB_Default' ] #options: (1) nil/none/false (2) 'NECB_Default' (i.e. 1.0 based on inputs from Michel Tardif re a real school in QC)
+  :nv_opening_fraction: [ 'NECB_Default' ]
+  :nv_temp_out_min: [ 'NECB_Default' ]
+  :nv_delta_temp_in_out: [ 'NECB_Default' ]
   :occupancy_loads_scale: [ 'NECB_Default' ]
   :electrical_loads_scale: [ 'NECB_Default' ]
   :oa_scale: [ 'NECB_Default' ]
   :infiltration_scale: [ 'NECB_Default' ]
-  :chiller_type: [
-    'NECB_Default',
-    #'VSD'
-  ] # Options: (1) 'NECB_Default'/nil/'none'/false (i.e. do nothing), (2) e.g. 'VSD'
+  :chiller_type: [ 'NECB_Default',
+                   'VSD'
+  ]
