@@ -138,8 +138,8 @@
                        'add_daylighting_controls'
   ]
   :ecm_system_name: [ 'NECB_Default',
-       #               'HS09_CCASHP_Baseboard',
-       #               'HS08_CCASHP_VRF'
+       #               'HS09_CCASHPSys',
+       #               'HS08_VRFZonal'
   ]
 
   :erv_package: [ 'NECB_Default',
