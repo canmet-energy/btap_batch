@@ -122,8 +122,8 @@
   ]
   :ecm_system_name: [
        'NECB_Default',
-#      'HS09_CCASHPSys',
-#      'HS08_VRFZonal'
+#      'HS09_CCASHP_Baseboard',
+#      'HS08_CCASHP_VRF'
   ]
 
   :erv_package: [
