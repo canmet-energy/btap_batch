@@ -37,6 +37,7 @@ import logging
 from pymoo.visualization.scatter import Scatter
 import socket
 import ssl
+import requests
 
 # seed the pseudorandom number generator
 from random import seed
@@ -200,6 +201,7 @@ class AWSCredentials:
         service_roles = self.iam.list_roles(PathPrefix='/service-role/')['Roles']
         self.aws_batch_service_role = \
             list(filter(lambda role: role['RoleName'] == 'AWSBatchServiceRole', service_roles))[0]['Arn']
+
 # Class to manage AWS images.
 class AWSImage:
     def __init__(self,
@@ -262,6 +264,11 @@ class AWSImage:
         # Upload files to S3 using custom s3 class to a user folder.
         s3 = S3()
         source_folder = os.path.join(DOCKERFILES_FOLDER, self.image_name)
+        # Copies Dockerfile from btap_cli repository
+        url = 'https://raw.githubusercontent.com/canmet-energy/btap_cli/main/Dockerfile'
+        r = requests.get(url, allow_redirects=True)
+        open(os.path.join(source_folder,'Dockerfile'), 'wb').write(r.content)
+
         s3.copy_folder_to_s3(self.bucket, source_folder, self.credentials.user_name + '/' + self.image_name)
         s3_location = 's3://' + self.bucket + '/' + self.credentials.user_name + '/' + self.image_name
         message = f"Copied build configuration files:\n\t from {source_folder}\n to \n\t {s3_location}"
@@ -385,6 +392,7 @@ class AWSImage:
                 exit(1)
             #Check status every 5 secs.
             time.sleep(5)
+
 # Class to run batch simulations on AWS>
 class AWSBatch:
     """
@@ -853,6 +861,11 @@ class Docker:
         self.dir_path = os.path.dirname(os.path.realpath(__file__))
         # determines folder of docker folder relative to this file.
         self.dockerfile = os.path.join(DOCKERFILES_FOLDER, self.image_name)
+        # Copies Dockerfile from btap_cli repository
+        url = 'https://raw.githubusercontent.com/canmet-energy/btap_cli/main/Dockerfile'
+        r = requests.get(url, allow_redirects=True)
+        open(os.path.join(self.dockerfile,'Dockerfile'), 'wb').write(r.content)
+
         # get a docker client object to run docker commands.
         self.docker_client = docker.from_env()
         # initialize image to None.. will assign later.
