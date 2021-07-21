@@ -20,5 +20,6 @@ dependencies:
   - dash-table
   - dash-renderer
   - scikit-optimize
+  - icecream
   - pip:
       - pymoo
