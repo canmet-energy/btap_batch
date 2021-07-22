@@ -1278,9 +1278,9 @@ class BTAPAnalysis():
                 btap_data.update(json.load(file))
                 file.close()
 
-                #Get Hourly data
-                #if not run_options[':output_variables'] and not run_options[':output_meters']:
-                #    btap_data['df_report_data'], btap_data['df_report_data_dictionary']= self.get_hourly_report_data_from_sqlite(local_eplusout_sql_path,run_options[':datapoint_id'])
+                #Get Hourly data if either meter of variable output has been requested.
+                if len(run_options[':output_variables']) != 0  or len(run_options[':output_meters']) !=0:
+                    btap_data['df_report_data'], btap_data['df_report_data_dictionary']= self.get_hourly_report_data_from_sqlite(local_eplusout_sql_path,run_options[':datapoint_id'])
 
                 # save output url.
                 btap_data['datapoint_output_url'] = 'file:///' + os.path.join(local_datapoint_output_folder)
@@ -1349,12 +1349,11 @@ class BTAPAnalysis():
             Session = sessionmaker(bind=self.database.get_engine())
             session = Session()
             df.to_sql('btap_data', con=session.get_bind(), if_exists='append', index=False)
-            if df_report_data_dictionary != None:
-                df_report_data_dictionary.to_sql('ReportDataDictionary', con=session.get_bind(), if_exists='append', index=False)
-            if df_report_data != None:
-                df_report_data.to_sql('ReportData', con=session.get_bind(), if_exists='append',index=False)
+            if isinstance(df_report_data_dictionary, pd.DataFrame):
+                df_report_data_dictionary.to_sql('ReportDataDictionary', con=session.get_bind(), if_exists='append', index=False, method='multi')
+            if isinstance(df_report_data, pd.DataFrame):
+                df_report_data.to_sql('ReportData', con=session.get_bind(), if_exists='append',index=False, method='multi')
             session.close()
-
         else:
             # If simulation failed, save failure information for user to debug to database
             # Convert failed results to dataframe and save to sql 'failed_runs' table.
@@ -1419,6 +1418,10 @@ class BTAPAnalysis():
                                                                                     output_folder = self.output_folder,
                                                                                     s3_bucket=self.analysis_config[":s3_bucket"],
                                                                                     compute_environment = self.analysis_config[':compute_environment'])
+
+
+
+
         # Kill database if it exists
         if self.database != None:
             if self.analysis_config[':kill_database'] == True:
@@ -1433,6 +1436,70 @@ class BTAPAnalysis():
 
         # Load baseline run data into dataframe.
         # Add eui_reference to analsys_df
+
+    def get_hourly_report_data_from_sqlite(self,
+            eplus_out_sql_file_path,
+            datapoint_id):
+        eplus_out_sql_file_path = r'sqlite:///' + eplus_out_sql_file_path
+        engine = sqlalchemy.create_engine(eplus_out_sql_file_path)
+        # Get CronIndex Table
+        command = """ 
+            SELECT 
+                *
+            FROM 
+                Time as t
+            WHERE
+                t.EnvironmentPeriodIndex = 3 AND
+                t.WarmupFlag = 0
+        """
+        df_hourly = pd.read_sql_query(command, engine)
+        df_hourly['Datetime'] = pd.to_datetime(df_hourly[['Year', 'Month', 'Day', 'Hour', 'Minute']])
+
+
+        df_hourly_template =         df_cron_index = pd.DataFrame(
+            {'Datetime': pd.date_range('2006-01-01 00:10:00', '2007-01-01 00:00:00', freq='10min')}
+        )
+        df_hourly_template['CronIndex'] = np.arange(1, len(df_hourly_template) + 1)
+
+        # Get Hourly ReportData
+        command = """ 
+                SELECT 
+                    rd.ReportDataIndex, 
+                    rd.TimeIndex, 
+                    rd.ReportDataDictionaryIndex, 
+                    rd.Value
+                FROM 
+                    ReportData As rd LEFT OUTER JOIN ReportExtendedData As red 
+                        ON rd.ReportDataIndex = red.ReportDataIndex 
+                    INNER JOIN 
+                    ReportDataDictionary As rdd 
+                        ON rd.ReportDataDictionaryIndex = rdd.ReportDataDictionaryIndex 
+                WHERE 
+                    rdd.ReportingFrequency = 'Hourly'
+
+            """
+        df_report_data = pd.read_sql_query(command, engine)
+        df_report_data = pd.merge(df_report_data, df_hourly[['TimeIndex', 'Datetime']], on='TimeIndex', how='left')
+        df_report_data = pd.merge(df_report_data, df_hourly_template[['CronIndex', 'Datetime']], on='Datetime', how='left')
+        df_report_data = df_report_data.drop(columns=['TimeIndex','ReportDataIndex','Datetime'])
+        df_report_data['datapoint_id'] = datapoint_id
+
+        report_data_dictionary = """ 
+            SELECT 
+                *
+            FROM 
+                ReportDataDictionary as rdd
+            WHERE
+                rdd.ReportingFrequency = 'Hourly'
+        """
+        df_report_data_dictionary = pd.read_sql_query(report_data_dictionary, engine)
+        df_report_data_dictionary = df_report_data_dictionary.drop(
+            columns=['IsMeter', 'ScheduleName'])
+        df_report_data_dictionary['datapoint_id'] = datapoint_id
+        return df_report_data, df_report_data_dictionary
+
+
+
 
     # This method creates a encoder and decoder of the simulation options to integers.  The ML and AI routines use float,
     # conventionally for optimization problems. Since most of the analysis that we do are discrete options for designers
@@ -1517,6 +1584,8 @@ class BTAPAnalysis():
         # Returns the dict.. Note this is not a class variable self like the others. That is because this method is used in the
         # problem definition and we need to avoid thread variable issues.
         return run_options
+
+
 
 
 # Class to Manage parametric runs.
@@ -1905,7 +1974,6 @@ class BTAPIntegratedDesignProcess:
         print(message)
         database.kill_database()
 
-
 # Class to manage local postgres database.
 class BTAPDatabase:
     #Contructor sets up paths and database options.
@@ -2158,21 +2226,24 @@ class BTAPDatabase:
 
 
         # Create ReportDataDictionary
-        sql_command = '''CREATE TABLE ReportDataDictionary (
-                    datapoint_id TEXT,
-                    ReportDataDictionaryIndex INTEGER,
-                    CronIndex INTEGER,
-                    IndexGroup TEXT,
-                    KeyValue TEXT,
-                    Name TEXT,
-                    Units TEXT,
-                    Frequency TEXT
+        sql_command = '''CREATE TABLE "ReportDataDictionary" (
+                        id              SERIAL PRIMARY KEY,
+	                    "ReportDataDictionaryIndex" BIGINT, 
+	                    "Type" TEXT, 
+	                    "IndexGroup" TEXT, 
+	                    "TimestepType" TEXT, 
+	                    "KeyValue" TEXT, 
+	                    "Name" TEXT, 
+	                    "ReportingFrequency" TEXT, 
+	                    "Units" TEXT, 
+	                    datapoint_id TEXT
                     )'''
         with self.engine.connect() as con:
             rs = con.execute(sql_command)
 
         # Create ReportData
         sql_command = '''CREATE TABLE ReportData (
+                    id              SERIAL PRIMARY KEY,
                     ReportDataDictionaryIndex INTEGER,
                     Value FLOAT(53),
                     CronIndex INTEGER,
@@ -2216,6 +2287,10 @@ class BTAPDatabase:
                               output_folder = None,
                               s3_bucket = None,
                               compute_environment = 'local'):
+        self.report_data_df = None
+        self.report_data_dict_df = None
+        self.hourly_df =None
+        self.failed_df = None
         print("Generating output files.")
         message = 'Gathering data from PostGresql'
         print(message)
@@ -2229,7 +2304,7 @@ class BTAPDatabase:
                 # Get all runs in database.
                 self.btap_data_df = pd.read_sql_table('btap_data', sql_connection)
                 # These tables will only be present if temporal data is saved.
-                if sql_engine.has_table('ReportData'):
+                if self.get_engine().has_table('ReportData'):
                     self.report_data_df = pd.read_sql_table('ReportData', sql_connection)
                     self.report_data_dict_df = pd.read_sql_table('ReportDataDictionary', sql_connection)
                     self.time_df = pd.read_sql_table('Time', sql_connection)
@@ -2237,7 +2312,7 @@ class BTAPDatabase:
                 command = f'SELECT * FROM btap_data WHERE ":analysis_id" = \'{analysis_id}\''
                 self.btap_data_df = pd.read_sql_query(command, sql_engine)
                 # These tables will only be present if temporal data is saved.
-                if sql_engine.has_table('ReportData'):
+                if self.get_engine().has_table('ReportData'):
                     self.report_data_df = pd.read_sql_table('ReportData', sql_connection)
                     self.report_data_dict_df = pd.read_sql_table('ReportDataDictionary', sql_connection)
                     self.hourly_df = pd.read_sql_table('Cron', sql_connection)
@@ -2304,9 +2379,10 @@ class BTAPDatabase:
         session = Session()
         if isinstance(btap_data_df, pd.DataFrame):
             btap_data_df.to_sql('BTAPData', con=session.get_bind(), if_exists='fail', index=False)
-            report_data_df.to_sql('ReportData', con=session.get_bind(), if_exists='fail', index=False)
-            report_data_dict_df.to_sql('ReportDataDictionary', con=session.get_bind(), if_exists='fail',index=False)
-            hourly_df.to_sql('Cron', con=session.get_bind(), if_exists='fail', index=False)
+            if self.get_engine().has_table('ReportData'):
+                report_data_df.to_sql('ReportData', con=session.get_bind(), if_exists='fail', index=False)
+                report_data_dict_df.to_sql('ReportDataDictionary', con=session.get_bind(), if_exists='fail',index=False)
+                hourly_df.to_sql('Cron', con=session.get_bind(), if_exists='fail', index=False)
         # if there were any failures.. get them too.
         if isinstance(self.failed_df, pd.DataFrame):
             failed_df.to_sql('failed_runs', con=session.get_bind(), if_exists='fail', index=False)
@@ -2321,9 +2397,10 @@ class BTAPDatabase:
         with pd.ExcelWriter(excel_path) as writer:
             if isinstance(btap_data_df, pd.DataFrame):
                 btap_data_df.to_excel(writer, index=False,sheet_name='btap_data')
-                report_data_df.to_csv(report_data_path, index=False, compression=dict(method='zip', archive_name='report_data.csv'))
-                report_data_dict_df.to_excel(writer, index=False, sheet_name='report_data_dictionary')
-                hourly_df.to_excel(writer, index=False, sheet_name='Cron')
+                if self.get_engine().has_table('ReportData'):
+                    report_data_df.to_csv(report_data_path, index=False, compression=dict(method='zip', archive_name='report_data.csv'))
+                    report_data_dict_df.to_excel(writer, index=False, sheet_name='report_data_dictionary')
+                    hourly_df.to_excel(writer, index=False, sheet_name='Cron')
             else:
                 message = 'No simulations completed.'
                 logging.error(message)
@@ -2416,6 +2493,71 @@ class BTAPSensitivity(BTAPParametric):
         logging.info(message)
         return self.scenarios
 
+# This class processed the btap_batch file to add columns as needed. This is a separate class as this can be applied
+# independant of simulation runs and optionally at simulation time as well if desired,but may have to make this
+# thread-safe if we do.
+class PostProcessResults:
+    def run(self,
+            baseline=BASELINE_RESULTS,
+            btap_data_df=r'C:\Users\plopez\test\btap_batch\example\posterity_mid_rise_elec_montreal\7576173d-48f4-47c6-a3aa-81381b9947bb\output\AWS_Opt_Posterity_MidRise_Elec.xlsx',
+            ):
+            if isinstance(btap_data_df, pd.DataFrame):
+                analysis_df = btap_data_df
+            else:
+                analysis_df = pd.read_excel(open(btap_data_df, 'rb'), sheet_name='btap_data')
+
+            self.economics(analysis_df, baseline)
+
+            return analysis_df
+
+    def economics(self, analysis_df, baseline):
+        file = open(baseline, 'rb')
+        baseline_df = pd.read_excel(file, sheet_name='btap_data')
+        file.close()
+        ceb_fuel_df = pd.read_csv(CER_UTILITY_COSTS)
+        merge_columns = [':building_type', ':template', ':primary_heating_fuel', ':epw_file']
+        df = pd.merge(analysis_df, baseline_df, how='left', left_on=merge_columns, right_on=merge_columns)
+        analysis_df['baseline_savings_energy_cost_per_m_sq'] = round(
+            (df['cost_utility_neb_total_cost_per_m_sq_x'] - df[
+                'cost_utility_neb_total_cost_per_m_sq_y']), 1)
+        analysis_df['baseline_difference_cost_equipment_total_cost_per_m_sq'] = round(
+            (df['cost_utility_neb_total_cost_per_m_sq_x'] - df[
+                'cost_utility_neb_total_cost_per_m_sq_y']), 1)
+        analysis_df['baseline_simple_payback_years'] = round(
+            (analysis_df['baseline_difference_cost_equipment_total_cost_per_m_sq'] / analysis_df[
+                'baseline_savings_energy_cost_per_m_sq']), 1)
+        analysis_df['baseline_peak_electric_percent_better'] = round(((df['energy_peak_electric_w_per_m_sq_y'] - df[
+            'energy_peak_electric_w_per_m_sq_x']) * 100.0 / df['energy_peak_electric_w_per_m_sq_y']), 1)
+        analysis_df['baseline_energy_percent_better'] = round(((df['energy_eui_total_gj_per_m_sq_y'] - df[
+            'energy_eui_total_gj_per_m_sq_x']) * 100 / df['energy_eui_total_gj_per_m_sq_y']), 1)
+        analysis_df['baseline_necb_tier'] = pd.cut(analysis_df['baseline_energy_percent_better'],
+                                                   bins=[-1000.0, -0.001, 25.00, 50.00, 60.00, 1000.0],
+                                                   labels=['non_compliant', 'tier_1', 'tier_2', 'tier_3', 'tier_4'])
+        analysis_df['baseline_ghg_percent_better'] = round(((df['cost_utility_ghg_total_kg_per_m_sq_y'] - df[
+            'cost_utility_ghg_total_kg_per_m_sq_x']) * 100 / df['cost_utility_ghg_total_kg_per_m_sq_y']), 1)
+        # NPV commented out for now.
+        # province = 'Quebec'
+        # npv_end_year = 2050
+        # ngas_rate = ceb_fuel_df.loc[(ceb_fuel_df['province'] == province) & (ceb_fuel_df['fuel_type'] == 'Natural Gas'),str(npv_start_year):str(npv_end_year)].iloc[0].reset_index(drop=True,name='values')
+        # elec_rate = ceb_fuel_df.loc[(ceb_fuel_df['province'] == province) & (ceb_fuel_df['fuel_type'] == 'Electricity'),str(npv_start_year):str(npv_end_year)].iloc[0].reset_index(drop=True, name='values')
+        # fueloil_rate = ceb_fuel_df.loc[(ceb_fuel_df['province'] == province) & (ceb_fuel_df['fuel_type'] == 'Oil'),str(npv_start_year):str(npv_end_year)].iloc[0].reset_index(drop=True, name='values')
+        #
+        # df = pd.concat([ngas_rate,elec_rate,fueloil_rate], axis=1,keys=['ngas_cost_per_gj','elec_cost_per_gj','oil_cost_per_gj'])
+        # df['saving_ngas_gj_per_m2'] = 50.0
+        # df['saving_elec_gj_per_m2'] = 50.0
+        # df['saving_oil_gj_per_m2'] = 50.0
+        # df['ngas_saving_per_m2'] = df['ngas_cost_per_gj'] * df['saving_ngas_gj_per_m2']
+        # df['elec_saving_per_m2'] = df['elec_cost_per_gj'] * df['saving_elec_gj_per_m2']
+        # df['oil_saving_per_m2'] =  df['oil_cost_per_gj'] * df['saving_oil_gj_per_m2']
+        # df['total_savings_per_m2'] = df['ngas_saving_per_m2'] + df['oil_saving_per_m2'] +df['oil_saving_per_m2']
+        # df['total_discounted_savings_per_m2'] = pv(rate=npv_discount_rate, pmt=0, nper=df.index, fv=-df['total_savings_per_m2'])
+        # df['total_cumulative_dicounted_savings_per_m2'] = np.cumsum(df['total_discounted_savings_per_m2'])
+        # print(df)
+        #
+        # final_full_year = df[df['total_cumulative_dicounted_savings_per_m2'] < 0].index.values.max()
+        # fractional_yr = -df['total_cumulative_dicounted_savings_per_m2'][final_full_year] / df['total_discounted_savings_per_m2'][final_full_year + 1]
+        # payback_period = final_full_year + fractional_yr
+        # print(payback_period)
 
 
 # Main method that researchers will interface with. If this gets bigger, consider a factory method pattern.
@@ -2484,73 +2626,5 @@ def btap_batch(analysis_config_file=None, git_api_token=None):
         print(message)
         logging.error(message)
         exit(1)
-
-
-# This class processed the btap_batch file to add columns as needed. This is a separate class as this can be applied
-# independant of simulation runs and optionally at simulation time as well if desired,but may have to make this
-# thread-safe if we do.
-class PostProcessResults:
-    def run(self,
-            baseline=BASELINE_RESULTS,
-            btap_data_df=r'C:\Users\plopez\test\btap_batch\example\posterity_mid_rise_elec_montreal\7576173d-48f4-47c6-a3aa-81381b9947bb\output\AWS_Opt_Posterity_MidRise_Elec.xlsx',
-            ):
-            if isinstance(btap_data_df, pd.DataFrame):
-                analysis_df = btap_data_df
-            else:
-                analysis_df = pd.read_excel(open(btap_data_df, 'rb'), sheet_name='btap_data')
-
-            self.economics(analysis_df, baseline)
-
-            return analysis_df
-
-    def economics(self, analysis_df, baseline):
-        file = open(baseline, 'rb')
-        baseline_df = pd.read_excel(file, sheet_name='btap_data')
-        file.close()
-        ceb_fuel_df = pd.read_csv(CER_UTILITY_COSTS)
-        merge_columns = [':building_type', ':template', ':primary_heating_fuel', ':epw_file']
-        df = pd.merge(analysis_df, baseline_df, how='left', left_on=merge_columns, right_on=merge_columns)
-        analysis_df['baseline_savings_energy_cost_per_m_sq'] = round(
-            (df['cost_utility_neb_total_cost_per_m_sq_x'] - df[
-                'cost_utility_neb_total_cost_per_m_sq_y']), 1)
-        analysis_df['baseline_difference_cost_equipment_total_cost_per_m_sq'] = round(
-            (df['cost_utility_neb_total_cost_per_m_sq_x'] - df[
-                'cost_utility_neb_total_cost_per_m_sq_y']), 1)
-        analysis_df['baseline_simple_payback_years'] = round(
-            (analysis_df['baseline_difference_cost_equipment_total_cost_per_m_sq'] / analysis_df[
-                'baseline_savings_energy_cost_per_m_sq']), 1)
-        analysis_df['baseline_peak_electric_percent_better'] = round(((df['energy_peak_electric_w_per_m_sq_y'] - df[
-            'energy_peak_electric_w_per_m_sq_x']) * 100.0 / df['energy_peak_electric_w_per_m_sq_y']), 1)
-        analysis_df['baseline_energy_percent_better'] = round(((df['energy_eui_total_gj_per_m_sq_y'] - df[
-            'energy_eui_total_gj_per_m_sq_x']) * 100 / df['energy_eui_total_gj_per_m_sq_y']), 1)
-        analysis_df['baseline_necb_tier'] = pd.cut(analysis_df['baseline_energy_percent_better'],
-                                                   bins=[-1000.0, -0.001, 25.00, 50.00, 60.00, 1000.0],
-                                                   labels=['non_compliant', 'tier_1', 'tier_2', 'tier_3', 'tier_4'])
-        analysis_df['baseline_ghg_percent_better'] = round(((df['cost_utility_ghg_total_kg_per_m_sq_y'] - df[
-            'cost_utility_ghg_total_kg_per_m_sq_x']) * 100 / df['cost_utility_ghg_total_kg_per_m_sq_y']), 1)
-        # NPV commented out for now.
-        # province = 'Quebec'
-        # npv_end_year = 2050
-        # ngas_rate = ceb_fuel_df.loc[(ceb_fuel_df['province'] == province) & (ceb_fuel_df['fuel_type'] == 'Natural Gas'),str(npv_start_year):str(npv_end_year)].iloc[0].reset_index(drop=True,name='values')
-        # elec_rate = ceb_fuel_df.loc[(ceb_fuel_df['province'] == province) & (ceb_fuel_df['fuel_type'] == 'Electricity'),str(npv_start_year):str(npv_end_year)].iloc[0].reset_index(drop=True, name='values')
-        # fueloil_rate = ceb_fuel_df.loc[(ceb_fuel_df['province'] == province) & (ceb_fuel_df['fuel_type'] == 'Oil'),str(npv_start_year):str(npv_end_year)].iloc[0].reset_index(drop=True, name='values')
-        #
-        # df = pd.concat([ngas_rate,elec_rate,fueloil_rate], axis=1,keys=['ngas_cost_per_gj','elec_cost_per_gj','oil_cost_per_gj'])
-        # df['saving_ngas_gj_per_m2'] = 50.0
-        # df['saving_elec_gj_per_m2'] = 50.0
-        # df['saving_oil_gj_per_m2'] = 50.0
-        # df['ngas_saving_per_m2'] = df['ngas_cost_per_gj'] * df['saving_ngas_gj_per_m2']
-        # df['elec_saving_per_m2'] = df['elec_cost_per_gj'] * df['saving_elec_gj_per_m2']
-        # df['oil_saving_per_m2'] =  df['oil_cost_per_gj'] * df['saving_oil_gj_per_m2']
-        # df['total_savings_per_m2'] = df['ngas_saving_per_m2'] + df['oil_saving_per_m2'] +df['oil_saving_per_m2']
-        # df['total_discounted_savings_per_m2'] = pv(rate=npv_discount_rate, pmt=0, nper=df.index, fv=-df['total_savings_per_m2'])
-        # df['total_cumulative_dicounted_savings_per_m2'] = np.cumsum(df['total_discounted_savings_per_m2'])
-        # print(df)
-        #
-        # final_full_year = df[df['total_cumulative_dicounted_savings_per_m2'] < 0].index.values.max()
-        # fractional_yr = -df['total_cumulative_dicounted_savings_per_m2'][final_full_year] / df['total_discounted_savings_per_m2'][final_full_year + 1]
-        # payback_period = final_full_year + fractional_yr
-        # print(payback_period)
-
 
 

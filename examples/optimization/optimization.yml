@@ -57,9 +57,9 @@
     :type: nsga2 # optimization all in the same analysis.
     # Population is the size of each generation. A good number is 100-200 if using AWS or set to the number of CPU cores you
     # have on your local system set to (#CPU cores *2 - 1). To simply test it is set to 5.
-    :population: 5
+    :population: 40
     # The number of generations. The more generations you have the more the optimization shape (pareto curve) will be defined.
-    :n_generations: 2
+    :n_generations: 1
     # examine the nsga implementation for more details on these inputs if you wish to change https://pymoo.org/algorithms/nsga2.html
     :prob: 0.85
     :eta: 3.0
@@ -75,6 +75,8 @@
         'energy_eui_total_gj_per_m_sq', # Total energy consumed by building
         #'cost_equipment_total_cost_per_m_sq' # This is only available in btap_private_cli
     ]
+  :output_meters: []
+  :output_variables: []
 #########################################  BUILDING OPTIONS  ###########################################################
 # Building options
 :building_options:
@@ -138,8 +140,8 @@
                        'add_daylighting_controls'
   ]
   :ecm_system_name: [ 'NECB_Default',
-                      'HS09_CCASHPSys',
-                      'HS08_VRFZonal'
+                      #'HS09_CCASHPSys',
+                      #'HS08_VRFZonal'
   ]
 
   :erv_package: [ 'NECB_Default',
