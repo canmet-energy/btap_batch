@@ -11,7 +11,7 @@
   # Choices are:
   #       local : Run locally.. Good to test out runs on small batches before sending to AWS.
   #       aws_batch: use for analyses with > 1000 simulations
-  :compute_environment: local
+  :compute_environment: aws_batch
 
   # DO NOT CHANGE: S3 Bucket...Must be created ahead of time. Must be a STRING.
   # H&B default bucket is '834599497928' for the btap_dev account.
@@ -26,17 +26,17 @@
   :nocache: false
 
   # Branch from https://github.com/NREL/openstudio-standards. Typically 'nrcan' branch.
-  :os_standards_branch: 'nrcan_315'
+  :os_standards_branch: 'cmhc_posterity'
 
   # Branch from https://github.com/canmet-energy/btap_costing. Typically 'master'
-  :btap_costing_branch: 'production'
+  :btap_costing_branch: 'cmhc_posterity'
 
   # DO NOT CHANGE: Openstudio Version only 3.0.1 available
   :os_version: '3.0.1'
 
   # The name of the analysis. Can be a user friendly name. This is how it will appear on your local system or on the S3
   # bucket. for example on s3 the analysis run input/output files will be here. s3://834599497928/phylroy.lopez/example_analysis
-  :analysis_name: 'baseline_2020_03_27'
+  :analysis_name: 'posterity_highrise_baseline_2021_07_22'
 
   # Currently fixed to true. DO NOT CHANGE
   :run_annual_simulation: true
@@ -68,9 +68,9 @@
 #      'RetailStandalone',
 #      'RetailStripmall',
 #      'QuickServiceRestaurant',
-       'FullServiceRestaurant',
+#      'FullServiceRestaurant',
 #      'MidriseApartment',
-#      'HighriseApartment',
+      'HighriseApartment',
 #      'LowriseApartment',
 #      'Hospital',
 #      'Outpatient'

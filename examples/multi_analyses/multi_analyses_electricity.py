@@ -70,7 +70,7 @@ def run_analysis(short_city_name,
     # Open the yaml in analysis dict.
     with open(OPTIONS_FILE, 'r') as stream:
         analysis = yaml.safe_load(stream)
-    analysis[':analysis_configuration'][':compute_environment'] = 'local'
+    analysis[':analysis_configuration'][':compute_environment'] = 'aws_batch'
     analysis[':analysis_configuration'][':algorithm'] = optimization
     analysis[':analysis_configuration'][':analysis_name'] = f"{short_city_name}_{building_type}_{primary_heating_fuel}"
     analysis[':analysis_configuration'][':kill_database'] = False
