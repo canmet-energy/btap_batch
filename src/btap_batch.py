@@ -868,8 +868,10 @@ class Docker:
         # Copies Dockerfile from btap_cli repository
         url = 'https://raw.githubusercontent.com/canmet-energy/btap_cli/main/Dockerfile'
         r = requests.get(url, allow_redirects=True)
-        open(os.path.join(self.dockerfile,'Dockerfile'), 'wb').write(r.content)
 
+        file = open(os.path.join(self.dockerfile,'Dockerfile'), 'wb')
+        file.write(r.content)
+        file.close()
         # get a docker client object to run docker commands.
         self.docker_client = docker.from_env()
         # initialize image to None.. will assign later.
@@ -879,11 +881,21 @@ class Docker:
         # Set timer to track how long it took to build.
         start = time.time()
         # add info to logger.
-        logging.info(f"Building image:{self.image_name}")
-        logging.info(f"OS Version:{self.os_version}")
-        logging.info(f"BTAP_COSTING:{self.btap_costing_branch}")
-        logging.info(f"OS_STANDARDS:{self.os_standards_branch}")
-        logging.info(f"Dockerfolder being use to build image:{self.dockerfile}")
+        message = f"Building image:{self.image_name}"
+        logging.info(message)
+        print(message)
+        message = f"OS Version:{self.os_version}"
+        logging.info(message)
+        print(message)
+        message = f"BTAP_COSTING Branch:{self.btap_costing_branch}"
+        logging.info(message)
+        print(message)
+        message = f"OS_STANDARDS branch:{self.os_standards_branch}"
+        logging.info(message)
+        print(message)
+        message = f"Dockerfolder being use to build image:{self.dockerfile}"
+        logging.info(message)
+        print(message)
 
         buildargs = {
             # Git token to access private repositories.
@@ -906,7 +918,7 @@ class Docker:
             image = None
 
         if image == None or self.nocache == True:
-            message = f'Building Image:{self.image_name} will take ~10m '
+            message = f'Building Image:{self.image_name} will take ~10m... '
             logging.info(message)
             print(message)
             image, json_log = self.docker_client.images.build(
@@ -1227,6 +1239,7 @@ class BTAPAnalysis():
             if run_options[':building_type'] in local_osm_dict:
                 #copy osm file into input folder.
                 shutil.copy(local_osm_dict[run_options[':building_type']], local_datapoint_input_folder)
+                logging.info(f"Copying osm file from {local_osm_dict[run_options[':building_type']]} to {local_datapoint_input_folder}")
 
             if run_options[':compute_environment'] == 'aws_batch':
 
@@ -2312,7 +2325,7 @@ class BTAPDatabase:
                 command = f'SELECT * FROM btap_data WHERE ":analysis_id" = \'{analysis_id}\''
                 self.btap_data_df = pd.read_sql_query(command, sql_engine)
                 # These tables will only be present if temporal data is saved.
-                if self.get_engine().has_table('ReportData'):
+                if sqlalchemy.inspect(self.get_engine()).has_table('ReportData'):
                     self.report_data_df = pd.read_sql_table('ReportData', sql_connection)
                     self.report_data_dict_df = pd.read_sql_table('ReportDataDictionary', sql_connection)
                     self.hourly_df = pd.read_sql_table('Cron', sql_connection)
@@ -2320,7 +2333,7 @@ class BTAPDatabase:
             self.btap_data_df['datapoint_index'] = np.arange(1, len(self.btap_data_df) + 1)
 
             # Reduce redundant columns in tables.
-            if sql_engine.has_table('ReportData'):
+            if sqlalchemy.inspect(self.get_engine()).has_table('ReportData'):
                 self.report_data_dict_df = pd.merge(self.report_data_dict_df, self.btap_data_df[[':datapoint_id', 'datapoint_index']], left_on='datapoint_id', right_on=':datapoint_id', how='left')
                 self.report_data_dict_df = self.report_data_dict_df.drop(columns=[':datapoint_id','datapoint_id'])
                 self.report_data_df = pd.merge(self.report_data_df, self.btap_data_df[[':datapoint_id', 'datapoint_index']], left_on='datapoint_id', right_on=':datapoint_id', how='left')
@@ -2340,7 +2353,7 @@ class BTAPDatabase:
                 self.failed_df = pd.read_sql_query(command, sql_engine)
 
         sql_connection.close()
-        message = 'Save high level and hourly data if required to sqlite database.'
+        message = f'Save high level and hourly data if required to sqlite database to {output_folder}'
         print(message)
         logging.info(message)
         self.save_sqlite_output(output_folder,
@@ -2349,7 +2362,7 @@ class BTAPDatabase:
                                 self.report_data_dict_df,
                                 self.hourly_df,
                                 self.failed_df)
-        message = 'Save high level and hourly data if required to excel file.'
+        message = f'Save high level and hourly data if required to excel file to {output_folder}'
         print(message)
         logging.info(message)
         self.save_excel_output(output_folder,
@@ -2358,7 +2371,7 @@ class BTAPDatabase:
                                 self.report_data_dict_df,
                                 self.hourly_df,
                                 self.failed_df)
-        message = 'Save high level and hourly data if required to zipped pickle file.'
+        message = f'Save high level and hourly data if required to zipped pickle file to {output_folder}'
         print(message)
         logging.info(message)
         self.save_pickle_output(output_folder,
@@ -2379,7 +2392,7 @@ class BTAPDatabase:
         session = Session()
         if isinstance(btap_data_df, pd.DataFrame):
             btap_data_df.to_sql('BTAPData', con=session.get_bind(), if_exists='fail', index=False)
-            if self.get_engine().has_table('ReportData'):
+            if sqlalchemy.inspect(self.get_engine()).has_table('ReportData'):
                 report_data_df.to_sql('ReportData', con=session.get_bind(), if_exists='fail', index=False)
                 report_data_dict_df.to_sql('ReportDataDictionary', con=session.get_bind(), if_exists='fail',index=False)
                 hourly_df.to_sql('Cron', con=session.get_bind(), if_exists='fail', index=False)
@@ -2397,7 +2410,7 @@ class BTAPDatabase:
         with pd.ExcelWriter(excel_path) as writer:
             if isinstance(btap_data_df, pd.DataFrame):
                 btap_data_df.to_excel(writer, index=False,sheet_name='btap_data')
-                if self.get_engine().has_table('ReportData'):
+                if sqlalchemy.inspect(self.get_engine()).has_table('ReportData'):
                     report_data_df.to_csv(report_data_path, index=False, compression=dict(method='zip', archive_name='report_data.csv'))
                     report_data_dict_df.to_excel(writer, index=False, sheet_name='report_data_dictionary')
                     hourly_df.to_excel(writer, index=False, sheet_name='Cron')

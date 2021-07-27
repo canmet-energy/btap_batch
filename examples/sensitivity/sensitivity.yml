@@ -18,7 +18,7 @@
   :s3_bucket: '834599497928'
 
   # Use btap_public_cli for full opensource version. For btap_private_cli to use costing. Contact us if you wish to work with costing data.
-  :image_name: 'btap_public_cli'
+  :image_name: 'btap_private_cli'
 
   # Set to True if you wish to build the image from scratch with the below branches fresh,
   # pulling from the most recent branches indicated below. If set to false, it will use the last version built locally or
@@ -27,11 +27,11 @@
 
   # Branch from https://github.com/NREL/openstudio-standards. Typically 'nrcan_prod' branch.
   # Developers or people liking to work on unstable code can use 'nrcan'
-  :os_standards_branch: 'nrcan_prod'
+  :os_standards_branch: 'nrcan'
 
   # Branch from https://github.com/canmet-energy/btap_costing. Typically 'nrcan_prod'
   # Developers or people liking to work on unstable code can use 'master'
-  :btap_costing_branch: 'nrcan_prod'
+  :btap_costing_branch: 'master'
 
   # DO NOT CHANGE: Openstudio Version only 3.0.1 available
   :os_version: '3.0.1'
@@ -39,7 +39,7 @@
   # The name of the analysis. Can be a user friendly name. This is how it will appear on your local system or on the S3
   # bucket. for example if 'example_analysis' on s3 the analysis run input/output files will be here in our s3 bucket
   # s3://834599497928/phylroy.lopez/example_analysis
-  :analysis_name: 'custom_osm_example'
+  :analysis_name: 'sensitivity_example'
 
   # Do you wish to run the simulations?
   :run_annual_simulation: true
@@ -55,6 +55,10 @@
   #########################################  Algorithm  ###########################################################
   :algorithm:
     :type: sensitivity
+
+###########################################     Hourly Data     #######################################################
+  :output_variables: []
+  :output_meters: []
 
 #########################################  BUILDING OPTIONS (All inputs should be 'strings') ###########################################################
 # Building options
@@ -119,8 +123,10 @@
   ]
   :ecm_system_name: [
       'NECB_Default',
-      'HS09_CCASHPSys',
-      'HS08_VRFZonal'
+      'HS09_CCASHP_Baseboard',
+      'HS08_CCASHP_VRF',
+      'HS11_ASHP_PTHP',
+      'HS12_ASHP_Baseboard'
   ]
 
   :erv_package: [
