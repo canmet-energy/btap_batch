@@ -7,6 +7,8 @@ from pathlib import Path
 import warnings
 
 class TestBTAPBatch(unittest.TestCase):
+    first_test = True
+
     def setUp(self):
         # Workaround for this warning https://github.com/boto/boto3/issues/454
         warnings.filterwarnings("ignore", category=ResourceWarning, message="unclosed.*<ssl.SSLSocket.*>")
@@ -14,7 +16,6 @@ class TestBTAPBatch(unittest.TestCase):
         # Displays logging.. Set to INFO or DEBUG for a more verbose output.
         logging.basicConfig(level=logging.ERROR)
 
-        self.first_test = True
 
         # Your git token.. Do not commit this!
         self.git_api_token = os.environ['GIT_API_TOKEN']
@@ -23,13 +24,13 @@ class TestBTAPBatch(unittest.TestCase):
         self.compute_environment = 'local'
 
         #Change to test on other branches.
-        self.os_standards_branch = 'nrcan_prod'
+        self.os_standards_branch = 'nrcan'
 
         # Branch from https://github.com/canmet-energy/btap_costing. Typically 'master'
-        self.btap_costing_branch = 'nrcan_prod'
+        self.btap_costing_branch = 'master'
 
         # Branch from https://github.com/canmet-energy/btap_costing. Typically 'master'
-        self.image_name = 'btap_public_cli'
+        self.image_name = 'btap_private_cli'
 
         # Set no-cache...in other words do we rebuild the image fresh? Takes an extra 10 minutes. Will only do this once
         # per test suite invocation.
@@ -51,10 +52,13 @@ class TestBTAPBatch(unittest.TestCase):
         analysis[':analysis_configuration'][':btap_costing_branch'] = self.btap_costing_branch
         analysis[':analysis_configuration'][':image_name'] = self.image_name
 
-        print(self.first_test)
-        if self.first_test == True:
-            analysis[':analysis_configuration'][':nocache'] = self.nocache
-            self.first_test = False
+        #This will check if we already ran a test.. if so we will not rebuild the images.
+        if self.__class__.first_test  == True:
+            analysis[':analysis_configuration'][':nocache'] = True
+            self.__class__.first_test  = False
+        else:
+            analysis[':analysis_configuration'][':nocache'] = False
+
 
         #mk folder for test.
         test_output_folder = os.path.join(os.getcwd(),'test_output',f'{self.compute_environment}_{basename}')
@@ -82,11 +86,6 @@ class TestBTAPBatch(unittest.TestCase):
     def test_parametric(self):
         self.run_analysis(input_file=os.path.join(os.path.dirname(os.path.realpath(__file__)),'..','..','examples','parametric', 'parametric.yml'))
 
-    def test_sample_lhs(self):
-        self.run_analysis(input_file=os.path.join(os.path.dirname(os.path.realpath(__file__)),'..','..','examples','sample-lhs', 'sample-lhs.yml'))
-
-    def test_multi_analysis(self):
-        self.run_analysis(input_file=os.path.join(os.path.dirname(os.path.realpath(__file__)),'..','..','examples','multi_analyses', 'multi_analyses.yml'))
 
 
 if __name__ == '__main__':
