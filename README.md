@@ -287,3 +287,26 @@ information to btap_data.json top level. Tables in btap_data.json are ignored by
 ## Testing
 Please run the test in btap_batch\src\test\test_btap_batch.py to ensure the code functions as expected after any development.
 You can adjust the parameters in the test if you wish to examine other scenarios. 
+
+## Troubleshooting
+**Problem**: Analysis seem to fail with errors creating the database server or out of space / cannot write errors.
+
+**Solution**: Sometimes docker fills either it hard disk or your system hard disk. You can check how much docker is using with this command. 
+```
+docker system df
+```
+
+This will produce an output that will show how full your system is. 
+
+```
+TYPE            TOTAL     ACTIVE    SIZE      RECLAIMABLE
+Images          3         0         13.51GB   13.51GB (100%)
+Containers      0         0         0B        0B
+Local Volumes   4         0         624MB     624MB (100%)
+Build Cache     0         0         0B        0B
+```
+
+You can remove the images, containers and volumes all at once with the command. Warning! This will delete all your containers from your system. Make sure you have backed up any work to a safe location.  See [docker documentation on this](https://docs.docker.com/engine/reference/commandline/system_prune/) for more information. 
+```
+docker prune -a -f --volumes
+```
