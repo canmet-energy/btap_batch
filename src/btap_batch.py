@@ -1935,6 +1935,7 @@ class BTAPDatabase:
                     ":electrical_loads_scale" TEXT,
                     ":oa_scale" TEXT,
                     ":infiltration_scale" TEXT,
+                    ":airloop_economizer_type" TEXT,
                     ":compute_environment" TEXT, 
                     ":s3_bucket" TEXT, 
                     ":image_name" TEXT, 

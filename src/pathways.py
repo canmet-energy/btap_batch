@@ -93,6 +93,7 @@ class Data:
             {'filter': 'hvac', 'label': 'Advanced DX', 'col_name': ':adv_dx_units'},
             {'filter': 'hvac', 'label': 'Chiller Type', 'col_name': ':chiller_type'},
             {'filter': 'hvac', 'label': 'Natural Ventilation', 'col_name': ':nv_type'},
+            {'filter': 'hvac', 'label': 'Air Side Economizer Type', 'col_name': ':airloop_economizer_type'},
 
             # Renewables
             {'filter': 'renewables', 'label': 'GroundPV', 'col_name': ':pv_ground_type'},

@@ -287,3 +287,8 @@
     'NECB_Default',
     #'VSD'
   ] # Options: (1) 'NECB_Default'/nil/'none'/false (i.e. do nothing), (2) e.g. 'VSD'
+  :airloop_economizer_type: [  # (1) nil/'NECB_Default' (2) 'DifferentialEnthalpy (3) 'DifferentialDryBulb'
+    'NECB_Default',
+    #'DifferentialEnthalpy'
+    #'DifferentialDryBulb'
+  ]
