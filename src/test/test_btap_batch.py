@@ -21,7 +21,7 @@ class TestBTAPBatch(unittest.TestCase):
         self.git_api_token = os.environ['GIT_API_TOKEN']
 
         #Change this to aws_batch to run tests on amazon.
-        self.compute_environment = 'local'
+        self.compute_environment = 'aws_batch'
 
         #Change to test on other branches.
         self.os_standards_branch = 'nrcan'
@@ -31,10 +31,6 @@ class TestBTAPBatch(unittest.TestCase):
 
         # Branch from https://github.com/canmet-energy/btap_costing. Typically 'master'
         self.image_name = 'btap_private_cli'
-
-        # Set no-cache...in other words do we rebuild the image fresh? Takes an extra 10 minutes. Will only do this once
-        # per test suite invocation.
-        self.nocache = False
 
     def run_analysis(self, input_file=None):
 
@@ -46,7 +42,7 @@ class TestBTAPBatch(unittest.TestCase):
         with open(input_file, 'r') as stream:
             analysis = yaml.safe_load(stream)
 
-        #Change compute environment
+        #Change options
         analysis[':analysis_configuration'][':compute_environment'] = self.compute_environment
         analysis[':analysis_configuration'][':os_standards_branch'] = self.os_standards_branch
         analysis[':analysis_configuration'][':btap_costing_branch'] = self.btap_costing_branch
@@ -83,8 +79,8 @@ class TestBTAPBatch(unittest.TestCase):
     def test_optimization(self):
         self.run_analysis(input_file=os.path.join(os.path.dirname(os.path.realpath(__file__)),'..','..','examples','optimization', 'optimization.yml'))
 
-    def test_parametric(self):
-        self.run_analysis(input_file=os.path.join(os.path.dirname(os.path.realpath(__file__)),'..','..','examples','parametric', 'parametric.yml'))
+    def test_sample_lhs(self):
+        self.run_analysis(input_file=os.path.join(os.path.dirname(os.path.realpath(__file__)),'..','..','examples','sample-lhs', 'sample-lhs.yml'))
 
 
 

@@ -892,7 +892,7 @@ class Docker:
         message = f"BTAP_COSTING Branch:{self.btap_costing_branch}"
         logging.info(message)
         print(message)
-        message = f"OS_STANDARDS branch:{self.os_standards_branch}"
+        message = f"OS_STANDARDS Branch:{self.os_standards_branch}"
         logging.info(message)
         print(message)
         message = f"Dockerfolder being use to build image:{self.dockerfile}"
@@ -2145,7 +2145,7 @@ class BTAPDatabase:
                 self.btap_data_df = pd.read_sql_query(command, sql_engine)
 
             # PostProcess comparison to baselines.
-            self.btap_data_df = PostProcessResults().run(btap_data_df=self.btap_data_df)
+            self.btap_data_df = PostProcessResults().run(btap_data_df=self.btap_data_df, output_folder=output_folder)
 
         # if there were any failures.. get them too.
 
@@ -2262,7 +2262,7 @@ class BTAPSensitivity(BTAPParametric):
 class PostProcessResults:
     def run(self,
             baseline=BASELINE_RESULTS,
-            btap_data_df=r'C:\Users\plopez\test\btap_batch\example\posterity_mid_rise_elec_montreal\7576173d-48f4-47c6-a3aa-81381b9947bb\output\AWS_Opt_Posterity_MidRise_Elec.xlsx',
+            btap_data_df=None,
             output_folder=None):
         if isinstance(btap_data_df, pd.DataFrame):
             analysis_df = btap_data_df
@@ -2274,16 +2274,31 @@ class PostProcessResults:
         # Iterate through each datapoint in analysis and collect hourly data.
         hourly_folder = os.path.join(output_folder,'hourly_data')
         os.makedirs(hourly_folder, exist_ok=True)
-        ic(hourly_folder)
-
+        s3 = boto3.resource('s3')
         for index, row in analysis_df.iterrows():
             if row['datapoint_output_url'].startswith('file:///'):
                 #This is a local file. use system copy. First remove prefix
                 hourly_data_path = os.path.join(row['datapoint_output_url'][len('file:///'):], 'hourly.csv')
-                ic(hourly_data_path)
                 shutil.copyfile(hourly_data_path,os.path.join(hourly_folder,row[':datapoint_id']+'.csv') )
-            elif row['datapoint_output_url'].startswith('s3://'):
-                print("S3 not supported yet to download hourly data.")
+            elif row['datapoint_output_url'].startswith('https://s3'):
+                p = re.compile("https:\/\/s3\.console\.aws\.amazon\.com\/s3\/buckets\/(\d*)\?region=(.*)\&prefix=(.*)")
+                m = p.match(row['datapoint_output_url'])
+                bucket = m.group(1)
+                region = m.group(2)
+                prefix = m.group(3)
+                csv_location = prefix + 'hourly.csv'
+                target = os.path.join(hourly_folder, row[':datapoint_id'] + '.csv')
+                message = f"Getting hourly data from S3 bucket {bucket} at path {csv_location} to {target}"
+                logging.info(message)
+                print(message)
+                try:
+                    s3.Bucket(bucket).download_file(csv_location, target)
+                except botocore.exceptions.ClientError as e:
+                    if e.response['Error']['Code'] == "404":
+                        print("The object does not exist.")
+                    else:
+                        raise
+
 
         return analysis_df
 
@@ -2475,8 +2490,3 @@ def btap_batch(analysis_config_file=None, git_api_token=None):
         print(message)
         logging.error(message)
         exit(1)
-
-
-pp = PostProcessResults().run(
-            btap_data_df=r'C:\Users\plopez\PycharmProjects\btap_batch\examples\elimination\elimination_example\62e1ca45-5355-4fa8-9cf5-f433ff9708ac\output\output.xlsx',
-            output_folder=r'C:\Users\plopez\PycharmProjects\btap_batch\examples\elimination\elimination_example\62e1ca45-5355-4fa8-9cf5-f433ff9708ac\output')

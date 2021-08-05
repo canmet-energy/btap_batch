@@ -27,11 +27,11 @@
 
   # Branch from https://github.com/NREL/openstudio-standards. Typically 'nrcan_prod' branch.
   # Developers or people liking to work on unstable code can use 'nrcan'
-  :os_standards_branch: 'standards'
+  :os_standards_branch: 'nrcan'
 
   # Branch from https://github.com/canmet-energy/btap_costing. Typically 'nrcan_prod'
   # Developers or people liking to work on unstable code can use 'master'
-  :btap_costing_branch: 'standards'
+  :btap_costing_branch: 'master'
 
   # DO NOT CHANGE: Openstudio Version only 3.0.1 available
   :os_version: '3.0.1'
@@ -64,8 +64,16 @@
     :random_seed: 1
 
 ###########################################     Hourly Data     #######################################################
-  :output_variables: []
-  :output_meters: []
+  :output_variables: [
+    {    key: '*',     variable: 'Zone Air Temperature',     frequency: 'hourly'}
+  ]
+  :output_meters: [
+    {    name: 'Gas:Facility',     frequency: 'hourly'},
+    {    name: 'Electricity:Facility',     frequency: 'hourly'},
+    {    name: 'DISTRICTHEATING:FACILITY',     frequency: 'hourly'},
+    {    name: 'DISTRICTCOOLING:FACILITY',     frequency: 'hourly'},
+    {    name: 'FuelOil#2:Facility',     frequency: 'hourly'}
+  ]
 
 #########################################  BUILDING OPTIONS  ###########################################################
 # Building options
@@ -274,7 +282,7 @@
   :nv_type: [ 'NECB_Default',
               'add_nv'
   ]
-   :nv_opening_fraction: [ 'NECB_Default' ]
+  :nv_opening_fraction: [ 'NECB_Default' ]
   :nv_temp_out_min: [ 'NECB_Default' ]
   :nv_delta_temp_in_out: [ 'NECB_Default' ]
   :occupancy_loads_scale: [ 'NECB_Default' ]
