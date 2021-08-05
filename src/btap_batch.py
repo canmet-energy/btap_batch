@@ -53,6 +53,8 @@ from skopt.sampler import Lhs
 import traceback
 import pickle
 import gzip
+import pathlib
+import csv
 
 seed(1)
 
@@ -1129,67 +1131,6 @@ class BTAPAnalysis():
         logging.info(f"local mounted input folder:{self.input_folder}")
         logging.info(f"local mounted output folder:{self.output_folder}")
 
-    def get_hourly_report_data_from_sqlite(self,
-            eplus_out_sql_file_path,
-            datapoint_id):
-        eplus_out_sql_file_path = r'sqlite:///' + eplus_out_sql_file_path
-        engine = sqlalchemy.create_engine(eplus_out_sql_file_path)
-        # Get CronIndex Table
-        command = """ 
-            SELECT 
-                *
-            FROM 
-                Time as t
-            WHERE
-                t.EnvironmentPeriodIndex = 3 AND
-                t.WarmupFlag = 0
-        """
-        df_hourly = pd.read_sql_query(command, engine)
-        df_hourly['Datetime'] = pd.to_datetime(df_hourly[['Year', 'Month', 'Day', 'Hour', 'Minute']])
-
-
-        df_hourly_template =         df_cron_index = pd.DataFrame(
-            {'Datetime': pd.date_range('2006-01-01 00:10:00', '2007-01-01 00:00:00', freq='10min')}
-        )
-        df_hourly_template['CronIndex'] = np.arange(1, len(df_hourly_template) + 1)
-
-        # Get Hourly ReportData
-        command = """ 
-                SELECT 
-                    rd.ReportDataIndex, 
-                    rd.TimeIndex, 
-                    rd.ReportDataDictionaryIndex, 
-                    rd.Value
-                FROM 
-                    ReportData As rd LEFT OUTER JOIN ReportExtendedData As red 
-                        ON rd.ReportDataIndex = red.ReportDataIndex 
-                    INNER JOIN 
-                    ReportDataDictionary As rdd 
-                        ON rd.ReportDataDictionaryIndex = rdd.ReportDataDictionaryIndex 
-                WHERE 
-                    rdd.ReportingFrequency = 'Hourly'
-
-            """
-        df_report_data = pd.read_sql_query(command, engine)
-        df_report_data = pd.merge(df_report_data, df_hourly[['TimeIndex', 'Datetime']], on='TimeIndex', how='left')
-        df_report_data = pd.merge(df_report_data, df_hourly_template[['CronIndex', 'Datetime']], on='Datetime', how='left')
-        df_report_data = df_report_data.drop(columns=['TimeIndex','ReportDataIndex','Datetime'])
-        df_report_data['datapoint_id'] = datapoint_id
-
-        report_data_dictionary = """ 
-            SELECT 
-                *
-            FROM 
-                ReportDataDictionary as rdd
-            WHERE
-                rdd.ReportingFrequency = 'Hourly'
-        """
-        df_report_data_dictionary = pd.read_sql_query(report_data_dictionary, engine)
-        df_report_data_dictionary = df_report_data_dictionary.drop(
-            columns=['IsMeter', 'ScheduleName'])
-        df_report_data_dictionary['datapoint_id'] = datapoint_id
-        return df_report_data, df_report_data_dictionary
-
     def run_datapoint(self,run_options):
         # Start timer to track simulation time.
         start = time.time()
@@ -1291,10 +1232,6 @@ class BTAPAnalysis():
                 btap_data.update(json.load(file))
                 file.close()
 
-                #Get Hourly data if either meter of variable output has been requested.
-                if len(run_options[':output_variables']) != 0  or len(run_options[':output_meters']) !=0:
-                    btap_data['df_report_data'], btap_data['df_report_data_dictionary']= self.get_hourly_report_data_from_sqlite(local_eplusout_sql_path,run_options[':datapoint_id'])
-
                 # save output url.
                 btap_data['datapoint_output_url'] = 'file:///' + os.path.join(local_datapoint_output_folder)
 
@@ -1349,9 +1286,7 @@ class BTAPAnalysis():
         return docker
 
     def save_results_to_database(self, results):
-        #Pop the hourly data from the results dict.
-        df_report_data = results.pop('df_report_data', None)
-        df_report_data_dictionary = results.pop('df_report_data_dictionary', None)
+
 
         if results['success'] == True:
             # if successful, don't save container_output since it is large.
@@ -1362,10 +1297,6 @@ class BTAPAnalysis():
             Session = sessionmaker(bind=self.database.get_engine())
             session = Session()
             df.to_sql('btap_data', con=session.get_bind(), if_exists='append', index=False)
-            if isinstance(df_report_data_dictionary, pd.DataFrame):
-                df_report_data_dictionary.to_sql('ReportDataDictionary', con=session.get_bind(), if_exists='append', index=False, method='multi')
-            if isinstance(df_report_data, pd.DataFrame):
-                df_report_data.to_sql('ReportData', con=session.get_bind(), if_exists='append',index=False, method='multi')
             session.close()
         else:
             # If simulation failed, save failure information for user to debug to database
@@ -1426,15 +1357,12 @@ class BTAPAnalysis():
 
         # Generate output files locally if database exists
         if self.database != None:
+            print("Generating output files.")
             self.btap_data_df, self.failed_df = self.database.generate_output_files(analysis_id = self.analysis_config[":analysis_id"],
                                                                                     analysis_name = self.analysis_config[":analysis_name"],
                                                                                     output_folder = self.output_folder,
                                                                                     s3_bucket=self.analysis_config[":s3_bucket"],
                                                                                     compute_environment = self.analysis_config[':compute_environment'])
-
-
-
-
         # Kill database if it exists
         if self.database != None:
             if self.analysis_config[':kill_database'] == True:
@@ -1450,66 +1378,6 @@ class BTAPAnalysis():
         # Load baseline run data into dataframe.
         # Add eui_reference to analsys_df
 
-    def get_hourly_report_data_from_sqlite(self,
-            eplus_out_sql_file_path,
-            datapoint_id):
-        eplus_out_sql_file_path = r'sqlite:///' + eplus_out_sql_file_path
-        engine = sqlalchemy.create_engine(eplus_out_sql_file_path)
-        # Get CronIndex Table
-        command = """ 
-            SELECT 
-                *
-            FROM 
-                Time as t
-            WHERE
-                t.EnvironmentPeriodIndex = 3 AND
-                t.WarmupFlag = 0
-        """
-        df_hourly = pd.read_sql_query(command, engine)
-        df_hourly['Datetime'] = pd.to_datetime(df_hourly[['Year', 'Month', 'Day', 'Hour', 'Minute']])
-
-
-        df_hourly_template =         df_cron_index = pd.DataFrame(
-            {'Datetime': pd.date_range('2006-01-01 00:10:00', '2007-01-01 00:00:00', freq='10min')}
-        )
-        df_hourly_template['CronIndex'] = np.arange(1, len(df_hourly_template) + 1)
-
-        # Get Hourly ReportData
-        command = """ 
-                SELECT 
-                    rd.ReportDataIndex, 
-                    rd.TimeIndex, 
-                    rd.ReportDataDictionaryIndex, 
-                    rd.Value
-                FROM 
-                    ReportData As rd LEFT OUTER JOIN ReportExtendedData As red 
-                        ON rd.ReportDataIndex = red.ReportDataIndex 
-                    INNER JOIN 
-                    ReportDataDictionary As rdd 
-                        ON rd.ReportDataDictionaryIndex = rdd.ReportDataDictionaryIndex 
-                WHERE 
-                    rdd.ReportingFrequency = 'Hourly'
-
-            """
-        df_report_data = pd.read_sql_query(command, engine)
-        df_report_data = pd.merge(df_report_data, df_hourly[['TimeIndex', 'Datetime']], on='TimeIndex', how='left')
-        df_report_data = pd.merge(df_report_data, df_hourly_template[['CronIndex', 'Datetime']], on='Datetime', how='left')
-        df_report_data = df_report_data.drop(columns=['TimeIndex','ReportDataIndex','Datetime'])
-        df_report_data['datapoint_id'] = datapoint_id
-
-        report_data_dictionary = """ 
-            SELECT 
-                *
-            FROM 
-                ReportDataDictionary as rdd
-            WHERE
-                rdd.ReportingFrequency = 'Hourly'
-        """
-        df_report_data_dictionary = pd.read_sql_query(report_data_dictionary, engine)
-        df_report_data_dictionary = df_report_data_dictionary.drop(
-            columns=['IsMeter', 'ScheduleName'])
-        df_report_data_dictionary['datapoint_id'] = datapoint_id
-        return df_report_data, df_report_data_dictionary
 
 
 
@@ -2229,43 +2097,6 @@ class BTAPDatabase:
         with self.engine.connect() as con:
             rs = con.execute(sql_command)
 
-        # Create CronIndexTable at 10m intervals
-        df_cron = pd.DataFrame(
-            {'Datetime': pd.date_range('2006-01-01 00:10:00', '2007-01-01 00:00:00', freq='10min')}
-        )
-        df_cron['CronIndex'] = np.arange(1, len(df_cron) + 1)
-
-        df_cron.to_sql('Cron', con=self.engine.connect(), if_exists='replace', index=False)
-
-
-        # Create ReportDataDictionary
-        sql_command = '''CREATE TABLE "ReportDataDictionary" (
-                        id              SERIAL PRIMARY KEY,
-	                    "ReportDataDictionaryIndex" BIGINT, 
-	                    "Type" TEXT, 
-	                    "IndexGroup" TEXT, 
-	                    "TimestepType" TEXT, 
-	                    "KeyValue" TEXT, 
-	                    "Name" TEXT, 
-	                    "ReportingFrequency" TEXT, 
-	                    "Units" TEXT, 
-	                    datapoint_id TEXT
-                    )'''
-        with self.engine.connect() as con:
-            rs = con.execute(sql_command)
-
-        # Create ReportData
-        sql_command = '''CREATE TABLE ReportData (
-                    id              SERIAL PRIMARY KEY,
-                    ReportDataDictionaryIndex INTEGER,
-                    Value FLOAT(53),
-                    CronIndex INTEGER,
-                    datapoint_index TEXT
-                    )'''
-        with self.engine.connect() as con:
-            rs = con.execute(sql_command)
-
-
     def get_engine(self):
         return self.engine
 
@@ -2295,19 +2126,11 @@ class BTAPDatabase:
             return([dict(row) for row in result][0]['count'])
 
     def generate_output_files(self,
-                              analysis_name = None,
-                              analysis_id = None,
-                              output_folder = None,
-                              s3_bucket = None,
-                              compute_environment = 'local'):
-        self.report_data_df = None
-        self.report_data_dict_df = None
-        self.hourly_df =None
-        self.failed_df = None
-        print("Generating output files.")
-        message = 'Gathering data from PostGresql'
-        print(message)
-        logging.info(message)
+                              analysis_name=None,
+                              analysis_id=None,
+                              output_folder=None,
+                              s3_bucket=None,
+                              compute_environment='local'):
 
         # Create link to database and read all high level simulations into a dataframe.
         sql_engine = self.get_engine()
@@ -2316,29 +2139,9 @@ class BTAPDatabase:
             if analysis_id == None:
                 # Get all runs in database.
                 self.btap_data_df = pd.read_sql_table('btap_data', sql_connection)
-                # These tables will only be present if temporal data is saved.
-                if self.get_engine().has_table('ReportData'):
-                    self.report_data_df = pd.read_sql_table('ReportData', sql_connection)
-                    self.report_data_dict_df = pd.read_sql_table('ReportDataDictionary', sql_connection)
-                    self.time_df = pd.read_sql_table('Time', sql_connection)
             else:
                 command = f'SELECT * FROM btap_data WHERE ":analysis_id" = \'{analysis_id}\''
                 self.btap_data_df = pd.read_sql_query(command, sql_engine)
-                # These tables will only be present if temporal data is saved.
-                if sqlalchemy.inspect(self.get_engine()).has_table('ReportData'):
-                    self.report_data_df = pd.read_sql_table('ReportData', sql_connection)
-                    self.report_data_dict_df = pd.read_sql_table('ReportDataDictionary', sql_connection)
-                    self.hourly_df = pd.read_sql_table('Cron', sql_connection)
-
-            self.btap_data_df['datapoint_index'] = np.arange(1, len(self.btap_data_df) + 1)
-
-            # Reduce redundant columns in tables.
-            if sqlalchemy.inspect(self.get_engine()).has_table('ReportData'):
-                self.report_data_dict_df = pd.merge(self.report_data_dict_df, self.btap_data_df[[':datapoint_id', 'datapoint_index']], left_on='datapoint_id', right_on=':datapoint_id', how='left')
-                self.report_data_dict_df = self.report_data_dict_df.drop(columns=[':datapoint_id','datapoint_id'])
-                self.report_data_df = pd.merge(self.report_data_df, self.btap_data_df[[':datapoint_id', 'datapoint_index']], left_on='datapoint_id', right_on=':datapoint_id', how='left')
-                self.report_data_df = self.report_data_df.drop(columns=[':datapoint_id','datapoint_id'])
-
 
             # PostProcess comparison to baselines.
             self.btap_data_df = PostProcessResults().run(btap_data_df=self.btap_data_df)
@@ -2353,98 +2156,44 @@ class BTAPDatabase:
                 self.failed_df = pd.read_sql_query(command, sql_engine)
 
         sql_connection.close()
-        message = f'Save high level and hourly data if required to sqlite database to {output_folder}'
-        print(message)
-        logging.info(message)
-        self.save_sqlite_output(output_folder,
-                                self.btap_data_df,
-                                self.report_data_df,
-                                self.report_data_dict_df,
-                                self.hourly_df,
-                                self.failed_df)
-        message = f'Save high level and hourly data if required to excel file to {output_folder}'
-        print(message)
-        logging.info(message)
-        self.save_excel_output(output_folder,
-                                self.btap_data_df,
-                                self.report_data_df,
-                                self.report_data_dict_df,
-                                self.hourly_df,
-                                self.failed_df)
-        message = f'Save high level and hourly data if required to zipped pickle file to {output_folder}'
-        print(message)
-        logging.info(message)
-        self.save_pickle_output(output_folder,
-                                self.btap_data_df,
-                                self.report_data_df,
-                                self.report_data_dict_df,
-                                self.hourly_df,
-                                self.failed_df)
 
-
-        return self.btap_data_df,self.failed_df
-
-    def save_sqlite_output(self, output_folder, btap_data_df,report_data_df,report_data_dict_df, hourly_df,failed_df):
-        #Create sqlite object
-        sqlite_path = os.path.join(output_folder, 'output.sql')
-        engine = create_engine(f"sqlite:///{sqlite_path}")
-        Session = sessionmaker(bind=engine)
-        session = Session()
-        if isinstance(btap_data_df, pd.DataFrame):
-            btap_data_df.to_sql('BTAPData', con=session.get_bind(), if_exists='fail', index=False)
-            if sqlalchemy.inspect(self.get_engine()).has_table('ReportData'):
-                report_data_df.to_sql('ReportData', con=session.get_bind(), if_exists='fail', index=False)
-                report_data_dict_df.to_sql('ReportDataDictionary', con=session.get_bind(), if_exists='fail',index=False)
-                hourly_df.to_sql('Cron', con=session.get_bind(), if_exists='fail', index=False)
-        # if there were any failures.. get them too.
-        if isinstance(self.failed_df, pd.DataFrame):
-            failed_df.to_sql('failed_runs', con=session.get_bind(), if_exists='fail', index=False)
-        # SQLITE close file.
-        session.commit()
-        session.close()
-
-    def save_excel_output(self,output_folder, btap_data_df, report_data_df, report_data_dict_df, hourly_df, failed_df):
-        # Create excel object
+        # output to excel
         excel_path = os.path.join(output_folder, 'output.xlsx')
-        report_data_path = os.path.join(output_folder, 'report_data.zip')
-        with pd.ExcelWriter(excel_path) as writer:
-            if isinstance(btap_data_df, pd.DataFrame):
-                btap_data_df.to_excel(writer, index=False,sheet_name='btap_data')
-                if sqlalchemy.inspect(self.get_engine()).has_table('ReportData'):
-                    report_data_df.to_csv(report_data_path, index=False, compression=dict(method='zip', archive_name='report_data.csv'))
-                    report_data_dict_df.to_excel(writer, index=False, sheet_name='report_data_dictionary')
-                    hourly_df.to_excel(writer, index=False, sheet_name='Cron')
-            else:
-                message = 'No simulations completed.'
-                logging.error(message)
+        writer = pd.ExcelWriter(excel_path)
 
-            # if there were any failures.. create failure sheet.
-            if isinstance(failed_df, pd.DataFrame):
-                failed_df.to_excel(writer, sheet_name='failed_runs')
-                message = 'Some simulations failed.'
-                logging.error(message)
-            #Wrtie excel
-            if isinstance(failed_df, pd.DataFrame) or isinstance(btap_data_df, pd.DataFrame):
-                message = f'Saving Excel Output: {excel_path}'
-                logging.info(message)
+        # btap_data from sql to excel writer
+        if isinstance(self.btap_data_df, pd.DataFrame):
+            self.btap_data_df.to_excel(writer, sheet_name='btap_data')
+        else:
+            message = 'No simulations completed.'
+            logging.error(message)
 
-    def save_pickle_output(self, output_folder, btap_data_df,report_data_df,report_data_dict_df, hourly_df,failed_df):
-        #Create sqlite object
-        pickle_path = os.path.join(output_folder, 'output.pkl')
-        data = {}
-        if isinstance(btap_data_df, pd.DataFrame):
-            data['BTAPData'] = btap_data_df
-            data['ReportData'] = report_data_df
-            data['ReportDataDictionary'] = report_data_dict_df
-            data['Cron'] = hourly_df
         # if there were any failures.. get them too.
         if isinstance(self.failed_df, pd.DataFrame):
-            data['failed_runs'] = failed_df
-        with open(pickle_path, 'wb') as handle:
-            pickle.dump(data, handle, protocol=pickle.HIGHEST_PROTOCOL)
+            self.failed_df.to_excel(writer, sheet_name='failed_runs')
+            message = 'Some simulations failed.'
+            logging.error(message)
 
+        if isinstance(self.failed_df, pd.DataFrame) or isinstance(self.btap_data_df, pd.DataFrame):
+            writer.save()
+            message = f'Excel Output: {excel_path}'
+            logging.info(message)
+            print(message)
 
+        # If this is an aws_batch run, copy the excel file to s3 for storage.
+        if compute_environment == 'aws_batch':
+            self.credentials = AWSCredentials()
+            target_path = os.path.join(self.credentials.user_name, analysis_name, analysis_id, 'output', 'output.xlsx')
+            # s3 likes forward slashes.
+            target_path = target_path.replace('\\', '/')
+            message = "Uploading %s..." % target_path
+            logging.info(message)
+            S3().upload_file(excel_path, s3_bucket, target_path)
 
+        writer.close()
+        # https://stackoverflow.com/questions/56751070/pandas-xlsxwriter-writer-close-does-not-completely-close-the-excel-file
+        writer.handles = None
+        return self.btap_data_df, self.failed_df
 
     def kill_database(self):
         self.container.remove(force=True)
@@ -2513,15 +2262,101 @@ class PostProcessResults:
     def run(self,
             baseline=BASELINE_RESULTS,
             btap_data_df=r'C:\Users\plopez\test\btap_batch\example\posterity_mid_rise_elec_montreal\7576173d-48f4-47c6-a3aa-81381b9947bb\output\AWS_Opt_Posterity_MidRise_Elec.xlsx',
-            ):
-            if isinstance(btap_data_df, pd.DataFrame):
-                analysis_df = btap_data_df
+            output_folder=None):
+        if isinstance(btap_data_df, pd.DataFrame):
+            analysis_df = btap_data_df
+        else:
+            analysis_df = pd.read_excel(open(btap_data_df, 'rb'), sheet_name='btap_data')
+
+        self.economics(analysis_df, baseline)
+
+        # Iterate through each datapoint in analysis and collect hourly data.
+        hourly_folder = os.path.join(output_folder,'hourly_data')
+        os.makedirs(hourly_folder, exist_ok=True)
+        ic(hourly_folder)
+
+        for index, row in analysis_df.iterrows():
+            if row['datapoint_output_url'].startswith('file:///'):
+                #This is a local file. use system copy. First remove prefix
+                hourly_data_path = os.path.join(row['datapoint_output_url'][len('file:///'):], 'hourly.csv')
+                ic(hourly_data_path)
+                shutil.copyfile(hourly_data_path,os.path.join(hourly_folder,row[':datapoint_id']+'.csv') )
+            elif row['datapoint_output_url'].startswith('s3://'):
+                print("S3 not supported yet to download hourly data.")
+
+        return analysis_df
+
+
+    def generate_output_files(self,
+                              analysis_name = None,
+                              analysis_id = None,
+                              output_folder = None,
+                              s3_bucket = None,
+                              compute_environment = 'local'):
+        self.report_data_df = None
+        self.report_data_dict_df = None
+        self.hourly_df =None
+        self.failed_df = None
+        print("Generating output files.")
+        message = 'Gathering data from PostGresql'
+        print(message)
+        logging.info(message)
+
+        # Create link to database and read all high level simulations into a dataframe.
+        sql_engine = self.get_engine()
+        sql_connection = sql_engine.connect()
+        if self.get_num_of_runs_completed(analysis_id) > 0:
+            if analysis_id == None:
+                # Get all runs in database.
+                self.btap_data_df = pd.read_sql_table('btap_data', sql_connection)
             else:
-                analysis_df = pd.read_excel(open(btap_data_df, 'rb'), sheet_name='btap_data')
+                command = f'SELECT * FROM btap_data WHERE ":analysis_id" = \'{analysis_id}\''
+                self.btap_data_df = pd.read_sql_query(command, sql_engine)
 
-            self.economics(analysis_df, baseline)
+            # PostProcess comparison to baselines.
+            self.btap_data_df = PostProcessResults().run(btap_data_df=self.btap_data_df, output_folder= output_folder)
 
-            return analysis_df
+        # if there were any failures.. get them too.
+
+        if self.get_num_of_runs_failed(analysis_id) > 0:
+            if analysis_id == None:
+                self.failed_df = pd.read_sql_table('failed_runs', sql_connection)
+            else:
+                command = f'SELECT * FROM failed_runs WHERE ":analysis_id" = \'{analysis_id}\''
+                self.failed_df = pd.read_sql_query(command, sql_engine)
+
+        sql_connection.close()
+
+        message = f'Save high level data to excel file to {output_folder}'
+        print(message)
+        logging.info(message)
+        self.save_excel_output(output_folder,
+                                self.btap_data_df,
+                                self.failed_df)
+        return self.btap_data_df,self.failed_df
+
+    def save_excel_output(self,output_folder, btap_data_df, failed_df ):
+        # Create excel object
+        excel_path = os.path.join(output_folder, 'output.xlsx')
+        report_data_path = os.path.join(output_folder, 'report_data.zip')
+        with pd.ExcelWriter(excel_path) as writer:
+            if isinstance(btap_data_df, pd.DataFrame):
+                btap_data_df.to_excel(writer, index=False,sheet_name='btap_data')
+            else:
+                message = 'No simulations completed.'
+                logging.error(message)
+
+            # if there were any failures.. create failure sheet.
+            if isinstance(failed_df, pd.DataFrame):
+                failed_df.to_excel(writer, sheet_name='failed_runs')
+                message = 'Some simulations failed.'
+                logging.error(message)
+            #Wrtie excel
+            if isinstance(failed_df, pd.DataFrame) or isinstance(btap_data_df, pd.DataFrame):
+                message = f'Saving Excel Output: {excel_path}'
+                logging.info(message)
+
+
 
     def economics(self, analysis_df, baseline):
         file = open(baseline, 'rb')
@@ -2641,3 +2476,6 @@ def btap_batch(analysis_config_file=None, git_api_token=None):
         exit(1)
 
 
+pp = PostProcessResults().run(
+            btap_data_df=r'C:\Users\plopez\PycharmProjects\btap_batch\examples\elimination\elimination_example\62e1ca45-5355-4fa8-9cf5-f433ff9708ac\output\output.xlsx',
+            output_folder=r'C:\Users\plopez\PycharmProjects\btap_batch\examples\elimination\elimination_example\62e1ca45-5355-4fa8-9cf5-f433ff9708ac\output')
