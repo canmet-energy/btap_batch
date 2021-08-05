@@ -274,7 +274,7 @@
   :nv_type: [ 'NECB_Default',
               'add_nv'
   ]
-  :nv_opening_fraction: [ 'NECB_Default' ]
+   :nv_opening_fraction: [ 'NECB_Default' ]
   :nv_temp_out_min: [ 'NECB_Default' ]
   :nv_delta_temp_in_out: [ 'NECB_Default' ]
   :occupancy_loads_scale: [ 'NECB_Default' ]
@@ -283,4 +283,9 @@
   :infiltration_scale: [ 'NECB_Default' ]
   :chiller_type: [ 'NECB_Default',
                    'VSD'
+  ]
+  :airloop_economizer_type: [  # (1) nil/'NECB_Default' (2) 'DifferentialEnthalpy (3) 'DifferentialDryBulb'
+    'NECB_Default',
+    #'DifferentialEnthalpy'
+    #'DifferentialDryBulb'
   ]
