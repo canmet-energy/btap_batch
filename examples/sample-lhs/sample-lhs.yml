@@ -142,7 +142,8 @@
       'HS09_CCASHP_Baseboard',
       'HS08_CCASHP_VRF',
       'HS11_ASHP_PTHP',
-      'HS12_ASHP_Baseboard'
+      'HS12_ASHP_Baseboard',
+      'HS13_ASHP_VRF'
   ]
 
   :erv_package: [ 'NECB_Default',
