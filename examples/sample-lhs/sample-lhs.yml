@@ -65,7 +65,7 @@
 
 ###########################################     Hourly Data     #######################################################
   :output_variables: [
-    {    key: '*',     variable: 'Zone Air Temperature',     frequency: 'hourly'}
+    #{    key: '*',     variable: 'Zone Air Temperature',     frequency: 'hourly'}
   ]
   :output_meters: [
     {    name: 'Gas:Facility',     frequency: 'hourly'},
@@ -115,18 +115,18 @@
     #'CAN_YT_Whitehorse.Intl.AP.719640_CWEC2016.epw'
   ]
   :primary_heating_fuel: [
-      "Electricity",
+    #  "Electricity",
       "NaturalGas",
     # "FuelOilNo2"
   ]
   :dcv_type: [
-      'NECB_Default',
+      #'NECB_Default',
       'No_DCV',
       'Occupancy_based_DCV',
       'CO2_based_DCV'
   ]
   :lights_type: [
-      'NECB_Default',
+      #'NECB_Default',
       'LED'
   ]
   :lights_scale: [ 'NECB_Default',
@@ -175,7 +175,7 @@
       "Natural Gas 88% Efficient SHW",
   #    "Natural Gas Direct Vent with Electric Ignition",
   #    "Natural Gas Power Vent with Electric Ignition",
-      "Natural Gas 97% Efficient SHW"
+      "Natural Gas Power Vent with Electric Ignition 97% Efficient"
   ]
   # Default DHW is consistent with primary heating fuel
   :ext_wall_cond: [ #'NECB_Default',
