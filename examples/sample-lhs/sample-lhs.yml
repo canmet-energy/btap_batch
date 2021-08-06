@@ -294,7 +294,9 @@
   :pv_ground_tilt_angle: [ 'NECB_Default' ]
   :pv_ground_azimuth_angle: [ 'NECB_Default' ]
   :pv_ground_module_description: [ 'NECB_Default' ]
-  :adv_dx_units: [ 'NECB_Default', 'Carrier WeatherExpert' ]
+  :adv_dx_units: [ 'NECB_Default',
+                   #'Carrier WeatherExpert'
+  ]
   :nv_type: [ 'NECB_Default',
               'add_nv'
   ]
