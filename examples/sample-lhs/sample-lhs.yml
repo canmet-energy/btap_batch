@@ -217,7 +217,9 @@
                        #'0.568',
                        #'0.379' ,
                        #'0.284',
-                       #'0.210' ]
+                       #'0.210'
+  ]
+
   :door_construction_cond: [ #'NECB_Default',
                              '2.4',
                              '2.2',
@@ -308,6 +310,6 @@
   ]
   :airloop_economizer_type: [  # (1) nil/'NECB_Default' (2) 'DifferentialEnthalpy (3) 'DifferentialDryBulb'
     'NECB_Default',
-    'DifferentialEnthalpy'
+    'DifferentialEnthalpy',
     'DifferentialDryBulb'
   ]
