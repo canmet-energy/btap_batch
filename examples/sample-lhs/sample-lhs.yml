@@ -27,11 +27,11 @@
 
   # Branch from https://github.com/NREL/openstudio-standards. Typically 'nrcan_prod' branch.
   # Developers or people liking to work on unstable code can use 'nrcan'
-  :os_standards_branch: 'standards'
+  :os_standards_branch: 'nrcan'
 
   # Branch from https://github.com/canmet-energy/btap_costing. Typically 'nrcan_prod'
   # Developers or people liking to work on unstable code can use 'master'
-  :btap_costing_branch: 'standards'
+  :btap_costing_branch: 'master'
 
   # DO NOT CHANGE: Openstudio Version only 3.0.1 available
   :os_version: '3.0.1'
@@ -56,7 +56,7 @@
   :algorithm:
     :type: sampling-lhs # nsga2 , parametric
     # Select number of samples. For testing just use 10.
-    :n_samples: 10
+    :n_samples: 1000
     # Select lhs type.. see link.
     #https://scikit-optimize.github.io/stable/auto_examples/sampler/initial-sampling-method.html
     :lhs_type: classic
@@ -64,8 +64,16 @@
     :random_seed: 1
 
 ###########################################     Hourly Data     #######################################################
-  :output_variables: []
-  :output_meters: []
+  :output_variables: [
+    #{    key: '*',     variable: 'Zone Air Temperature',     frequency: 'hourly'}
+  ]
+  :output_meters: [
+    {    name: 'Gas:Facility',     frequency: 'hourly'},
+    {    name: 'Electricity:Facility',     frequency: 'hourly'},
+    # {    name: 'DISTRICTHEATING:FACILITY',     frequency: 'hourly'},
+    # {    name: 'DISTRICTCOOLING:FACILITY',     frequency: 'hourly'},
+    {    name: 'FuelOil#2:Facility',     frequency: 'hourly'}
+  ]
 
 #########################################  BUILDING OPTIONS  ###########################################################
 # Building options
@@ -108,17 +116,17 @@
   ]
   :primary_heating_fuel: [
       "Electricity",
-    # "NaturalGas",
+      "NaturalGas",
     # "FuelOilNo2"
   ]
   :dcv_type: [
-      'NECB_Default',
+      #'NECB_Default',
       'No_DCV',
       'Occupancy_based_DCV',
       'CO2_based_DCV'
   ]
   :lights_type: [
-      'NECB_Default',
+      #'NECB_Default',
       'LED'
   ]
   :lights_scale: [ 'NECB_Default',
@@ -131,10 +139,11 @@
   ]
   :ecm_system_name: [
       'NECB_Default',
-#      'HS09_CCASHP_Baseboard',
-#      'HS08_CCASHP_VRF',
-#      'HS11_ASHP_PTHP',
-#      'HS12_ASHP_Baseboard'
+      'HS09_CCASHP_Baseboard',
+      'HS08_CCASHP_VRF',
+      'HS11_ASHP_PTHP',
+      'HS12_ASHP_Baseboard',
+      'HS13_ASHP_VRF'
   ]
 
   :erv_package: [ 'NECB_Default',
@@ -147,20 +156,29 @@
   # What are the existing vs all versions?
   :boiler_eff: [
       "NECB_Default",
+      "NECB 85% Efficient Condensing Boiler",
       "NECB 88% Efficient Condensing Boiler",
+      "NECB 91% Efficient Condensing Boiler",
+      "NECB 94% Efficient Condensing Boiler",
       "Viessmann Vitocrossal 300 CT3-17 96.2% Efficient Condensing Gas Boiler"
   ]
   :furnace_eff: [
       "NECB_Default",
-      "NECB 85% Efficient Condensing Gas Furnace"
+      "NECB 85% Efficient Condensing Gas Furnace",
+      "NECB 88% Efficient Condensing Gas Furnace",
+      "NECB 91% Efficient Condensing Gas Furnace",
+      "NECB 94% Efficient Condensing Gas Furnace"
   ]
   :shw_eff: [
       "NECB_Default",
+      "Natural Gas 85% Efficient SHW",
+      "Natural Gas 88% Efficient SHW",
+      "Natural Gas Direct Vent with Electric Ignition",
       "Natural Gas Power Vent with Electric Ignition",
-      "Natural Gas Direct Vent with Electric Ignition"
+      "Natural Gas Power Vent with Electric Ignition 97% Efficient"
   ]
   # Default DHW is consistent with primary heating fuel
-  :ext_wall_cond: [ 'NECB_Default',
+  :ext_wall_cond: [ #'NECB_Default',
                     '0.314',
                     '0.278',
                     '0.247',
@@ -168,13 +186,13 @@
                     '0.183'
   ]
 
-  :ext_floor_cond: [ 'NECB_Default',
+  :ext_floor_cond: [ #'NECB_Default',
                      '0.227',
                      '0.183',
                      '0.162',
                      '0.142'
   ]
-  :ext_roof_cond: [ 'NECB_Default',
+  :ext_roof_cond: [ #'NECB_Default',
                     '0.227',
                     '0.193',
                     '0.183',
@@ -184,43 +202,45 @@
                     '0.121'
   ]
   :ground_wall_cond: [ 'NECB_Default',
-                       '0.568',
-                       '0.379',
-                       '0.284',
-                       '0.210'
+                       #'0.568',
+                       #'0.379',
+                       #'0.284',
+                       #'0.210'
   ]
 
   :ground_floor_cond: [ 'NECB_Default',
-                        '0.758',
-                        '0.379'
+                        #'0.758',
+                        #'0.379'
   ]
 
   :ground_roof_cond: [ 'NECB_Default',
-                       '0.568',
-                       '0.379' ,
-                       '0.284',
-                       '0.210' ]
-  :door_construction_cond: [ 'NECB_Default',
+                       #'0.568',
+                       #'0.379' ,
+                       #'0.284',
+                       #'0.210'
+  ]
+
+  :door_construction_cond: [ #'NECB_Default',
                              '2.4',
                              '2.2',
                              '1.6'
   ]
-  :fixed_window_cond: [ 'NECB_Default',
+  :fixed_window_cond: [ #'NECB_Default',
                         '2.4',
                         '2.2',
                         '1.6'
   ]
-  :glass_door_cond: [ 'NECB_Default',
+  :glass_door_cond: [ #'NECB_Default',
                       '2.4',
                       '2.2',
                       '1.6'
   ]
-  :overhead_door_cond: [ 'NECB_Default',
+  :overhead_door_cond: [ #'NECB_Default',
                          '2.4',
                          '2.2',
                          '1.6'
   ]
-  :skylight_cond: [ 'NECB_Default',
+  :skylight_cond: [ #'NECB_Default',
                     '2.4',
                     '2.2',
                     '1.6'
@@ -229,7 +249,7 @@
                              '0.05',
                              '0.95'
   ]
-  :fixed_wind_solar_trans: [ 'NECB_Default',
+  :fixed_wind_solar_trans: [ #'NECB_Default',
                              '0.2',
                              '0.3',
                              '0.4',
@@ -242,7 +262,8 @@
                            '0.50',
                            '0.95'
   ]
-  :fdwr_set: [ 'NECB_Default',
+  :fdwr_set: [ #'NECB_Default',
+               '0.1',
                '0.2',
                '0.3',
                '0.4',
@@ -254,10 +275,13 @@
   ]
 
   :srr_set: [ 'NECB_Default',
-              '0.03',
-              '0.05'
+              #'0.03',
+              #'0.05',
+              #'0.08',
+              #'0.10',
   ]
-  :rotation_degrees: [ 'NECB_Default',
+  :rotation_degrees: [ #'NECB_Default',
+                       '0.0',
                        '45.0',
                        '90.0'
   ]
@@ -270,7 +294,9 @@
   :pv_ground_tilt_angle: [ 'NECB_Default' ]
   :pv_ground_azimuth_angle: [ 'NECB_Default' ]
   :pv_ground_module_description: [ 'NECB_Default' ]
-  :adv_dx_units: [ 'NECB_Default', 'Carrier WeatherExpert' ]
+  :adv_dx_units: [ 'NECB_Default',
+                   #'Carrier WeatherExpert'
+  ]
   :nv_type: [ 'NECB_Default',
               'add_nv'
   ]
@@ -283,4 +309,9 @@
   :infiltration_scale: [ 'NECB_Default' ]
   :chiller_type: [ 'NECB_Default',
                    'VSD'
+  ]
+  :airloop_economizer_type: [  # (1) nil/'NECB_Default' (2) 'DifferentialEnthalpy (3) 'DifferentialDryBulb'
+    'NECB_Default',
+    'DifferentialEnthalpy',
+    'DifferentialDryBulb'
   ]

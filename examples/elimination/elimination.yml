@@ -11,7 +11,7 @@
   # Choices are:
   #       local : Run locally.. Good to test out runs on small batches before sending to AWS.
   #       aws_batch: use for analyses with > 1000 simulations: This is currently only available for NRCan staff.  If you would wish to make used of Amazon cloud computing, please contact us.
-  :compute_environment: local
+  :compute_environment: aws_batch
 
   # DO NOT CHANGE: AWS S3 Bucket...Must be created ahead of time. Must be a STRING.
   # H&B default bucket is '834599497928' for the btap_dev account. Only used for Amazon.
@@ -58,8 +58,16 @@
 
 
 ###########################################     Hourly Data     #######################################################
-  :output_variables: []
-  :output_meters: []
+  :output_variables: [
+    {    key: '*',     variable: 'Zone Air Temperature',     frequency: 'hourly'}
+  ]
+  :output_meters: [
+    {    name: 'Gas:Facility',     frequency: 'hourly'},
+    {    name: 'Electricity:Facility',     frequency: 'hourly'},
+    {    name: 'DISTRICTHEATING:FACILITY',     frequency: 'hourly'},
+    {    name: 'DISTRICTCOOLING:FACILITY',     frequency: 'hourly'},
+    {    name: 'FuelOil#2:Facility',     frequency: 'hourly'}
+  ]
 
 #########################################  BUILDING Identity  ###########################################################
 # Building identity
@@ -284,3 +292,8 @@
     'NECB_Default',
     #'VSD'
   ] # Options: (1) 'NECB_Default'/nil/'none'/false (i.e. do nothing), (2) e.g. 'VSD'
+  :airloop_economizer_type: [  # (1) nil/'NECB_Default' (2) 'DifferentialEnthalpy (3) 'DifferentialDryBulb'
+    'NECB_Default',
+    #'DifferentialEnthalpy'
+    #'DifferentialDryBulb'
+  ]
