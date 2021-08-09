@@ -273,7 +273,8 @@ class AWSImage:
         # Copies Dockerfile from btap_cli repository
         url = 'https://raw.githubusercontent.com/canmet-energy/btap_cli/main/Dockerfile'
         r = requests.get(url, allow_redirects=True)
-        open(os.path.join(source_folder,'Dockerfile'), 'wb').write(r.content)
+        with open(os.path.join(source_folder,'Dockerfile'), 'wb') as file:
+            file.write(r.content)
 
         s3.copy_folder_to_s3(self.bucket, source_folder, self.credentials.user_name + '/' + self.image_name)
         s3_location = 's3://' + self.bucket + '/' + self.credentials.user_name + '/' + self.image_name
