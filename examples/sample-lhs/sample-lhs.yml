@@ -56,7 +56,7 @@
   :algorithm:
     :type: sampling-lhs # nsga2 , parametric
     # Select number of samples. For testing just use 10.
-    :n_samples: 10
+    :n_samples: 1000
     # Select lhs type.. see link.
     #https://scikit-optimize.github.io/stable/auto_examples/sampler/initial-sampling-method.html
     :lhs_type: classic
@@ -115,7 +115,7 @@
     #'CAN_YT_Whitehorse.Intl.AP.719640_CWEC2016.epw'
   ]
   :primary_heating_fuel: [
-    #  "Electricity",
+      "Electricity",
       "NaturalGas",
     # "FuelOilNo2"
   ]
@@ -155,26 +155,26 @@
   ]
   # What are the existing vs all versions?
   :boiler_eff: [
-  #    "NECB_Default",
+      "NECB_Default",
       "NECB 85% Efficient Condensing Boiler",
-  #    "NECB 88% Efficient Condensing Boiler",
+      "NECB 88% Efficient Condensing Boiler",
       "NECB 91% Efficient Condensing Boiler",
       "NECB 94% Efficient Condensing Boiler",
-  #    "Viessmann Vitocrossal 300 CT3-17 96.2% Efficient Condensing Gas Boiler"
+      "Viessmann Vitocrossal 300 CT3-17 96.2% Efficient Condensing Gas Boiler"
   ]
   :furnace_eff: [
-  #    "NECB_Default",
-  #    "NECB 85% Efficient Condensing Gas Furnace",
+      "NECB_Default",
+      "NECB 85% Efficient Condensing Gas Furnace",
       "NECB 88% Efficient Condensing Gas Furnace",
       "NECB 91% Efficient Condensing Gas Furnace",
       "NECB 94% Efficient Condensing Gas Furnace"
   ]
   :shw_eff: [
-  #    "NECB_Default",
+      "NECB_Default",
       "Natural Gas 85% Efficient SHW",
       "Natural Gas 88% Efficient SHW",
-  #    "Natural Gas Direct Vent with Electric Ignition",
-  #    "Natural Gas Power Vent with Electric Ignition",
+      "Natural Gas Direct Vent with Electric Ignition",
+      "Natural Gas Power Vent with Electric Ignition",
       "Natural Gas Power Vent with Electric Ignition 97% Efficient"
   ]
   # Default DHW is consistent with primary heating fuel
