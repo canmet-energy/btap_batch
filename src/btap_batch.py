@@ -431,6 +431,7 @@ class AWSBatch:
         self.iam = boto3.client('iam', config = config)
         self.s3 = boto3.client('s3',config=botocore.client.Config(max_pool_connections=threads,retries={'max_attempts': AWS_MAX_RETRIES, 'mode': 'standard'}))
         self.cloudwatch = boto3.client('logs')
+        self.credentials.user_name
 
         # Create image helper object.
         self.btap_image = AWSImage(image_name=btap_image_name,
@@ -452,7 +453,7 @@ class AWSBatch:
             self.analysis_id = analysis_id
 
         # Compute id is the same as analysis id but stringed.
-        self.compute_environment_id = f"{self.analysis_id}"
+        self.compute_environment_id = f"{self.credentials.user_name.replace('.','_')}-{self.analysis_id}"
 
         # Set up the job def as a suffix of the analysis id"
         self.job_def_id = f"{self.compute_environment_id}_job_def"
@@ -1025,9 +1026,12 @@ class BTAPAnalysis():
         return osm_list
 
     # Constructor will
-    def __init__(self, analysis_config_file=None, git_api_token=None):
+    def __init__(self,
+                 analysis_config_file=None,
+                 git_api_token=None,
+                 aws_batch=None):
         self.credentials = None
-        self.aws_batch = None
+        self.aws_batch = aws_batch
         self.docker = None
         self.database = None
         self.btap_data_df = []
@@ -1071,8 +1075,10 @@ class BTAPAnalysis():
         self.init_database()
 
         if self.analysis_config[':compute_environment'] == 'aws_batch':
-            # Start batch queue if required.
-            self.aws_batch = self.initialize_aws_batch(git_api_token)
+            #If aws batch object was not passed.. create it.
+            if self.aws_batch == None:
+                # Start batch queue if required.
+                self.aws_batch = self.initialize_aws_batch(git_api_token)
         else:
             self.docker = self.build_image(git_api_token=git_api_token)
 
@@ -1150,6 +1156,8 @@ class BTAPAnalysis():
             run_options[':image_name'] = self.analysis_config[':image_name']
             run_options[':output_variables'] = self.analysis_config[':output_variables']
             run_options[':output_meters'] = self.analysis_config[':output_meters']
+            run_options[':algorithm_type'] = self.analysis_config[':algorithm'][':type']
+
 
             #S3 paths. Set base to username used in aws.
             if self.analysis_config[':compute_environment'] == 'aws_batch':
@@ -1461,8 +1469,6 @@ class BTAPAnalysis():
         run_options.update(self.constants)
         # Add the analysis setting to the run options dict.
         run_options.update(self.analysis_config)
-
-
         # Returns the dict.. Note this is not a class variable self like the others. That is because this method is used in the
         # problem definition and we need to avoid thread variable issues.
         return run_options
@@ -1472,9 +1478,13 @@ class BTAPAnalysis():
 
 # Class to Manage parametric runs.
 class BTAPParametric(BTAPAnalysis):
-    def __init__(self, analysis_config_file=None, git_api_token=None):
+    def __init__(self,
+                 analysis_config_file=None,
+                 git_api_token=None,
+                 aws_batch = None
+                 ):
         # Run super initializer to set up default variables.
-        super().__init__(analysis_config_file, git_api_token)
+        super().__init__(analysis_config_file, git_api_token,aws_batch)
         self.scenarios = []
 
     def run(self):
@@ -1658,10 +1668,10 @@ class BTAPProblem(Problem):
 
 # Class to manage optimization runs.
 class BTAPOptimization(BTAPAnalysis):
-    def __init__(self, analysis_config_file=None, git_api_token=None):
+    def __init__(self, analysis_config_file=None, git_api_token=None,aws_batch=None):
 
         # Run super initializer to set up default variables.
-        super().__init__(analysis_config_file, git_api_token)
+        super().__init__(analysis_config_file, git_api_token,aws_batch)
 
     def run(self):
         message = "success"
@@ -2426,7 +2436,7 @@ class PostProcessResults:
 
 
 # Main method that researchers will interface with. If this gets bigger, consider a factory method pattern.
-def btap_batch(analysis_config_file=None, git_api_token=None):
+def btap_batch(analysis_config_file=None, git_api_token=None, aws_batch = None):
     # Load Analysis File into variable
     if not os.path.isfile(analysis_config_file):
         logging.error(f"could not find analysis input file at {analysis_config_file}. Exiting")
@@ -2444,7 +2454,8 @@ def btap_batch(analysis_config_file=None, git_api_token=None):
         opt = BTAPSamplingLHS(
             # Input file.
             analysis_config_file=analysis_config_file ,
-            git_api_token=git_api_token
+            git_api_token=git_api_token,
+            aws_batch=aws_batch
         )
         return opt
 
@@ -2455,35 +2466,49 @@ def btap_batch(analysis_config_file=None, git_api_token=None):
         opt = BTAPOptimization(
             # Input file.
             analysis_config_file=analysis_config_file ,
-            git_api_token=git_api_token
+            git_api_token=git_api_token,
+            aws_batch=aws_batch
         )
         return opt
     elif analysis[':analysis_configuration'][':algorithm'][':type'] == 'parametric':
         bb = BTAPParametric(
             # Input file.
             analysis_config_file=analysis_config_file,
-            git_api_token=git_api_token
+            git_api_token=git_api_token,
+            aws_batch=aws_batch
         )
         return bb
     elif analysis[':analysis_configuration'][':algorithm'][':type'] == 'elimination':
         bb = BTAPElimination(
             # Input file.
             analysis_config_file=analysis_config_file,
-            git_api_token=git_api_token
+            git_api_token=git_api_token,
+            aws_batch=aws_batch
         )
         return bb
     elif analysis[':analysis_configuration'][':algorithm'][':type'] == 'sensitivity':
         bb = BTAPSensitivity(
             # Input file.
             analysis_config_file=analysis_config_file,
-            git_api_token=git_api_token
+            git_api_token=git_api_token,
+            aws_batch=aws_batch
         )
         return bb
     elif analysis[':analysis_configuration'][':algorithm'][':type'] == 'idp':
         bb = BTAPIntegratedDesignProcess(
             # Input file.
             analysis_config_file=analysis_config_file,
-            git_api_token=git_api_token
+            git_api_token=git_api_token,
+            aws_batch=aws_batch
+        )
+        return bb
+    elif analysis[':analysis_configuration'][':algorithm'][':type'] == 'osm_batch':
+        #Need to force this to use the NECB2011 standards class for now.
+        bb = BTAPParametric(
+            # Input file.
+            analysis_config_file=analysis_config_file,
+            git_api_token=git_api_token,
+            aws_batch=aws_batch
         )
         return bb
     else:
