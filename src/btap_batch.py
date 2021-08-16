@@ -1266,7 +1266,6 @@ class BTAPAnalysis():
 
         except Exception as error:
             error_msg = ''
-            print(self.analysis_config)
             if self.analysis_config[':compute_environment'] == 'aws_batch':
                 content_object = boto3.resource('s3').Object(run_options[':s3_bucket'], s3_error_txt_path)
                 print(error_msg)
@@ -1295,8 +1294,6 @@ class BTAPAnalysis():
         return docker
 
     def save_results_to_database(self, results):
-
-
         if results['success'] == True:
             # if successful, don't save container_output since it is large.
             results['container_output'] = None
@@ -1315,7 +1312,7 @@ class BTAPAnalysis():
             session = Session()
             df.to_sql('failed_runs', con=session.get_bind(), if_exists='append', dtype = {':algorithm':sqlalchemy.types.JSON})
             session.close()
-            raise FailedSimulationException(f'This scenario failed. dp_values= {results}')
+            print(f'This scenario failed. dp_values= {results}')
         return results
 
     def sort_results(self, results):
