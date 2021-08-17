@@ -1243,6 +1243,9 @@ class BTAPAnalysis():
 
                 # save output url.
                 btap_data['datapoint_output_url'] = 'file:///' + os.path.join(local_datapoint_output_folder)
+                btap_data['eplus_warnings'] = sum(1 for d in btap_data['eplusout_err_table'] if d.get('error_type') == 'warning')
+                btap_data['eplus_severes'] = sum(1 for d in btap_data['eplusout_err_table'] if d.get('error_type') == 'severe')
+                btap_data['eplus_fatals'] = sum(1 for d in btap_data['eplusout_err_table'] if d.get('error_type') == 'fatal')
 
 
 
@@ -1260,6 +1263,7 @@ class BTAPAnalysis():
             # Flag that is was successful.
             btap_data['success'] = True
             btap_data['simulation_time'] = time.time() - start
+
 
             #return btap_data
             return btap_data
@@ -1294,25 +1298,21 @@ class BTAPAnalysis():
         return docker
 
     def save_results_to_database(self, results):
-        if results['success'] == True:
-            # if successful, don't save container_output since it is large.
-            results['container_output'] = None
-            # This method organizes the data structure of the dataframe to fit into a report table.
-            df = self.sort_results(results)
 
-            Session = sessionmaker(bind=self.database.get_engine())
-            session = Session()
-            df.to_sql('btap_data', con=session.get_bind(), if_exists='append', index=False)
-            session.close()
-        else:
-            # If simulation failed, save failure information for user to debug to database
-            # Convert failed results to dataframe and save to sql 'failed_runs' table.
-            df = self.sort_results(results)
-            Session = sessionmaker(bind=self.database.get_engine())
-            session = Session()
-            df.to_sql('failed_runs', con=session.get_bind(), if_exists='append', dtype = {':algorithm':sqlalchemy.types.JSON})
-            session.close()
-            print(f'This scenario failed. dp_values= {results}')
+        if results['success'] == True:
+            #If container completed with success don't save container output.
+            results['container_output'] = None
+            if results['eplus_fatals'] > 0:
+                # If we had fatal errors..the run was not successful after all.
+                results['success'] = False
+
+        # This method organizes the data structure of the dataframe to fit into a report table.
+        df = self.sort_results(results)
+
+        Session = sessionmaker(bind=self.database.get_engine())
+        session = Session()
+        df.to_sql('btap_data', con=session.get_bind(), if_exists='append', index=False)
+        session.close()
         return results
 
     def sort_results(self, results):
@@ -1928,6 +1928,27 @@ class BTAPDatabase:
         # Create btap_data_table
         sql_command = '''CREATE TABLE btap_data (
                     index BIGINT, 
+                    success BOOLEAN, 
+                    eplus_warnings INTEGER,
+                    eplus_severes INTEGER,
+                    eplus_fatals INTEGER,
+                    simulation_time FLOAT(53),
+                    ":os_standards_branch" TEXT, 
+                    ":btap_costing_branch" TEXT, 
+                    ":os_version" TEXT, 
+                    simulation_btap_data_version TEXT, 
+                    simulation_date TEXT, 
+                    simulation_os_standards_revision TEXT, 
+                    simulation_os_standards_version TEXT, 
+                    run_options TEXT, 
+                    ":analysis_name" TEXT, 
+                    ":analysis_id" TEXT, 
+                    ":datapoint_id" TEXT,
+                    ":template" TEXT, 
+                    ":building_type" TEXT,
+                    ":primary_heating_fuel" TEXT,
+                    energy_principal_heating_source TEXT,
+                    ":epw_file" TEXT, 
                     ":algorithm_type" TEXT,
                     ":no_of_threads" TEXT,
                     ":dcv_type" TEXT, 
@@ -1938,10 +1959,6 @@ class BTAPDatabase:
                     ":ext_floor_cond" TEXT, 
                     ":ext_roof_cond" TEXT, 
                     ":fixed_window_cond" TEXT, 
-                    ":building_type" TEXT, 
-                    ":template" TEXT, 
-                    ":epw_file" TEXT, 
-                    ":primary_heating_fuel" TEXT, 
                     ":lights_scale" TEXT, 
                     ":daylighting_type" TEXT, 
                     ":boiler_eff" TEXT, 
@@ -1983,14 +2000,8 @@ class BTAPDatabase:
                     ":s3_bucket" TEXT, 
                     ":image_name" TEXT, 
                     ":nocache" BOOLEAN, 
-                    ":os_standards_branch" TEXT, 
-                    ":btap_costing_branch" TEXT, 
-                    ":os_version" TEXT, 
-                    ":analysis_name" TEXT, 
-                    ":analysis_id" TEXT, 
                     ":run_annual_simulation" BOOLEAN, 
-                    ":enable_costing" BOOLEAN, 
-                    ":datapoint_id" TEXT, 
+                    ":enable_costing" BOOLEAN,  
                     ":kill_database" BOOLEAN,  
                     ":scenario" TEXT,
                     heating_peak_w_per_m_sq FLOAT(53),
@@ -2043,7 +2054,6 @@ class BTAPDatabase:
                     "energy_eui_water systems_gj_per_m_sq" FLOAT(53), 
                     energy_peak_electric_w_per_m_sq FLOAT(53), 
                     energy_peak_natural_gas_w_per_m_sq FLOAT(53), 
-                    energy_principal_heating_source TEXT, 
                     env_fdwr FLOAT(53), 
                     "env_ground_floors_average_conductance-w_per_m_sq_k" FLOAT(53), 
                     "env_ground_roofs_average_conductance-w_per_m_sq_k" TEXT, 
@@ -2086,14 +2096,7 @@ class BTAPDatabase:
                     shw_water_m_cu_per_day FLOAT(53), 
                     shw_water_m_cu_per_day_per_occupant FLOAT(53), 
                     shw_water_m_cu_per_year FLOAT(53), 
-                    simulation_btap_data_version TEXT, 
-                    simulation_date TEXT, 
-                    simulation_os_standards_revision TEXT, 
-                    simulation_os_standards_version TEXT, 
-                    run_options TEXT, 
                     "energy_eui_heat rejection_gj_per_m_sq" FLOAT(53), 
-                    success BOOLEAN, 
-                    simulation_time FLOAT(53),
                     total_site_eui_gj_per_m_sq FLOAT(53),
                     unmet_hours_cooling FLOAT(53),
                     unmet_hours_cooling_during_occupied FLOAT(53),
@@ -2101,7 +2104,8 @@ class BTAPDatabase:
                     unmet_hours_heating_during_occupied FLOAT(53),
                     container_output TEXT,
                     datapoint_output_url TEXT,
-                    ":btap_batch_version" TEXT
+                    ":btap_batch_version" TEXT,
+                    container_error TEXT
                 )'''
         with self.engine.connect() as con:
             rs = con.execute(sql_command)
@@ -2122,14 +2126,13 @@ class BTAPDatabase:
             return([dict(row) for row in result][0]['count'])
 
     def get_num_of_runs_failed(self,analysis_id = None):
-        #if not self.engine.dialect.has_table(self.engine, 'failed_runs'):
-        if not sqlalchemy.inspect(self.engine).has_table('failed_runs'):
+        if not sqlalchemy.inspect(self.engine).has_table('btap_data'):
             return 0
         else:
             if analysis_id == None:
-                command = f'SELECT COUNT(*) FROM failed_runs'
+                command = f'SELECT COUNT(*) FROM btap_data AND "success" = False'
             else:
-                command = f'SELECT COUNT(*) FROM failed_runs WHERE ":analysis_id" = \'{analysis_id}\''
+                command = f'SELECT COUNT(*) FROM btap_data WHERE ":analysis_id" = \'{analysis_id}\' AND "success" = False'
 
             result = self.engine.connect().execute(command)
             return([dict(row) for row in result][0]['count'])
@@ -2155,14 +2158,6 @@ class BTAPDatabase:
             # PostProcess comparison to baselines.
             self.btap_data_df = PostProcessResults().run(btap_data_df=self.btap_data_df, output_folder=output_folder)
 
-        # if there were any failures.. get them too.
-
-        if self.get_num_of_runs_failed(analysis_id) > 0:
-            if analysis_id == None:
-                self.failed_df = pd.read_sql_table('failed_runs', sql_connection)
-            else:
-                command = f'SELECT * FROM failed_runs WHERE ":analysis_id" = \'{analysis_id}\''
-                self.failed_df = pd.read_sql_query(command, sql_engine)
 
         sql_connection.close()
 
@@ -2177,17 +2172,7 @@ class BTAPDatabase:
             message = 'No simulations completed.'
             logging.error(message)
 
-        # if there were any failures.. get them too.
-        if isinstance(self.failed_df, pd.DataFrame):
-            self.failed_df.to_excel(writer, sheet_name='failed_runs')
-            message = 'Some simulations failed.'
-            logging.error(message)
 
-        if isinstance(self.failed_df, pd.DataFrame) or isinstance(self.btap_data_df, pd.DataFrame):
-            writer.save()
-            message = f'Excel Output: {excel_path}'
-            logging.info(message)
-            print(message)
 
         # If this is an aws_batch run, copy the excel file to s3 for storage.
         if compute_environment == 'aws_batch':
@@ -2284,28 +2269,29 @@ class PostProcessResults:
         os.makedirs(hourly_folder, exist_ok=True)
         s3 = boto3.resource('s3')
         for index, row in analysis_df.iterrows():
-            if row['datapoint_output_url'].startswith('file:///'):
-                #This is a local file. use system copy. First remove prefix
-                hourly_data_path = os.path.join(row['datapoint_output_url'][len('file:///'):], 'hourly.csv')
-                shutil.copyfile(hourly_data_path,os.path.join(hourly_folder,row[':datapoint_id']+'.csv') )
-            elif row['datapoint_output_url'].startswith('https://s3'):
-                p = re.compile("https:\/\/s3\.console\.aws\.amazon\.com\/s3\/buckets\/(\d*)\?region=(.*)\&prefix=(.*)")
-                m = p.match(row['datapoint_output_url'])
-                bucket = m.group(1)
-                region = m.group(2)
-                prefix = m.group(3)
-                csv_location = prefix + 'hourly.csv'
-                target = os.path.join(hourly_folder, row[':datapoint_id'] + '.csv')
-                message = f"Getting hourly data from S3 bucket {bucket} at path {csv_location} to {target}"
-                logging.info(message)
-                print(message)
-                try:
-                    s3.Bucket(bucket).download_file(csv_location, target)
-                except botocore.exceptions.ClientError as e:
-                    if e.response['Error']['Code'] == "404":
-                        print("The object does not exist.")
-                    else:
-                        raise
+            if row['success'] == True:
+                if row['datapoint_output_url'].startswith('file:///'):
+                    #This is a local file. use system copy. First remove prefix
+                    hourly_data_path = os.path.join(row['datapoint_output_url'][len('file:///'):], 'hourly.csv')
+                    shutil.copyfile(hourly_data_path,os.path.join(hourly_folder,row[':datapoint_id']+'.csv') )
+                elif row['datapoint_output_url'].startswith('https://s3'):
+                    p = re.compile("https:\/\/s3\.console\.aws\.amazon\.com\/s3\/buckets\/(\d*)\?region=(.*)\&prefix=(.*)")
+                    m = p.match(row['datapoint_output_url'])
+                    bucket = m.group(1)
+                    region = m.group(2)
+                    prefix = m.group(3)
+                    csv_location = prefix + 'hourly.csv'
+                    target = os.path.join(hourly_folder, row[':datapoint_id'] + '.csv')
+                    message = f"Getting hourly data from S3 bucket {bucket} at path {csv_location} to {target}"
+                    logging.info(message)
+                    print(message)
+                    try:
+                        s3.Bucket(bucket).download_file(csv_location, target)
+                    except botocore.exceptions.ClientError as e:
+                        if e.response['Error']['Code'] == "404":
+                            print("The object does not exist.")
+                        else:
+                            raise
 
 
         return analysis_df
@@ -2340,15 +2326,6 @@ class PostProcessResults:
             # PostProcess comparison to baselines.
             self.btap_data_df = PostProcessResults().run(btap_data_df=self.btap_data_df, output_folder= output_folder)
 
-        # if there were any failures.. get them too.
-
-        if self.get_num_of_runs_failed(analysis_id) > 0:
-            if analysis_id == None:
-                self.failed_df = pd.read_sql_table('failed_runs', sql_connection)
-            else:
-                command = f'SELECT * FROM failed_runs WHERE ":analysis_id" = \'{analysis_id}\''
-                self.failed_df = pd.read_sql_query(command, sql_engine)
-
         sql_connection.close()
 
         message = f'Save high level data to excel file to {output_folder}'
@@ -2370,11 +2347,6 @@ class PostProcessResults:
                 message = 'No simulations completed.'
                 logging.error(message)
 
-            # if there were any failures.. create failure sheet.
-            if isinstance(failed_df, pd.DataFrame):
-                failed_df.to_excel(writer, sheet_name='failed_runs')
-                message = 'Some simulations failed.'
-                logging.error(message)
             #Wrtie excel
             if isinstance(failed_df, pd.DataFrame) or isinstance(btap_data_df, pd.DataFrame):
                 message = f'Saving Excel Output: {excel_path}'

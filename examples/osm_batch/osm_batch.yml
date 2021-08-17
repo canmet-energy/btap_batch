@@ -39,7 +39,7 @@
   # The name of the analysis. Can be a user friendly name. This is how it will appear on your local system or on the S3
   # bucket. for example if 'example_analysis' on s3 the analysis run input/output files will be here in our s3 bucket
   # s3://834599497928/phylroy.lopez/example_analysis
-  :analysis_name: _batch_example'
+  :analysis_name: osm_batch_example'
 
   # Do you wish to run the simulations?
   :run_annual_simulation: true
