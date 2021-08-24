@@ -2,7 +2,7 @@
 # Todo: Integrate with Pathways viewer.(Done. works with Excel output. Need to add measures)
 # Todo: Secure local postgre docker container with a better(random) password
 # docker kill btap_postgres
-
+#docker kill (docker ps -q -a --filter "ancestor=btap_private_cli")
 from icecream import ic
 import itertools
 import copy
@@ -271,7 +271,7 @@ class AWSImage:
         s3 = S3()
         source_folder = os.path.join(DOCKERFILES_FOLDER, self.image_name)
         # Copies Dockerfile from btap_cli repository
-        url = 'https://raw.githubusercontent.com/canmet-energy/btap_cli/main/Dockerfile'
+        url = 'https://raw.githubusercontent.com/canmet-energy/btap_cli/3.2.0/Dockerfile'
         r = requests.get(url, allow_redirects=True)
         with open(os.path.join(source_folder,'Dockerfile'), 'wb') as file:
             file.write(r.content)
@@ -987,6 +987,16 @@ class Docker:
         jobName = f"{run_options[':analysis_id']}-{run_options[':datapoint_id']}"
         message = f"Submitting job {jobName}"
         logging.info(message)
+        volumes = {
+                    local_output_folder: {
+                        'bind': '/btap_costing/utilities/btap_cli/output',
+                        'mode': 'rw'},
+                    local_input_folder: {
+                        'bind': '/btap_costing/utilities/btap_cli/input',
+                        'mode': 'rw'},
+                    }
+        # Runnning docker command
+        run_options['docker_command'] = f"docker run --rm -v {local_output_folder}:/btap_costing/utilities/btap_cli/output -v {local_input_folder}:/btap_costing/utilities/btap_cli/input {run_options[':image_name']} bundle exec ruby btap_cli.rb"
         result = self.docker_client.containers.run(
                                                     # Local image name to use.
                                                     image=run_options[':image_name'],
@@ -995,14 +1005,7 @@ class Docker:
                                                     command='bundle exec ruby btap_cli.rb',
 
                                                     # host volume mount points and setting to read and write.
-                                                    volumes={
-                                                       local_output_folder: {
-                                                           'bind': '/btap_costing/utilities/btap_cli/output',
-                                                           'mode': 'rw'},
-                                                       local_input_folder: {
-                                                           'bind': '/btap_costing/utilities/btap_cli/input',
-                                                           'mode': 'rw'},
-                                                    },
+                                                    volumes=volumes,
                                                     # Will detach from current thread.. don't do it if you don't understand this.
                                                     detach=detach,
                                                     # This deletes the container on exit otherwise the container
@@ -1020,9 +1023,12 @@ class BTAPAnalysis():
 
     def get_local_osm_files(self):
         osm_list = {}
-        for file in os.listdir(self.project_root):
-            if file.endswith(".osm"):
-                osm_list[os.path.splitext(file)[0]] = os.path.join(self.project_root, file)
+        osm_folder = os.path.join(self.project_root,'osm_folder')
+        print(f"Looking locally in {osm_folder} for custom building_type osm files")
+        if pathlib.Path(osm_folder).is_dir():
+            for file in os.listdir(osm_folder):
+                if file.endswith(".osm"):
+                    osm_list[os.path.splitext(file)[0]] = os.path.join(osm_folder, file)
         return osm_list
 
     # Constructor will
@@ -1186,8 +1192,14 @@ class BTAPAnalysis():
 
             #Save custom osm file if required.
             local_osm_dict = self.get_local_osm_files()
+
+
             if run_options[':building_type'] in local_osm_dict:
                 #copy osm file into input folder.
+                # ic(local_osm_dict[run_options[':building_type']])
+                # ic(run_options[':building_type'])
+                # ic(local_datapoint_input_folder)
+                # ic(f"Copying osm file from {local_osm_dict[run_options[':building_type']]} to {local_datapoint_input_folder}")
                 shutil.copy(local_osm_dict[run_options[':building_type']], local_datapoint_input_folder)
                 logging.info(f"Copying osm file from {local_osm_dict[run_options[':building_type']]} to {local_datapoint_input_folder}")
 
@@ -1275,8 +1287,10 @@ class BTAPAnalysis():
                 print(error_msg)
                 error_msg= content_object.get()['Body'].read().decode('utf-8')
             else:
-                with open(local_error_txt_path, 'r') as file:
-                    error_msg = file.read()
+                error_msg = ''
+                if os.path.exists(local_error_txt_path):
+                    with open(local_error_txt_path, 'r') as file:
+                        error_msg = file.read()
             btap_data = {}
             btap_data.update(run_options)
             btap_data['success'] = False
@@ -2105,7 +2119,8 @@ class BTAPDatabase:
                     container_output TEXT,
                     datapoint_output_url TEXT,
                     ":btap_batch_version" TEXT,
-                    container_error TEXT
+                    container_error TEXT,
+                    docker_command TEXT
                 )'''
         with self.engine.connect() as con:
             rs = con.execute(sql_command)
@@ -2262,7 +2277,7 @@ class PostProcessResults:
         else:
             analysis_df = pd.read_excel(open(btap_data_df, 'rb'), sheet_name='btap_data')
 
-        self.economics(analysis_df, baseline)
+        #self.economics(analysis_df, baseline)
 
         # Iterate through each datapoint in analysis and collect hourly data.
         hourly_folder = os.path.join(output_folder,'hourly_data')

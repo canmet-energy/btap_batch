@@ -21,13 +21,15 @@ class TestBTAPBatch(unittest.TestCase):
         self.git_api_token = os.environ['GIT_API_TOKEN']
 
         #Change this to aws_batch to run tests on amazon.
-        self.compute_environment = 'aws_batch'
+        self.compute_environment = 'local'
+
+        self.os_version = '3.0.1'
 
         #Change to test on other branches.
-        self.os_standards_branch = 'nrcan'
+        self.os_standards_branch = 'nrcan_340'
 
         # Branch from https://github.com/canmet-energy/btap_costing. Typically 'master'
-        self.btap_costing_branch = 'master'
+        self.btap_costing_branch = 'os320'
 
         # Branch from https://github.com/canmet-energy/btap_costing. Typically 'master'
         self.image_name = 'btap_private_cli'
@@ -47,6 +49,7 @@ class TestBTAPBatch(unittest.TestCase):
         analysis[':analysis_configuration'][':os_standards_branch'] = self.os_standards_branch
         analysis[':analysis_configuration'][':btap_costing_branch'] = self.btap_costing_branch
         analysis[':analysis_configuration'][':image_name'] = self.image_name
+        analysis[':analysis_configuration'][':os_version'] = self.os_version
 
         #This will check if we already ran a test.. if so we will not rebuild the images.
         if self.__class__.first_test  == True:
