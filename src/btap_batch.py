@@ -1024,7 +1024,6 @@ class BTAPAnalysis():
     def get_local_osm_files(self):
         osm_list = {}
         osm_folder = os.path.join(self.project_root,'osm_folder')
-        print(f"Looking locally in {osm_folder} for custom building_type osm files")
         if pathlib.Path(osm_folder).is_dir():
             for file in os.listdir(osm_folder):
                 if file.endswith(".osm"):
