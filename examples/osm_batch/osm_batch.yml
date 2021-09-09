@@ -1,0 +1,138 @@
+---
+# Run configuration
+:analysis_configuration:
+
+  # BTAP Batch version
+  :btap_batch_version: 1.0.003
+
+  # number of threads is a stub for aws batch. Unused at the moment.
+  :no_of_threads:
+
+  # Choices are:
+  #       local : Run locally.. Good to test out runs on small batches before sending to AWS.
+  #       aws_batch: use for analyses with > 1000 simulations: This is currently only available for NRCan staff.  If you would wish to make used of Amazon cloud computing, please contact us.
+  :compute_environment: local
+
+  # DO NOT CHANGE: AWS S3 Bucket...Must be created ahead of time. Must be a STRING.
+  # H&B default bucket is '834599497928' for the btap_dev account. Only used for Amazon.
+  :s3_bucket: '834599497928'
+
+  # Use btap_public_cli for full opensource version. For btap_private_cli to use costing. Contact us if you wish to work with costing data.
+  :image_name: 'btap_private_cli'
+
+  # Set to True if you wish to build the image from scratch with the below branches fresh,
+  # pulling from the most recent branches indicated below. If set to false, it will use the last version built locally or
+  # on AWS. This can save time (~10minute) if set to false when you have already built the image and expect no changes.
+  :nocache: false
+
+  # Branch from https://github.com/NREL/openstudio-standards. Typically 'nrcan_prod' branch.
+  # Developers or people liking to work on unstable code can use 'nrcan'
+  :os_standards_branch: 'nrcan'
+
+  # Branch from https://github.com/canmet-energy/btap_costing. Typically 'nrcan_prod'
+  # Developers or people liking to work on unstable code can use 'master'
+  :btap_costing_branch: 'master'
+
+  # DO NOT CHANGE: Openstudio Version only 3.0.1 available
+  :os_version: '3.0.1'
+
+  # The name of the analysis. Can be a user friendly name. This is how it will appear on your local system or on the S3
+  # bucket. for example if 'example_analysis' on s3 the analysis run input/output files will be here in our s3 bucket
+  # s3://834599497928/phylroy.lopez/example_analysis
+  :analysis_name: 'osm_batch_example'
+
+  # Do you wish to run the simulations?
+  :run_annual_simulation: true
+
+  # Do you wish to enable automated costing for materials, labour, equipment? Disabled in btap_public_cli version.
+  :enable_costing: false
+
+  # DO NOT CHANGE. Will keep the postgresql running after the analysis is complete. Turn this on if you wish to monitor the
+  # results in real-time or wish to append subsequent analyses to the database. To kill the database manually type
+  # 'docker kill btap_postgres' at any command prompt on your host system.
+  :kill_database: true
+
+  #########################################  Algorithm  ###########################################################
+  :algorithm:
+    :type: 'osm_batch'
+
+
+
+  ###########################################     Hourly Data     #######################################################
+  :output_variables: [
+    { key: '*',     variable: 'Zone Air Temperature',     frequency: 'hourly' }
+  ]
+  :output_meters: [
+    { name: 'Gas:Facility',     frequency: 'hourly' },
+    { name: 'Electricity:Facility',     frequency: 'hourly' },
+    { name: 'DISTRICTHEATING:FACILITY',     frequency: 'hourly' },
+    { name: 'DISTRICTCOOLING:FACILITY',     frequency: 'hourly' },
+    { name: 'FuelOil#2:Facility',     frequency: 'hourly' }
+  ]
+
+#########################################  BUILDING OPTIONS (All inputs should be 'strings') ###########################################################
+# Building options
+:building_options:
+
+  :template: [
+      "NECB2011"
+  ]
+
+  :epw_file: [
+      'CAN_QC_Montreal-Trudeau.Intl.AP.716270_CWEC2016.epw',
+    #      'CAN_NS_Halifax.Dockyard.713280_CWEC2016.epw',
+    #      'CAN_AB_Edmonton.Intl.AP.711230_CWEC2016.epw',
+    #      'CAN_BC_Vancouver.Intl.AP.718920_CWEC2016.epw',
+    #      'CAN_AB_Calgary.Intl.AP.718770_CWEC2016.epw',
+    #      'CAN_ON_Toronto.Pearson.Intl.AP.716240_CWEC2016.epw',
+    #      'CAN_YT_Whitehorse.Intl.AP.719640_CWEC2016.epw'
+  ]
+
+  :building_type: [
+     'coldlake_Barracks_pre-1960',
+      'coldlake_FireHall_pre-1960',
+      'coldlake_FoodService_pre-1960',
+      'coldlake_Hangar_1960-1979',
+      'coldlake_Hangar_1980-2004',
+      'coldlake_Hangar_pre-1960',
+      'coldlake_MaintenanceShop-Small_1960-1979',
+      'coldlake_MaintenanceShop-Small_1980-2004',
+      'coldlake_MaintenanceShop-Small_pre-1960',
+      'coldlake_MaintenanceShop_1980-2004',
+      'coldlake_MaintenanceShop_pre-1960',
+      'coldlake_Office-Small_1960-1979',
+      'coldlake_Office-Small_1980-2004',
+      'coldlake_Office-Small_2005-2014',
+      'coldlake_Office_1960-1979',
+      'coldlake_Office_1980-2004',
+      'coldlake_Office_pre-1960',
+      'coldlake_Storage Building_1960-1979',
+      'coldlake_Storage Building_1980-2004',
+      'coldlake_Storage Building_2005-2014',
+      'coldlake_Storage Building_pre-1960',
+      'coldlake_Training Building_1980-2004',
+      'coldlake_Training Building_2005-2014',
+      'coldlake_Training Building_pre-1960',
+      'coldlake_VehicleGarage_1980-2004',
+      'coldlake_VehicleGarage_pre-1960',
+      'trenton_111_Dormitory_1953',
+      'trenton_119_Retail_1956',
+      'trenton_120_FoodServices_1956',
+      'trenton_152_Workshop_1941',
+      'trenton_155_OfficeWorkshop_1942',
+      'trenton_19_FireHall_1962',
+      'trenton_231_Barracks_1979',
+      'trenton_239_Warehouse_1939',
+      'trenton_260_Bunkhouse_1983',
+      'trenton_2a_TrainingCentre_1934',
+      'trenton_358_Warehouse_1997',
+      'trenton_362_FitnessPool_1997',
+      'trenton_405_Arena',
+      'trenton_414_Motel_2003',
+      'trenton_424_GolfClubhouse',
+      'trenton_58_Fitness_1939',
+      'trenton_58_Fitness_1992',
+      'trenton_607_Hanger_2001',
+      'trenton_6a_Office_1937'
+  ]
+
