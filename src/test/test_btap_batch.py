@@ -26,10 +26,10 @@ class TestBTAPBatch(unittest.TestCase):
         self.os_version = '3.0.1'
 
         #Change to test on other branches.
-        self.os_standards_branch = 'nrcan_340'
+        self.os_standards_branch = 'nrcan'
 
         # Branch from https://github.com/canmet-energy/btap_costing. Typically 'master'
-        self.btap_costing_branch = 'os320'
+        self.btap_costing_branch = 'master'
 
         # Branch from https://github.com/canmet-energy/btap_costing. Typically 'master'
         self.image_name = 'btap_private_cli'
