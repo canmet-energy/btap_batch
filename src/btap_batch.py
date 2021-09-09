@@ -100,6 +100,8 @@ BATCH_JOB_ROLE = 'arn:aws:iam::834599497928:role/batchJobRole'
 BATCH_SERVICE_ROLE = 'arn:aws:iam::834599497928:role/service-role/AWSBatchServiceRole'
 # Max Retry attemps for aws clients.
 AWS_MAX_RETRIES=12
+#Dockerfile url location
+DOCKERFILE_URL = 'https://raw.githubusercontent.com/canmet-energy/btap_cli/dev/Dockerfile'
 
 #Custom exceptions
 class FailedSimulationException(Exception):
@@ -271,7 +273,7 @@ class AWSImage:
         s3 = S3()
         source_folder = os.path.join(DOCKERFILES_FOLDER, self.image_name)
         # Copies Dockerfile from btap_cli repository
-        url = 'https://raw.githubusercontent.com/canmet-energy/btap_cli/3.2.0/Dockerfile'
+        url = DOCKERFILE_URL
         r = requests.get(url, allow_redirects=True)
         with open(os.path.join(source_folder,'Dockerfile'), 'wb') as file:
             file.write(r.content)
@@ -870,8 +872,14 @@ class Docker:
         # determines folder of docker folder relative to this file.
         self.dockerfile = os.path.join(DOCKERFILES_FOLDER, self.image_name)
         # Copies Dockerfile from btap_cli repository
-        url = 'https://raw.githubusercontent.com/canmet-energy/btap_cli/main/Dockerfile'
-        r = requests.get(url, allow_redirects=True)
+        url = DOCKERFILE_URL
+        r = None
+        try:
+            r = requests.get(url, allow_redirects=True)
+        except requests.exceptions.SSLError as err:
+            logging.error("Could not set up SSL certificate. Are you behind a VPN? This will interfere with SSL certificates.")
+            exit(1)
+
 
         file = open(os.path.join(self.dockerfile,'Dockerfile'), 'wb')
         file.write(r.content)
@@ -933,7 +941,9 @@ class Docker:
                                                                     # nocache flag to build use cache or build from scratch.
                                                                     nocache=self.nocache,
                                                                     # ENV variables used in Dockerfile.
-                                                                    buildargs=buildargs
+                                                                    buildargs=buildargs,
+                                                                    # remove temp containers.
+                                                                    forcerm=True
                                                                    )
             for chunk in json_log:
                 if 'stream' in chunk:

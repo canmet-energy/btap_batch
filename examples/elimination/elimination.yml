@@ -11,7 +11,7 @@
   # Choices are:
   #       local : Run locally.. Good to test out runs on small batches before sending to AWS.
   #       aws_batch: use for analyses with > 1000 simulations: This is currently only available for NRCan staff.  If you would wish to make used of Amazon cloud computing, please contact us.
-  :compute_environment: aws_batch
+  :compute_environment: local
 
   # DO NOT CHANGE: AWS S3 Bucket...Must be created ahead of time. Must be a STRING.
   # H&B default bucket is '834599497928' for the btap_dev account. Only used for Amazon.
