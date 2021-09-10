@@ -5,6 +5,7 @@ import logging
 import yaml
 from pathlib import Path
 import warnings
+import shutil
 
 class TestBTAPBatch(unittest.TestCase):
     first_test = True
@@ -34,10 +35,16 @@ class TestBTAPBatch(unittest.TestCase):
         # Branch from https://github.com/canmet-energy/btap_costing. Typically 'master'
         self.image_name = 'btap_private_cli'
 
+        # Use no_cache
+        self.no_cache = True
+
     def run_analysis(self, input_file=None):
 
         #Get basename
         basename = Path(input_file).stem
+
+        #Get Folder name
+        folder_name = os.path.dirname(input_file)
 
         #Load yaml file.
         # Open the yaml in analysis dict.
@@ -53,7 +60,7 @@ class TestBTAPBatch(unittest.TestCase):
 
         #This will check if we already ran a test.. if so we will not rebuild the images.
         if self.__class__.first_test  == True:
-            analysis[':analysis_configuration'][':nocache'] = True
+            analysis[':analysis_configuration'][':nocache'] = self.no_cache
             self.__class__.first_test  = False
         else:
             analysis[':analysis_configuration'][':nocache'] = False
@@ -61,20 +68,40 @@ class TestBTAPBatch(unittest.TestCase):
 
         #mk folder for test.
         test_output_folder = os.path.join(os.getcwd(),'test_output',f'{self.compute_environment}_{basename}')
-        os.makedirs(test_output_folder, exist_ok=True)
 
-        #Save file in folder in tests
+        # Check if folder exists
+        if os.path.isdir(test_output_folder):
+            # Remove old folder
+            try:
+                shutil.rmtree(test_output_folder)
+            except PermissionError as err:
+                message = f'Could not delete {test_output_folder}. Do you have a file open in that folder? Exiting'
+                print(message)
+                logging.error(message)
+                exit(1)
+
+
+
+        #Copy example folder
+        source_dir = folder_name
+        destination_dir = test_output_folder
+        shutil.copytree(source_dir, destination_dir)
+
+        #Save new input yml file in folder in tests
         test_configuration_file = os.path.join(test_output_folder,'input.yml')
         with open(test_configuration_file, 'w') as outfile:
             yaml.dump(analysis, outfile, default_flow_style=False)
 
         #Run analysis
-
         # Initialize the analysis object and run.
-        btap.btap_batch( analysis_config_file=test_configuration_file, git_api_token=self.git_api_token).run()
+        bb = btap.btap_batch( analysis_config_file=test_configuration_file, git_api_token=self.git_api_token)
+        bb.run()
+        excel_path = os.path.join(bb.project_root, bb.analysis_config[':analysis_name'], bb.analysis_config[':analysis_id'], 'output', 'output.xlsx')
+        assert os.path.isfile(excel_path), 'Output.xlsx was not created'
+        return bb
 
     def test_elimination(self):
-        self.run_analysis(input_file=os.path.join(os.path.dirname(os.path.realpath(__file__)),'..','..','examples','elimination', 'elimination.yml'))
+        self.run_analysis(input_file=os.path.join(os.path.dirname(os.path.realpath(__file__)),'..','..','examples', 'elimination', f'elimination.yml'))
 
     def test_sensitivity(self):
         self.run_analysis(input_file=os.path.join(os.path.dirname(os.path.realpath(__file__)),'..','..','examples','sensitivity', 'sensitivity.yml'))
@@ -85,6 +112,14 @@ class TestBTAPBatch(unittest.TestCase):
     def test_sample_lhs(self):
         self.run_analysis(input_file=os.path.join(os.path.dirname(os.path.realpath(__file__)),'..','..','examples','sample-lhs', 'sample-lhs.yml'))
 
+    def test_custom_osm(self):
+        bb = self.run_analysis(input_file=os.path.join(os.path.dirname(os.path.realpath(__file__)),'..','..','examples', 'custom_osm', 'custom_osm.yml'))
+
+    def test_osm_batch(self):
+        self.run_analysis(input_file=os.path.join(os.path.dirname(os.path.realpath(__file__)),'..','..','examples','osm_batch', 'osm_batch.yml'))
+
+    def test_parametric(self):
+        self.run_analysis(input_file=os.path.join(os.path.dirname(os.path.realpath(__file__)),'..','..','examples','parametric', 'parametric.yml'))
 
 
 if __name__ == '__main__':
