@@ -1212,6 +1212,7 @@ class BTAPAnalysis():
                 shutil.copy(local_osm_dict[run_options[':building_type']], local_datapoint_input_folder)
                 logging.info(f"Copying osm file from {local_osm_dict[run_options[':building_type']]} to {local_datapoint_input_folder}")
 
+            btap_data = {}
             if run_options[':compute_environment'] == 'aws_batch':
 
                 message = f"Copying from {local_datapoint_input_folder} to bucket {self.analysis_config[':s3_bucket']} folder {s3_datapoint_input_folder}"
@@ -1225,7 +1226,7 @@ class BTAPAnalysis():
                 bundle_command = bundle_command.replace('\\', '/')
                 self.aws_batch.submit_job(jobName=jobName, debug=True, command=["/bin/bash", "-c", bundle_command])
 
-                btap_data = {}
+
                 # add run options to dict.
                 btap_data.update(run_options)
 
@@ -1264,9 +1265,11 @@ class BTAPAnalysis():
 
                 # save output url.
                 btap_data['datapoint_output_url'] = 'file:///' + os.path.join(local_datapoint_output_folder)
-                btap_data['eplus_warnings'] = sum(1 for d in btap_data['eplusout_err_table'] if d.get('error_type') == 'warning')
-                btap_data['eplus_severes'] = sum(1 for d in btap_data['eplusout_err_table'] if d.get('error_type') == 'severe')
-                btap_data['eplus_fatals'] = sum(1 for d in btap_data['eplusout_err_table'] if d.get('error_type') == 'fatal')
+
+            # Store sum of warnings errors and severes.
+            btap_data['eplus_warnings'] = sum(1 for d in btap_data['eplusout_err_table'] if d.get('error_type') == 'warning')
+            btap_data['eplus_severes'] = sum(1 for d in btap_data['eplusout_err_table'] if d.get('error_type') == 'severe')
+            btap_data['eplus_fatals'] = sum(1 for d in btap_data['eplusout_err_table'] if d.get('error_type') == 'fatal')
 
 
 
@@ -1321,7 +1324,6 @@ class BTAPAnalysis():
         return docker
 
     def save_results_to_database(self, results):
-
         if results['success'] == True:
             #If container completed with success don't save container output.
             results['container_output'] = None
@@ -1521,6 +1523,7 @@ class BTAPParametric(BTAPAnalysis):
             message = f"Certificate Failure. This error occurs when AWS does not trust your security certificate. Either because you are using a VPN or your network is otherwise spoofing IPs. Please ensure that you are not on a VPN or contact your network admin. Error: {err}"
             logging.error(message)
         finally:
+            print("Shutdown..")
             self.shutdown_analysis()
 
     def get_threads(self):
