@@ -1,3 +1,18 @@
+###2020-06-09: 1.0.004
+nrcan_prod branches:
+* openstudio_standards revision = 04c220861664566800596666bb98699e4631a394
+* btap_costing revision = 671ed2b9604f017ec67ac26de3f73ce86670f2e4
+Features Added. 
+* Changed ventilation rates to use ASHRAE 2001 version for NECB2011/15/17
+* Added experimental support for upcoming NECB2020 added by NRC
+* Added Hourly Output capabilities
+* Added ability to use custom osm files 
+* Added ability to do batch runs of standalone osm files.
+* Added experimental support for OpenStudio 3.2.1
+* Fixed SRR measure
+* Updated HP measures
+* Removed baseline comparison capability temporarily. Will return in next version where baselines will be automatically run for each analysis.
+
 ###2020-06-09: 1.0.003
 nrcan_prod branches:
 * openstudio_standards revision = 04c220861664566800596666bb98699e4631a394
