@@ -2,7 +2,7 @@
 # Todo: Integrate with Pathways viewer.(Done. works with Excel output. Need to add measures)
 # Todo: Secure local postgre docker container with a better(random) password
 # docker kill btap_postgres
-#docker kill (docker ps -q -a --filter "ancestor=btap_private_cli")
+# docker kill (docker ps -q -a --filter "ancestor=btap_private_cli")
 from icecream import ic
 import itertools
 import copy
@@ -45,6 +45,7 @@ import requests
 from random import seed
 from random import random
 import numpy as np
+
 np.random.seed(123)
 import matplotlib.pyplot as plt
 from skopt.space import Space
@@ -58,8 +59,7 @@ import csv
 
 seed(1)
 
-
-BTAP_BATCH_VERSION='1.0.002'
+BTAP_BATCH_VERSION = '1.0.002'
 
 # Maximum AWS CPUS that AWS will allocate for the run.
 MAX_AWS_VCPUS = 500
@@ -77,18 +77,18 @@ CONTAINER_STORAGE = 100
 AWS_BATCH_ALLOCATION_STRATEGY = 'BEST_FIT_PROGRESSIVE'
 # AWS Compute instances types..setting to optimal to let AWS figure it out for me.
 # https://docs.aws.amazon.com/batch/latest/userguide/create-compute-environment.html
-AWS_BATCH_COMPUTE_INSTANCE_TYPES =  ['optimal']
+AWS_BATCH_COMPUTE_INSTANCE_TYPES = ['optimal']
 # Using the public Amazon Linux 2 AMI to make use of overlay disk storage. Has all aws goodies already installed,
 # makeing secure session manager possible, and has docker pre-installed.
 AWS_BATCH_DEFAULT_IMAGE = 'ami-0a06b44c462364156'
 
-
 # Location of Docker folder that contains information to build the btap image locally and on aws.
 DOCKERFILES_FOLDER = os.path.join(os.path.dirname(os.path.realpath(__file__)), 'Dockerfiles')
 # Location of previously run baseline simulations to compare with design scenarios
-BASELINE_RESULTS = os.path.join(os.path.dirname(os.path.realpath(__file__)),'resources', 'baselines.xlsx')
+BASELINE_RESULTS = os.path.join(os.path.dirname(os.path.realpath(__file__)), 'resources', 'baselines.xlsx')
 # CER Fuel costs data. Will be used for NPV more extensively.
-CER_UTILITY_COSTS = os.path.join(os.path.dirname(os.path.realpath(__file__)),'resources', 'ceb_fuel_end_use_prices.csv')
+CER_UTILITY_COSTS = os.path.join(os.path.dirname(os.path.realpath(__file__)), 'resources',
+                                 'ceb_fuel_end_use_prices.csv')
 
 # These resources were created either by hand or default from the AWS web console. If moving this to another aws account,
 # recreate these 3 items in the new account. Also create s3 bucket to use named based account id like we did here.
@@ -99,20 +99,24 @@ CLOUD_BUILD_SERVICE_ROLE = 'arn:aws:iam::834599497928:role/service-role/codebuil
 BATCH_JOB_ROLE = 'arn:aws:iam::834599497928:role/batchJobRole'
 BATCH_SERVICE_ROLE = 'arn:aws:iam::834599497928:role/service-role/AWSBatchServiceRole'
 # Max Retry attemps for aws clients.
-AWS_MAX_RETRIES=12
-#Dockerfile url location
+AWS_MAX_RETRIES = 12
+# Dockerfile url location
 DOCKERFILE_URL = 'https://raw.githubusercontent.com/canmet-energy/btap_cli/dev/Dockerfile'
 
-#Custom exceptions
+
+# Custom exceptions
 class FailedSimulationException(Exception):
     pass
-#S3 Operations
+
+
+# S3 Operations
 class S3:
-    #Constructor
+    # Constructor
     def __init__(self):
         # Create the s3 client.
-        config = Config(retries={ 'max_attempts': AWS_MAX_RETRIES, 'mode': 'standard'})
-        self.s3 = boto3.client('s3',config=config)
+        config = Config(retries={'max_attempts': AWS_MAX_RETRIES, 'mode': 'standard'})
+        self.s3 = boto3.client('s3', config=config)
+
     # Method to delete a bucket.
     def delete_bucket(self, bucket_name):
         message = f'Deleting S3 {bucket_name}'
@@ -122,7 +126,7 @@ class S3:
 
     # Method to create a bucket.
     def create_bucket(self, bucket_name):
-        message =f'Creating S3 {bucket_name}'
+        message = f'Creating S3 {bucket_name}'
         print(message)
         logging.info(message)
         response = self.s3.create_bucket(
@@ -133,6 +137,7 @@ class S3:
             },
             ObjectLockEnabledForBucket=False
         )
+
     # Method to download folder.
     def download_s3_folder(self, bucket_name, s3_folder, local_dir=None):
         """
@@ -149,10 +154,12 @@ class S3:
             if not os.path.exists(os.path.dirname(target)):
                 os.makedirs(os.path.dirname(target))
             bucket.download_file(obj.key, target)
+
     # Delete S3 folder.
     def delete_s3_folder(self, bucket, folder):
         bucket = self.s3.Bucket(bucket)
         bucket.objects.filter(Prefix=folder).delete()
+
     # Copy folder to S3
     def copy_folder_to_s3(self, bucket_name, source_folder, target_folder):
         # Get files in folder.
@@ -167,34 +174,35 @@ class S3:
 
             self.s3.upload_file(file, bucket_name, target_path)
 
-    def upload_file(self,file, bucket_name, target_path):
+    def upload_file(self, file, bucket_name, target_path):
         logging.info(f"uploading {file} to s3 bucket {bucket_name} target {target_path}")
         self.s3.upload_file(file, bucket_name, target_path)
+
 
 # Class to authenticate to AWS.
 class AWSCredentials:
     # Initialize with required clients.
     def __init__(self):
-        config = Config(retries={ 'max_attempts': AWS_MAX_RETRIES, 'mode': 'standard'})
-        self.sts = boto3.client('sts',config=config)
-        self.iam = boto3.client('iam',config=config)
+        config = Config(retries={'max_attempts': AWS_MAX_RETRIES, 'mode': 'standard'})
+        self.sts = boto3.client('sts', config=config)
+        self.iam = boto3.client('iam', config=config)
         try:
             self.account_id = self.sts.get_caller_identity()["Account"]
             self.user_id = self.sts.get_caller_identity()["UserId"]
         except botocore.exceptions.ClientError as e:
             if e.response['Error']['Code'] == 'ExpiredToken':
-                logging.error("Your session has expired while running. Please renew your aws credentials and consider running this in an amazon instance if your run is longer than 2 hours")
+                logging.error(
+                    "Your session has expired while running. Please renew your aws credentials and consider running this in an amazon instance if your run is longer than 2 hours")
                 exit(1)
             else:
                 print("Unexpected botocore.exceptions.ClientError error: %s" % e)
                 exit(1)
         except botocore.exceptions.SSLError as e:
-            logging.error("SSL validation failed.. This is usually because you are behind a VPN. Please do not use a VPN.")
+            logging.error(
+                "SSL validation failed.. This is usually because you are behind a VPN. Please do not use a VPN.")
             exit(1)
 
-
-
-        #get aws username from userid.
+        # get aws username from userid.
         if re.compile(".*:(.*)@.*").search(self.user_id) is None:
             self.user_name = 'osdev'
         else:
@@ -210,11 +218,12 @@ class AWSCredentials:
         self.aws_batch_service_role = \
             list(filter(lambda role: role['RoleName'] == 'AWSBatchServiceRole', service_roles))[0]['Arn']
 
+
 # Class to manage AWS images.
 class AWSImage:
     def __init__(self,
                  image_name=None,
-                 git_api_token= None,
+                 git_api_token=None,
                  os_version=None,
                  btap_costing_branch=None,
                  os_standards_branch=None,
@@ -232,7 +241,7 @@ class AWSImage:
         # Todo create cloud build service role.
         self.cloudbuild_service_role = CLOUD_BUILD_SERVICE_ROLE
         self.iam = boto3.client('iam')
-        self.s3 = boto3.client('s3',)
+        self.s3 = boto3.client('s3', )
         self.ecr = boto3.client('ecr')
         self.cloudwatch = boto3.client('logs')
         repositories = self.ecr_client.describe_repositories()['repositories']
@@ -265,6 +274,7 @@ class AWSImage:
             logging.info(message)
             print(message)
             self.build_image()
+
     def build_image(self):
         # Codebuild image.
         codebuild = boto3.client('codebuild')
@@ -275,7 +285,7 @@ class AWSImage:
         # Copies Dockerfile from btap_cli repository
         url = DOCKERFILE_URL
         r = requests.get(url, allow_redirects=True)
-        with open(os.path.join(source_folder,'Dockerfile'), 'wb') as file:
+        with open(os.path.join(source_folder, 'Dockerfile'), 'wb') as file:
             file.write(r.content)
 
         s3.copy_folder_to_s3(self.bucket, source_folder, self.credentials.user_name + '/' + self.image_name)
@@ -372,15 +382,15 @@ class AWSImage:
                 "value": self.os_version
             }]
         source_location = self.bucket + '/' + self.credentials.user_name + '/' + self.image_name + '/'
-        message=f'Code build image env overrides {environmentVariablesOverride}'
+        message = f'Code build image env overrides {environmentVariablesOverride}'
         logging.info(message)
 
-        message=f"Building from sources at {source_location}"
+        message = f"Building from sources at {source_location}"
         logging.info(message)
 
         response = codebuild.start_build(projectName=self.image_name,
                                          sourceTypeOverride='S3',
-                                         sourceLocationOverride= source_location,
+                                         sourceLocationOverride=source_location,
                                          environmentVariablesOverride=environmentVariablesOverride
                                          )
         build_id = response['build']['id']
@@ -399,8 +409,9 @@ class AWSImage:
                 print(message)
                 logging.error(message)
                 exit(1)
-            #Check status every 5 secs.
+            # Check status every 5 secs.
             time.sleep(5)
+
 
 # Class to run batch simulations on AWS>
 class AWSBatch:
@@ -418,26 +429,30 @@ class AWSBatch:
                  analysis_id=None,
                  btap_image_name='btap_private_cli',
                  rebuild_image=False,
-                 git_api_token= None,
+                 git_api_token=None,
                  os_version=None,
                  btap_costing_branch=None,
                  os_standards_branch=None,
-                 threads = 24
+                 threads=24
                  ):
         self.credentials = AWSCredentials()
         bucket = self.credentials.account_id
         # Create the aws clients required.
-        config = Config(retries={ 'max_attempts': AWS_MAX_RETRIES, 'mode': 'standard'})
-        self.ec2 = boto3.client('ec2', config = config)
-        self.batch = boto3.client('batch',config=botocore.client.Config(max_pool_connections=threads,retries={'max_attempts': AWS_MAX_RETRIES, 'mode': 'standard'}))
-        self.iam = boto3.client('iam', config = config)
-        self.s3 = boto3.client('s3',config=botocore.client.Config(max_pool_connections=threads,retries={'max_attempts': AWS_MAX_RETRIES, 'mode': 'standard'}))
+        config = Config(retries={'max_attempts': AWS_MAX_RETRIES, 'mode': 'standard'})
+        self.ec2 = boto3.client('ec2', config=config)
+        self.batch = boto3.client('batch', config=botocore.client.Config(max_pool_connections=threads,
+                                                                         retries={'max_attempts': AWS_MAX_RETRIES,
+                                                                                  'mode': 'standard'}))
+        self.iam = boto3.client('iam', config=config)
+        self.s3 = boto3.client('s3', config=botocore.client.Config(max_pool_connections=threads,
+                                                                   retries={'max_attempts': AWS_MAX_RETRIES,
+                                                                            'mode': 'standard'}))
         self.cloudwatch = boto3.client('logs')
         self.credentials.user_name
 
         # Create image helper object.
         self.btap_image = AWSImage(image_name=btap_image_name,
-                                   rebuild = rebuild_image,
+                                   rebuild=rebuild_image,
                                    git_api_token=git_api_token,
                                    os_version=os_version,
                                    btap_costing_branch=btap_costing_branch,
@@ -455,7 +470,7 @@ class AWSBatch:
             self.analysis_id = analysis_id
 
         # Compute id is the same as analysis id but stringed.
-        self.compute_environment_id = f"{self.credentials.user_name.replace('.','_')}-{self.analysis_id}"
+        self.compute_environment_id = f"{self.credentials.user_name.replace('.', '_')}-{self.analysis_id}"
 
         # Set up the job def as a suffix of the analysis id"
         self.job_def_id = f"{self.compute_environment_id}_job_def"
@@ -545,7 +560,7 @@ class AWSBatch:
 
     def create_compute_environment(self):
         # Inform user starting to create CE.
-        message=f'Creating Compute Environment {self.compute_environment_id}'
+        message = f'Creating Compute Environment {self.compute_environment_id}'
         print(message)
         logging.info(message)
 
@@ -560,7 +575,7 @@ class AWSBatch:
                 'allocationStrategy': AWS_BATCH_ALLOCATION_STRATEGY,
                 'minvCpus': MIN_AWS_VCPUS,
                 'maxvCpus': MAX_AWS_VCPUS,
-                #'desiredvCpus': DESIRED_AWS_VCPUS,
+                # 'desiredvCpus': DESIRED_AWS_VCPUS,
                 'instanceTypes': AWS_BATCH_COMPUTE_INSTANCE_TYPES,
                 'imageId': AWS_BATCH_DEFAULT_IMAGE,
                 'subnets': self.subnet_id_list,
@@ -590,7 +605,7 @@ class AWSBatch:
 
     def delete_compute_environment(self):
         # Inform user starting to create CE.
-        message =f'Disable Compute Environment {self.compute_environment_id}'
+        message = f'Disable Compute Environment {self.compute_environment_id}'
         print(message)
         logging.info(message)
 
@@ -612,7 +627,7 @@ class AWSBatch:
                 raise Exception('Failed to create compute environment is invalid state: %s' % (reason))
             time.sleep(5)
         # Delete CE
-        message=f'Deleting Compute Environment {self.compute_environment_id}'
+        message = f'Deleting Compute Environment {self.compute_environment_id}'
         print(message)
         logging.info(message)
         self.batch.delete_compute_environment(computeEnvironment=self.compute_environment_id)
@@ -673,7 +688,7 @@ class AWSBatch:
         return response
 
     def create_job_queue(self):
-        message=f'Creating Job Queue {self.job_queue_id}'
+        message = f'Creating Job Queue {self.job_queue_id}'
         logging.info(message)
         print(message)
 
@@ -699,7 +714,7 @@ class AWSBatch:
             elif status == 'INVALID':
                 reason = jobQueue['statusReason']
                 message = f'Failed to create job queue: {reason}'
-                logging.error( message )
+                logging.error(message)
                 exit(1)
             time.sleep(5)
 
@@ -712,7 +727,7 @@ class AWSBatch:
         # Store the aws service role arn for AWSBatchServiceRole. This role is created by default when AWSBatch
         # compute environment is created for the first time via the web console automatically.
 
-        message =f'Creating Job Definition {self.job_def_id}'
+        message = f'Creating Job Definition {self.job_def_id}'
         logging.info(message)
         print(message)
 
@@ -744,7 +759,6 @@ class AWSBatch:
                                                                f"bundle exec ruby btap_cli.rb --building_type FullServiceRestaurant --template NECB2017 --enable_costing true "]):
         # Tell user.
 
-
         # See https://boto3.amazonaws.com/v1/documentation/api/latest/reference/services/batch.html#Batch.Client.submit_job
         submitJobResponse = self.submit_job_wrapper(command, jobName)
 
@@ -773,15 +787,15 @@ class AWSBatch:
                 break
             elif status == 'RUNNING':
                 # Commented out logstream.
-                #logStreamName = self.getLogStream(logGroupName, jobName, jobId)
-                if not running: #and logStreamName:
+                # logStreamName = self.getLogStream(logGroupName, jobName, jobId)
+                if not running:  # and logStreamName:
                     running = True
                     # print('Output [%s]:\n %s' % (logStreamName, '=' * 80))
-                #if logStreamName:
-                    #startTime = self.printLogs(logGroupName, logStreamName, startTime) + 1
+                # if logStreamName:
+                # startTime = self.printLogs(logGroupName, logStreamName, startTime) + 1
             else:
                 message = 'UNKNOWN - Job [%s - %s] is %-9s' % (jobName, jobId, status)
-                #logging.info(message)
+                # logging.info(message)
                 sys.stdout.flush()
         return result
 
@@ -795,25 +809,26 @@ class AWSBatch:
             )
             return submitJobResponse
         except:
-            #Implementing exponential backoff
-            if n==8:
-                logging.exception(f'Failed to submit job {jobName} in 7 tries while using exponential backoff. Error was {sys.exc_info()[0]} ')
+            # Implementing exponential backoff
+            if n == 8:
+                logging.exception(
+                    f'Failed to submit job {jobName} in 7 tries while using exponential backoff. Error was {sys.exc_info()[0]} ')
             wait_time = 2 ** n + random()
             logging.warning(f"Implementing exponential backoff for job {jobName} for {wait_time}s")
             time.sleep(wait_time)
-            return self.submit_job_wrapper( command, jobName, n=n+1)
+            return self.submit_job_wrapper(command, jobName, n=n + 1)
 
     def get_job_status(self, jobId, n=0):
         try:
             describeJobsResponse = self.batch.describe_jobs(jobs=[jobId])
             return describeJobsResponse
         except:
-            if n==8:
-                raise(f'Failed to get job status for {jobId} in 7 tries while using exponential backoff.')
+            if n == 8:
+                raise (f'Failed to get job status for {jobId} in 7 tries while using exponential backoff.')
             wait_time = 2 ** n + random()
             logging.warning(f"Implementing exponential backoff for job {jobId} for {wait_time}s")
-            time.sleep( wait_time )
-            return self.get_job_status(jobId, n=n+1)
+            time.sleep(wait_time)
+            return self.get_job_status(jobId, n=n + 1)
 
     def describe_job_queues(self, job_queue_id, n=0):
         try:
@@ -839,6 +854,7 @@ class AWSBatch:
             logging.warning(f"Implementing exponential backoff for job {compute_environment_id} for {wait_time}s")
             time.sleep(wait_time)
             return self.describe_compute_environments(compute_environment_id, n=n + 1)
+
 
 # Class to manage local docker images.
 class Docker:
@@ -877,11 +893,11 @@ class Docker:
         try:
             r = requests.get(url, allow_redirects=True)
         except requests.exceptions.SSLError as err:
-            logging.error("Could not set up SSL certificate. Are you behind a VPN? This will interfere with SSL certificates.")
+            logging.error(
+                "Could not set up SSL certificate. Are you behind a VPN? This will interfere with SSL certificates.")
             exit(1)
 
-
-        file = open(os.path.join(self.dockerfile,'Dockerfile'), 'wb')
+        file = open(os.path.join(self.dockerfile, 'Dockerfile'), 'wb')
         file.write(r.content)
         file.close()
         # get a docker client object to run docker commands.
@@ -934,23 +950,23 @@ class Docker:
             logging.info(message)
             print(message)
             image, json_log = self.docker_client.images.build(
-                                                                    # Path to docker file.
-                                                                    path=self.dockerfile,
-                                                                    # Image name
-                                                                    tag=self.image_name,
-                                                                    # nocache flag to build use cache or build from scratch.
-                                                                    nocache=self.nocache,
-                                                                    # ENV variables used in Dockerfile.
-                                                                    buildargs=buildargs,
-                                                                    # remove temp containers.
-                                                                    forcerm=True
-                                                                   )
+                # Path to docker file.
+                path=self.dockerfile,
+                # Image name
+                tag=self.image_name,
+                # nocache flag to build use cache or build from scratch.
+                nocache=self.nocache,
+                # ENV variables used in Dockerfile.
+                buildargs=buildargs,
+                # remove temp containers.
+                forcerm=True
+            )
             for chunk in json_log:
                 if 'stream' in chunk:
                     for line in chunk['stream'].splitlines():
                         logging.debug(line)
             # let use know that the image built sucessfully.
-            message = f'Image built in {(time.time() - start)/60}m'
+            message = f'Image built in {(time.time() - start) / 60}m'
             logging.info(message)
             print(message)
         else:
@@ -990,40 +1006,39 @@ class Docker:
         if local_output_folder == None:
             local_output_folder = os.path.join(self.dir_path, 'output')
 
-
-
-
         # Run the simulation
         jobName = f"{run_options[':analysis_id']}-{run_options[':datapoint_id']}"
         message = f"Submitting job {jobName}"
         logging.info(message)
         volumes = {
-                    local_output_folder: {
-                        'bind': '/btap_costing/utilities/btap_cli/output',
-                        'mode': 'rw'},
-                    local_input_folder: {
-                        'bind': '/btap_costing/utilities/btap_cli/input',
-                        'mode': 'rw'},
-                    }
+            local_output_folder: {
+                'bind': '/btap_costing/utilities/btap_cli/output',
+                'mode': 'rw'},
+            local_input_folder: {
+                'bind': '/btap_costing/utilities/btap_cli/input',
+                'mode': 'rw'},
+        }
         # Runnning docker command
-        run_options['docker_command'] = f"docker run --rm -v {local_output_folder}:/btap_costing/utilities/btap_cli/output -v {local_input_folder}:/btap_costing/utilities/btap_cli/input {run_options[':image_name']} bundle exec ruby btap_cli.rb"
+        run_options[
+            'docker_command'] = f"docker run --rm -v {local_output_folder}:/btap_costing/utilities/btap_cli/output -v {local_input_folder}:/btap_costing/utilities/btap_cli/input {run_options[':image_name']} bundle exec ruby btap_cli.rb"
         result = self.docker_client.containers.run(
-                                                    # Local image name to use.
-                                                    image=run_options[':image_name'],
+            # Local image name to use.
+            image=run_options[':image_name'],
 
-                                                    # Command issued to container.
-                                                    command='bundle exec ruby btap_cli.rb',
+            # Command issued to container.
+            command='bundle exec ruby btap_cli.rb',
 
-                                                    # host volume mount points and setting to read and write.
-                                                    volumes=volumes,
-                                                    # Will detach from current thread.. don't do it if you don't understand this.
-                                                    detach=detach,
-                                                    # This deletes the container on exit otherwise the container
-                                                    # will bloat your system.
-                                                    auto_remove=True
-           )
+            # host volume mount points and setting to read and write.
+            volumes=volumes,
+            # Will detach from current thread.. don't do it if you don't understand this.
+            detach=detach,
+            # This deletes the container on exit otherwise the container
+            # will bloat your system.
+            auto_remove=True
+        )
 
         return result
+
 
 # Parent Analysis class.
 class BTAPAnalysis():
@@ -1033,7 +1048,7 @@ class BTAPAnalysis():
 
     def get_local_osm_files(self):
         osm_list = {}
-        osm_folder = os.path.join(self.project_root,'osm_folder')
+        osm_folder = os.path.join(self.project_root, 'osm_folder')
         if pathlib.Path(osm_folder).is_dir():
             for file in os.listdir(osm_folder):
                 if file.endswith(".osm"):
@@ -1060,7 +1075,8 @@ class BTAPAnalysis():
         try:
             docker.from_env()
         except DockerException as err:
-            logging.error(f"Could not access Docker Daemon. Either it is not running, or you do not have permissions to run docker. {err}")
+            logging.error(
+                f"Could not access Docker Daemon. Either it is not running, or you do not have permissions to run docker. {err}")
             exit(1)
 
         # Load Analysis File into variable
@@ -1074,14 +1090,13 @@ class BTAPAnalysis():
         # Store analysis config and building_options.
         self.analysis_config = analysis[':analysis_configuration']
         self.building_options = analysis[':building_options']
-        
+
         # Check user selected public version.. if so force costing to be turned off.
         if self.analysis_config[':image_name'] == 'btap_public_cli':
             self.analysis_config[':enable_costing'] = False
 
         # Set up project root.
         self.project_root = os.path.dirname(analysis_config_file)
-
 
         # Create required paths and folders for analysis
         self.create_paths_folders()
@@ -1090,7 +1105,7 @@ class BTAPAnalysis():
         self.init_database()
 
         if self.analysis_config[':compute_environment'] == 'aws_batch':
-            #If aws batch object was not passed.. create it.
+            # If aws batch object was not passed.. create it.
             if self.aws_batch == None:
                 # Start batch queue if required.
                 self.aws_batch = self.initialize_aws_batch(git_api_token)
@@ -1122,7 +1137,7 @@ class BTAPAnalysis():
                                                  self.analysis_config[':analysis_name'])
         logging.info(f'analysis_folder:{self.analysis_config[":analysis_name"]}')
         self.analysis_id_folder = os.path.join(self.analysis_name_folder,
-                                                 self.analysis_config[':analysis_id'])
+                                               self.analysis_config[':analysis_id'])
 
         # Tell log we are deleting previous runs.
         message = f'Deleting previous runs from: {self.analysis_name_folder}'
@@ -1139,13 +1154,11 @@ class BTAPAnalysis():
                 logging.error(message)
                 exit(1)
 
-
         # create local input and output folders
         self.input_folder = os.path.join(self.analysis_id_folder,
                                          'input')
         self.output_folder = os.path.join(self.analysis_id_folder,
                                           'output')
-
 
         # Make input / output folder for mounting to container.
         os.makedirs(self.input_folder, exist_ok=True)
@@ -1153,7 +1166,7 @@ class BTAPAnalysis():
         logging.info(f"local mounted input folder:{self.input_folder}")
         logging.info(f"local mounted output folder:{self.output_folder}")
 
-    def run_datapoint(self,run_options):
+    def run_datapoint(self, run_options):
         # Start timer to track simulation time.
         start = time.time()
         try:
@@ -1173,15 +1186,17 @@ class BTAPAnalysis():
             run_options[':output_meters'] = self.analysis_config[':output_meters']
             run_options[':algorithm_type'] = self.analysis_config[':algorithm'][':type']
 
-
-            #S3 paths. Set base to username used in aws.
+            # S3 paths. Set base to username used in aws.
             if self.analysis_config[':compute_environment'] == 'aws_batch':
                 self.credentials = AWSCredentials()
-                s3_analysis_folder = os.path.join(self.credentials.user_name, run_options[':analysis_name'], run_options[':analysis_id']).replace('\\', '/')
-                s3_datapoint_input_folder = os.path.join(s3_analysis_folder, 'input', run_options[':datapoint_id']).replace('\\', '/')
+                s3_analysis_folder = os.path.join(self.credentials.user_name, run_options[':analysis_name'],
+                                                  run_options[':analysis_id']).replace('\\', '/')
+                s3_datapoint_input_folder = os.path.join(s3_analysis_folder, 'input',
+                                                         run_options[':datapoint_id']).replace('\\', '/')
                 s3_output_folder = os.path.join(s3_analysis_folder, 'output').replace('\\', '/')
-                s3_datapoint_output_folder = os.path.join( s3_output_folder, run_options[':datapoint_id']).replace('\\', '/')
-                s3_btap_data_path = os.path.join( s3_datapoint_output_folder, 'btap_data.json').replace('\\', '/')
+                s3_datapoint_output_folder = os.path.join(s3_output_folder, run_options[':datapoint_id']).replace('\\',
+                                                                                                                  '/')
+                s3_btap_data_path = os.path.join(s3_datapoint_output_folder, 'btap_data.json').replace('\\', '/')
                 s3_error_txt_path = os.path.join(s3_datapoint_output_folder, 'error.txt').replace('\\', '/')
 
             # Local Paths
@@ -1189,9 +1204,10 @@ class BTAPAnalysis():
             local_datapoint_output_folder = os.path.join(self.output_folder, run_options[':datapoint_id'])
             local_run_option_file = os.path.join(local_datapoint_input_folder, 'run_options.yml')
             # Create path to btap_data.json file.
-            local_btap_data_path = os.path.join(self.output_folder, run_options[':datapoint_id'],'btap_data.json')
+            local_btap_data_path = os.path.join(self.output_folder, run_options[':datapoint_id'], 'btap_data.json')
             local_error_txt_path = os.path.join(self.output_folder, run_options[':datapoint_id'], 'error.txt')
-            local_eplusout_sql_path = os.path.join(self.output_folder, run_options[':datapoint_id'],'run_dir','run','eplusout.sql')
+            local_eplusout_sql_path = os.path.join(self.output_folder, run_options[':datapoint_id'], 'run_dir', 'run',
+                                                   'eplusout.sql')
 
             # Save run_option file for this simulation.
             os.makedirs(local_datapoint_input_folder, exist_ok=True)
@@ -1199,33 +1215,32 @@ class BTAPAnalysis():
             with open(local_run_option_file, 'w') as outfile:
                 yaml.dump(run_options, outfile, encoding=('utf-8'))
 
-            #Save custom osm file if required.
+            # Save custom osm file if required.
             local_osm_dict = self.get_local_osm_files()
 
-
             if run_options[':building_type'] in local_osm_dict:
-                #copy osm file into input folder.
+                # copy osm file into input folder.
                 # ic(local_osm_dict[run_options[':building_type']])
                 # ic(run_options[':building_type'])
                 # ic(local_datapoint_input_folder)
                 # ic(f"Copying osm file from {local_osm_dict[run_options[':building_type']]} to {local_datapoint_input_folder}")
                 shutil.copy(local_osm_dict[run_options[':building_type']], local_datapoint_input_folder)
-                logging.info(f"Copying osm file from {local_osm_dict[run_options[':building_type']]} to {local_datapoint_input_folder}")
+                logging.info(
+                    f"Copying osm file from {local_osm_dict[run_options[':building_type']]} to {local_datapoint_input_folder}")
 
             btap_data = {}
             if run_options[':compute_environment'] == 'aws_batch':
 
                 message = f"Copying from {local_datapoint_input_folder} to bucket {self.analysis_config[':s3_bucket']} folder {s3_datapoint_input_folder}"
                 logging.info(message)
-                S3().copy_folder_to_s3( bucket_name=self.analysis_config[':s3_bucket'],
-                                        source_folder=local_datapoint_input_folder,
-                                        target_folder=s3_datapoint_input_folder)
+                S3().copy_folder_to_s3(bucket_name=self.analysis_config[':s3_bucket'],
+                                       source_folder=local_datapoint_input_folder,
+                                       target_folder=s3_datapoint_input_folder)
                 jobName = f"{run_options[':analysis_id']}-{run_options[':datapoint_id']}"
                 bundle_command = f"bundle exec ruby btap_cli.rb --input_path s3://{self.analysis_config[':s3_bucket']}/{s3_datapoint_input_folder} --output_path s3://{self.analysis_config[':s3_bucket']}/{s3_output_folder} "
                 # replace \ slashes to / slash for correct s3 convention.
                 bundle_command = bundle_command.replace('\\', '/')
                 self.aws_batch.submit_job(jobName=jobName, debug=True, command=["/bin/bash", "-c", bundle_command])
-
 
                 # add run options to dict.
                 btap_data.update(run_options)
@@ -1236,17 +1251,16 @@ class BTAPAnalysis():
                 content_object = boto3.resource('s3').Object(self.analysis_config[':s3_bucket'], s3_btap_data_path)
                 btap_data.update(json.loads(content_object.get()['Body'].read().decode('utf-8')))
                 # save url to datapoint output for Kamel.
-                btap_data['datapoint_output_url'] = f"https://s3.console.aws.amazon.com/s3/buckets/{self.analysis_config[':s3_bucket']}?region=ca-central-1&prefix={s3_datapoint_output_folder}/"
+                btap_data[
+                    'datapoint_output_url'] = f"https://s3.console.aws.amazon.com/s3/buckets/{self.analysis_config[':s3_bucket']}?region=ca-central-1&prefix={s3_datapoint_output_folder}/"
             else:
 
                 result = self.docker.run_container_simulation(
-                                                            run_options = run_options,
-                                                            local_input_folder = local_datapoint_input_folder,
-                                                            local_output_folder = self.output_folder,
-                                                            detach = False
+                    run_options=run_options,
+                    local_input_folder=local_datapoint_input_folder,
+                    local_output_folder=self.output_folder,
+                    detach=False
                 )
-
-
 
                 # If file was not created...raise an error.
                 if not os.path.isfile(local_btap_data_path):
@@ -1267,11 +1281,12 @@ class BTAPAnalysis():
                 btap_data['datapoint_output_url'] = 'file:///' + os.path.join(local_datapoint_output_folder)
 
             # Store sum of warnings errors and severes.
-            btap_data['eplus_warnings'] = sum(1 for d in btap_data['eplusout_err_table'] if d.get('error_type') == 'warning')
-            btap_data['eplus_severes'] = sum(1 for d in btap_data['eplusout_err_table'] if d.get('error_type') == 'severe')
-            btap_data['eplus_fatals'] = sum(1 for d in btap_data['eplusout_err_table'] if d.get('error_type') == 'fatal')
-
-
+            btap_data['eplus_warnings'] = sum(
+                1 for d in btap_data['eplusout_err_table'] if d.get('error_type') == 'warning')
+            btap_data['eplus_severes'] = sum(
+                1 for d in btap_data['eplusout_err_table'] if d.get('error_type') == 'severe')
+            btap_data['eplus_fatals'] = sum(
+                1 for d in btap_data['eplusout_err_table'] if d.get('error_type') == 'fatal')
 
             # dump full run_options.yml file into database for convienience.
             btap_data['run_options'] = yaml.dump(run_options)
@@ -1281,15 +1296,15 @@ class BTAPAnalysis():
                 if not btap_data.get(item):
                     btap_data[item] = 0.0
 
-
-
-
             # Flag that is was successful.
             btap_data['success'] = True
             btap_data['simulation_time'] = time.time() - start
 
-
-            #return btap_data
+            # save btap_data json file to output folder if aws_run.
+            if run_options[':compute_environment'] == 'aws_batch':
+                pathlib.Path(os.path.dirname(local_btap_data_path)).mkdir(parents=True, exist_ok=True)
+                with open(local_btap_data_path, 'w') as outfile:
+                    json.dump(btap_data, outfile, indent=4)
             return btap_data
 
         except Exception as error:
@@ -1297,7 +1312,7 @@ class BTAPAnalysis():
             if self.analysis_config[':compute_environment'] == 'aws_batch':
                 content_object = boto3.resource('s3').Object(run_options[':s3_bucket'], s3_error_txt_path)
                 print(error_msg)
-                error_msg= content_object.get()['Body'].read().decode('utf-8')
+                error_msg = content_object.get()['Body'].read().decode('utf-8')
             else:
                 error_msg = ''
                 if os.path.exists(local_error_txt_path):
@@ -1309,23 +1324,28 @@ class BTAPAnalysis():
             btap_data['container_error'] = str(error_msg)
             btap_data['run_options'] = yaml.dump(run_options)
             btap_data['datapoint_output_url'] = 'file:///' + os.path.join(local_datapoint_output_folder)
-            #return btap_data
+            # save btap_data json file to output folder if aws_run.
+            if run_options[':compute_environment'] == 'aws_batch':
+                pathlib.Path(os.path.dirname(local_btap_data_path)).mkdir(parents=True, exist_ok=True)
+                with open(local_btap_data_path, 'w') as outfile:
+                    json.dump(btap_data, outfile, indent=4)
+
             return btap_data
 
     def build_image(self, git_api_token=None):
 
         docker = Docker(image_name=self.analysis_config[':image_name'],
-                             git_api_token=git_api_token,
-                             os_standards_branch=self.analysis_config[':os_standards_branch'],
-                             btap_costing_branch=self.analysis_config[':btap_costing_branch'],
-                             os_version=self.analysis_config[':os_version'],
-                             nocache=self.analysis_config[':nocache'])
+                        git_api_token=git_api_token,
+                        os_standards_branch=self.analysis_config[':os_standards_branch'],
+                        btap_costing_branch=self.analysis_config[':btap_costing_branch'],
+                        os_version=self.analysis_config[':os_version'],
+                        nocache=self.analysis_config[':nocache'])
         docker.build_docker_image()
         return docker
 
     def save_results_to_database(self, results):
         if results['success'] == True:
-            #If container completed with success don't save container output.
+            # If container completed with success don't save container output.
             results['container_output'] = None
             if results['eplus_fatals'] > 0:
                 # If we had fatal errors..the run was not successful after all.
@@ -1389,11 +1409,12 @@ class BTAPAnalysis():
         # Generate output files locally if database exists
         if self.database != None:
             print("Generating output files.")
-            self.btap_data_df, self.failed_df = self.database.generate_output_files(analysis_id = self.analysis_config[":analysis_id"],
-                                                                                    analysis_name = self.analysis_config[":analysis_name"],
-                                                                                    output_folder = self.output_folder,
-                                                                                    s3_bucket=self.analysis_config[":s3_bucket"],
-                                                                                    compute_environment = self.analysis_config[':compute_environment'])
+            self.btap_data_df, self.failed_df = self.database.generate_output_files(
+                analysis_id=self.analysis_config[":analysis_id"],
+                analysis_name=self.analysis_config[":analysis_name"],
+                output_folder=self.output_folder,
+                s3_bucket=self.analysis_config[":s3_bucket"],
+                compute_environment=self.analysis_config[':compute_environment'])
         # Kill database if it exists
         if self.database != None:
             if self.analysis_config[':kill_database'] == True:
@@ -1408,10 +1429,6 @@ class BTAPAnalysis():
 
         # Load baseline run data into dataframe.
         # Add eui_reference to analsys_df
-
-
-
-
 
     # This method creates a encoder and decoder of the simulation options to integers.  The ML and AI routines use float,
     # conventionally for optimization problems. Since most of the analysis that we do are discrete options for designers
@@ -1444,7 +1461,7 @@ class BTAPAnalysis():
                 # Otherwise warn user that nothing was provided.
                 raise (f"building option {key} was set to empty. Pleace enter a value for it.")
 
-        #Return the variables.. but the return value is not really use since these are access via the object variable self anyways.
+        # Return the variables.. but the return value is not really use since these are access via the object variable self anyways.
         return self.constants, self.option_encoder
 
     # convieniance interface to get number of variables.
@@ -1452,7 +1469,6 @@ class BTAPAnalysis():
         # Returns the number of variables Note this is not a class variable self like the others. That is because this method is used in the
         # problem definition and we need to avoid thread variable issues.
         return len(self.option_encoder)
-
 
     # Convience variable to get the upper limit integers of all the variable as an ordered list.
     def x_u(self):
@@ -1496,17 +1512,15 @@ class BTAPAnalysis():
         return run_options
 
 
-
-
 # Class to Manage parametric runs.
 class BTAPParametric(BTAPAnalysis):
     def __init__(self,
                  analysis_config_file=None,
                  git_api_token=None,
-                 aws_batch = None
+                 aws_batch=None
                  ):
         # Run super initializer to set up default variables.
-        super().__init__(analysis_config_file, git_api_token,aws_batch)
+        super().__init__(analysis_config_file, git_api_token, aws_batch)
         self.scenarios = []
 
     def run(self):
@@ -1533,11 +1547,11 @@ class BTAPParametric(BTAPAnalysis):
                 if self.file_number < multiprocessing.cpu_count() - 2:
                     return_value = self.file_number
                 else:
-                    return_value =  multiprocessing.cpu_count() - 2
+                    return_value = multiprocessing.cpu_count() - 2
             elif self.analysis_config[':compute_environment'] == 'aws_batch':
-                    return_value =  MAX_AWS_VCPUS
+                return_value = MAX_AWS_VCPUS
         else:
-            return_value =  self.analysis_config[':no_of_threads']
+            return_value = self.analysis_config[':no_of_threads']
         return return_value
 
     # This method will compute all the possible scenarios from the input file for a parametric run.
@@ -1557,7 +1571,6 @@ class BTAPParametric(BTAPAnalysis):
                 # Create new array to list
                 new_list = []
                 for item in value:
-
                     # Create an indidual item for the option as a keyword/value array.
                     new_list.append([str(key), item])
 
@@ -1626,6 +1639,7 @@ class BTAPParametric(BTAPAnalysis):
         logging.info(message)
         print(message)
 
+
 # Optimization problem definition class.
 class BTAPProblem(Problem):
     # Inspiration for this was drawn from examples:
@@ -1689,12 +1703,13 @@ class BTAPProblem(Problem):
             objectives.append(results[objective])
         out["F"] = np.column_stack(objectives)
 
+
 # Class to manage optimization runs.
 class BTAPOptimization(BTAPAnalysis):
-    def __init__(self, analysis_config_file=None, git_api_token=None,aws_batch=None):
+    def __init__(self, analysis_config_file=None, git_api_token=None, aws_batch=None):
 
         # Run super initializer to set up default variables.
-        super().__init__(analysis_config_file, git_api_token,aws_batch)
+        super().__init__(analysis_config_file, git_api_token, aws_batch)
 
     def run(self):
         message = "success"
@@ -1723,7 +1738,7 @@ class BTAPOptimization(BTAPAnalysis):
     def get_threads(self):
         if self.analysis_config[':no_of_threads'] == None:
             if self.analysis_config[':compute_environment'] == 'local':
-                cpus =  multiprocessing.cpu_count() - 2
+                cpus = multiprocessing.cpu_count() - 2
                 population = self.analysis_config[':algorithm'][':population']
                 if cpus > population:
                     return population
@@ -1741,9 +1756,10 @@ class BTAPOptimization(BTAPAnalysis):
         print(f"Number of Variables: {self.number_of_variables()}")
         print(f"Number of minima objectives: {self.number_of_minimize_objectives()}")
         print(f"Number of possible designs: {self.number_of_possible_designs}")
-        max_number_of_individuals = int(self.analysis_config[':algorithm'][':population']) * int(self.analysis_config[':algorithm'][':n_generations'])
+        max_number_of_individuals = int(self.analysis_config[':algorithm'][':population']) * int(
+            self.analysis_config[':algorithm'][':n_generations'])
         if self.number_of_possible_designs < max_number_of_individuals:
-            self.max_number_of_simulations =  self.number_of_possible_designs
+            self.max_number_of_simulations = self.number_of_possible_designs
         else:
             self.max_number_of_simulations = max_number_of_individuals
         print("Starting Simulations.")
@@ -1773,25 +1789,22 @@ class BTAPOptimization(BTAPAnalysis):
                                )
         # set to optimize minimize the problem n_gen os the max number of generations before giving up.
         self.res = minimize(problem,
-                       method,
-                       termination=('n_gen', n_gen),
-                       seed=1
-                       )
-        #Scatter().add(res.F).show()
+                            method,
+                            termination=('n_gen', n_gen),
+                            seed=1
+                            )
+        # Scatter().add(res.F).show()
         # Let the user know the runtime.
         print('Execution Time:', self.res.exec_time)
         # shut down the pool and threads.
         pool.close()
-
-
-
-
 
     # convieniance interface to get number of minimized objectives.
     def number_of_minimize_objectives(self):
         # Returns the number of variables Note this is not a class variable self like the others. That is because this method is used in the
         # problem definition and we need to avoid thread variable issues.
         return len(self.analysis_config[':algorithm'][':minimize_objectives'])
+
 
 # Class to manage lhs runs. Uses Scipy.. Please see link for options explanation
 # https://scikit-optimize.github.io/stable/auto_examples/sampler/initial-sampling-method.html
@@ -1800,13 +1813,13 @@ class BTAPSamplingLHS(BTAPParametric):
         # This method converts the options for each ecm as an int. This allows for strings and numbers to use the same
         # approach for optimization.
         self.create_options_encoder()
-        #lower bound of all options (should be zero)
+        # lower bound of all options (should be zero)
         xl = [0] * self.number_of_variables()
         # Upper bound.
         xu = self.x_u()
-        #create ranges for each ecm and create the Space object.
+        # create ranges for each ecm and create the Space object.
         space = Space(list(map(lambda x, y: (x, y), xl, xu)))
-        #set random seed.
+        # set random seed.
 
         np.random.seed(self.analysis_config[':algorithm'][':random_seed'])
 
@@ -1889,12 +1902,13 @@ class BTAPIntegratedDesignProcess:
         print(message)
         database.kill_database()
 
+
 # Class to manage local postgres database.
 class BTAPDatabase:
-    #Contructor sets up paths and database options.
+    # Contructor sets up paths and database options.
     def __init__(self,
-                 username = 'docker',
-                 password = 'docker'):
+                 username='docker',
+                 password='docker'):
         self.credentials = None
         self.btap_data_df = []
         self.failed_df = []
@@ -1904,7 +1918,7 @@ class BTAPDatabase:
         logging.info(message)
         print(message)
         # Checking if container already is running.
-        containers = self.docker_client.containers.list(filters={'name':'btap_postgres'})
+        containers = self.docker_client.containers.list(filters={'name': 'btap_postgres'})
         if containers:
             message = f"Found existing database. Using that."
             logging.info(message)
@@ -1918,25 +1932,25 @@ class BTAPDatabase:
         else:
             try:
                 self.container = self.docker_client.containers.run(
-                                                            # Local image name to use.
-                                                            name='btap_postgres',
-                                                            image='postgres',
+                    # Local image name to use.
+                    name='btap_postgres',
+                    image='postgres',
 
-                                                            # Environment args passed to container.
-                                                            environment=[f"POSTGRES_USER={username}",
-                                                                         f"POSTGRES_PASSWORD={password}",
-                                                                         "POSTGRES_DB=btap"],
-                                                            ports={5432:5432},
-                                                            # Will detach from current thread.. don't do it if you don't understand this.
-                                                            detach=True,
-                                                            # This deletes the container on exit otherwise the container
-                                                            # will bloat your system.
-                                                            auto_remove=True
-               )
+                    # Environment args passed to container.
+                    environment=[f"POSTGRES_USER={username}",
+                                 f"POSTGRES_PASSWORD={password}",
+                                 "POSTGRES_DB=btap"],
+                    ports={5432: 5432},
+                    # Will detach from current thread.. don't do it if you don't understand this.
+                    detach=True,
+                    # This deletes the container on exit otherwise the container
+                    # will bloat your system.
+                    auto_remove=True
+                )
             except docker.errors.APIError as err:
-                    message = f"Error creating database. {err}"
-                    logging.error(message)
-                    exit(1)
+                message = f"Error creating database. {err}"
+                logging.error(message)
+                exit(1)
 
             message = f"Waiting for database to initialize..."
             logging.info(message)
@@ -2140,7 +2154,7 @@ class BTAPDatabase:
     def get_engine(self):
         return self.engine
 
-    def get_num_of_runs_completed(self,analysis_id = None):
+    def get_num_of_runs_completed(self, analysis_id=None):
         if not sqlalchemy.inspect(self.engine).has_table('btap_data'):
             return 0
         else:
@@ -2149,10 +2163,10 @@ class BTAPDatabase:
             else:
                 command = f'SELECT COUNT(*) FROM btap_data WHERE ":analysis_id" = \'{analysis_id}\''
 
-            result = self.engine.connect().execute( command )
-            return([dict(row) for row in result][0]['count'])
+            result = self.engine.connect().execute(command)
+            return ([dict(row) for row in result][0]['count'])
 
-    def get_num_of_runs_failed(self,analysis_id = None):
+    def get_num_of_runs_failed(self, analysis_id=None):
         if not sqlalchemy.inspect(self.engine).has_table('btap_data'):
             return 0
         else:
@@ -2162,7 +2176,7 @@ class BTAPDatabase:
                 command = f'SELECT COUNT(*) FROM btap_data WHERE ":analysis_id" = \'{analysis_id}\' AND "success" = False'
 
             result = self.engine.connect().execute(command)
-            return([dict(row) for row in result][0]['count'])
+            return ([dict(row) for row in result][0]['count'])
 
     def generate_output_files(self,
                               analysis_name=None,
@@ -2185,7 +2199,6 @@ class BTAPDatabase:
             # PostProcess comparison to baselines.
             self.btap_data_df = PostProcessResults().run(btap_data_df=self.btap_data_df, output_folder=output_folder)
 
-
         sql_connection.close()
 
         # output to excel
@@ -2198,8 +2211,6 @@ class BTAPDatabase:
         else:
             message = 'No simulations completed.'
             logging.error(message)
-
-
 
         # If this is an aws_batch run, copy the excel file to s3 for storage.
         if compute_environment == 'aws_batch':
@@ -2242,7 +2253,7 @@ class BTAPElimination(BTAPParametric):
         for key, value in building_options.items():
             if isinstance(value, list) and len(value) >= 1:
                 building_options[key] = value[0]
-        #Replace key value with elimination value.
+        # Replace key value with elimination value.
         for elimination_parameter in self.elimination_parameters:
             run_option = copy.deepcopy(building_options)
             run_option[':algorithm_type'] = self.analysis_config[':algorithm'][':type']
@@ -2257,11 +2268,11 @@ class BTAPElimination(BTAPParametric):
 
 class BTAPSensitivity(BTAPParametric):
     def compute_scenarios(self):
-        #Create default options scenario. Uses first value of all arrays.
+        # Create default options scenario. Uses first value of all arrays.
         default_options = copy.deepcopy(self.building_options)
         for key, value in self.building_options.items():
-                default_options[key] = value[0]
-        #Create scenario
+            default_options[key] = value[0]
+        # Create scenario
         for key, value in self.building_options.items():
             # If more than one option. Iterate, create run_option for each one.
             if isinstance(value, list) and len(value) > 1:
@@ -2270,11 +2281,12 @@ class BTAPSensitivity(BTAPParametric):
                     run_option[':algorithm_type'] = self.analysis_config[':algorithm'][':type']
                     run_option[key] = item
                     run_option[':scenario'] = key
-                    #append scenario to list.
+                    # append scenario to list.
                     self.scenarios.append(run_option)
         message = f'Number of Scenarios {len(self.scenarios)}'
         logging.info(message)
         return self.scenarios
+
 
 # This class processed the btap_batch file to add columns as needed. This is a separate class as this can be applied
 # independant of simulation runs and optionally at simulation time as well if desired,but may have to make this
@@ -2289,20 +2301,19 @@ class PostProcessResults:
         else:
             analysis_df = pd.read_excel(open(btap_data_df, 'rb'), sheet_name='btap_data')
 
-        #self.economics(analysis_df, baseline)
-
         # Iterate through each datapoint in analysis and collect hourly data.
-        hourly_folder = os.path.join(output_folder,'hourly_data')
+        hourly_folder = os.path.join(output_folder, 'hourly_data')
         os.makedirs(hourly_folder, exist_ok=True)
         s3 = boto3.resource('s3')
         for index, row in analysis_df.iterrows():
             if row['success'] == True:
                 if row['datapoint_output_url'].startswith('file:///'):
-                    #This is a local file. use system copy. First remove prefix
+                    # This is a local file. use system copy. First remove prefix
                     hourly_data_path = os.path.join(row['datapoint_output_url'][len('file:///'):], 'hourly.csv')
-                    shutil.copyfile(hourly_data_path,os.path.join(hourly_folder,row[':datapoint_id']+'.csv') )
+                    shutil.copyfile(hourly_data_path, os.path.join(hourly_folder, row[':datapoint_id'] + '.csv'))
                 elif row['datapoint_output_url'].startswith('https://s3'):
-                    p = re.compile("https:\/\/s3\.console\.aws\.amazon\.com\/s3\/buckets\/(\d*)\?region=(.*)\&prefix=(.*)")
+                    p = re.compile(
+                        "https:\/\/s3\.console\.aws\.amazon\.com\/s3\/buckets\/(\d*)\?region=(.*)\&prefix=(.*)")
                     m = p.match(row['datapoint_output_url'])
                     bucket = m.group(1)
                     region = m.group(2)
@@ -2320,19 +2331,17 @@ class PostProcessResults:
                         else:
                             raise
 
-
         return analysis_df
 
-
     def generate_output_files(self,
-                              analysis_name = None,
-                              analysis_id = None,
-                              output_folder = None,
-                              s3_bucket = None,
-                              compute_environment = 'local'):
+                              analysis_name=None,
+                              analysis_id=None,
+                              output_folder=None,
+                              s3_bucket=None,
+                              compute_environment='local'):
         self.report_data_df = None
         self.report_data_dict_df = None
-        self.hourly_df =None
+        self.hourly_df = None
         self.failed_df = None
         print("Generating output files.")
         message = 'Gathering data from PostGresql'
@@ -2351,7 +2360,7 @@ class PostProcessResults:
                 self.btap_data_df = pd.read_sql_query(command, sql_engine)
 
             # PostProcess comparison to baselines.
-            self.btap_data_df = PostProcessResults().run(btap_data_df=self.btap_data_df, output_folder= output_folder)
+            self.btap_data_df = PostProcessResults().run(btap_data_df=self.btap_data_df, output_folder=output_folder)
 
         sql_connection.close()
 
@@ -2359,27 +2368,25 @@ class PostProcessResults:
         print(message)
         logging.info(message)
         self.save_excel_output(output_folder,
-                                self.btap_data_df,
-                                self.failed_df)
-        return self.btap_data_df,self.failed_df
+                               self.btap_data_df,
+                               self.failed_df)
+        return self.btap_data_df, self.failed_df
 
-    def save_excel_output(self,output_folder, btap_data_df, failed_df ):
+    def save_excel_output(self, output_folder, btap_data_df, failed_df):
         # Create excel object
         excel_path = os.path.join(output_folder, 'output.xlsx')
         report_data_path = os.path.join(output_folder, 'report_data.zip')
         with pd.ExcelWriter(excel_path) as writer:
             if isinstance(btap_data_df, pd.DataFrame):
-                btap_data_df.to_excel(writer, index=False,sheet_name='btap_data')
+                btap_data_df.to_excel(writer, index=False, sheet_name='btap_data')
             else:
                 message = 'No simulations completed.'
                 logging.error(message)
 
-            #Wrtie excel
+            # Wrtie excel
             if isinstance(failed_df, pd.DataFrame) or isinstance(btap_data_df, pd.DataFrame):
                 message = f'Saving Excel Output: {excel_path}'
                 logging.info(message)
-
-
 
     def economics(self, analysis_df, baseline):
         file = open(baseline, 'rb')
@@ -2432,7 +2439,7 @@ class PostProcessResults:
 
 
 # Main method that researchers will interface with. If this gets bigger, consider a factory method pattern.
-def btap_batch(analysis_config_file=None, git_api_token=None, aws_batch = None):
+def btap_batch(analysis_config_file=None, git_api_token=None, aws_batch=None):
     # Load Analysis File into variable
     if not os.path.isfile(analysis_config_file):
         logging.error(f"could not find analysis input file at {analysis_config_file}. Exiting")
@@ -2441,7 +2448,6 @@ def btap_batch(analysis_config_file=None, git_api_token=None, aws_batch = None):
     with open(analysis_config_file, 'r') as stream:
         analysis = yaml.safe_load(stream)
 
-
     print(f"Compute Environment:{analysis[':analysis_configuration'][':compute_environment']}")
     print(f"Analysis Type:{analysis[':analysis_configuration'][':algorithm'][':type']}")
 
@@ -2449,19 +2455,17 @@ def btap_batch(analysis_config_file=None, git_api_token=None, aws_batch = None):
     if analysis[':analysis_configuration'][':algorithm'][':type'] == 'sampling-lhs':
         opt = BTAPSamplingLHS(
             # Input file.
-            analysis_config_file=analysis_config_file ,
+            analysis_config_file=analysis_config_file,
             git_api_token=git_api_token,
             aws_batch=aws_batch
         )
         return opt
 
-
-
     # If nsga2 optimization
     if analysis[':analysis_configuration'][':algorithm'][':type'] == 'nsga2':
         opt = BTAPOptimization(
             # Input file.
-            analysis_config_file=analysis_config_file ,
+            analysis_config_file=analysis_config_file,
             git_api_token=git_api_token,
             aws_batch=aws_batch
         )
@@ -2499,7 +2503,7 @@ def btap_batch(analysis_config_file=None, git_api_token=None, aws_batch = None):
         )
         return bb
     elif analysis[':analysis_configuration'][':algorithm'][':type'] == 'osm_batch':
-        #Need to force this to use the NECB2011 standards class for now.
+        # Need to force this to use the NECB2011 standards class for now.
         bb = BTAPParametric(
             # Input file.
             analysis_config_file=analysis_config_file,
