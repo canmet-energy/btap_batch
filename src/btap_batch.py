@@ -85,10 +85,8 @@ AWS_BATCH_DEFAULT_IMAGE = 'ami-0a06b44c462364156'
 # Location of Docker folder that contains information to build the btap image locally and on aws.
 DOCKERFILES_FOLDER = os.path.join(os.path.dirname(os.path.realpath(__file__)), 'Dockerfiles')
 # Location of previously run baseline simulations to compare with design scenarios
-BASELINE_RESULTS = os.path.join(os.path.dirname(os.path.realpath(__file__)), 'resources', 'baselines.xlsx')
-# CER Fuel costs data. Will be used for NPV more extensively.
-CER_UTILITY_COSTS = os.path.join(os.path.dirname(os.path.realpath(__file__)), 'resources',
-                                 'ceb_fuel_end_use_prices.csv')
+BASELINE_RESULTS = os.path.join(os.path.dirname(os.path.realpath(__file__)), '..', 'resources', 'reference', 'output.xlsx')
+
 
 # These resources were created either by hand or default from the AWS web console. If moving this to another aws account,
 # recreate these 3 items in the new account. Also create s3 bucket to use named based account id like we did here.
@@ -1123,8 +1121,9 @@ class BTAPAnalysis():
         # Create analysis folder
         os.makedirs(self.project_root, exist_ok=True)
 
-        # Create unique id for the analysis
-        self.analysis_config[':analysis_id'] = str(uuid.uuid4())
+        # Create unique id for the analysis if not given.
+        if not ':analysis_id' in self.analysis_config or self.analysis_config[':analysis_id'] == None:
+            self.analysis_config[':analysis_id'] = str(uuid.uuid4())
 
         # Tell user and logger id and names
         print(f'analysis_id is: {self.analysis_config[":analysis_id"]}')
@@ -1839,7 +1838,7 @@ class BTAPSamplingLHS(BTAPParametric):
 
 
 class BTAPIntegratedDesignProcess:
-    def __init__(self, analysis_config_file=None, git_api_token=None):
+    def __init__(self, analysis_config_file=None, git_api_token=None, aws_batch=None):
         self.analysis_config_file = analysis_config_file
         self.project_root = os.path.dirname(analysis_config_file)
         self.git_api_token = git_api_token
@@ -2202,7 +2201,9 @@ class BTAPDatabase:
         sql_connection.close()
 
         # output to excel
-        excel_path = os.path.join(output_folder, 'output.xlsx')
+        results_folder = os.path.join(output_folder,'..','results')
+        pathlib.Path(os.path.dirname(results_folder)).mkdir(parents=True, exist_ok=True)
+        excel_path = os.path.join(results_folder, 'output.xlsx')
         writer = pd.ExcelWriter(excel_path)
 
         # btap_data from sql to excel writer
@@ -2215,7 +2216,7 @@ class BTAPDatabase:
         # If this is an aws_batch run, copy the excel file to s3 for storage.
         if compute_environment == 'aws_batch':
             self.credentials = AWSCredentials()
-            target_path = os.path.join(self.credentials.user_name, analysis_name, analysis_id, 'output', 'output.xlsx')
+            target_path = os.path.join(self.credentials.user_name, analysis_name, analysis_id, 'results', 'output.xlsx')
             # s3 likes forward slashes.
             target_path = target_path.replace('\\', '/')
             message = "Uploading %s..." % target_path
@@ -2301,6 +2302,20 @@ class PostProcessResults:
         else:
             analysis_df = pd.read_excel(open(btap_data_df, 'rb'), sheet_name='btap_data')
 
+        self.economics(analysis_df, baseline)
+
+        download_file_paths = ['run_dir/run/in.osm',
+                               'run_dir/run/eplustbl.htm',
+                               'hourly.csv']
+        for file_path in download_file_paths:
+            self.get_files(analysis_df, output_folder, file_path=file_path )
+
+        return analysis_df
+
+    def hourly_data(self, analysis_df, output_folder):
+        message = f"Getting hourly data"
+        logging.info(message)
+        print(message)
         # Iterate through each datapoint in analysis and collect hourly data.
         hourly_folder = os.path.join(output_folder, 'hourly_data')
         os.makedirs(hourly_folder, exist_ok=True)
@@ -2322,7 +2337,6 @@ class PostProcessResults:
                     target = os.path.join(hourly_folder, row[':datapoint_id'] + '.csv')
                     message = f"Getting hourly data from S3 bucket {bucket} at path {csv_location} to {target}"
                     logging.info(message)
-                    print(message)
                     try:
                         s3.Bucket(bucket).download_file(csv_location, target)
                     except botocore.exceptions.ClientError as e:
@@ -2331,7 +2345,44 @@ class PostProcessResults:
                         else:
                             raise
 
-        return analysis_df
+
+
+    def get_files(self, analysis_df, output_folder, file_path =r'run_dir/run/in.osm'):
+        results_folder = os.path.join(output_folder,'..','results')
+        pathlib.Path(os.path.dirname(results_folder)).mkdir(parents=True, exist_ok=True)
+        filename = os.path.basename(file_path)
+        extension = pathlib.Path(filename).suffix
+        message = f"Getting {filename} files"
+        logging.info(message)
+        print(message)
+        bin_folder = os.path.join(results_folder, filename)
+        os.makedirs(bin_folder, exist_ok=True)
+        s3 = boto3.resource('s3')
+        for index, row in analysis_df.iterrows():
+                if row['datapoint_output_url'].startswith('file:///'):
+                    # This is a local file. use system copy. First remove prefix
+                    local_file_path = os.path.join(row['datapoint_output_url'][len('file:///'):], file_path)
+                    shutil.copyfile(local_file_path, os.path.join(bin_folder, row[':datapoint_id'] + extension))
+                elif row['datapoint_output_url'].startswith('https://s3'):
+                    p = re.compile(
+                        "https:\/\/s3\.console\.aws\.amazon\.com\/s3\/buckets\/(\d*)\?region=(.*)\&prefix=(.*)")
+                    m = p.match(row['datapoint_output_url'])
+                    bucket = m.group(1)
+                    region = m.group(2)
+                    prefix = m.group(3)
+                    s3_file_path = prefix + file_path
+                    target = os.path.join(bin_folder, row[':datapoint_id'] + extension)
+                    message = f"Getting osm file from S3 bucket {bucket} at path {s3_file_path} to {target}"
+                    logging.info(message)
+                    print(message)
+                    try:
+                        s3.Bucket(bucket).download_file(s3_file_path, target)
+                    except botocore.exceptions.ClientError as e:
+                        if e.response['Error']['Code'] == "404":
+                            print("The object does not exist.")
+                        else:
+                            raise
+
 
     def generate_output_files(self,
                               analysis_name=None,
@@ -2367,15 +2418,16 @@ class PostProcessResults:
         message = f'Save high level data to excel file to {output_folder}'
         print(message)
         logging.info(message)
-        self.save_excel_output(output_folder,
-                               self.btap_data_df,
-                               self.failed_df)
+        results_folder = os.path.join(output_folder,'..','results')
+        pathlib.Path(os.path.dirname(results_folder)).mkdir(parents=True, exist_ok=True)
+        self.save_excel_output(output_folder=results_folder,
+                               btap_data_df=self.btap_data_df,
+                               failed_df=self.failed_df)
         return self.btap_data_df, self.failed_df
 
     def save_excel_output(self, output_folder, btap_data_df, failed_df):
         # Create excel object
         excel_path = os.path.join(output_folder, 'output.xlsx')
-        report_data_path = os.path.join(output_folder, 'report_data.zip')
         with pd.ExcelWriter(excel_path) as writer:
             if isinstance(btap_data_df, pd.DataFrame):
                 btap_data_df.to_excel(writer, index=False, sheet_name='btap_data')
@@ -2387,12 +2439,12 @@ class PostProcessResults:
             if isinstance(failed_df, pd.DataFrame) or isinstance(btap_data_df, pd.DataFrame):
                 message = f'Saving Excel Output: {excel_path}'
                 logging.info(message)
+                print(message)
 
     def economics(self, analysis_df, baseline):
         file = open(baseline, 'rb')
         baseline_df = pd.read_excel(file, sheet_name='btap_data')
         file.close()
-        ceb_fuel_df = pd.read_csv(CER_UTILITY_COSTS)
         merge_columns = [':building_type', ':template', ':primary_heating_fuel', ':epw_file']
         df = pd.merge(analysis_df, baseline_df, how='left', left_on=merge_columns, right_on=merge_columns)
         analysis_df['baseline_savings_energy_cost_per_m_sq'] = round(
