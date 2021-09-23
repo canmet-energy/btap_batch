@@ -27,11 +27,11 @@
 
   # Branch from https://github.com/NREL/openstudio-standards. Typically 'nrcan_prod' branch.
   # Developers or people liking to work on unstable code can use 'nrcan'
-  :os_standards_branch: 'nrcan'
+  :os_standards_branch: 'nrcan_prod'
 
   # Branch from https://github.com/canmet-energy/btap_costing. Typically 'nrcan_prod'
   # Developers or people liking to work on unstable code can use 'master'
-  :btap_costing_branch: 'master'
+  :btap_costing_branch: 'nrcan_prod'
 
   # DO NOT CHANGE: Openstudio Version only 3.0.1 available
   :os_version: '3.0.1'
