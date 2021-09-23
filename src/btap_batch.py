@@ -13,7 +13,7 @@ from sklearn import preprocessing
 import numpy as np
 from pymoo.factory import get_algorithm, get_crossover, get_mutation, get_sampling
 from pymoo.optimize import minimize
-from pymoo.model.problem import Problem
+from pymoo.core.problem import Problem
 from multiprocessing.pool import ThreadPool
 import docker
 from docker.errors import DockerException
