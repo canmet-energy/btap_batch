@@ -96,7 +96,7 @@ class TestBTAPBatch(unittest.TestCase):
         # Initialize the analysis object and run.
         bb = btap.btap_batch( analysis_config_file=test_configuration_file, git_api_token=self.git_api_token)
         bb.run()
-        excel_path = os.path.join(bb.project_root, bb.analysis_config[':analysis_name'], bb.analysis_config[':analysis_id'], 'output', 'output.xlsx')
+        excel_path = os.path.join(bb.project_root, bb.analysis_config[':analysis_name'], bb.analysis_config[':analysis_id'], 'results', 'output.xlsx')
         assert os.path.isfile(excel_path), 'Output.xlsx was not created'
         return bb
 

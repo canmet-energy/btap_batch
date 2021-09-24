@@ -13,7 +13,7 @@ from sklearn import preprocessing
 import numpy as np
 from pymoo.factory import get_algorithm, get_crossover, get_mutation, get_sampling
 from pymoo.optimize import minimize
-from pymoo.core.problem import Problem
+from pymoo.core.problem import ElementwiseProblem
 from multiprocessing.pool import ThreadPool
 import docker
 from docker.errors import DockerException
@@ -1640,7 +1640,7 @@ class BTAPParametric(BTAPAnalysis):
 
 
 # Optimization problem definition class.
-class BTAPProblem(Problem):
+class BTAPProblem(ElementwiseProblem):
     # Inspiration for this was drawn from examples:
     #   Discrete analysis https://pymoo.org/customization/discrete_problem.html
     #   Stapmap Multithreaded https://pymoo.org/problems/parallelization.html
@@ -1664,8 +1664,6 @@ class BTAPProblem(Problem):
             # the upper bound for each variable option as an integer.. We are dealing only with discrete integers in
             # this optimization.
             xu=self.btap_optimization.x_u(),
-            # Tell pymoo to operate on this serially in separate threads since we are using starmap
-            elementwise_evaluation=True,
             # Tell pymoo that the variables are discrete integers and not floats as is usually the default.
             type_var=int,
             # options to parent class (not used)
