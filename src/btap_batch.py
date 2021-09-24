@@ -14,6 +14,7 @@ import numpy as np
 from pymoo.factory import get_algorithm, get_crossover, get_mutation, get_sampling
 from pymoo.optimize import minimize
 from pymoo.core.problem import ElementwiseProblem
+from pymoo.core.problem import starmap_parallelized_eval
 from multiprocessing.pool import ThreadPool
 import docker
 from docker.errors import DockerException
@@ -1775,7 +1776,7 @@ class BTAPOptimization(BTAPAnalysis):
         logging.info(message)
         print(message)
         # Create pymoo problem. Pass self for helper methods and set up a starmap multithread pool.
-        problem = BTAPProblem(btap_optimization=self, parallelization=('starmap', pool.starmap))
+        problem = BTAPProblem(btap_optimization=self, runner=pool.starmap, func_eval=starmap_parallelized_eval)
         # configure the algorithm.
         method = get_algorithm(type,
                                pop_size=pop_size,
