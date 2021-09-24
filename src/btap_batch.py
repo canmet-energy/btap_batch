@@ -1159,10 +1159,13 @@ class BTAPAnalysis():
                                          'input')
         self.output_folder = os.path.join(self.analysis_id_folder,
                                           'output')
+        self.results_folder = os.path.join(self.analysis_id_folder,
+                                          'results')
 
         # Make input / output folder for mounting to container.
         os.makedirs(self.input_folder, exist_ok=True)
         os.makedirs(self.output_folder, exist_ok=True)
+        os.makedirs(self.results_folder, exist_ok=True)
         logging.info(f"local mounted input folder:{self.input_folder}")
         logging.info(f"local mounted output folder:{self.output_folder}")
 
@@ -1412,7 +1415,7 @@ class BTAPAnalysis():
             self.btap_data_df, self.failed_df = self.database.generate_output_files(
                 analysis_id=self.analysis_config[":analysis_id"],
                 analysis_name=self.analysis_config[":analysis_name"],
-                output_folder=self.output_folder,
+                results_folder=self.results_folder,
                 s3_bucket=self.analysis_config[":s3_bucket"],
                 compute_environment=self.analysis_config[':compute_environment'])
         # Kill database if it exists
@@ -1845,6 +1848,7 @@ class BTAPIntegratedDesignProcess:
     def run(self):
         # Create Database
         database = BTAPDatabase()
+        output_excel_files = []
 
         # Load Analysis File into variable
         if not os.path.isfile(self.analysis_config_file):
@@ -1859,7 +1863,7 @@ class BTAPIntegratedDesignProcess:
         config[':analysis_configuration'][':algorithm'][':type'] = 'elimination'
         config[':analysis_configuration'][':analysis_name'] = config[':analysis_configuration'][
                                                                   ':analysis_name'] + '_elim'
-        config[':analysis_configuration'][':kill_database'] = False
+        config[':analysis_configuration'][':kill_database'] = True
 
         config_file_name = os.path.join(self.project_root, 'elimination.yml')
         with open(config_file_name, 'w') as file:
@@ -1867,25 +1871,27 @@ class BTAPIntegratedDesignProcess:
         bb = BTAPElimination(analysis_config_file=config_file_name, git_api_token=self.git_api_token)
         print("running elimination stage")
         bb.run()
+        output_excel_files.append(os.path.join(bb.results_folder,'output.xlsx'))
         # Run sensitivity
         # Change analysis type and options
         config = copy.deepcopy(analysis)
         config[':analysis_configuration'][':algorithm'][':type'] = 'sensitivity'
         config[':analysis_configuration'][':analysis_name'] = config[':analysis_configuration'][
                                                                   ':analysis_name'] + '_sens'
-        config[':analysis_configuration'][':kill_database'] = False
+        config[':analysis_configuration'][':kill_database'] = True
         config[':analysis_configuration'][':nocache'] = False
         config_file_name = os.path.join(self.project_root, 'sensitivity.yml')
         with open(config_file_name, 'w') as file:
             yaml.dump(config, file)
         bb = BTAPSensitivity(analysis_config_file=config_file_name, git_api_token=self.git_api_token)
         bb.run()
+        output_excel_files.append(os.path.join(bb.results_folder, 'output.xlsx'))
         # Run optimization
         # Change analysis type and options
         config = copy.deepcopy(analysis)
         config[':analysis_configuration'][':algorithm'][':type'] = 'nsga2'
         config[':analysis_configuration'][':nocache'] = False
-        config[':analysis_configuration'][':kill_database'] = False
+        config[':analysis_configuration'][':kill_database'] = True
         config[':analysis_configuration'][':analysis_name'] = config[':analysis_configuration'][
                                                                   ':analysis_name'] + '_opt'
         config_file_name = os.path.join(self.project_root, 'optimization.yml')
@@ -1893,12 +1899,15 @@ class BTAPIntegratedDesignProcess:
             yaml.dump(config, file)
         bb = BTAPOptimization(analysis_config_file=config_file_name, git_api_token=self.git_api_token)
         bb.run()
-        # Output results from all analysis into
-        database.generate_output_files(analysis_id=None, output_folder=self.project_root)
-        message = "Killing Database Server."
-        logging.info(message)
-        print(message)
-        database.kill_database()
+        output_excel_files.append(os.path.join(bb.results_folder, 'output.xlsx'))
+        # Output results from all analysis into top level output excel.
+        df = pd.DataFrame()
+        for file in output_excel_files:
+            df = df.append(pd.read_excel(file), ignore_index=True)
+        df.to_excel(os.path.join(bb.project_root,'output.xlsx'))
+
+
+
 
 
 # Class to manage local postgres database.
@@ -2179,7 +2188,7 @@ class BTAPDatabase:
     def generate_output_files(self,
                               analysis_name=None,
                               analysis_id=None,
-                              output_folder=None,
+                              results_folder=None,
                               s3_bucket=None,
                               compute_environment='local'):
 
@@ -2195,13 +2204,11 @@ class BTAPDatabase:
                 self.btap_data_df = pd.read_sql_query(command, sql_engine)
 
             # PostProcess comparison to baselines.
-            self.btap_data_df = PostProcessResults().run(btap_data_df=self.btap_data_df, output_folder=output_folder)
+            self.btap_data_df = PostProcessResults().run(btap_data_df=self.btap_data_df, results_folder=results_folder)
 
         sql_connection.close()
 
         # output to excel
-        results_folder = os.path.join(output_folder,'..','results')
-        pathlib.Path(os.path.dirname(results_folder)).mkdir(parents=True, exist_ok=True)
         excel_path = os.path.join(results_folder, 'output.xlsx')
         writer = pd.ExcelWriter(excel_path)
 
@@ -2295,7 +2302,7 @@ class PostProcessResults:
     def run(self,
             baseline=BASELINE_RESULTS,
             btap_data_df=None,
-            output_folder=None):
+            results_folder=None):
         if isinstance(btap_data_df, pd.DataFrame):
             analysis_df = btap_data_df
         else:
@@ -2307,7 +2314,7 @@ class PostProcessResults:
                                'run_dir/run/eplustbl.htm',
                                'hourly.csv']
         for file_path in download_file_paths:
-            self.get_files(analysis_df, output_folder, file_path=file_path )
+            self.get_files(analysis_df, results_folder, file_path=file_path )
 
         return analysis_df
 
@@ -2346,8 +2353,7 @@ class PostProcessResults:
 
 
 
-    def get_files(self, analysis_df, output_folder, file_path =r'run_dir/run/in.osm'):
-        results_folder = os.path.join(output_folder,'..','results')
+    def get_files(self, analysis_df, results_folder, file_path =r'run_dir/run/in.osm'):
         pathlib.Path(os.path.dirname(results_folder)).mkdir(parents=True, exist_ok=True)
         filename = os.path.basename(file_path)
         extension = pathlib.Path(filename).suffix
@@ -2383,46 +2389,7 @@ class PostProcessResults:
                             raise
 
 
-    def generate_output_files(self,
-                              analysis_name=None,
-                              analysis_id=None,
-                              output_folder=None,
-                              s3_bucket=None,
-                              compute_environment='local'):
-        self.report_data_df = None
-        self.report_data_dict_df = None
-        self.hourly_df = None
-        self.failed_df = None
-        print("Generating output files.")
-        message = 'Gathering data from PostGresql'
-        print(message)
-        logging.info(message)
 
-        # Create link to database and read all high level simulations into a dataframe.
-        sql_engine = self.get_engine()
-        sql_connection = sql_engine.connect()
-        if self.get_num_of_runs_completed(analysis_id) > 0:
-            if analysis_id == None:
-                # Get all runs in database.
-                self.btap_data_df = pd.read_sql_table('btap_data', sql_connection)
-            else:
-                command = f'SELECT * FROM btap_data WHERE ":analysis_id" = \'{analysis_id}\''
-                self.btap_data_df = pd.read_sql_query(command, sql_engine)
-
-            # PostProcess comparison to baselines.
-            self.btap_data_df = PostProcessResults().run(btap_data_df=self.btap_data_df, output_folder=output_folder)
-
-        sql_connection.close()
-
-        message = f'Save high level data to excel file to {output_folder}'
-        print(message)
-        logging.info(message)
-        results_folder = os.path.join(output_folder,'..','results')
-        pathlib.Path(os.path.dirname(results_folder)).mkdir(parents=True, exist_ok=True)
-        self.save_excel_output(output_folder=results_folder,
-                               btap_data_df=self.btap_data_df,
-                               failed_df=self.failed_df)
-        return self.btap_data_df, self.failed_df
 
     def save_excel_output(self, output_folder, btap_data_df, failed_df):
         # Create excel object
