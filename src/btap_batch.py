@@ -1904,9 +1904,7 @@ class BTAPIntegratedDesignProcess:
         df = pd.DataFrame()
         for file in output_excel_files:
             df = df.append(pd.read_excel(file), ignore_index=True)
-        df.to_excel(os.path.join(bb.project_root,'output.xlsx'))
-
-
+        df.to_excel(excel_writer=os.path.join(bb.project_root,'output.xlsx'), sheet_name='btap_data')
 
 
 
