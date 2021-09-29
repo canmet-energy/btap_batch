@@ -5,6 +5,8 @@
 
 #packages and depencies locked versions below.
 # conda env create --prefix ./env --file environment.yml
+#List lock versions
+# conda env export
 name: btap_batch
 channels:
   - conda-forge
