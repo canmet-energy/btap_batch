@@ -95,14 +95,16 @@ git clone https://github.com/canmet-energy/btap_batch
 cd btap_batch
 ```
 3. Set up your conda/python environment 'btap_batch'. This will download all required packages to your system.  
-For those familiar with Ruby, this is similar to a Gemfile/Bundle environment. 
+For those familiar with Ruby, this is similar to a Gemfile vendor/bundle environment. 
 ```
-conda env create -f environment.yml
+conda env create --prefix ./env --file environment.yml
 ```
-4. Activate your conda environment. 
+4. Activate your conda environment. It should give you the command after step 3.. Should look like this.  
 ```
-conda activate btap_batch
+conda activate <path_to_your_environment
 ```
+
+
 
 ## QuickStart Command Line 
 ### Parametric Analysis Local Machine
