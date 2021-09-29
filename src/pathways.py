@@ -3,10 +3,7 @@ import numpy as np
 import dash
 import plotly.express as px
 import plotly.graph_objects as go
-import dash_table
-import dash_html_components as html
-import dash_core_components as dcc
-from dash.dependencies import Input, Output, State
+from dash import Dash, callback, html, dcc, dash_table, Input, Output, State, MATCH, ALL
 import dash_bootstrap_components as dbc
 from sklearn.preprocessing import LabelEncoder
 import copy
@@ -15,7 +12,7 @@ import copy
 class Data:
     def __init__(self):
         # Enter in the full path to your Excel analysis output file.
-        OUTPUT_XLSX = r'C:\Users\plopez\test\btap_batch\examples\idp\output.xlsx'
+        OUTPUT_XLSX = r'C:\Users\plopez\PycharmProjects\btap_batch\examples\idp\output.xlsx'
         # Variable to store the para cords state.
         self.par_coord_data = None
         # Variable to store scatter graph inputs.
@@ -440,30 +437,30 @@ app = dash.Dash("Example",
 
 # Building and Location Selection
 
-input_building_type = dbc.FormGroup([dbc.Label("Building Type"),
+input_building_type = dbc.Form([dbc.Label("Building Type"),
                                      dcc.Dropdown(id='building_type', options=data.get_building_types(),
                                                   value=data.get_building_types()[0]['value'])])
-input_weather = dbc.FormGroup([dbc.Label("Weather"),
+input_weather = dbc.Form([dbc.Label("Weather"),
                                dcc.Dropdown(id='weather', options=data.get_epw_locations(),
                                             value=data.get_epw_locations()[0]['value'])])
 
-input_primary_heating_fuels = dbc.FormGroup([dbc.Label("Baseline Heating Fuel"),
+input_primary_heating_fuels = dbc.Form([dbc.Label("Baseline Heating Fuel"),
                                              dcc.Dropdown(id='primary_heating_fuel',
                                                           options=data.get_primary_heating_fuels(),
                                                           value=data.get_primary_heating_fuels()[0]['value'])])
 
 # XY Scatter.
-input_scatter_y_axis = dbc.FormGroup([dbc.Label("Y-Axis"),
+input_scatter_y_axis = dbc.Form([dbc.Label("Y-Axis"),
                                       dcc.Dropdown(id='xy_scatter_y_axis_dropdown', options=data.xy_scatter_options(),
                                                    value="cost_equipment_total_cost_per_m_sq")])
-input_scatter_x_axis = dbc.FormGroup([dbc.Label("X-Axis"),
+input_scatter_x_axis = dbc.Form([dbc.Label("X-Axis"),
                                       dcc.Dropdown(id='xy_scatter_x_axis_dropdown', options=data.xy_scatter_options(),
                                                    value="energy_eui_total_gj_per_m_sq")])
-input_scatter_color_dropdown = dbc.FormGroup([dbc.Label("Color"), dcc.Dropdown(id='xy_scatter_color_dropdown',
+input_scatter_color_dropdown = dbc.Form([dbc.Label("Color"), dcc.Dropdown(id='xy_scatter_color_dropdown',
                                                                                options=data.xy_scatter_options(),
                                                                                value=":dcv_type")])
 # PC Inputs
-input_pc_filter = dbc.FormGroup(
+input_pc_filter = dbc.Form(
     [dbc.Label("Filter"), dcc.Dropdown(id='pc_graph_form_domain', options=data.pc_filter_options(), value="all")])
 
 # scenario_counter = dbc.Card( dbc.CardBody([html.H2(id='number_of_scenarios'),]))
