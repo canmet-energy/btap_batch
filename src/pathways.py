@@ -3,10 +3,7 @@ import numpy as np
 import dash
 import plotly.express as px
 import plotly.graph_objects as go
-import dash_table
-import dash_html_components as html
-import dash_core_components as dcc
-from dash.dependencies import Input, Output, State
+from dash import Dash, callback, html, dcc, dash_table, Input, Output, State, MATCH, ALL
 import dash_bootstrap_components as dbc
 from sklearn.preprocessing import LabelEncoder
 import copy
@@ -15,13 +12,16 @@ import copy
 class Data:
     def __init__(self):
         # Enter in the full path to your Excel analysis output file.
-        OUTPUT_XLSX = r'C:\Users\plopez\test\btap_batch\examples\idp\output.xlsx'
+        OUTPUT_XLSX = r'C:\Users\plopez\PycharmProjects\btap_batch\examples\idp\output.xlsx'
         # Variable to store the para cords state.
         self.par_coord_data = None
         # Variable to store scatter graph inputs.
         self.xy_scatter_x_axis_dropdown = None
         self.xy_scatter_y_axis_dropdown = None
         self.xy_scatter_color_dropdown = None
+        # Variable to store sensitivity graph inputs.
+        self.input_sensitivity_scenario_dropdown = None
+        self.input_sensitivity_stacked_variables_dropdown = None
         # Variable to store pc graph filter domain input
         self.pc_graph_form_domain = None
         # Optimized filtered dataframe
@@ -209,12 +209,16 @@ class Data:
                          xy_scatter_y_axis_dropdown=None,
                          xy_scatter_color_dropdown=None,
                          pc_graph_form_domain=None,
-                         par_coord_data=None):
+                         par_coord_data=None,
+                         input_sensitivity_scenario_dropdown=None,
+                         input_sensitivity_stacked_dropdown=None):
         if xy_scatter_x_axis_dropdown != None: self.xy_scatter_x_axis_dropdown = xy_scatter_x_axis_dropdown
         if xy_scatter_y_axis_dropdown != None: self.xy_scatter_y_axis_dropdown = xy_scatter_y_axis_dropdown
         if xy_scatter_color_dropdown != None: self.xy_scatter_color_dropdown = xy_scatter_color_dropdown
         if pc_graph_form_domain != None: self.pc_graph_form_domain = pc_graph_form_domain
         if par_coord_data != None: self.par_coord_data = par_coord_data
+        if input_sensitivity_scenario_dropdown != None: self.input_sensitivity_scenario_dropdown = input_sensitivity_scenario_dropdown
+        if input_sensitivity_stacked_dropdown != None: self.input_sensitivity_stacked_variables_dropdown = input_sensitivity_stacked_dropdown
 
     def get_spreadsheet_data(self):
         self.df_filt = self.get_opt_df().copy()
@@ -255,17 +259,37 @@ class Data:
     def get_epw_locations(self):
         return [{'label': d, 'value': d} for d in self.df[':epw_file'].unique().tolist()]
 
+    def get_sensitivity_scenarios(self):
+        #filter by analsys type sensitivity and then return unique :scenario values.
+        df = self.df.loc[self.df[':algorithm_type'] == 'sensitivity']
+        return [{'label': d, 'value': d} for d in df[':scenario'].unique().tolist()]
+
     def get_primary_heating_fuels(self):
         return [{'label': d, 'value': d} for d in self.df[':primary_heating_fuel'].unique().tolist()]
 
+class WebComponents:
+    def __init__(self,data=None):
+        self.data=data
 
-class Figures:
+    ##########Main Navigation ###################
+    def building_type_dd(self):
+        return dbc.Form([dbc.Label("Building Type"),
+                                    dcc.Dropdown(id='building_type', options=data.get_building_types(),
+                                                 value=self.data.get_building_types()[0]['value'])])
+    def weather_dd(self):
+        return dbc.Form([dbc.Label("Weather"),
+                              dcc.Dropdown(id='weather', options=data.get_epw_locations(),
+                                           value=self.data.get_epw_locations()[0]['value'])])
+    def primary_heating_fuel_dd(self):
+        return dbc.Form([dbc.Label("Baseline Heating Fuel"),
+                                            dcc.Dropdown(id='primary_heating_fuel',
+                                                         options=self.data.get_primary_heating_fuels(),
+                                                         value=self.data.get_primary_heating_fuels()[0]['value'])])
 
-    #### Parallel Coordinates Methods.
-
-    def get_pc_chart(self, data=None):
+    #### Design Criteria Controls####
+    def design_criteria_chart_pc(self):
         # If no data show nothing.
-        if data.df.index.empty:
+        if self.data.df.index.empty:
             # If empty, let user know and create blank figure.
             scatter_graph = px.scatter()
             scatter_graph.layout.annotations = [dict(text='empty dataframe', showarrow=False)]
@@ -280,14 +304,14 @@ class Figures:
             data=go.Parcoords(
                 # Color lines based on eui.
                 line=dict(
-                    color=data.get_opt_df()['energy_eui_total_gj_per_m_sq'],
+                    color=self.data.get_opt_df()['energy_eui_total_gj_per_m_sq'],
                     colorscale=[
                         [0, 'green'],
                         [0.5, 'yellow'],
                         [1.0, 'red']
                     ]
                 ),
-                dimensions=data.get_pc_dimensions(),
+                dimensions=self.data.get_pc_dimensions(),
             ),
         )
         fig.update_traces(labelangle=20, selector=dict(type='parcoords'))
@@ -300,13 +324,18 @@ class Figures:
         # fig.update_traces(line_colorbar_ticklabelposition='outside', selector=dict(type='parcoords'))
         # fig.update_traces(line_colorbar_tickformatstops=list(...), selector=dict(type='parcoords'))
         return fig
+    def design_criteria_domain_filter_dd(self):
+        return dbc.Form(
+        [dbc.Label("Filter"), dcc.Dropdown(id='pc_graph_form_domain', options=self.data.pc_filter_options(), value="all")])
+    def design_criteria_scenario_counter(self):
+        return dbc.Button([dbc.Badge("0", color="light", id='number_of_scenarios')], color="primary", )
 
-    #### Scatter Plot Methods
-    def get_scatter_graph(self, data=None):
-        pc_filtered_data = data.get_spreadsheet_data()
-        xy_scatter_color_dropdown = data.xy_scatter_color_dropdown
-        xy_scatter_x_axis_dropdown = data.xy_scatter_x_axis_dropdown
-        xy_scatter_y_axis_dropdown = data.xy_scatter_y_axis_dropdown
+    #### Data Analysis Controls
+    def data_analysis_fig(self, data=None):
+        pc_filtered_data = self.data.get_spreadsheet_data()
+        xy_scatter_color_dropdown = self.data.xy_scatter_color_dropdown
+        xy_scatter_x_axis_dropdown = self.data.xy_scatter_x_axis_dropdown
+        xy_scatter_y_axis_dropdown = self.data.xy_scatter_y_axis_dropdown
 
         scatter_graph = None
         # Create/Update standard scatter graph with filtered data.
@@ -330,20 +359,32 @@ class Figures:
                                                               color='DarkSlateGrey')),
                                         selector=dict(mode='markers'))
         return scatter_graph
+    def data_analysis_y_axis_dd(self):
+        return dbc.Form([dbc.Label("Y-Axis"),
+                                     dcc.Dropdown(id='xy_scatter_y_axis_dropdown', options=self.data.xy_scatter_options(),
+                                                  value="cost_equipment_total_cost_per_m_sq")])
+    def data_analysis_x_axis_dd(self):
+        return dbc.Form([dbc.Label("X-Axis"),
+                                     dcc.Dropdown(id='xy_scatter_x_axis_dropdown', options=self.data.xy_scatter_options(),
+                                                  value="energy_eui_total_gj_per_m_sq")])
+    def data_analysis_color_dd(self):
+        return dbc.Form([dbc.Label("Color"), dcc.Dropdown(id='xy_scatter_color_dropdown',
+                                                                              options=self.data.xy_scatter_options(),
+                                                                              value=":dcv_type")])
 
-    #### DataTable
-    def init_data_table(self, id='data-table', data=None):
+    #### Solutions Sets Controls
+    def solutions_set_data_table(self, id='data-table'):
         start_table_df = pd.DataFrame(columns=['Start Column'])
 
         style_cell_conditional = []
-        for col in data.df.columns:
+        for col in self.data.df.columns:
             name_length = len(col)
             pixel = 50 + round(name_length * 8)
             pixel = str(pixel) + "px"
             style_cell_conditional.append({'if': {'column_id': col}, 'minWidth': pixel})
 
         data_table = dash_table.DataTable(data=start_table_df.to_dict('records'),
-                                          columns=data.get_table_columns(),
+                                          columns=self.data.get_table_columns(),
                                           id=id,
                                           style_table={
                                               'overflowY': 'scroll',
@@ -367,8 +408,9 @@ class Figures:
 
         return data_table
 
-    def get_elimination_figure(self, id='elimination_stacked_bar', data=None):
-        elim_df = copy.deepcopy(data.df)
+    #### Elimination Controls
+    def elimination_figure(self, id='elimination_stacked_bar'):
+        elim_df = copy.deepcopy(self.data.df)
         # Filter by :analysis_name = elimination
         # :scenario
         elim_df = elim_df.loc[elim_df[':algorithm_type'] == 'elimination']
@@ -395,79 +437,74 @@ class Figures:
         fig.update_layout(xaxis={'categoryorder': 'total descending'})
         return fig
 
-    def get_sensitivity_figure(self, id='sensitivity_xy_scatter', data=None):
-        from plotly.subplots import make_subplots
-        import plotly.graph_objects as go
-        elim_df = copy.deepcopy(data.df)
-        # Filter by sensitivity
+    #### Sensitivity Controls
+    def sensitivity_figure(self, id='sensitivity_xy_scatter'):
+        sensitivity_scenarios_dropdown = self.data.input_sensitivity_scenario_dropdown
+        sensitivity_stacked_variables_dropdown = self.data.input_sensitivity_stacked_variables_dropdown
+
+        elim_df = copy.deepcopy(self.data.df)
+        # Filter by :analysis_name = elimination
+        # :scenario
+
+        if sensitivity_stacked_variables_dropdown == 'Costs':
+            stacked_variables = [
+                'cost_equipment_heating_and_cooling_total_cost_per_m_sq',
+                'cost_equipment_lighting_total_cost_per_m_sq',
+                'cost_equipment_shw_total_cost_per_m_sq',
+                'cost_equipment_ventilation_total_cost_per_m_sq'
+            ]
+
+
+        elif sensitivity_stacked_variables_dropdown == 'End Uses':
+            stacked_variables = ['energy_eui_additional_fuel_gj_per_m_sq',
+                            'energy_eui_cooling_gj_per_m_sq',
+                            'energy_eui_district_cooling_gj_per_m_sq',
+                            'energy_eui_district_heating_gj_per_m_sq',
+                            'energy_eui_fans_gj_per_m_sq',
+                            'energy_eui_heat recovery_gj_per_m_sq',
+                            'energy_eui_heating_gj_per_m_sq',
+                            'energy_eui_interior equipment_gj_per_m_sq',
+                            'energy_eui_interior lighting_gj_per_m_sq',
+                            'energy_eui_pumps_gj_per_m_sq',
+                            'energy_eui_water systems_gj_per_m_sq']
+
         elim_df = elim_df.loc[elim_df[':algorithm_type'] == 'sensitivity']
-        # If there is no sensitivity analysis.
+        elim_df = elim_df.loc[elim_df[':scenario'] == sensitivity_scenarios_dropdown]
         if elim_df.empty:
             fig = px.bar()
-            fig.layout.annotations = [dict(text='Sensitivity data not available.', showarrow=False)]
+            fig.layout.annotations = [dict(text='Elimination data not available.', showarrow=False)]
             return fig
-        ecm_list = elim_df[':scenario'].unique().tolist()
-        children = []
 
-        for ecm in ecm_list:
-            # Filter by ecm
-            ecm_df = elim_df.loc[elim_df[':scenario'] == ecm]
+        fig = px.bar(elim_df,
+                     x=sensitivity_scenarios_dropdown,
+                     y=stacked_variables,
+                     title="Sensitivity Analysis"
+                     )
+        fig.update_layout(xaxis={'categoryorder': 'total descending'})
+        return fig
+    def sensitivity_scenario_dd(self):
+        return dbc.Form([dbc.Label("Sensitivity Variable"),
+                                           dcc.Dropdown(id='input_sensitivity_scenario_dropdown',
+                                                        options=self.data.get_sensitivity_scenarios(),
+                                                        value=self.data.get_sensitivity_scenarios()[0]["value"])])
+    def sensitivity_stacked_dd(self):
+        return dbc.Form([dbc.Label("Stacked Variables"),
+                                          dcc.Dropdown(id='input_sensitivity_stacked_dropdown',
+                                                       options=[{'label': 'Costs', 'value': 'Costs'},
+                                                                {'label': 'End Uses', 'value': 'End Uses'}],
+                                                       value='Costs')])
 
-            fig = px.scatter(ecm_df,
-                             y='cost_equipment_total_cost_per_m_sq',
-                             x="baseline_energy_percent_better",
-                             color=ecm,
-                             title=ecm
-                             )
-            # Update size of point/markers.
-            fig.update_traces(marker={'size': 15})
-            children.append(dcc.Graph(id=ecm, figure=fig))
 
-        return children
-
-
-#### Main
-
-# Load Sample data used by dash library.
+# Load Sample data used by dash library into datamodel.
 data = Data()
-figures = Figures()
+# Load Web Components
+wc = WebComponents(data=data)
+# Building and Location Selection
+
 # Set up app and use standard BOOTSTRAP theme.
 app = dash.Dash("Example",
                 external_stylesheets=[dbc.themes.SIMPLEX]
                 )
-
-# User Inputs.
-
-# Building and Location Selection
-
-input_building_type = dbc.FormGroup([dbc.Label("Building Type"),
-                                     dcc.Dropdown(id='building_type', options=data.get_building_types(),
-                                                  value=data.get_building_types()[0]['value'])])
-input_weather = dbc.FormGroup([dbc.Label("Weather"),
-                               dcc.Dropdown(id='weather', options=data.get_epw_locations(),
-                                            value=data.get_epw_locations()[0]['value'])])
-
-input_primary_heating_fuels = dbc.FormGroup([dbc.Label("Baseline Heating Fuel"),
-                                             dcc.Dropdown(id='primary_heating_fuel',
-                                                          options=data.get_primary_heating_fuels(),
-                                                          value=data.get_primary_heating_fuels()[0]['value'])])
-
-# XY Scatter.
-input_scatter_y_axis = dbc.FormGroup([dbc.Label("Y-Axis"),
-                                      dcc.Dropdown(id='xy_scatter_y_axis_dropdown', options=data.xy_scatter_options(),
-                                                   value="cost_equipment_total_cost_per_m_sq")])
-input_scatter_x_axis = dbc.FormGroup([dbc.Label("X-Axis"),
-                                      dcc.Dropdown(id='xy_scatter_x_axis_dropdown', options=data.xy_scatter_options(),
-                                                   value="energy_eui_total_gj_per_m_sq")])
-input_scatter_color_dropdown = dbc.FormGroup([dbc.Label("Color"), dcc.Dropdown(id='xy_scatter_color_dropdown',
-                                                                               options=data.xy_scatter_options(),
-                                                                               value=":dcv_type")])
-# PC Inputs
-input_pc_filter = dbc.FormGroup(
-    [dbc.Label("Filter"), dcc.Dropdown(id='pc_graph_form_domain', options=data.pc_filter_options(), value="all")])
-
-# scenario_counter = dbc.Card( dbc.CardBody([html.H2(id='number_of_scenarios'),]))
-scenario_counter = dbc.Button([dbc.Badge("0", color="light", id='number_of_scenarios')], color="primary", )
 
 # Basic HTMl Bootstrap / Layout
 app.layout = dbc.Container(fluid=True, children=[
@@ -475,18 +512,18 @@ app.layout = dbc.Container(fluid=True, children=[
         dbc.Tabs(
             [
                 dbc.Tab(label='Building Baseline Selection',
-                        children=[input_building_type, input_weather, input_primary_heating_fuels]),
+                        children=[wc.building_type_dd(), wc.weather_dd(), wc.primary_heating_fuel_dd()]),
                 dbc.Tab(label='Elimination Analysis', children=[dcc.Graph(id='elimination_stacked_bar')]),
-                dbc.Tab(id='sensitivity_analysis_tab',
-                        label='Sensitivity Analysis',
-                        children=[]),
+                dbc.Tab(label='Sensitivity Analysis', children=[dbc.Row(
+                    [dbc.Col(md=3, children=[wc.sensitivity_scenario_dd(), wc.sensitivity_stacked_dd()]),
+                     dbc.Col(md=9, children=[dcc.Graph(id='sensitivity_analysis_tab')])])]),
                 dbc.Tab(label='Design Constraints', children=[dbc.Row(
-                    [dbc.Col(md=6, children=[input_pc_filter]),
-                     dbc.Col(md=6, children=[scenario_counter])]), dcc.Graph(id='pc-graph')]),
+                    [dbc.Col(md=6, children=[wc.design_criteria_domain_filter_dd()]),
+                     dbc.Col(md=6, children=[wc.design_criteria_scenario_counter()])]), dcc.Graph(id='pc-graph')]),
                 dbc.Tab(label='Data Analysis', children=[dbc.Row(
-                    [dbc.Col(md=3, children=[input_scatter_x_axis, input_scatter_y_axis, input_scatter_color_dropdown]),
+                    [dbc.Col(md=3, children=[wc.data_analysis_x_axis_dd(), wc.data_analysis_y_axis_dd(), wc.data_analysis_color_dd()]),
                      dbc.Col(md=9, children=[dcc.Graph(id='scatter-graph')])])]),
-                dbc.Tab(label='Solution Sets', children=[figures.init_data_table(data=data)])
+                dbc.Tab(label='Solution Sets', children=[wc.solutions_set_data_table()])
             ]
         )
     ])
@@ -506,7 +543,7 @@ app.layout = dbc.Container(fluid=True, children=[
     # Update Elimination Figure
     Output(component_id='elimination_stacked_bar', component_property='figure'),
     # Update Sensitivity Figure
-    Output(component_id='sensitivity_analysis_tab', component_property='children'),
+    Output(component_id='sensitivity_analysis_tab', component_property='figure'),
 
     # Inputs
     Input(component_id='pc-graph', component_property='restyleData'),  # Needed for event call.
@@ -514,6 +551,8 @@ app.layout = dbc.Container(fluid=True, children=[
     Input(component_id='xy_scatter_y_axis_dropdown', component_property='value'),
     Input(component_id='xy_scatter_color_dropdown', component_property='value'),
     Input(component_id='pc_graph_form_domain', component_property='value'),
+    Input(component_id='input_sensitivity_scenario_dropdown', component_property='value'),
+    Input(component_id='input_sensitivity_stacked_dropdown', component_property='value'),
     State('pc-graph', 'figure'),
 )
 def update_graphs(restyledata,
@@ -521,6 +560,8 @@ def update_graphs(restyledata,
                   xy_scatter_y_axis_dropdown,
                   xy_scatter_color_dropdown,
                   pc_graph_form_domain,
+                  input_sensitivity_scenario_dropdown,
+                  input_sensitivity_stacked_dropdown,
                   par_coord_data
                   ):
     # Update the datamodel.
@@ -528,15 +569,17 @@ def update_graphs(restyledata,
                           xy_scatter_y_axis_dropdown=xy_scatter_y_axis_dropdown,
                           xy_scatter_color_dropdown=xy_scatter_color_dropdown,
                           pc_graph_form_domain=pc_graph_form_domain,
-                          par_coord_data=par_coord_data)
+                          par_coord_data=par_coord_data,
+                          input_sensitivity_scenario_dropdown=input_sensitivity_scenario_dropdown,
+                          input_sensitivity_stacked_dropdown=input_sensitivity_stacked_dropdown)
 
     return [
-        figures.get_scatter_graph(data=data),  # Scatter figure
+        wc.data_analysis_fig(),  # Scatter figure
         data.get_spreadsheet_data().to_dict('records'),  # Update Datatable with records that may be filtered.
-        figures.get_pc_chart(data=data),  # Parallel Coords Figure
+        wc.design_criteria_chart_pc(),  # Parallel Coords Figure
         ['Selected Scenarios: {}'.format(len(data.get_spreadsheet_data().to_dict('records')))],
-        figures.get_elimination_figure(data=data),
-        figures.get_sensitivity_figure(data=data)
+        wc.elimination_figure(),
+        wc.sensitivity_figure()
     ]
 
 
