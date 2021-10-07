@@ -85,6 +85,20 @@ as an array of energy conservation measures.
 * [OpenStudio App 1.0.1](https://github.com/openstudiocoalition/OpenStudioApplication/releases/tag/v1.0.1) (optional) 
 To create custom geometry models. 
 
+## Test Requirements are Met
+### Miniconda
+Open Windows Start->Anaconda3-Anaconda Prompt(Miniconda)
+### Git
+Execute the following command. This should produce a version number for git if it is installed correctly.
+```
+git --version
+```
+### Docker
+Ensure Docker for Windows Desktop is running (Windows Start->Docker Desktop) You should have a docker icon then running in your system tray. You will need to ensure that this is running for any btap analysis. This command will test if it is working properly.
+```
+docker run hello-world
+```
+If you get a permission denied error to you will need to [add your windows user account to the docker-group](https://docs.microsoft.com/en-us/visualstudio/containers/troubleshooting-docker-errors?view=vs-2019#docker-users-group). You will require admin priviliges to do this. 
 
 ## Configuration
 1. Open a miniconda prompt (Start->Anaconda3(64-bit)->Anaconda Prompt) Not Powershell!
@@ -95,14 +109,16 @@ git clone https://github.com/canmet-energy/btap_batch
 cd btap_batch
 ```
 3. Set up your conda/python environment 'btap_batch'. This will download all required packages to your system.  
-For those familiar with Ruby, this is similar to a Gemfile/Bundle environment. 
+For those familiar with Ruby, this is similar to a Gemfile vendor/bundle environment. 
 ```
-conda env create -f environment.yml
+conda env create --prefix ./env --file environment.yml
 ```
-4. Activate your conda environment. 
+4. Activate your conda environment. It should give you the command after step 3.. Should look like this.  
 ```
-conda activate btap_batch
+conda activate <path_to_your_environment>
 ```
+
+
 
 ## QuickStart Command Line 
 ### Parametric Analysis Local Machine

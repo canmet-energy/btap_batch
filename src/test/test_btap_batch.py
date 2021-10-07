@@ -24,7 +24,7 @@ class TestBTAPBatch(unittest.TestCase):
         #Change this to aws_batch to run tests on amazon.
         self.compute_environment = 'local'
 
-        self.os_version = '3.0.1'
+        self.os_version = '3.2.1'
 
         #Change to test on other branches.
         self.os_standards_branch = 'nrcan'
