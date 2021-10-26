@@ -93,3 +93,8 @@
       'test2'
   ]
 
+  :primary_heating_fuel: [
+      "Electricity",
+     # "NaturalGas",
+     # "FuelOilNo2"
+  ]
