@@ -2367,7 +2367,9 @@ class PostProcessResults:
                 if row['datapoint_output_url'].startswith('file:///'):
                     # This is a local file. use system copy. First remove prefix
                     local_file_path = os.path.join(row['datapoint_output_url'][len('file:///'):], file_path)
-                    shutil.copyfile(local_file_path, os.path.join(bin_folder, row[':datapoint_id'] + extension))
+                    if os.path.isfile(local_file_path):
+                        shutil.copyfile(local_file_path, os.path.join(bin_folder, row[':datapoint_id'] + extension))
+                    #shutil.copyfile(local_file_path, os.path.join(bin_folder, row[':datapoint_id'] + extension))
                 elif row['datapoint_output_url'].startswith('https://s3'):
                     p = re.compile(
                         "https:\/\/s3\.console\.aws\.amazon\.com\/s3\/buckets\/(\d*)\?region=(.*)\&prefix=(.*)")
