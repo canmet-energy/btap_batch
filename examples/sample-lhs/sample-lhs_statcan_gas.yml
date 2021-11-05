@@ -31,7 +31,7 @@
 
   # Branch from https://github.com/canmet-energy/btap_costing. Typically 'nrcan_prod'
   # Developers or people liking to work on unstable code can use 'master'
-  :btap_costing_branch: 'nrcan'
+  :btap_costing_branch: 'master'
 
   # DO NOT CHANGE: Openstudio Version only 3.0.1 available
   :os_version: '3.2.1'
