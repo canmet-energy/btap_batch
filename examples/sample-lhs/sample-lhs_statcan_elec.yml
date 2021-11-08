@@ -115,8 +115,8 @@
     #'CAN_YT_Whitehorse.Intl.AP.719640_CWEC2016.epw'
   ]
   :primary_heating_fuel: [
-      #"Electricity",
-      "NaturalGas",
+      "Electricity",
+      #"NaturalGas",
     # "FuelOilNo2"
   ]
   :dcv_type: [
@@ -156,26 +156,26 @@
   # What are the existing vs all versions?
   :boiler_eff: [
       "NECB_Default",
-      "NECB 85% Efficient Condensing Boiler",
-      "NECB 88% Efficient Condensing Boiler",
-      "NECB 91% Efficient Condensing Boiler",
-      "NECB 94% Efficient Condensing Boiler",
-      "Viessmann Vitocrossal 300 CT3-17 96.2% Efficient Condensing Gas Boiler"
+      #"NECB 85% Efficient Condensing Boiler",
+      #"NECB 88% Efficient Condensing Boiler",
+      #"NECB 91% Efficient Condensing Boiler",
+      #"NECB 94% Efficient Condensing Boiler",
+      #"Viessmann Vitocrossal 300 CT3-17 96.2% Efficient Condensing Gas Boiler"
   ]
   :furnace_eff: [
       "NECB_Default",
-      "NECB 85% Efficient Condensing Gas Furnace",
-      "NECB 88% Efficient Condensing Gas Furnace",
-      "NECB 91% Efficient Condensing Gas Furnace",
-      "NECB 94% Efficient Condensing Gas Furnace"
+      #"NECB 85% Efficient Condensing Gas Furnace",
+      #"NECB 88% Efficient Condensing Gas Furnace",
+      #"NECB 91% Efficient Condensing Gas Furnace",
+      #"NECB 94% Efficient Condensing Gas Furnace"
   ]
   :shw_eff: [
       "NECB_Default",
-      "Natural Gas 85% Efficient SHW",
-      "Natural Gas 88% Efficient SHW",
-      "Natural Gas Direct Vent with Electric Ignition",
-      "Natural Gas Power Vent with Electric Ignition",
-      "Natural Gas Power Vent with Electric Ignition 97% Efficient"
+      #"Natural Gas 85% Efficient SHW",
+      #"Natural Gas 88% Efficient SHW",
+      #"Natural Gas Direct Vent with Electric Ignition",
+      #"Natural Gas Power Vent with Electric Ignition",
+      #"Natural Gas Power Vent with Electric Ignition 97% Efficient"
   ]
   # Default DHW is consistent with primary heating fuel
   :ext_wall_cond: [ #'NECB_Default',

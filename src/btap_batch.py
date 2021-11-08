@@ -2049,6 +2049,7 @@ class BTAPDatabase:
                     ":enable_costing" BOOLEAN,  
                     ":kill_database" BOOLEAN,  
                     ":scenario" TEXT,
+                    ":shw_scale" TEXT,
                     heating_peak_w_per_m_sq FLOAT(53),
                     cooling_peak_w_per_m_sq FLOAT(53),                  
                     bc_step_code_tedi_kwh_per_m_sq FLOAT(53),
@@ -2136,7 +2137,7 @@ class BTAPDatabase:
                     shw_electricity_per_day FLOAT(53), 
                     shw_electricity_per_day_per_occupant FLOAT(53), 
                     shw_electricity_per_year FLOAT(53), 
-                    shw_natural_gas_per_year FLOAT(53), 
+                    shw_natural_gas_per_year FLOAT(53),
                     shw_total_nominal_occupancy FLOAT(53), 
                     shw_water_m_cu_per_day FLOAT(53), 
                     shw_water_m_cu_per_day_per_occupant FLOAT(53), 
@@ -2246,6 +2247,7 @@ class BTAPElimination(BTAPParametric):
             [':lights_scale', '0.0'],
             [':oa_scale', '0.0'],
             [':occupancy_loads_scale', '0.0'],
+            [':shw_scale', '0.0'],
             [':ext_wall_cond', '0.01'],
             [':ext_roof_cond', '0.01'],
             [':ground_floor_cond', '0.01'],
@@ -2306,7 +2308,7 @@ class PostProcessResults:
         else:
             analysis_df = pd.read_excel(open(btap_data_df, 'rb'), sheet_name='btap_data')
 
-        self.economics(analysis_df, baseline)
+        #self.economics(analysis_df, baseline)
 
         download_file_paths = ['run_dir/run/in.osm',
                                'run_dir/run/eplustbl.htm',
@@ -2365,7 +2367,9 @@ class PostProcessResults:
                 if row['datapoint_output_url'].startswith('file:///'):
                     # This is a local file. use system copy. First remove prefix
                     local_file_path = os.path.join(row['datapoint_output_url'][len('file:///'):], file_path)
-                    shutil.copyfile(local_file_path, os.path.join(bin_folder, row[':datapoint_id'] + extension))
+                    if os.path.isfile(local_file_path):
+                        shutil.copyfile(local_file_path, os.path.join(bin_folder, row[':datapoint_id'] + extension))
+                    #shutil.copyfile(local_file_path, os.path.join(bin_folder, row[':datapoint_id'] + extension))
                 elif row['datapoint_output_url'].startswith('https://s3'):
                     p = re.compile(
                         "https:\/\/s3\.console\.aws\.amazon\.com\/s3\/buckets\/(\d*)\?region=(.*)\&prefix=(.*)")
