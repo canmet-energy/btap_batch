@@ -1100,9 +1100,6 @@ class BTAPAnalysis():
         # Create required paths and folders for analysis
         self.create_paths_folders()
 
-        # Initialize database
-        self.init_database()
-
         if self.analysis_config[':compute_environment'] == 'aws_batch':
             # If aws batch object was not passed.. create it.
             if self.aws_batch == None:
@@ -1111,9 +1108,22 @@ class BTAPAnalysis():
         else:
             self.docker = self.build_image(git_api_token=git_api_token)
 
-    def init_database(self):
 
-        self.database = BTAPDatabase()
+    def get_num_of_runs_failed(self):
+        database_folder = os.path.join(self.results_folder, 'failures')
+        if os.path.isdir(database_folder):
+            return len([name for name in os.listdir(database_folder) if os.path.isfile(os.path.join(database_folder, name))])
+        else:
+            return 0
+
+    def get_num_of_runs_completed(self):
+        database_folder = os.path.join(self.results_folder, 'database_mirror')
+        if os.path.isdir(database_folder):
+            return len([name for name in os.listdir(database_folder) if os.path.isfile(os.path.join(database_folder, name))])
+        else:
+            return 0
+
+
 
     # This methods sets the pathnames and creates the input and output folders for the analysis. It also initilizes the
     # sql database.
@@ -1353,15 +1363,22 @@ class BTAPAnalysis():
             if results['eplus_fatals'] > 0:
                 # If we had fatal errors..the run was not successful after all.
                 results['success'] = False
-
         # This method organizes the data structure of the dataframe to fit into a report table.
         df = self.sort_results(results)
 
-        Session = sessionmaker(bind=self.database.get_engine())
-        session = Session()
-        df.to_sql('btap_data', con=session.get_bind(), if_exists='append', index=False)
-        session.close()
+        # Save datapoint row information to disc in case of catastrophic failure or when C.K. likes to hit Ctrl-C
+        database_folder = os.path.join(self.results_folder, 'database_mirror')
+        pathlib.Path(database_folder).mkdir(parents=True, exist_ok=True)
+        df.to_csv(os.path.join(database_folder, f"{results[':datapoint_id']}.csv"))
+
+        #Save failures to a folder as well.
+
+        if results['success'] == False:
+            failures_folder = os.path.join(self.results_folder, 'failures')
+            pathlib.Path(failures_folder).mkdir(parents=True, exist_ok=True)
+            df.to_csv(os.path.join(failures_folder, f"{results[':datapoint_id']}.csv"))
         return results
+
 
     def sort_results(self, results):
         # Set up dict for top/high level data from btap_data.json output
@@ -1410,28 +1427,8 @@ class BTAPAnalysis():
             self.aws_batch.shutdown_batch_workflow()
 
         # Generate output files locally if database exists
-        if self.database != None:
-            print("Generating output files.")
-            self.btap_data_df, self.failed_df = self.database.generate_output_files(
-                analysis_id=self.analysis_config[":analysis_id"],
-                analysis_name=self.analysis_config[":analysis_name"],
-                results_folder=self.results_folder,
-                s3_bucket=self.analysis_config[":s3_bucket"],
-                compute_environment=self.analysis_config[':compute_environment'])
-        # Kill database if it exists
-        if self.database != None:
-            if self.analysis_config[':kill_database'] == True:
-                message = "Killing Database Server."
-                logging.info(message)
-                print(message)
-                self.database.kill_database()
-            else:
-                message = "Leaving database server running."
-                logging.info(message)
-                print(message)
+        self.generate_output_file()
 
-        # Load baseline run data into dataframe.
-        # Add eui_reference to analsys_df
 
     # This method creates a encoder and decoder of the simulation options to integers.  The ML and AI routines use float,
     # conventionally for optimization problems. Since most of the analysis that we do are discrete options for designers
@@ -1513,6 +1510,40 @@ class BTAPAnalysis():
         # Returns the dict.. Note this is not a class variable self like the others. That is because this method is used in the
         # problem definition and we need to avoid thread variable issues.
         return run_options
+
+    def generate_output_file(self):
+        # Create link to database and read all high level simulations into a dataframe.
+        database_folder = os.path.join(self.results_folder, 'database_mirror')
+        filepaths = [os.path.join(database_folder,f) for f in os.listdir(database_folder) if f.endswith('.csv')]
+        self.btap_data_df = pd.concat(map(pd.read_csv, filepaths))
+        # PostProcess comparison to baselines.
+        self.btap_data_df = PostProcessResults().run(btap_data_df=self.btap_data_df, results_folder=self.results_folder)
+
+        # output to excel
+        excel_path = os.path.join(self.results_folder, 'output.xlsx')
+        writer = pd.ExcelWriter(excel_path)
+
+        # btap_data from sql to excel writer
+        if isinstance(self.btap_data_df, pd.DataFrame):
+            self.btap_data_df.to_excel(writer, sheet_name='btap_data')
+        else:
+            message = 'No simulations completed.'
+            logging.error(message)
+
+        # If this is an aws_batch run, copy the excel file to s3 for storage.
+        if self.analysis_config[':compute_environment'] == 'aws_batch':
+            self.credentials = AWSCredentials()
+            target_path = os.path.join(self.credentials.user_name, analysis_name, analysis_id, 'results', 'output.xlsx')
+            # s3 likes forward slashes.
+            target_path = target_path.replace('\\', '/')
+            message = "Uploading %s..." % target_path
+            logging.info(message)
+            S3().upload_file(excel_path, self.analysis_config[':s3_bucket'], target_path)
+
+        writer.close()
+        # https://stackoverflow.com/questions/56751070/pandas-xlsxwriter-writer-close-does-not-completely-close-the-excel-file
+        writer.handles = None
+        return self.btap_data_df, self.failed_df
 
 
 # Class to Manage parametric runs.
@@ -1612,9 +1643,7 @@ class BTAPParametric(BTAPAnalysis):
         threaded_start = time.time()
         # Using all your processors minus 1.
         print(f'Using {self.get_threads()} threads.')
-        message = f'{self.database.get_num_of_runs_completed(self.analysis_config[":analysis_id"])} of {self.file_number} simulations completed'
-        logging.info(message)
-        print(message)
+
 
         with concurrent.futures.ThreadPoolExecutor(self.get_threads()) as executor:
             futures = []
@@ -1634,11 +1663,11 @@ class BTAPParametric(BTAPAnalysis):
                     failed_datapoints += 1
 
                 # Update user.
-                message = f'TotalRuns:{self.file_number}\tCompleted:{self.database.get_num_of_runs_completed(self.analysis_config[":analysis_id"])}\tFailed:{self.database.get_num_of_runs_failed(self.analysis_config[":analysis_id"])}\tElapsed Time: {str(datetime.timedelta(seconds=round(time.time() - threaded_start)))}'
+                message = f'TotalRuns:{self.file_number}\tCompleted:{self.get_num_of_runs_completed()}\tFailed:{self.get_num_of_runs_failed()}\tElapsed Time: {str(datetime.timedelta(seconds=round(time.time() - threaded_start)))}'
                 logging.info(message)
                 print(message)
         # At end of runs update for users.
-        message = f'{self.file_number} Simulations completed. No. of failures = {self.database.get_num_of_runs_failed(self.analysis_config[":analysis_id"])} Total Time: {str(datetime.timedelta(seconds=round(time.time() - threaded_start)))}'
+        message = f'{self.file_number} Simulations completed. No. of failures = {self.get_num_of_runs_failed()} Total Time: {str(datetime.timedelta(seconds=round(time.time() - threaded_start)))}'
         logging.info(message)
         print(message)
 
@@ -1694,7 +1723,7 @@ class BTAPProblem(ElementwiseProblem):
         # Saves results to database if successful or not.
         self.btap_optimization.save_results_to_database(results)
         analysis_id = self.btap_optimization.analysis_config[':analysis_id']
-        message = f'{self.btap_optimization.database.get_num_of_runs_completed(analysis_id)} simulations completed of {self.btap_optimization.max_number_of_simulations}. No. of failures = {self.btap_optimization.database.get_num_of_runs_failed(analysis_id)}'
+        message = f'{self.btap_optimization.get_num_of_runs_completed()} simulations completed of {self.btap_optimization.max_number_of_simulations}. No. of failures = {self.btap_optimization.get_num_of_runs_failed()}'
         logging.info(message)
         print(message)
 
@@ -1846,8 +1875,7 @@ class BTAPIntegratedDesignProcess:
         self.git_api_token = git_api_token
 
     def run(self):
-        # Create Database
-        database = BTAPDatabase()
+
         output_excel_files = []
 
         # Load Analysis File into variable
@@ -1905,336 +1933,6 @@ class BTAPIntegratedDesignProcess:
         for file in output_excel_files:
             df = df.append(pd.read_excel(file), ignore_index=True)
         df.to_excel(excel_writer=os.path.join(bb.project_root,'output.xlsx'), sheet_name='btap_data')
-
-
-
-# Class to manage local postgres database.
-class BTAPDatabase:
-    # Contructor sets up paths and database options.
-    def __init__(self,
-                 username='docker',
-                 password='docker'):
-        self.credentials = None
-        self.btap_data_df = []
-        self.failed_df = []
-        # docker run -e POSTGRES_USER=docker -e POSTGRES_PASSWORD=docker -e POSTGRES_DB=btap
-        self.docker_client = docker.from_env()
-        message = f"Starting postgres database container on localhost."
-        logging.info(message)
-        print(message)
-        # Checking if container already is running.
-        containers = self.docker_client.containers.list(filters={'name': 'btap_postgres'})
-        if containers:
-            message = f"Found existing database. Using that."
-            logging.info(message)
-            print(message)
-            self.container = containers[0]
-            self.engine = create_engine("postgresql://docker:docker@localhost:5432/btap",
-                                        pool_pre_ping=True,
-                                        pool_size=MAX_AWS_VCPUS,
-                                        max_overflow=50,
-                                        pool_timeout=60)
-        else:
-            try:
-                self.container = self.docker_client.containers.run(
-                    # Local image name to use.
-                    name='btap_postgres',
-                    image='postgres',
-
-                    # Environment args passed to container.
-                    environment=[f"POSTGRES_USER={username}",
-                                 f"POSTGRES_PASSWORD={password}",
-                                 "POSTGRES_DB=btap"],
-                    ports={5432: 5432},
-                    # Will detach from current thread.. don't do it if you don't understand this.
-                    detach=True,
-                    # This deletes the container on exit otherwise the container
-                    # will bloat your system.
-                    auto_remove=True
-                )
-            except docker.errors.APIError as err:
-                message = f"Error creating database. {err}"
-                logging.error(message)
-                exit(1)
-
-            message = f"Waiting for database to initialize..."
-            logging.info(message)
-            print(message)
-            time.sleep(5)
-            self.engine = create_engine("postgresql://docker:docker@localhost:5432/btap",
-                                        pool_pre_ping=True,
-                                        pool_size=MAX_AWS_VCPUS,
-                                        max_overflow=50,
-                                        pool_timeout=60)
-            self.create_btap_database()
-        message = f"DatabaseServer:localhost:5432 DatabaseUserName:{docker} DatabasePassword:{password} DatabaseName:btap"
-
-    def create_btap_database(self):
-        # Create btap_data_table
-        sql_command = '''CREATE TABLE btap_data (
-                    index BIGINT, 
-                    success BOOLEAN, 
-                    eplus_warnings INTEGER,
-                    eplus_severes INTEGER,
-                    eplus_fatals INTEGER,
-                    simulation_time FLOAT(53),
-                    ":os_standards_branch" TEXT, 
-                    ":btap_costing_branch" TEXT, 
-                    ":os_version" TEXT, 
-                    simulation_btap_data_version TEXT, 
-                    simulation_date TEXT, 
-                    simulation_os_standards_revision TEXT, 
-                    simulation_os_standards_version TEXT, 
-                    run_options TEXT, 
-                    ":analysis_name" TEXT, 
-                    ":analysis_id" TEXT, 
-                    ":datapoint_id" TEXT,
-                    ":template" TEXT, 
-                    ":building_type" TEXT,
-                    ":primary_heating_fuel" TEXT,
-                    energy_principal_heating_source TEXT,
-                    ":epw_file" TEXT, 
-                    ":algorithm_type" TEXT,
-                    ":no_of_threads" TEXT,
-                    ":dcv_type" TEXT, 
-                    ":lights_type" TEXT, 
-                    ":ecm_system_name" TEXT, 
-                    ":erv_package" TEXT, 
-                    ":ext_wall_cond" TEXT, 
-                    ":ext_floor_cond" TEXT, 
-                    ":ext_roof_cond" TEXT, 
-                    ":fixed_window_cond" TEXT, 
-                    ":lights_scale" TEXT, 
-                    ":daylighting_type" TEXT, 
-                    ":boiler_eff" TEXT, 
-                    ":furnace_eff" TEXT, 
-                    ":shw_eff" TEXT, 
-                    ":ground_wall_cond" TEXT, 
-                    ":ground_floor_cond" TEXT, 
-                    ":ground_roof_cond" TEXT, 
-                    ":door_construction_cond" TEXT, 
-                    ":glass_door_cond" TEXT, 
-                    ":overhead_door_cond" TEXT, 
-                    ":skylight_cond" TEXT, 
-                    ":glass_door_solar_trans" TEXT, 
-                    ":fixed_wind_solar_trans" TEXT, 
-                    ":skylight_solar_trans" TEXT, 
-                    ":fdwr_set" TEXT, 
-                    ":srr_set" TEXT, 
-                    ":rotation_degrees" TEXT, 
-                    ":scale_x" TEXT, 
-                    ":scale_y" TEXT, 
-                    ":scale_z" TEXT, 
-                    ":pv_ground_type" TEXT, 
-                    ":pv_ground_total_area_pv_panels_m2" TEXT, 
-                    ":pv_ground_tilt_angle" TEXT, 
-                    ":pv_ground_azimuth_angle" TEXT, 
-                    ":pv_ground_module_description" TEXT,
-                    ":adv_dx_units" TEXT,
-                    ":nv_type" TEXT,
-                    ":nv_opening_fraction" TEXT,
-                    ":nv_temp_out_min" TEXT,
-                    ":nv_delta_temp_in_out" TEXT,
-                    ":chiller_type" TEXT,
-                    ":occupancy_loads_scale" TEXT,
-                    ":electrical_loads_scale" TEXT,
-                    ":oa_scale" TEXT,
-                    ":infiltration_scale" TEXT,
-                    ":airloop_economizer_type" TEXT,
-                    ":compute_environment" TEXT, 
-                    ":s3_bucket" TEXT, 
-                    ":image_name" TEXT, 
-                    ":nocache" BOOLEAN, 
-                    ":run_annual_simulation" BOOLEAN, 
-                    ":enable_costing" BOOLEAN,  
-                    ":kill_database" BOOLEAN,  
-                    ":scenario" TEXT,
-                    ":shw_scale" TEXT,
-                    heating_peak_w_per_m_sq FLOAT(53),
-                    cooling_peak_w_per_m_sq FLOAT(53),                  
-                    bc_step_code_tedi_kwh_per_m_sq FLOAT(53),
-                    bc_step_code_meui_kwh_per_m_sq FLOAT(53),
-                    bldg_conditioned_floor_area_m_sq FLOAT(53), 
-                    bldg_exterior_area_m_sq FLOAT(53), 
-                    bldg_fdwr FLOAT(53), 
-                    bldg_name TEXT, 
-                    bldg_nominal_floor_to_ceiling_height TEXT, 
-                    bldg_nominal_floor_to_floor_height TEXT, 
-                    bldg_srr FLOAT(53), 
-                    bldg_standards_building_type TEXT, 
-                    bldg_standards_number_of_above_ground_stories BIGINT, 
-                    bldg_standards_number_of_living_units TEXT, 
-                    bldg_standards_number_of_stories BIGINT, 
-                    bldg_standards_template TEXT, 
-                    bldg_surface_to_volume_ratio FLOAT(53), 
-                    bldg_volume_m_cu FLOAT(53), 
-                    cost_equipment_envelope_total_cost_per_m_sq FLOAT(53), 
-                    cost_equipment_heating_and_cooling_total_cost_per_m_sq FLOAT(53), 
-                    cost_equipment_lighting_total_cost_per_m_sq FLOAT(53), 
-                    cost_equipment_shw_total_cost_per_m_sq FLOAT(53), 
-                    cost_equipment_total_cost_per_m_sq FLOAT(53), 
-                    cost_equipment_ventilation_total_cost_per_m_sq FLOAT(53), 
-                    cost_rs_means_city TEXT, 
-                    cost_rs_means_prov TEXT, 
-                    cost_utility_ghg_electricity_kg_per_m_sq FLOAT(53), 
-                    "cost_utility_ghg_natural gas_kg_per_m_sq" FLOAT(53), 
-                    cost_utility_ghg_oil_kg_per_m_sq FLOAT(53), 
-                    cost_utility_ghg_total_kg_per_m_sq FLOAT(53), 
-                    cost_utility_neb_electricity_cost_per_m_sq FLOAT(53), 
-                    "cost_utility_neb_natural gas_cost_per_m_sq" FLOAT(53), 
-                    cost_utility_neb_oil_cost_per_m_sq FLOAT(53), 
-                    cost_utility_neb_total_cost_per_m_sq FLOAT(53), 
-                    energy_eui_additional_fuel_gj_per_m_sq FLOAT(53), 
-                    energy_eui_cooling_gj_per_m_sq FLOAT(53), 
-                    energy_eui_district_cooling_gj_per_m_sq FLOAT(53), 
-                    energy_eui_district_heating_gj_per_m_sq FLOAT(53), 
-                    energy_eui_electricity_gj_per_m_sq FLOAT(53), 
-                    energy_eui_fans_gj_per_m_sq FLOAT(53), 
-                    "energy_eui_heat recovery_gj_per_m_sq" FLOAT(53), 
-                    energy_eui_heating_gj_per_m_sq FLOAT(53), 
-                    "energy_eui_interior equipment_gj_per_m_sq" FLOAT(53), 
-                    "energy_eui_interior lighting_gj_per_m_sq" FLOAT(53), 
-                    energy_eui_natural_gas_gj_per_m_sq FLOAT(53), 
-                    energy_eui_pumps_gj_per_m_sq FLOAT(53), 
-                    energy_eui_total_gj_per_m_sq FLOAT(53), 
-                    "energy_eui_water systems_gj_per_m_sq" FLOAT(53), 
-                    energy_peak_electric_w_per_m_sq FLOAT(53), 
-                    energy_peak_natural_gas_w_per_m_sq FLOAT(53), 
-                    env_fdwr FLOAT(53), 
-                    "env_ground_floors_average_conductance-w_per_m_sq_k" FLOAT(53), 
-                    "env_ground_roofs_average_conductance-w_per_m_sq_k" TEXT, 
-                    "env_ground_walls_average_conductance-w_per_m_sq_k" TEXT, 
-                    "env_outdoor_doors_average_conductance-w_per_m_sq_k" TEXT, 
-                    "env_outdoor_floors_average_conductance-w_per_m_sq_k" TEXT, 
-                    "env_outdoor_overhead_doors_average_conductance-w_per_m_sq_k" TEXT, 
-                    "env_outdoor_roofs_average_conductance-w_per_m_sq_k" FLOAT(53), 
-                    "env_outdoor_walls_average_conductance-w_per_m_sq_k" FLOAT(53), 
-                    "env_outdoor_windows_average_conductance-w_per_m_sq_k" FLOAT(53), 
-                    "env_skylights_average_conductance-w_per_m_sq_k" TEXT, 
-                    env_srr FLOAT(53), 
-                    location_city TEXT, 
-                    location_country TEXT, 
-                    location_epw_cdd FLOAT(53), 
-                    location_epw_hdd FLOAT(53), 
-                    location_latitude FLOAT(53), 
-                    location_longitude FLOAT(53), 
-                    location_necb_climate_zone TEXT, 
-                    location_necb_hdd FLOAT(53), 
-                    location_state_province_region TEXT, 
-                    location_weather_file TEXT,                     
-                    net_site_eui_gj_per_m_sq FLOAT(53),
-                    peak_cooling_load_w_per_m_sq_necb FLOAT(53),
-                    peak_heating_load_w_per_m_sq_necb FLOAT(53),
-                    phius_annual_cooling_demand_kwh_per_m_sq FLOAT(53),
-                    phius_annual_heating_demand_kwh_per_m_sq FLOAT(53),
-                    phius_necb_meet_cooling_demand BOOLEAN,
-                    phius_necb_meet_cooling_peak_load BOOLEAN,
-                    phius_necb_meet_heating_demand BOOLEAN,
-                    phius_necb_meet_heating_peak_load BOOLEAN,
-                    phius_peak_cooling_load_w_per_m_sq FLOAT(53),
-                    phius_peak_heating_load_w_per_m_sq FLOAT(53),
-                    shw_additional_fuel_per_year FLOAT(53), 
-                    shw_electricity_per_day FLOAT(53), 
-                    shw_electricity_per_day_per_occupant FLOAT(53), 
-                    shw_electricity_per_year FLOAT(53), 
-                    shw_natural_gas_per_year FLOAT(53),
-                    shw_total_nominal_occupancy FLOAT(53), 
-                    shw_water_m_cu_per_day FLOAT(53), 
-                    shw_water_m_cu_per_day_per_occupant FLOAT(53), 
-                    shw_water_m_cu_per_year FLOAT(53), 
-                    "energy_eui_heat rejection_gj_per_m_sq" FLOAT(53), 
-                    total_site_eui_gj_per_m_sq FLOAT(53),
-                    unmet_hours_cooling FLOAT(53),
-                    unmet_hours_cooling_during_occupied FLOAT(53),
-                    unmet_hours_heating FLOAT(53),
-                    unmet_hours_heating_during_occupied FLOAT(53),
-                    container_output TEXT,
-                    datapoint_output_url TEXT,
-                    ":btap_batch_version" TEXT,
-                    container_error TEXT,
-                    docker_command TEXT
-                )'''
-        with self.engine.connect() as con:
-            rs = con.execute(sql_command)
-
-    def get_engine(self):
-        return self.engine
-
-    def get_num_of_runs_completed(self, analysis_id=None):
-        if not sqlalchemy.inspect(self.engine).has_table('btap_data'):
-            return 0
-        else:
-            if analysis_id == None:
-                command = f'SELECT COUNT(*) FROM btap_data'
-            else:
-                command = f'SELECT COUNT(*) FROM btap_data WHERE ":analysis_id" = \'{analysis_id}\''
-
-            result = self.engine.connect().execute(command)
-            return ([dict(row) for row in result][0]['count'])
-
-    def get_num_of_runs_failed(self, analysis_id=None):
-        if not sqlalchemy.inspect(self.engine).has_table('btap_data'):
-            return 0
-        else:
-            if analysis_id == None:
-                command = f'SELECT COUNT(*) FROM btap_data AND "success" = False'
-            else:
-                command = f'SELECT COUNT(*) FROM btap_data WHERE ":analysis_id" = \'{analysis_id}\' AND "success" = False'
-
-            result = self.engine.connect().execute(command)
-            return ([dict(row) for row in result][0]['count'])
-
-    def generate_output_files(self,
-                              analysis_name=None,
-                              analysis_id=None,
-                              results_folder=None,
-                              s3_bucket=None,
-                              compute_environment='local'):
-
-        # Create link to database and read all high level simulations into a dataframe.
-        sql_engine = self.get_engine()
-        sql_connection = sql_engine.connect()
-        if self.get_num_of_runs_completed(analysis_id) > 0:
-            if analysis_id == None:
-                # Get all runs in database.
-                self.btap_data_df = pd.read_sql_table('btap_data', sql_connection)
-            else:
-                command = f'SELECT * FROM btap_data WHERE ":analysis_id" = \'{analysis_id}\''
-                self.btap_data_df = pd.read_sql_query(command, sql_engine)
-
-            # PostProcess comparison to baselines.
-            self.btap_data_df = PostProcessResults().run(btap_data_df=self.btap_data_df, results_folder=results_folder)
-
-        sql_connection.close()
-
-        # output to excel
-        excel_path = os.path.join(results_folder, 'output.xlsx')
-        writer = pd.ExcelWriter(excel_path)
-
-        # btap_data from sql to excel writer
-        if isinstance(self.btap_data_df, pd.DataFrame):
-            self.btap_data_df.to_excel(writer, sheet_name='btap_data')
-        else:
-            message = 'No simulations completed.'
-            logging.error(message)
-
-        # If this is an aws_batch run, copy the excel file to s3 for storage.
-        if compute_environment == 'aws_batch':
-            self.credentials = AWSCredentials()
-            target_path = os.path.join(self.credentials.user_name, analysis_name, analysis_id, 'results', 'output.xlsx')
-            # s3 likes forward slashes.
-            target_path = target_path.replace('\\', '/')
-            message = "Uploading %s..." % target_path
-            logging.info(message)
-            S3().upload_file(excel_path, s3_bucket, target_path)
-
-        writer.close()
-        # https://stackoverflow.com/questions/56751070/pandas-xlsxwriter-writer-close-does-not-completely-close-the-excel-file
-        writer.handles = None
-        return self.btap_data_df, self.failed_df
-
-    def kill_database(self):
-        self.container.remove(force=True)
 
 
 class BTAPElimination(BTAPParametric):
