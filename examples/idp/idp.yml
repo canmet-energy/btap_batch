@@ -27,7 +27,7 @@
 
   # Branch from https://github.com/NREL/openstudio-standards. Typically 'nrcan_prod' branch.
   # Developers or people liking to work on unstable code can use 'nrcan'
-  :os_standards_branch: '04e8f4947f9755ad8fc87a2cd96fe2e677125844'
+  :os_standards_branch: 'nrcan_prod'
 
   # Branch from https://github.com/canmet-energy/btap_costing. Typically 'nrcan_prod'
   # Developers or people liking to work on unstable code can use 'master'
@@ -95,13 +95,12 @@
     # "RetailStandalone",
     # "RetailStripmall",
     # "QuickServiceRestaurant",
-    # "FullServiceRestaurant",
+     "FullServiceRestaurant",
     # "MidriseApartment",
     # "HighriseApartment",
     # "LowriseApartment",
     #"Hospital",
     #"Outpatient"
-    "SQIessai3"
   ]
   # The standard template to use for baseline assumptions.
   :template: [
