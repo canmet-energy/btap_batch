@@ -34,7 +34,7 @@
   :btap_costing_branch: 'nrcan_prod'
 
   # DO NOT CHANGE: Openstudio Version only 3.0.1 available
-  :os_version: '3.0.1'
+  :os_version: '3.2.1'
 
   # The name of the analysis. Can be a user friendly name. This is how it will appear on your local system or on the S3
   # bucket. for example if 'example_analysis' on s3 the analysis run input/output files will be here in our s3 bucket

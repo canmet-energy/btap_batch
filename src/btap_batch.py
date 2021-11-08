@@ -2308,7 +2308,7 @@ class PostProcessResults:
         else:
             analysis_df = pd.read_excel(open(btap_data_df, 'rb'), sheet_name='btap_data')
 
-        self.economics(analysis_df, baseline)
+        #self.economics(analysis_df, baseline)
 
         download_file_paths = ['run_dir/run/in.osm',
                                'run_dir/run/eplustbl.htm',
