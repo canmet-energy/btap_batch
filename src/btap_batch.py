@@ -2294,6 +2294,33 @@ class BTAPSensitivity(BTAPParametric):
         logging.info(message)
         return self.scenarios
 
+class BTAPSensitivity_multi_bldg_cz(BTAPParametric): # Sensitivity runs for multiple building types and climate zones
+    def compute_scenarios(self):
+        # Create default options scenario.
+        default_options = copy.deepcopy(self.building_options)
+        dic_bldg = {k: default_options[k] for k in [':building_type']}
+        dic_cz = {k: default_options[k] for k in [':epw_file']}
+
+        # Create scenarios
+        for index_bldg in range(0,len(dic_bldg[':building_type'])):
+            for index_cz in range(0,len(dic_cz[':epw_file'])):
+                for key, value in self.building_options.items():
+                    # If more than one option. Iterate, create run_option for each one.
+                    if isinstance(value, list) and len(value) > 1 and key!=':building_type' and key!=':epw_file':
+                        for item in value:
+                            run_option = copy.deepcopy(default_options)
+                            run_option[':algorithm_type'] = self.analysis_config[':algorithm'][':type']
+                            run_option[':building_type'] = dic_bldg[':building_type'][index_bldg]
+                            run_option[':epw_file'] = dic_cz[':epw_file'][index_cz]
+                            run_option[key] = item
+                            run_option[':scenario'] = key
+                            print(run_option)
+                            # append scenario to list.
+                            self.scenarios.append(run_option)
+
+        message = f'Number of Scenarios {len(self.scenarios)}'
+        logging.info(message)
+        return self.scenarios
 
 # This class processed the btap_batch file to add columns as needed. This is a separate class as this can be applied
 # independant of simulation runs and optionally at simulation time as well if desired,but may have to make this
@@ -2508,6 +2535,14 @@ def btap_batch(analysis_config_file=None, git_api_token=None, aws_batch=None):
         return bb
     elif analysis[':analysis_configuration'][':algorithm'][':type'] == 'sensitivity':
         bb = BTAPSensitivity(
+            # Input file.
+            analysis_config_file=analysis_config_file,
+            git_api_token=git_api_token,
+            aws_batch=aws_batch
+        )
+        return bb
+    elif analysis[':analysis_configuration'][':algorithm'][':type'] == 'sensitivity_multi_bldg_cz':
+        bb = BTAPSensitivity_multi_bldg_cz(
             # Input file.
             analysis_config_file=analysis_config_file,
             git_api_token=git_api_token,
