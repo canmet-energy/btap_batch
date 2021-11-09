@@ -56,7 +56,7 @@
   :algorithm:
     :type: sampling-lhs # nsga2 , parametric
     # Select number of samples. For testing just use 10.
-    :n_samples: 3000
+    :n_samples: 10
     # Select lhs type.. see link.
     #https://scikit-optimize.github.io/stable/auto_examples/sampler/initial-sampling-method.html
     :lhs_type: classic

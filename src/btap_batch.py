@@ -1110,16 +1110,15 @@ class BTAPAnalysis():
 
 
     def get_num_of_runs_failed(self):
-        database_folder = os.path.join(self.results_folder, 'failures')
-        if os.path.isdir(database_folder):
-            return len([name for name in os.listdir(database_folder) if os.path.isfile(os.path.join(database_folder, name))])
+        if os.path.isdir(self.failures_folder):
+            return len([name for name in os.listdir(self.failures_folder) if os.path.isfile(os.path.join(self.failures_folder, name))])
         else:
             return 0
 
     def get_num_of_runs_completed(self):
-        database_folder = os.path.join(self.results_folder, 'database_mirror')
-        if os.path.isdir(database_folder):
-            return len([name for name in os.listdir(database_folder) if os.path.isfile(os.path.join(database_folder, name))])
+
+        if os.path.isdir(self.database_folder):
+            return len([name for name in os.listdir(self.database_folder) if os.path.isfile(os.path.join(self.database_folder, name))])
         else:
             return 0
 
@@ -1171,11 +1170,17 @@ class BTAPAnalysis():
                                           'output')
         self.results_folder = os.path.join(self.analysis_id_folder,
                                           'results')
+        self.database_folder = os.path.join(self.results_folder,
+                                          'database')
+        self.failures_folder = os.path.join(self.results_folder,
+                                            'failures')
 
         # Make input / output folder for mounting to container.
         os.makedirs(self.input_folder, exist_ok=True)
         os.makedirs(self.output_folder, exist_ok=True)
         os.makedirs(self.results_folder, exist_ok=True)
+        os.makedirs(self.database_folder, exist_ok=True)
+        os.makedirs(self.failures_folder, exist_ok=True)
         logging.info(f"local mounted input folder:{self.input_folder}")
         logging.info(f"local mounted output folder:{self.output_folder}")
 
@@ -1367,16 +1372,14 @@ class BTAPAnalysis():
         df = self.sort_results(results)
 
         # Save datapoint row information to disc in case of catastrophic failure or when C.K. likes to hit Ctrl-C
-        database_folder = os.path.join(self.results_folder, 'database_mirror')
-        pathlib.Path(database_folder).mkdir(parents=True, exist_ok=True)
-        df.to_csv(os.path.join(database_folder, f"{results[':datapoint_id']}.csv"))
+
+        pathlib.Path(self.database_folder).mkdir(parents=True, exist_ok=True)
+        df.to_csv(os.path.join(self.database_folder, f"{results[':datapoint_id']}.csv"))
 
         #Save failures to a folder as well.
 
         if results['success'] == False:
-            failures_folder = os.path.join(self.results_folder, 'failures')
-            pathlib.Path(failures_folder).mkdir(parents=True, exist_ok=True)
-            df.to_csv(os.path.join(failures_folder, f"{results[':datapoint_id']}.csv"))
+            df.to_csv(os.path.join(self.failures_folder, f"{results[':datapoint_id']}.csv"))
         return results
 
 
@@ -1513,8 +1516,7 @@ class BTAPAnalysis():
 
     def generate_output_file(self):
         # Create link to database and read all high level simulations into a dataframe.
-        database_folder = os.path.join(self.results_folder, 'database_mirror')
-        filepaths = [os.path.join(database_folder,f) for f in os.listdir(database_folder) if f.endswith('.csv')]
+        filepaths = [os.path.join(self.database_folder,f) for f in os.listdir(self.database_folder) if f.endswith('.csv')]
         self.btap_data_df = pd.concat(map(pd.read_csv, filepaths))
         # PostProcess comparison to baselines.
         self.btap_data_df = PostProcessResults().run(btap_data_df=self.btap_data_df, results_folder=self.results_folder)
@@ -1533,7 +1535,7 @@ class BTAPAnalysis():
         # If this is an aws_batch run, copy the excel file to s3 for storage.
         if self.analysis_config[':compute_environment'] == 'aws_batch':
             self.credentials = AWSCredentials()
-            target_path = os.path.join(self.credentials.user_name, analysis_name, analysis_id, 'results', 'output.xlsx')
+            target_path = os.path.join(self.credentials.user_name, self.analysis_config[':analysis_name'], self.analysis_config[':analysis_id'], 'results', 'output.xlsx')
             # s3 likes forward slashes.
             target_path = target_path.replace('\\', '/')
             message = "Uploading %s..." % target_path
@@ -2077,7 +2079,7 @@ class PostProcessResults:
                     prefix = m.group(3)
                     s3_file_path = prefix + file_path
                     target = os.path.join(bin_folder, row[':datapoint_id'] + extension)
-                    message = f"Getting osm file from S3 bucket {bucket} at path {s3_file_path} to {target}"
+                    message = f"Getting file from S3 bucket {bucket} at path {s3_file_path} to {target}"
                     logging.info(message)
                     print(message)
                     try:
