@@ -1732,6 +1732,8 @@ class BTAPProblem(ElementwiseProblem):
         # Pass back objective function results.
         objectives = []
         for objective in self.btap_optimization.analysis_config[':algorithm'][':minimize_objectives']:
+            if not (objective in results):
+                raise FailedSimulationException(f"Objective value {objective} not found in results of simulation. Most likely due to failure of simulation runs. Stopping optimization")
             objectives.append(results[objective])
         out["F"] = np.column_stack(objectives)
 
@@ -1755,7 +1757,7 @@ class BTAPOptimization(BTAPAnalysis):
             self.run_analysis()
 
         except FailedSimulationException as err:
-            message = f"Simulation(s) failed. Optimization cannot continue. Please review failed simulations to determine cause of error in Excel output or if possible the simulation datapoint files. \nLast failure had these inputs:\n\t {err}"
+            message = f"Simulation(s) failed. Optimization cannot continue. Please review failed simulations to determine cause of error in Excel output or if possible the simulation datapoint files. \nLast failure:\n\t {err}"
             logging.error(message)
         except botocore.exceptions.SSLError as err:
             message = f"Certificate Failure. This error occurs when AWS does not trust your security certificate. Either because you are using a VPN or your network is otherwise spoofing IPs. Please ensure that you are not on a VPN or contact your network admin. Error: {err}"
