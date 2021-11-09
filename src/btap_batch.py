@@ -2296,17 +2296,18 @@ class BTAPSensitivity(BTAPParametric):
 
 class BTAPSensitivity_multi_bldg_cz(BTAPParametric): # Sensitivity runs for multiple building types and climate zones
     def compute_scenarios(self):
-        # Create default options scenario.
+        # Create default options scenario. Uses first value of all arrays.
         default_options = copy.deepcopy(self.building_options)
-        dic_bldg = {k: default_options[k] for k in [':building_type']}
-        dic_cz = {k: default_options[k] for k in [':epw_file']}
+        for key, value in self.building_options.items():
+            default_options[key] = value[0]
+        dic_bldg = {k: self.building_options[k] for k in [':building_type']}
+        dic_cz = {k: self.building_options[k] for k in [':epw_file']}
 
         # Create scenarios
-        for index_bldg in range(0,len(dic_bldg[':building_type'])):
-            for index_cz in range(0,len(dic_cz[':epw_file'])):
-                for key, value in self.building_options.items():
-                    # If more than one option. Iterate, create run_option for each one.
-                    if isinstance(value, list) and len(value) > 1 and key!=':building_type' and key!=':epw_file':
+        for key, value in self.building_options.items():
+            for index_bldg in range(0,len(dic_bldg[':building_type'])):
+                for index_cz in range(0,len(dic_cz[':epw_file'])):
+                    if isinstance(value, list) and len(value) > 1 and key != ':building_type' and key != ':epw_file':
                         for item in value:
                             run_option = copy.deepcopy(default_options)
                             run_option[':algorithm_type'] = self.analysis_config[':algorithm'][':type']
@@ -2314,7 +2315,6 @@ class BTAPSensitivity_multi_bldg_cz(BTAPParametric): # Sensitivity runs for mult
                             run_option[':epw_file'] = dic_cz[':epw_file'][index_cz]
                             run_option[key] = item
                             run_option[':scenario'] = key
-                            print(run_option)
                             # append scenario to list.
                             self.scenarios.append(run_option)
 
