@@ -40,6 +40,7 @@ class TestBTAPBatch(unittest.TestCase):
         # Use no_cache
         cls.no_cache = False
 
+
         # Set aws_batch object to None intially.
         cls.aws_batch = None
 
@@ -97,7 +98,6 @@ class TestBTAPBatch(unittest.TestCase):
         analysis[':analysis_configuration'][':btap_costing_branch'] = TestBTAPBatch.btap_costing_branch
         analysis[':analysis_configuration'][':image_name'] = TestBTAPBatch.image_name
         analysis[':analysis_configuration'][':os_version'] = TestBTAPBatch.os_version
-        analysis[':analysis_configuration'][':run_reference'] = TestBTAPBatch.run_reference
 
 
         #This will check if we already ran a test.. if so we will not rebuild the images.
@@ -157,7 +157,7 @@ class TestBTAPBatch(unittest.TestCase):
         self.run_analysis(input_file=os.path.join(os.path.dirname(os.path.realpath(__file__)),'..','..','examples','sample-lhs', 'input.yml'))
 
     def test_custom_osm(self):
-        bb = self.run_analysis(input_file=os.path.join(os.path.dirname(os.path.realpath(__file__)),'..','..','examples', 'custom_osm', 'input.yml'))
+        self.run_analysis(input_file=os.path.join(os.path.dirname(os.path.realpath(__file__)),'..','..','examples', 'custom_osm', 'input.yml'))
 
     def test_osm_batch(self):
         self.run_analysis(input_file=os.path.join(os.path.dirname(os.path.realpath(__file__)),'..','..','examples','osm_batch', 'input.yml'))
