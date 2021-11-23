@@ -9,7 +9,7 @@ logging.basicConfig(level=logging.ERROR)
 git_api_token = os.environ['GIT_API_TOKEN']
 
 # Set input file path.
-input_file = os.path.join(os.path.dirname(os.path.realpath(__file__)),'elimination.yml')
+input_file = os.path.join(os.path.dirname(os.path.realpath(__file__)),'input.yml')
 
 # Initialize the analysis object.
 bb = btap.btap_batch(
@@ -20,6 +20,5 @@ bb = btap.btap_batch(
 
 # Run the analysis
 bb.run()
-
 
 
