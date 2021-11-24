@@ -272,8 +272,8 @@ BTAP needs to know the number of above and below ground floors. This cannot be i
  'Standards Number of Above Ground Stories'. To be clear, 'Standards Number of Stories' is the total number of 
  stories in the model including basement levels. 
  
- ### Building Template
- Please add a building template name to the osm file's OS:Building object.  You can choose one of the name of the 16 building types.
+ ### Building Type
+ Please add a standards building type name to the osm file's OS:Building object.  You can choose one of the name of the 16 building types.
  
 ## Output
 When the analysis is finished, you can review the output.xlxs file that is created in the output folder in 
