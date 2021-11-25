@@ -2417,8 +2417,7 @@ def btap_batch(analysis_config_file=None, git_api_token=None, aws_batch=None):
                                 building_options=building_options,
                                 project_root=project_root,
                                 git_api_token=git_api_token,
-                                aws_batch=aws_batch,
-                                baseline_results=baseline_results)
+                                aws_batch=aws_batch)
     # osm_batch
     elif analysis_config[':algorithm'][':type'] == 'osm_batch':
         # Need to force this to use the NECB2011 standards class for now.
