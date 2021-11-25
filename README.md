@@ -109,7 +109,8 @@ git clone https://github.com/canmet-energy/btap_batch
 cd btap_batch
 ```
 3. Set up your conda/python environment 'btap_batch'. This will download all required packages to your system.  
-For those familiar with Ruby, this is similar to a Gemfile vendor/bundle environment. 
+For those familiar with Ruby, this is similar to a Gemfile vendor/bundle environment. You can do this by running 
+the .bat file below
 ```
 conda env create --prefix ./env --file environment.yml
 ```
@@ -128,7 +129,7 @@ run millions of simulations on your 2 core laptop). Ensure that the ':compute_en
 2. Run the example.py file from the root of the btap_batch project folder. On Windows you will need to set the 
 PYTHONPATH to that folder. Please ensure that the btap_batch environment is active. 
 ```
-set PYTHONPATH=%cd% && python examples\parametric\parametric.py
+set PYTHONPATH=%cd% && python examples\parametric\run.py
 ```
 3. Simulation should start to run. A folder will be created in parametric folder with the variable name you set 
 ':analysis_name' in the yml file. It will create a unique folder under this based on a random UUID for this analysis. In 
@@ -183,7 +184,7 @@ For more details on the nsga algorithm please visit the pymoo website.
 
 To run the optimization, follow the steps explained above under 'Parametric Analysis Local Machine'or 'Parametric AWS' depending on whether you run locally or on cloud, except for Step 5 for which, run the below file:
 ```
-set PYTHONPATH=%cd% && python examples\optimization\optimization.py
+set PYTHONPATH=%cd% && python examples\optimization\run.py
 ```
 
 ## Elimination Analysis
@@ -269,7 +270,11 @@ BTAP needs to know the number of above and below ground floors. This cannot be i
  for all building types, for example split level models. To identify this, open the 
  OSM file and find the 'OS:Building' object and add the correct values to  'Standards Number of Stories' and 
  'Standards Number of Above Ground Stories'. To be clear, 'Standards Number of Stories' is the total number of 
- stories in the model including basement levels.  
+ stories in the model including basement levels. 
+ 
+ ### Building Type
+ Please add a standards building type name to the osm file's OS:Building object.  You can choose one of the name of the 16 building types.
+ 
 ## Output
 When the analysis is finished, you can review the output.xlxs file that is created in the output folder in 
 the analysis directory. It will contain all the high level information for each simulation as well as a link to the 
@@ -277,19 +282,13 @@ simulation folder where energyplus ran if you want the raw results. The IDP work
 for all the elimination, sensitivity and optimization runs in the same folder and the yml input file. 
 
 ## Monitoring the Analysis
-While the program will output items to the console, there are a few other ways to monitor the results if you wish 
+While the program will output items to the console, there are a few other ways to monitor the results if you wish. The high level output is contained in the results/database folder. Failures are collected in the results/failures folder.  
 
-### PostGreSQL 
-While the simulations are running, you have access to the postgres database. Note that this database will abruptly shutdown when 
-the simulations are complete by design. You can use database viewers like DBeaver or pgAdmin. The username and password for the 
-database is 'docker'. You can also optionally build a viewer via a Jupyter Note using python's SQLAlchemy library with postgresql. 
 
 ### Amazon Web Services
 If you are running on aws-batch. You can monitor the simulation in the AWS Batch Dashboard and the compute resources 
 being used in the EC2 dashboard. 
 
-### PowerBI / Tableau
-Through the postgresSQL server you can connect and update live data using either of these tools. 
 
 # Development Notes
 
@@ -325,4 +324,14 @@ Build Cache     0         0         0B        0B
 You can remove the images, containers and volumes all at once with the command. Warning! This will delete all your containers from your system. Make sure you have backed up any work to a safe location.  See [docker documentation on this](https://docs.docker.com/engine/reference/commandline/system_prune/) for more information. 
 ```
 docker prune -a -f --volumes
+```
+
+## Troubleshooting
+**Problem**: Analysis seem to be very slow locally. Takes literaly hours to run simple simulations
+
+**Solution**: If you are using WSL in your docker setttings. You may get a performance boost by not using WSL. Go into your Docker
+settings and under "General" tab, deselect the "Use the WSL2 based engine" This will force Dockder to use the Hyper-V engine.  Then go to the "Resources" tab and allocate
+ 80% of your computers total processor capacity. The processor capacity if the number of cpu cores you have x2. 
+ Similarly devote 50-80% of your Memory, keep 2GB of swap and whatever disk image size you can spare from your disk storage.. I would recommend at least 200GB. 
+ Apply and restart. You may have to reboot your computer and lauch Docker Desktop as soon as you log in to windows. 
 ```

@@ -1,3 +1,9 @@
+###2020-11-22: 1.0.005
+* Removed Postgres Database. Now using just flatfiles to create output.xlsx
+* Added pre-flight option to analysis. This will do a short check on the osm files and a single run to help error check files. 
+* Added option to :run_reference simulations ahead of analysis. This is required for comparitive analysis like percent better than code information. Default is set to True. 
+* AWSBatch now can be passed as an argument. This now allows the IDP and the test to run using a single AWS Batch instance.. saving 10m time for each subsequent run. 
+
 ###2020-06-09: 1.0.004
 nrcan_prod branches:
 * openstudio_standards revision = 04c220861664566800596666bb98699e4631a394
