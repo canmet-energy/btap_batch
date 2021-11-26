@@ -1927,34 +1927,18 @@ class BTAPIntegratedDesignProcess:
                  building_options=None,
                  project_root=None,
                  git_api_token=None,
-                 aws_batch=None):
+                 aws_batch=None,
+                 baseline_results = None):
         self.analysis_config = analysis_config
         self.building_options = building_options
         self.project_root = project_root
         self.git_api_token = git_api_token
         self.aws_batch = aws_batch
+        self.baseline_results = baseline_results
 
     def run(self):
         # excel file container.
         output_excel_files = []
-
-
-        #reference block
-        analysis_suffix = '_ref'
-        algorithm_type = 'reference'
-        temp_analysis_config = copy.deepcopy(self.analysis_config)
-        temp_building_options = copy.deepcopy(self.building_options)
-        temp_analysis_config[':algorithm'][':type'] = algorithm_type
-        temp_analysis_config[':analysis_name'] = temp_analysis_config[':analysis_name'] + analysis_suffix
-        bb = BTAPReference(analysis_config=temp_analysis_config,
-                            building_options=temp_building_options,
-                            project_root=self.project_root,
-                            git_api_token=self.git_api_token,
-                            aws_batch=self.aws_batch)
-        print(f"running {algorithm_type} stage")
-        bb.run()
-        baseline_results = os.path.join(bb.results_folder, 'output.xlsx')
-        output_excel_files.append(os.path.join(bb.results_folder,'output.xlsx'))
 
 
         #Elimination block
@@ -1969,7 +1953,7 @@ class BTAPIntegratedDesignProcess:
                             project_root=self.project_root,
                             git_api_token=self.git_api_token,
                             aws_batch=self.aws_batch,
-                            baseline_results=baseline_results)
+                            baseline_results=self.baseline_results)
         print(f"running {algorithm_type} stage")
         bb.run()
         output_excel_files.append(os.path.join(bb.results_folder,'output.xlsx'))
@@ -1987,7 +1971,7 @@ class BTAPIntegratedDesignProcess:
                             project_root=self.project_root,
                             git_api_token=self.git_api_token,
                             aws_batch=self.aws_batch,
-                            baseline_results=baseline_results)
+                            baseline_results=self.baseline_results)
         print(f"running {algorithm_type} stage")
         bb.run()
         output_excel_files.append(os.path.join(bb.results_folder,'output.xlsx'))
@@ -2004,7 +1988,7 @@ class BTAPIntegratedDesignProcess:
                                 project_root=self.project_root,
                                 git_api_token=self.git_api_token,
                                 aws_batch=self.aws_batch,
-                                baseline_results=baseline_results)
+                                baseline_results=self.baseline_results)
         print(f"running {algorithm_type} stage")
         bb.run()
         output_excel_files.append(os.path.join(bb.results_folder,'output.xlsx'))
@@ -2417,7 +2401,8 @@ def btap_batch(analysis_config_file=None, git_api_token=None, aws_batch=None):
                                 building_options=building_options,
                                 project_root=project_root,
                                 git_api_token=git_api_token,
-                                aws_batch=aws_batch)
+                                aws_batch=aws_batch,
+                                baseline_results=baseline_results)
     # osm_batch
     elif analysis_config[':algorithm'][':type'] == 'osm_batch':
         # Need to force this to use the NECB2011 standards class for now.
