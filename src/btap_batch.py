@@ -1,4 +1,4 @@
-
+#docker image prune -f -a ; docker container prune -f ; docker volume prune -f ; docker builder prune -a -f
 
 # docker kill (docker ps -q -a --filter "ancestor=btap_private_cli")
 from icecream import ic
@@ -94,6 +94,31 @@ class FailedSimulationException(Exception):
 class OSMErrorException(Exception):
     pass
 
+
+class Queue():
+
+    def __init__(self,
+                 analysis_id=None,
+                 btap_image_name='btap_private_cli',
+                 rebuild_image=False,
+                 git_api_token=None,
+                 os_version=None,
+                 btap_costing_branch=None,
+                 os_standards_branch=None,
+                 threads=24
+                 ):
+        print("heelo")
+
+
+
+    def set_up(self):
+        print("Creating infrastructure")
+
+    def tear_down(self):
+        print("Tearing down queue infrastructure")
+
+    def submit_job(self):
+        print("Run job")
 
 # S3 Operations
 class S3:
@@ -205,199 +230,6 @@ class AWSCredentials:
             list(filter(lambda role: role['RoleName'] == 'AWSBatchServiceRole', service_roles))[0]['Arn']
 
 
-# Class to manage AWS images.
-class AWSImage:
-    def __init__(self,
-                 image_name=None,
-                 git_api_token=None,
-                 os_version=None,
-                 btap_costing_branch=None,
-                 os_standards_branch=None,
-                 rebuild=False):
-        self.credentials = AWSCredentials()
-        self.bucket = self.credentials.account_id
-        self.git_api_token = git_api_token
-        self.os_version = os_version
-        self.btap_costing_branch = btap_costing_branch
-        self.os_standards_branch = os_standards_branch
-        self.image_name = image_name
-        self.image_tag = self.credentials.user_name
-        self.image_full_name = f'{self.credentials.account_id}.dkr.ecr.{self.credentials.region_name}.amazonaws.com/' + self.image_name + ':' + self.image_tag
-        self.ecr_client = boto3.client('ecr')
-        # Todo create cloud build service role.
-        self.cloudbuild_service_role = CLOUD_BUILD_SERVICE_ROLE
-        self.iam = boto3.client('iam')
-        self.s3 = boto3.client('s3', )
-        self.ecr = boto3.client('ecr')
-        self.cloudwatch = boto3.client('logs')
-        repositories = self.ecr_client.describe_repositories()['repositories']
-        if next((item for item in repositories if item["repositoryName"] == self.image_name), None) == None:
-            message = f"Creating repository {self.image_name}"
-            logging.info(message)
-            self.ecr_client.create_repository(repositoryName=self.image_name)
-        else:
-            message = f"Repository {self.image_name} already exists. Using existing."
-            logging.info(message)
-
-        # Check if image exists.. if not it will create an image from the latest git hub reps.
-        # Get list of tags for image name on aws.
-        available_tags = sum(
-            [d.get('imageTags', [None]) for d in self.ecr.describe_images(repositoryName=image_name)['imageDetails']],
-            [])
-
-        if not self.image_tag in available_tags:
-            message = f"The tag {self.image_tag} does not exist in the AWS ECR repository for {self.image_name}. Creating from latest sources."
-            logging.info(message)
-            print(message)
-
-        if rebuild == True:
-            message = f"User requested build from sources. image:{self.image_name}:{self.image_tag}  "
-            logging.info(message)
-            print(message)
-
-        if rebuild == True or not self.image_tag in available_tags:
-            message = f"Building image from sources.\n\ttag:{self.image_tag}\n\timage:{self.image_name}\n\tos_version:{self.os_version}\n\tbtap_costing_branch:{self.btap_costing_branch}\n\tos_standards_branch:{self.os_standards_branch}"
-            logging.info(message)
-            print(message)
-            self.build_image()
-
-    def build_image(self):
-        # Codebuild image.
-        codebuild = boto3.client('codebuild')
-
-        # Upload files to S3 using custom s3 class to a user folder.
-        s3 = S3()
-        source_folder = os.path.join(DOCKERFILES_FOLDER, self.image_name)
-        # Copies Dockerfile from btap_cli repository
-        url = DOCKERFILE_URL
-        r = requests.get(url, allow_redirects=True)
-        with open(os.path.join(source_folder, 'Dockerfile'), 'wb') as file:
-            file.write(r.content)
-
-        s3.copy_folder_to_s3(self.bucket, source_folder, self.credentials.user_name + '/' + self.image_name)
-        s3_location = 's3://' + self.bucket + '/' + self.credentials.user_name + '/' + self.image_name
-        message = f"Copied build configuration files:\n\t from {source_folder}\n to \n\t {s3_location}"
-        logging.info(message)
-        print(message)
-
-        # create project if it does not exist. This set the environment variables for the build. Note: if you change add
-        # ENV to the build process.. you must DELETE the build project first!!!
-        if not self.image_name in codebuild.list_projects()['projects']:
-            # create build project
-            codebuild.create_project(
-                name=self.image_name,
-                description='string',
-                source={
-                    'type': 'S3',
-                    'location': self.bucket + '/' + self.credentials.user_name + '/' + self.image_name + '/'
-                },
-                artifacts={
-                    'type': 'NO_ARTIFACTS',
-                },
-                environment={
-                    'type': 'LINUX_CONTAINER',
-                    'image': 'aws/codebuild/standard:4.0',
-                    'computeType': 'BUILD_GENERAL1_2XLARGE',
-                    'environmentVariables': [
-                        {
-                            "name": "AWS_DEFAULT_REGION",
-                            "value": self.credentials.region_name
-                        },
-                        {
-                            "name": "AWS_ACCOUNT_ID",
-                            "value": self.credentials.account_id
-                        },
-                        {
-                            "name": "IMAGE_REPO_NAME",
-                            "value": self.image_name
-                        },
-                        {
-                            "name": "IMAGE_TAG",
-                            "value": self.credentials.user_name
-                        },
-                        {
-                            "name": "GIT_API_TOKEN",
-                            "value": self.git_api_token
-                        },
-                        {
-                            "name": "OS_STANDARDS_BRANCH",
-                            "value": self.os_standards_branch
-                        },
-                        {
-                            "name": "BTAP_COSTING_BRANCH",
-                            "value": self.btap_costing_branch
-                        },
-                        {
-                            "name": "OPENSTUDIO_VERSION",
-                            "value": self.os_version
-                        },
-                    ],
-                    'privilegedMode': True
-                },
-                serviceRole=self.cloudbuild_service_role,
-            )
-
-        # Start building image.
-        start = time.time()
-        message = f'Building Image {self.image_name} on Amazon CloudBuild, will take ~10m'
-        print(message)
-        logging.info(message)
-        environmentVariablesOverride = [
-            {
-                "name": "IMAGE_REPO_NAME",
-                "value": self.image_name
-            },
-            {
-                "name": "IMAGE_TAG",
-                "value": self.credentials.user_name
-            },
-            {
-                "name": "GIT_API_TOKEN",
-                "value": self.git_api_token
-            },
-            {
-                "name": "OS_STANDARDS_BRANCH",
-                "value": self.os_standards_branch
-            },
-            {
-                "name": "BTAP_COSTING_BRANCH",
-                "value": self.btap_costing_branch
-            },
-            {
-                "name": "OPENSTUDIO_VERSION",
-                "value": self.os_version
-            }]
-        source_location = self.bucket + '/' + self.credentials.user_name + '/' + self.image_name + '/'
-        message = f'Code build image env overrides {environmentVariablesOverride}'
-        logging.info(message)
-
-        message = f"Building from sources at {source_location}"
-        logging.info(message)
-
-        response = codebuild.start_build(projectName=self.image_name,
-                                         sourceTypeOverride='S3',
-                                         sourceLocationOverride=source_location,
-                                         environmentVariablesOverride=environmentVariablesOverride
-                                         )
-        build_id = response['build']['id']
-        # Check state of creating CE.
-        while True:
-            status = codebuild.batch_get_builds(ids=[build_id])['builds'][0]['buildStatus']
-            # If CE is in valid state, inform user and break from loop.
-            if status == 'SUCCEEDED':
-                message = f'Image {self.image_name} Created on Amazon. \nImage built in {time.time() - start}'
-                logging.info(message)
-                print(message)
-                break
-            # If CE is in invalid state... break
-            elif status == 'FAILED' or status == 'FAULT' or status == 'TIMED_OUT' or status == 'STOPPED':
-                message = f'Build Failed: See amazon web console Codebuild to determine error. buildID:{build_id}'
-                print(message)
-                logging.error(message)
-                exit(1)
-            # Check status every 5 secs.
-            time.sleep(5)
-
 
 # Class to run batch simulations on AWS>
 class AWSBatch:
@@ -422,7 +254,16 @@ class AWSBatch:
                  threads=24
                  ):
         self.credentials = AWSCredentials()
-        bucket = self.credentials.account_id
+        self.bucket = self.credentials.account_id
+        self.image_name = btap_image_name
+        self.rebuild_image = rebuild_image
+        self.git_api_token = git_api_token
+        self.os_version = os_version
+        self.btap_costing_branch = btap_costing_branch
+        self.os_standards_branch = os_standards_branch
+
+
+
         # Create the aws clients required.
         config = Config(retries={'max_attempts': AWS_MAX_RETRIES, 'mode': 'standard'})
         self.ec2 = boto3.client('ec2', config=config)
@@ -434,16 +275,13 @@ class AWSBatch:
                                                                    retries={'max_attempts': AWS_MAX_RETRIES,
                                                                             'mode': 'standard'}))
         self.cloudwatch = boto3.client('logs')
-        self.credentials.user_name
+        self.ecr = boto3.client('ecr')
+        self.cloudwatch = boto3.client('logs')
+        # Todo create cloud build service role.
+        self.cloudbuild_service_role = CLOUD_BUILD_SERVICE_ROLE
 
-        # Create image helper object.
-        self.btap_image = AWSImage(image_name=btap_image_name,
-                                   rebuild=rebuild_image,
-                                   git_api_token=git_api_token,
-                                   os_version=os_version,
-                                   btap_costing_branch=btap_costing_branch,
-                                   os_standards_branch=os_standards_branch,
-                                   )
+
+
         # This is the role with permissions inside the docker containers. Created by aws web console. (todo: automate creations and destruction)
         self.batch_job_role = BATCH_JOB_ROLE
         # This is the role with the permissions to create batch runs. Created by aws web console. (todo: automate creations and destruction)
@@ -458,10 +296,10 @@ class AWSBatch:
         # Compute id is the same as analysis id but stringed.
         self.compute_environment_id = f"{self.credentials.user_name.replace('.', '_')}-{self.analysis_id}"
 
-        # Set up the job def as a suffix of the analysis id"
+        # Set up the job def as a suffix of the compute_environment_id"
         self.job_def_id = f"{self.compute_environment_id}_job_def"
 
-        # Set up the job queue id as the suffix of the analysis id.
+        # Set up the job queue id as the suffix of the compute_environment_id.
         self.job_queue_id = f"{self.compute_environment_id}_job_queue"
 
         # Store the subnets into a list. This was set up by NRCan.
@@ -471,8 +309,244 @@ class AWSBatch:
         # Store the security groups into a list. This was set up by NRCan.
         security_groups = self.ec2.describe_security_groups()["SecurityGroups"]
         self.securityGroupIds = [security_group['GroupId'] for security_group in security_groups]
+
         #On exit deconstructor
-        atexit.register(self.shutdown_batch_workflow)
+        atexit.register(self.tear_down)
+
+
+    def setup(self):
+        # This method creates analysis id for batch run. See methods for details.
+        self.build_image()
+        self.create_compute_environment()
+        self.create_job_queue()
+        self.register_job_definition()
+        print("Completed AWS batch initialization.")
+
+    def tear_down(self):
+        # This method manages the teardown of the batch workflow. See methods for details.
+        message = "Shutting down AWSBatch...."
+        print(message)
+        logging.info(message)
+        self.delete_job_definition()
+        self.delete_job_queue()
+        self.delete_compute_environment()
+
+    def submit_job(self, jobName='test', debug=False, command=["/bin/bash", "-c",
+                                                               f"bundle exec ruby btap_cli.rb --building_type FullServiceRestaurant --template NECB2017 --enable_costing true "]):
+        # Tell user.
+
+        # See https://boto3.amazonaws.com/v1/documentation/api/latest/reference/services/batch.html#Batch.Client.submit_job
+        submitJobResponse = self.submit_job_wrapper(command, jobName)
+
+        jobId = submitJobResponse['jobId']
+        message = f"Submitted job_id {jobId} with job name {jobName} to the job queue {self.job_queue_id}"
+        logging.info(message)
+        running = False
+        startTime = 0
+        logGroupName = '/aws/batch/job'
+        result = 'FAILED'
+        while debug:
+            # Don't hammer AWS.. make queries every minute for the run status
+            time.sleep(60 + random())
+            describeJobsResponse = self.get_job_status(jobId)
+            status = describeJobsResponse['jobs'][0]['status']
+            if status == 'SUCCEEDED':
+                message = 'SUCCEEDED - Job [%s - %s] %s' % (jobName, jobId, status)
+                logging.info(message)
+                print(message)
+                result = 'SUCCEEDED'
+                break
+            elif status == 'FAILED':
+                message = 'FAILED - Job [%s - %s] %s' % (jobName, jobId, status)
+                logging.error(message)
+                result = 'FAILED'
+                break
+            elif status == 'RUNNING':
+                # Commented out logstream.
+                # logStreamName = self.getLogStream(logGroupName, jobName, jobId)
+                if not running:  # and logStreamName:
+                    running = True
+                    # print('Output [%s]:\n %s' % (logStreamName, '=' * 80))
+                # if logStreamName:
+                # startTime = self.printLogs(logGroupName, logStreamName, startTime) + 1
+            else:
+                message = 'UNKNOWN - Job [%s - %s] is %-9s' % (jobName, jobId, status)
+                # logging.info(message)
+                sys.stdout.flush()
+        return result
+
+    def build_image(self, rebuild=False):
+
+        self.image_tag = self.credentials.user_name
+        ic(self.image_name)
+        self.image_full_name = f'{self.credentials.account_id}.dkr.ecr.{self.credentials.region_name}.amazonaws.com/' + self.image_name + ':' + self.image_tag
+
+        # Todo create cloud build service role.
+
+        repositories = self.ecr.describe_repositories()['repositories']
+        if next((item for item in repositories if item["repositoryName"] == self.image_name), None) == None:
+            message = f"Creating repository {self.image_name}"
+            logging.info(message)
+            self.ecr.create_repository(repositoryName=self.image_name)
+        else:
+            message = f"Repository {self.image_name} already exists. Using existing."
+            logging.info(message)
+
+        # Check if image exists.. if not it will create an image from the latest git hub reps.
+        # Get list of tags for image name on aws.
+        available_tags = sum(
+            [d.get('imageTags', [None]) for d in self.ecr.describe_images(repositoryName=self.image_name)['imageDetails']],
+            [])
+
+        if not self.image_tag in available_tags:
+            message = f"The tag {self.image_tag} does not exist in the AWS ECR repository for {self.image_name}. Creating from latest sources."
+            logging.info(message)
+            print(message)
+
+        if rebuild == True:
+            message = f"User requested build from sources. image:{self.image_name}:{self.image_tag}  "
+            logging.info(message)
+            print(message)
+
+        if rebuild == True or not self.image_tag in available_tags:
+            message = f"Building image from sources.\n\ttag:{self.image_tag}\n\timage:{self.image_name}\n\tos_version:{self.os_version}\n\tbtap_costing_branch:{self.btap_costing_branch}\n\tos_standards_branch:{self.os_standards_branch}"
+            logging.info(message)
+            print(message)
+            # Codebuild image.
+            codebuild = boto3.client('codebuild')
+
+            # Upload files to S3 using custom s3 class to a user folder.
+            s3 = S3()
+            source_folder = os.path.join(DOCKERFILES_FOLDER, self.image_name)
+            # Copies Dockerfile from btap_cli repository
+            url = DOCKERFILE_URL
+            r = requests.get(url, allow_redirects=True)
+            with open(os.path.join(source_folder, 'Dockerfile'), 'wb') as file:
+                file.write(r.content)
+
+            s3.copy_folder_to_s3(self.bucket, source_folder, self.credentials.user_name + '/' + self.image_name)
+            s3_location = 's3://' + self.bucket + '/' + self.credentials.user_name + '/' + self.image_name
+            message = f"Copied build configuration files:\n\t from {source_folder}\n to \n\t {s3_location}"
+            logging.info(message)
+            print(message)
+
+            # create project if it does not exist. This set the environment variables for the build. Note: if you change add
+            # ENV to the build process.. you must DELETE the build project first!!!
+            if not self.image_name in codebuild.list_projects()['projects']:
+                # create build project
+                codebuild.create_project(
+                    name=self.image_name,
+                    description='string',
+                    source={
+                        'type': 'S3',
+                        'location': self.bucket + '/' + self.credentials.user_name + '/' + self.image_name + '/'
+                    },
+                    artifacts={
+                        'type': 'NO_ARTIFACTS',
+                    },
+                    environment={
+                        'type': 'LINUX_CONTAINER',
+                        'image': 'aws/codebuild/standard:4.0',
+                        'computeType': 'BUILD_GENERAL1_2XLARGE',
+                        'environmentVariables': [
+                            {
+                                "name": "AWS_DEFAULT_REGION",
+                                "value": self.credentials.region_name
+                            },
+                            {
+                                "name": "AWS_ACCOUNT_ID",
+                                "value": self.credentials.account_id
+                            },
+                            {
+                                "name": "IMAGE_REPO_NAME",
+                                "value": self.image_name
+                            },
+                            {
+                                "name": "IMAGE_TAG",
+                                "value": self.credentials.user_name
+                            },
+                            {
+                                "name": "GIT_API_TOKEN",
+                                "value": self.git_api_token
+                            },
+                            {
+                                "name": "OS_STANDARDS_BRANCH",
+                                "value": self.os_standards_branch
+                            },
+                            {
+                                "name": "BTAP_COSTING_BRANCH",
+                                "value": self.btap_costing_branch
+                            },
+                            {
+                                "name": "OPENSTUDIO_VERSION",
+                                "value": self.os_version
+                            },
+                        ],
+                        'privilegedMode': True
+                    },
+                    serviceRole=self.cloudbuild_service_role,
+                )
+
+            # Start building image.
+            start = time.time()
+            message = f'Building Image {self.image_name} on Amazon CloudBuild, will take ~10m'
+            print(message)
+            logging.info(message)
+            environmentVariablesOverride = [
+                {
+                    "name": "IMAGE_REPO_NAME",
+                    "value": self.image_name
+                },
+                {
+                    "name": "IMAGE_TAG",
+                    "value": self.credentials.user_name
+                },
+                {
+                    "name": "GIT_API_TOKEN",
+                    "value": self.git_api_token
+                },
+                {
+                    "name": "OS_STANDARDS_BRANCH",
+                    "value": self.os_standards_branch
+                },
+                {
+                    "name": "BTAP_COSTING_BRANCH",
+                    "value": self.btap_costing_branch
+                },
+                {
+                    "name": "OPENSTUDIO_VERSION",
+                    "value": self.os_version
+                }]
+            source_location = self.bucket + '/' + self.credentials.user_name + '/' + self.image_name + '/'
+            message = f'Code build image env overrides {environmentVariablesOverride}'
+            logging.info(message)
+
+            message = f"Building from sources at {source_location}"
+            logging.info(message)
+
+            response = codebuild.start_build(projectName=self.image_name,
+                                             sourceTypeOverride='S3',
+                                             sourceLocationOverride=source_location,
+                                             environmentVariablesOverride=environmentVariablesOverride
+                                             )
+            build_id = response['build']['id']
+            # Check state of creating CE.
+            while True:
+                status = codebuild.batch_get_builds(ids=[build_id])['builds'][0]['buildStatus']
+                # If CE is in valid state, inform user and break from loop.
+                if status == 'SUCCEEDED':
+                    message = f'Image {self.image_name} Created on Amazon. \nImage built in {time.time() - start}'
+                    logging.info(message)
+                    print(message)
+                    break
+                # If CE is in invalid state... break
+                elif status == 'FAILED' or status == 'FAULT' or status == 'TIMED_OUT' or status == 'STOPPED':
+                    message = f'Build Failed: See amazon web console Codebuild to determine error. buildID:{build_id}'
+                    print(message)
+                    logging.error(message)
+                    exit(1)
+                # Check status every 5 secs.
+                time.sleep(5)
 
     # This method is a helper to print/stream logs.
     def printLogs(self, logGroupName, logStreamName, startTime):
@@ -539,7 +613,7 @@ class AWSBatch:
             logging.info(message)
         return template_name
 
-    #
+
     def delete_storage_space_launch_template(self):
         template_name = f'{self.credentials.account_id}_storage'
         response = self.ec2.delete_launch_template(
@@ -722,7 +796,7 @@ class AWSBatch:
         response = self.batch.register_job_definition(jobDefinitionName=self.job_def_id,
                                                       type='container',
                                                       containerProperties={
-                                                          'image': self.btap_image.image_full_name,
+                                                          'image': self.image_full_name,
                                                           'vcpus': unitVCpus,
                                                           'memory': unitMemory,
                                                           'privileged': True,
@@ -730,69 +804,6 @@ class AWSBatch:
                                                       })
 
         return response
-
-    def create_batch_workflow(self):
-        # This method creates analysis id for batch run. See methods for details.
-        self.create_compute_environment()
-        self.create_job_queue()
-        self.register_job_definition()
-        print("Completed AWS batch initialization.")
-
-
-
-
-    def shutdown_batch_workflow(self):
-        # This method manages the teardown of the batch workflow. See methods for details.
-        message = "Shutting down AWSBatch...."
-        print(message)
-        logging.info(message)
-        self.delete_job_definition()
-        self.delete_job_queue()
-        self.delete_compute_environment()
-
-    def submit_job(self, jobName='test', debug=False, command=["/bin/bash", "-c",
-                                                               f"bundle exec ruby btap_cli.rb --building_type FullServiceRestaurant --template NECB2017 --enable_costing true "]):
-        # Tell user.
-
-        # See https://boto3.amazonaws.com/v1/documentation/api/latest/reference/services/batch.html#Batch.Client.submit_job
-        submitJobResponse = self.submit_job_wrapper(command, jobName)
-
-        jobId = submitJobResponse['jobId']
-        message = f"Submitted job_id {jobId} with job name {jobName} to the job queue {self.job_queue_id}"
-        logging.info(message)
-        running = False
-        startTime = 0
-        logGroupName = '/aws/batch/job'
-        result = 'FAILED'
-        while debug:
-            # Don't hammer AWS.. make queries every minute for the run status
-            time.sleep(60 + random())
-            describeJobsResponse = self.get_job_status(jobId)
-            status = describeJobsResponse['jobs'][0]['status']
-            if status == 'SUCCEEDED':
-                message = 'SUCCEEDED - Job [%s - %s] %s' % (jobName, jobId, status)
-                logging.info(message)
-                print(message)
-                result = 'SUCCEEDED'
-                break
-            elif status == 'FAILED':
-                message = 'FAILED - Job [%s - %s] %s' % (jobName, jobId, status)
-                logging.error(message)
-                result = 'FAILED'
-                break
-            elif status == 'RUNNING':
-                # Commented out logstream.
-                # logStreamName = self.getLogStream(logGroupName, jobName, jobId)
-                if not running:  # and logStreamName:
-                    running = True
-                    # print('Output [%s]:\n %s' % (logStreamName, '=' * 80))
-                # if logStreamName:
-                # startTime = self.printLogs(logGroupName, logStreamName, startTime) + 1
-            else:
-                message = 'UNKNOWN - Job [%s - %s] is %-9s' % (jobName, jobId, status)
-                # logging.info(message)
-                sys.stdout.flush()
-        return result
 
     def submit_job_wrapper(self, command, jobName, n=0):
         try:
@@ -861,10 +872,10 @@ class Docker:
             docker.from_env()
         except DockerException as err:
             logging.error(
-                f"Could not access Docker Daemon. Either it is not running, or you do not have permissions to run docker. {err}")
+                f"Could not access Docker Daemon. Either it is not running, or you do not have permissions to run docker. {err}. Could not get number of cpus used in Docker.")
             exit(1)
-        #Return number of cpus minus one to give a bit of slack.
-        return int(docker.from_env().containers.run('alpine', 'nproc --all')) -2
+        #Return number of cpus minus 2 to give a bit of slack.
+        return int(docker.from_env().containers.run(image='alpine', command='nproc --all',remove=True)) -2
 
 
 
@@ -915,8 +926,11 @@ class Docker:
         # initialize image to None.. will assign later.
         self.image = None
 
+    def setup(self):
+        self.build_image()
 
-    def build_docker_image(self, nocache=False):
+
+    def build_image(self):
         # Set timer to track how long it took to build.
         start = time.time()
         # add info to logger.
@@ -989,27 +1003,24 @@ class Docker:
         # return image.. also is a part of the object.
         return self.image
 
-    # remove docker image.. this is not use right now.
-    def remove_docker_image(self):
-        self.docker_client.images.remove(image=self.image_name, force=True)
 
     # This method will run the simulation with the general command. It passes all the information via the
     # run_options.yml file. This file was created ahead of this in the local_input_folder which is mounted to the
     # container. The output similarly will be placed in the local_output_folder using the datapoint_id as the new
     # folder name.
-    def run_container_simulation(self,
+    def submit_job(self,
 
-                                 # run_options dict is used for finding the folder after the simulation is completed to store in the database.
-                                 run_options=None,
+                   # run_options dict is used for finding the folder after the simulation is completed to store in the database.
+                   run_options=None,
 
-                                 # mount point to container of input file(s)
-                                 local_input_folder=None,
+                   # mount point to container of input file(s)
+                   local_input_folder=None,
 
-                                 # mount point for container to copy simulation files.
-                                 local_output_folder=None,
+                   # mount point for container to copy simulation files.
+                   local_output_folder=None,
 
-                                 # Don't detach.. hold on to current thread.
-                                 detach=False):
+                   # Don't detach.. hold on to current thread.
+                   detach=False):
 
         # If local i/o folder is not set.. try to use folder where this file is.
         if local_input_folder == None:
@@ -1129,6 +1140,7 @@ class BTAPAnalysis():
         self.building_options = building_options
         self.project_root = project_root # os.path.dirname(analysis_config_file)
         self.baseline_results = baseline_results
+
         # Making sure that used installed docker.
         find_docker = os.system("docker -v")
         if find_docker != 0:
@@ -1156,9 +1168,26 @@ class BTAPAnalysis():
             # If aws batch object was not passed.. create it.
             if self.aws_batch == None:
                 # Start batch queue if required.
-                self.aws_batch = self.initialize_aws_batch(git_api_token)
+                # create aws image, set up aws compute env and create workflow queue.
+                self.aws_batch = AWSBatch(
+                    analysis_id=self.analysis_config[':analysis_id'],
+                    btap_image_name=self.analysis_config[':image_name'],
+                    rebuild_image=self.analysis_config[':nocache'],
+                    git_api_token=git_api_token,
+                    os_version=self.analysis_config[':os_version'],
+                    btap_costing_branch=self.analysis_config[':btap_costing_branch'],
+                    os_standards_branch=self.analysis_config[':os_standards_branch'],
+                    threads=self.get_threads()
+                )
+                self.aws_batch.setup()
         else:
-            self.docker = self.build_image(git_api_token=git_api_token)
+            self.docker = Docker(image_name=self.analysis_config[':image_name'],
+                            git_api_token=git_api_token,
+                            os_standards_branch=self.analysis_config[':os_standards_branch'],
+                            btap_costing_branch=self.analysis_config[':btap_costing_branch'],
+                            os_version=self.analysis_config[':os_version'],
+                            nocache=self.analysis_config[':nocache'])
+            self.docker.build_image()
 
     def get_num_of_runs_failed(self):
         if os.path.isdir(self.failures_folder):
@@ -1212,6 +1241,10 @@ class BTAPAnalysis():
                 logging.error(message)
                 exit(1)
 
+
+        message = f'Creating new folders for analysis'
+        logging.info(message)
+        print(message)
         # create local input and output folders
         self.input_folder = os.path.join(self.analysis_id_folder,
                                          'input')
@@ -1232,121 +1265,170 @@ class BTAPAnalysis():
         os.makedirs(self.failures_folder, exist_ok=True)
         logging.info(f"local mounted input folder:{self.input_folder}")
         logging.info(f"local mounted output folder:{self.output_folder}")
+        logging.info(f"local mounted results_folder folder:{self.results_folder}")
+        logging.info(f"local mounted database_folder folder:{self.database_folder}")
+        logging.info(f"local mounted failures_folder folder:{self.failures_folder}")
 
     def run_datapoint(self, run_options):
         # Start timer to track simulation time.
         start = time.time()
+
+        # Save run options to a unique folder. Run options is modified to contain datapoint id, analysis_id and
+        # other run information.
+        # Create datapoint id and path to folder where input file should be saved.
+        run_options[':btap_batch_version'] = BTAP_BATCH_VERSION
+        run_options[':datapoint_id'] = str(uuid.uuid4())
+        run_options[':analysis_id'] = self.analysis_config[':analysis_id']
+        run_options[':analysis_name'] = self.analysis_config[':analysis_name']
+        run_options[':run_annual_simulation'] = self.analysis_config[':run_annual_simulation']
+        run_options[':enable_costing'] = self.analysis_config[':enable_costing']
+        run_options[':compute_environment'] = self.analysis_config[':compute_environment']
+        run_options[':s3_bucket'] = self.analysis_config[':s3_bucket']
+        run_options[':image_name'] = self.analysis_config[':image_name']
+        run_options[':output_variables'] = self.analysis_config[':output_variables']
+        run_options[':output_meters'] = self.analysis_config[':output_meters']
+        run_options[':algorithm_type'] = self.analysis_config[':algorithm'][':type']
+
+        # Local Paths
+        local_datapoint_input_folder = os.path.join(self.input_folder, run_options[':datapoint_id'])
+        local_datapoint_output_folder = os.path.join(self.output_folder, run_options[':datapoint_id'])
+        local_run_option_file = os.path.join(local_datapoint_input_folder, 'run_options.yml')
+        # Create path to btap_data.json file.
+        local_btap_data_path = os.path.join(self.output_folder, run_options[':datapoint_id'], 'btap_data.json')
+
+
+
+        # Save run_option file for this simulation.
+        os.makedirs(local_datapoint_input_folder, exist_ok=True)
+        logging.info(f'saving simulation input file here:{local_run_option_file}')
+        with open(local_run_option_file, 'w') as outfile:
+            yaml.dump(run_options, outfile, encoding=('utf-8'))
+
+        # Save custom osm file if required.
+        local_osm_dict = self.get_local_osm_files()
+        if run_options[':building_type'] in local_osm_dict:
+            shutil.copy(local_osm_dict[run_options[':building_type']], local_datapoint_input_folder)
+            logging.info(
+                f"Copying osm file from {local_osm_dict[run_options[':building_type']]} to {local_datapoint_input_folder}")
+
+        # S3 paths
+        if self.analysis_config[':compute_environment'] == 'aws_batch':
+            return self.submit_job_aws(self.output_folder,
+                                       local_btap_data_path,
+                                       local_datapoint_input_folder,
+                                       local_datapoint_output_folder,
+                                       run_options)
+        else:
+            return self.submit_job_docker(self.output_folder,
+                                          local_btap_data_path,
+                                          local_datapoint_input_folder,
+                                          local_datapoint_output_folder,
+                                          run_options)
+
+
+    def submit_job_docker(self,
+                          output_folder,
+                          local_btap_data_path,
+                          local_datapoint_input_folder,
+                          local_datapoint_output_folder,
+                          run_options):
         try:
-            # Save run options to a unique folder. Run options is modified to contain datapoint id, analysis_id and
-            # other run information.
-            # Create datapoint id and path to folder where input file should be saved.
-            run_options[':btap_batch_version'] = BTAP_BATCH_VERSION
-            run_options[':datapoint_id'] = str(uuid.uuid4())
-            run_options[':analysis_id'] = self.analysis_config[':analysis_id']
-            run_options[':analysis_name'] = self.analysis_config[':analysis_name']
-            run_options[':run_annual_simulation'] = self.analysis_config[':run_annual_simulation']
-            run_options[':enable_costing'] = self.analysis_config[':enable_costing']
-            run_options[':compute_environment'] = self.analysis_config[':compute_environment']
-            run_options[':s3_bucket'] = self.analysis_config[':s3_bucket']
-            run_options[':image_name'] = self.analysis_config[':image_name']
-            run_options[':output_variables'] = self.analysis_config[':output_variables']
-            run_options[':output_meters'] = self.analysis_config[':output_meters']
-            run_options[':algorithm_type'] = self.analysis_config[':algorithm'][':type']
-
-            # S3 paths. Set base to username used in aws.
-            if self.analysis_config[':compute_environment'] == 'aws_batch':
-                self.credentials = AWSCredentials()
-                s3_analysis_folder = os.path.join(self.credentials.user_name, run_options[':analysis_name'],
-                                                  run_options[':analysis_id']).replace('\\', '/')
-                s3_datapoint_input_folder = os.path.join(s3_analysis_folder, 'input',
-                                                         run_options[':datapoint_id']).replace('\\', '/')
-                s3_output_folder = os.path.join(s3_analysis_folder, 'output').replace('\\', '/')
-                s3_datapoint_output_folder = os.path.join(s3_output_folder, run_options[':datapoint_id']).replace('\\',
-                                                                                                                  '/')
-                s3_btap_data_path = os.path.join(s3_datapoint_output_folder, 'btap_data.json').replace('\\', '/')
-                s3_error_txt_path = os.path.join(s3_datapoint_output_folder, 'error.txt').replace('\\', '/')
-
-            # Local Paths
-            local_datapoint_input_folder = os.path.join(self.input_folder, run_options[':datapoint_id'])
-            local_datapoint_output_folder = os.path.join(self.output_folder, run_options[':datapoint_id'])
-            local_run_option_file = os.path.join(local_datapoint_input_folder, 'run_options.yml')
-            # Create path to btap_data.json file.
-            local_btap_data_path = os.path.join(self.output_folder, run_options[':datapoint_id'], 'btap_data.json')
-            local_error_txt_path = os.path.join(self.output_folder, run_options[':datapoint_id'], 'error.txt')
-            local_eplusout_sql_path = os.path.join(self.output_folder, run_options[':datapoint_id'], 'run_dir', 'run',
-                                                   'eplusout.sql')
-
-            # Save run_option file for this simulation.
-            os.makedirs(local_datapoint_input_folder, exist_ok=True)
-            logging.info(f'saving simulation input file here:{local_run_option_file}')
-            with open(local_run_option_file, 'w') as outfile:
-                yaml.dump(run_options, outfile, encoding=('utf-8'))
-
-            # Save custom osm file if required.
-            local_osm_dict = self.get_local_osm_files()
-
-            if run_options[':building_type'] in local_osm_dict:
-                # copy osm file into input folder.
-                # ic(local_osm_dict[run_options[':building_type']])
-                # ic(run_options[':building_type'])
-                # ic(local_datapoint_input_folder)
-                # ic(f"Copying osm file from {local_osm_dict[run_options[':building_type']]} to {local_datapoint_input_folder}")
-                shutil.copy(local_osm_dict[run_options[':building_type']], local_datapoint_input_folder)
-                logging.info(
-                    f"Copying osm file from {local_osm_dict[run_options[':building_type']]} to {local_datapoint_input_folder}")
-
+            local_error_txt_path = os.path.join(output_folder, run_options[':datapoint_id'], 'error.txt')
             btap_data = {}
-            if run_options[':compute_environment'] == 'aws_batch':
+            # add run options to dict.
+            btap_data.update(run_options)
+            # Start timer to track simulation time.
+            start = time.time()
+            result = self.docker.submit_job(
+                run_options=run_options,
+                local_input_folder=local_datapoint_input_folder,
+                local_output_folder=output_folder,
+                detach=False
+            )
+            # If file was not created...raise an error.
+            if not os.path.isfile(local_btap_data_path):
+                raise FileNotFoundError(errno.ENOENT, os.strerror(errno.ENOENT), local_btap_data_path)
+            # Open the btap Data file in analysis dict.
+            file = open(local_btap_data_path, 'r')
+            btap_data.update(json.load(file))
+            file.close()
+            # save output url.
+            btap_data['datapoint_output_url'] = 'file:///' + os.path.join(local_datapoint_output_folder)
+            # Store sum of warnings errors and severes.
+            btap_data['eplus_warnings'] = sum(
+                1 for d in btap_data['eplusout_err_table'] if d.get('error_type') == 'warning')
+            btap_data['eplus_severes'] = sum(
+                1 for d in btap_data['eplusout_err_table'] if d.get('error_type') == 'severe')
+            btap_data['eplus_fatals'] = sum(
+                1 for d in btap_data['eplusout_err_table'] if d.get('error_type') == 'fatal')
+            # dump full run_options.yml file into database for convienience.
+            btap_data['run_options'] = yaml.dump(run_options)
+            # Need to zero this in costing btap_data.rb file otherwise may be NA.
+            for item in ['energy_eui_heat recovery_gj_per_m_sq', 'energy_eui_heat rejection_gj_per_m_sq']:
+                if not btap_data.get(item):
+                    btap_data[item] = 0.0
+            # Flag that is was successful.
+            btap_data['success'] = True
+            btap_data['simulation_time'] = time.time() - start
+            return btap_data
+        except Exception as error:
+            error_msg = ''
+            if os.path.exists(local_error_txt_path):
+                with open(local_error_txt_path, 'r') as file:
+                    error_msg = file.read()
+            btap_data = {}
+            btap_data.update(run_options)
+            btap_data['success'] = False
+            btap_data['container_error'] = str(error_msg)
+            btap_data['run_options'] = yaml.dump(run_options)
+            btap_data['datapoint_output_url'] = 'file:///' + os.path.join(local_datapoint_output_folder)
+            return btap_data
 
-                message = f"Copying from {local_datapoint_input_folder} to bucket {self.analysis_config[':s3_bucket']} folder {s3_datapoint_input_folder}"
-                logging.info(message)
-                S3().copy_folder_to_s3(bucket_name=self.analysis_config[':s3_bucket'],
-                                       source_folder=local_datapoint_input_folder,
-                                       target_folder=s3_datapoint_input_folder)
-                jobName = f"{run_options[':analysis_id']}-{run_options[':datapoint_id']}"
-                bundle_command = f"bundle exec ruby btap_cli.rb --input_path s3://{self.analysis_config[':s3_bucket']}/{s3_datapoint_input_folder} --output_path s3://{self.analysis_config[':s3_bucket']}/{s3_output_folder} "
-                # replace \ slashes to / slash for correct s3 convention.
-                bundle_command = bundle_command.replace('\\', '/')
-                self.aws_batch.submit_job(jobName=jobName, debug=True, command=["/bin/bash", "-c", bundle_command])
 
-                # add run options to dict.
-                btap_data.update(run_options)
+    def submit_job_aws(self,
+                       output_folder,
+                       local_btap_data_path,
+                       local_datapoint_input_folder,
+                       local_datapoint_output_folder,
+                       run_options):
+        try:
+            btap_data = {}
+            # add run options to dict.
+            btap_data.update(run_options)
+            self.credentials = AWSCredentials()
+            s3_analysis_folder = os.path.join(self.credentials.user_name, run_options[':analysis_name'],
+                                              run_options[':analysis_id']).replace('\\', '/')
+            s3_datapoint_input_folder = os.path.join(s3_analysis_folder, 'input',
+                                                     run_options[':datapoint_id']).replace('\\', '/')
+            s3_output_folder = os.path.join(s3_analysis_folder, 'output').replace('\\', '/')
+            s3_datapoint_output_folder = os.path.join(s3_output_folder, run_options[':datapoint_id']).replace('\\',
+                                                                                                              '/')
+            s3_btap_data_path = os.path.join(s3_datapoint_output_folder, 'btap_data.json').replace('\\', '/')
+            s3_error_txt_path = os.path.join(s3_datapoint_output_folder, 'error.txt').replace('\\', '/')
 
-                # Get btap_data from s3
-                message = f"Getting data from S3 bucket {self.analysis_config[':s3_bucket']} at path {s3_btap_data_path}"
-                logging.info(message)
-                content_object = boto3.resource('s3').Object(self.analysis_config[':s3_bucket'], s3_btap_data_path)
-                btap_data.update(json.loads(content_object.get()['Body'].read().decode('utf-8')))
-                # save url to datapoint output for Kamel.
-                btap_data[
-                    'datapoint_output_url'] = f"https://s3.console.aws.amazon.com/s3/buckets/{self.analysis_config[':s3_bucket']}?region=ca-central-1&prefix={s3_datapoint_output_folder}/"
-            else:
+            jobName = f"{run_options[':analysis_id']}-{run_options[':datapoint_id']}"
 
-                result = self.docker.run_container_simulation(
-                    run_options=run_options,
-                    local_input_folder=local_datapoint_input_folder,
-                    local_output_folder=self.output_folder,
-                    detach=False
-                )
+            bundle_command = f"bundle exec ruby btap_cli.rb --input_path s3://{self.analysis_config[':s3_bucket']}/{s3_datapoint_input_folder} --output_path s3://{self.analysis_config[':s3_bucket']}/{s3_output_folder} "
+            # replace \ slashes to / slash for correct s3 convention.
+            bundle_command = bundle_command.replace('\\', '/')
 
-                # If file was not created...raise an error.
-                if not os.path.isfile(local_btap_data_path):
-                    raise FileNotFoundError(errno.ENOENT, os.strerror(errno.ENOENT), local_btap_data_path)
-
-                # Create btap_data dict to store.
-                btap_data = {}
-
-                # add run options to dict.
-                btap_data.update(run_options)
-
-                # Open the btap Data file in analysis dict.
-                file = open(local_btap_data_path, 'r')
-                btap_data.update(json.load(file))
-                file.close()
-
-                # save output url.
-                btap_data['datapoint_output_url'] = 'file:///' + os.path.join(local_datapoint_output_folder)
-
+            logging.info(
+                f"Copying from {local_datapoint_input_folder} to bucket {self.analysis_config[':s3_bucket']} folder {s3_datapoint_input_folder}")
+            S3().copy_folder_to_s3(bucket_name=self.analysis_config[':s3_bucket'],
+                                   source_folder=local_datapoint_input_folder,
+                                   target_folder=s3_datapoint_input_folder)
+            # Start timer to track simulation time.
+            start = time.time()
+            self.aws_batch.submit_job(jobName=jobName, debug=True, command=["/bin/bash", "-c", bundle_command])
+            # Get btap_data from s3
+            logging.info(
+                f"Getting data from S3 bucket {self.analysis_config[':s3_bucket']} at path {s3_btap_data_path}")
+            content_object = boto3.resource('s3').Object(self.analysis_config[':s3_bucket'], s3_btap_data_path)
+            # Adding simulation high level results to btap_data df.
+            btap_data.update(json.loads(content_object.get()['Body'].read().decode('utf-8')))
+            # save url to datapoint output for Kamel.
+            btap_data[
+                'datapoint_output_url'] = f"https://s3.console.aws.amazon.com/s3/buckets/{self.analysis_config[':s3_bucket']}?region=ca-central-1&prefix={s3_datapoint_output_folder}/"
             # Store sum of warnings errors and severes.
             btap_data['eplus_warnings'] = sum(
                 1 for d in btap_data['eplusout_err_table'] if d.get('error_type') == 'warning')
@@ -1366,25 +1448,14 @@ class BTAPAnalysis():
             # Flag that is was successful.
             btap_data['success'] = True
             btap_data['simulation_time'] = time.time() - start
-
-            # save btap_data json file to output folder if aws_run.
-            if run_options[':compute_environment'] == 'aws_batch':
-                pathlib.Path(os.path.dirname(local_btap_data_path)).mkdir(parents=True, exist_ok=True)
-                with open(local_btap_data_path, 'w') as outfile:
-                    json.dump(btap_data, outfile, indent=4)
             return btap_data
+
 
         except Exception as error:
             error_msg = ''
-            if self.analysis_config[':compute_environment'] == 'aws_batch':
-                content_object = boto3.resource('s3').Object(run_options[':s3_bucket'], s3_error_txt_path)
-                print(error_msg)
-                error_msg = content_object.get()['Body'].read().decode('utf-8')
-            else:
-                error_msg = ''
-                if os.path.exists(local_error_txt_path):
-                    with open(local_error_txt_path, 'r') as file:
-                        error_msg = file.read()
+            content_object = boto3.resource('s3').Object(run_options[':s3_bucket'], s3_error_txt_path)
+            print(error_msg)
+            error_msg = content_object.get()['Body'].read().decode('utf-8')
             btap_data = {}
             btap_data.update(run_options)
             btap_data['success'] = False
@@ -1392,23 +1463,10 @@ class BTAPAnalysis():
             btap_data['run_options'] = yaml.dump(run_options)
             btap_data['datapoint_output_url'] = 'file:///' + os.path.join(local_datapoint_output_folder)
             # save btap_data json file to output folder if aws_run.
-            if run_options[':compute_environment'] == 'aws_batch':
-                pathlib.Path(os.path.dirname(local_btap_data_path)).mkdir(parents=True, exist_ok=True)
-                with open(local_btap_data_path, 'w') as outfile:
-                    json.dump(btap_data, outfile, indent=4)
-
+            pathlib.Path(os.path.dirname(local_btap_data_path)).mkdir(parents=True, exist_ok=True)
+            with open(local_btap_data_path, 'w') as outfile:
+                json.dump(btap_data, outfile, indent=4)
             return btap_data
-
-    def build_image(self, git_api_token=None):
-
-        docker = Docker(image_name=self.analysis_config[':image_name'],
-                        git_api_token=git_api_token,
-                        os_standards_branch=self.analysis_config[':os_standards_branch'],
-                        btap_costing_branch=self.analysis_config[':btap_costing_branch'],
-                        os_version=self.analysis_config[':os_version'],
-                        nocache=self.analysis_config[':nocache'])
-        docker.build_docker_image()
-        return docker
 
     def save_results_to_database(self, results):
         if results['success'] == True:
@@ -1455,29 +1513,10 @@ class BTAPAnalysis():
         df = pd.DataFrame([dp_values])
         return df
 
-    def initialize_aws_batch(self, git_api_token):
-        # create aws image, set up aws compute env and create workflow queue.
-        aws_batch = AWSBatch(
-            analysis_id=self.analysis_config[':analysis_id'],
-            btap_image_name=self.analysis_config[':image_name'],
-            rebuild_image=self.analysis_config[':nocache'],
-            git_api_token=git_api_token,
-            os_version=self.analysis_config[':os_version'],
-            btap_costing_branch=self.analysis_config[':btap_costing_branch'],
-            os_standards_branch=self.analysis_config[':os_standards_branch'],
-            threads=self.get_threads()
-        )
-        aws_batch.create_batch_workflow()
-        return aws_batch
+
+
 
     def shutdown_analysis(self):
-
-        # # If aws batch was activated..kill the workflow if something went wrong.
-        # if self.aws_batch != None:
-        #     print("Shutting down AWS Resources")
-        #     self.aws_batch.shutdown_batch_workflow()
-
-        # Generate output files locally if database exists
         self.generate_output_file(baseline_results=self.baseline_results)
 
 
@@ -2294,7 +2333,6 @@ def btap_batch(analysis_config_file=None, git_api_token=None, aws_batch=None):
         # Set Analysis Id if not set
         if (not ':analysis_id' in analysis_config ) or analysis_config[':analysis_id'] is None:
             analysis_config[':analysis_id'] = str(uuid.uuid4())
-
         aws_batch = AWSBatch(
             analysis_id=analysis_config[':analysis_id'],
             btap_image_name=analysis_config[':image_name'],
@@ -2306,7 +2344,7 @@ def btap_batch(analysis_config_file=None, git_api_token=None, aws_batch=None):
             threads=get_threads(analysis_config)
         )
         # Create batch queue on aws.
-        aws_batch.create_batch_workflow()
+        aws_batch.setup()
 
     baseline_results = None
     # Ensure reference run is executed in all other cases unless :run_reference is false.
@@ -2417,6 +2455,6 @@ def btap_batch(analysis_config_file=None, git_api_token=None, aws_batch=None):
         logging.error(message)
         exit(1)
     if not aws_batch is None:
-        aws_batch.shutdown_batch_workflow()
+        aws_batch.tear_down()
 
 
