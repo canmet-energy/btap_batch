@@ -1,7 +1,5 @@
-# Todo: Build Elimination and Sensitivity Analysis workflows to inform Optimization and Parametric Workflows.
-# Todo: Integrate with Pathways viewer.(Done. works with Excel output. Need to add measures)
-# Todo: Secure local postgre docker container with a better(random) password
-# docker kill btap_postgres
+
+
 # docker kill (docker ps -q -a --filter "ancestor=btap_private_cli")
 from icecream import ic
 import itertools
@@ -10,7 +8,6 @@ import multiprocessing
 import concurrent.futures
 import shutil
 from sklearn import preprocessing
-import numpy as np
 from pymoo.factory import get_algorithm, get_crossover, get_mutation, get_sampling
 from pymoo.optimize import minimize
 from pymoo.core.problem import ElementwiseProblem
@@ -30,34 +27,21 @@ import uuid
 import datetime
 import sys
 import pandas as pd
-from sqlalchemy import create_engine
-from sqlalchemy.orm import sessionmaker
-import sqlalchemy.types
 import re
 import glob
-from functools import wraps
 import logging
-from pymoo.visualization.scatter import Scatter
-import socket
-import ssl
 import requests
-
-# seed the pseudorandom number generator
 from random import seed
 from random import random
-import numpy as np
-
-np.random.seed(123)
-import matplotlib.pyplot as plt
 from skopt.space import Space
-from skopt.sampler import Sobol
 from skopt.sampler import Lhs
 import traceback
-import pickle
-import gzip
 import pathlib
-import csv
+import openstudio
+import numpy as np
+import atexit
 
+np.random.seed(123)
 seed(1)
 
 BTAP_BATCH_VERSION = '1.0.002'
@@ -87,7 +71,7 @@ AWS_BATCH_DEFAULT_IMAGE = 'ami-0a06b44c462364156'
 DOCKERFILES_FOLDER = os.path.join(os.path.dirname(os.path.realpath(__file__)), 'Dockerfiles')
 # Location of previously run baseline simulations to compare with design scenarios
 BASELINE_RESULTS = os.path.join(os.path.dirname(os.path.realpath(__file__)), '..', 'resources', 'reference', 'output.xlsx')
-
+NECB2011_SPACETYPE_PATH = os.path.join(os.path.dirname(os.path.realpath(__file__)), '..', 'resources', 'space_type_library', 'NECB2011_space_types.osm')
 
 # These resources were created either by hand or default from the AWS web console. If moving this to another aws account,
 # recreate these 3 items in the new account. Also create s3 bucket to use named based account id like we did here.
@@ -105,6 +89,9 @@ DOCKERFILE_URL = 'https://raw.githubusercontent.com/canmet-energy/btap_cli/dev/D
 
 # Custom exceptions
 class FailedSimulationException(Exception):
+    pass
+
+class OSMErrorException(Exception):
     pass
 
 
@@ -484,6 +471,8 @@ class AWSBatch:
         # Store the security groups into a list. This was set up by NRCan.
         security_groups = self.ec2.describe_security_groups()["SecurityGroups"]
         self.securityGroupIds = [security_group['GroupId'] for security_group in security_groups]
+        #On exit deconstructor
+        atexit.register(self.shutdown_batch_workflow)
 
     # This method is a helper to print/stream logs.
     def printLogs(self, logGroupName, logStreamName, startTime):
@@ -747,9 +736,16 @@ class AWSBatch:
         self.create_compute_environment()
         self.create_job_queue()
         self.register_job_definition()
+        print("Completed AWS batch initialization.")
 
-    def shutdown_batch_workflow(self, ):
+
+
+
+    def shutdown_batch_workflow(self):
         # This method manages the teardown of the batch workflow. See methods for details.
+        message = "Shutting down AWSBatch...."
+        print(message)
+        logging.info(message)
         self.delete_job_definition()
         self.delete_job_queue()
         self.delete_compute_environment()
@@ -857,6 +853,21 @@ class AWSBatch:
 
 # Class to manage local docker images.
 class Docker:
+
+    @classmethod
+    def get_docker_number_of_processes(cls):
+        # Try to access the docker daemon. If we cannot.. ask user to turn it on and then exit.
+        try:
+            docker.from_env()
+        except DockerException as err:
+            logging.error(
+                f"Could not access Docker Daemon. Either it is not running, or you do not have permissions to run docker. {err}")
+            exit(1)
+        #Return number of cpus minus one to give a bit of slack.
+        return int(docker.from_env().containers.run('alpine', 'nproc --all')) -2
+
+
+
     def __init__(self,
                  # name of docker image created
                  image_name='btap_private_cli',
@@ -903,6 +914,7 @@ class Docker:
         self.docker_client = docker.from_env()
         # initialize image to None.. will assign later.
         self.image = None
+
 
     def build_docker_image(self, nocache=False):
         # Set timer to track how long it took to build.
@@ -1041,9 +1053,54 @@ class Docker:
 
 # Parent Analysis class.
 class BTAPAnalysis():
+    # This does some simple check on the osm file to ensure that it has the required inputs for btap.
+    def check_list(self,osm_file):
+        print("Preflight check of local osm file.")
+        # filepath = r"C:\Users\plopez\PycharmProjects\btap_batch\examples\idp\idp_example_elim\b6056cd4-e4f5-44eb-ae57-73b624faa5ce\output\0fba95bd-455a-44f4-8532-2e167a95cffa\sizing_folder\autozone_systems\run\in.osm"
+        version_translator = openstudio.osversion.VersionTranslator()
+        model = version_translator.loadModel(openstudio.path(osm_file)).get()
+        necb_lib = openstudio.osversion.VersionTranslator().loadModel(openstudio.path(NECB2011_SPACETYPE_PATH)).get()
+
+        messages = ''
+        if not model.getBuilding().standardsBuildingType().is_initialized():
+            messages += f"OS:Building, you have not defined the standardsBuildingType\n"
+
+        if not model.getBuilding().standardsNumberOfAboveGroundStories().is_initialized():
+            messages += f"OS:Building, you have not defined the standardsNumberOfAboveGroundStories\n"
+
+        if not model.getBuilding().standardsNumberOfStories().is_initialized():
+            messages += f"OS:Building, you have not defined the standardsNumberOfStories\n"
+
+        for space in model.getSpaces():
+            if not space.spaceType().is_initialized():
+                messages += f"OS:Space {space.name().get()} does not have a spacetype defined.\n"
+
+            if not space.thermalZone().is_initialized():
+                messages += f"OS:Space {space.name().get()} is not associated with a zone.\n"
+        model_spacetypes = []
+        for spacetype in model.getSpaceTypes():
+            if not spacetype.standardsBuildingType().is_initialized():
+                messages += f"OS:SpaceType {spacetype.name().get()} does not have a standardBuildingType defined.\n"
+            if not spacetype.standardsSpaceType().is_initialized():
+                messages += f"OS:SpaceType {spacetype.name().get()} does not have a standardsSpaceType defined.\n"
+
+            if spacetype.standardsSpaceType().is_initialized() and spacetype.standardsBuildingType().is_initialized():
+                model_spacetypes.append(spacetype.standardsBuildingType().get() + spacetype.standardsSpaceType().get())
+
+        # Check if we are using NECB2011 spacetypes
+        necb_spacetypes = list(
+            map(lambda spacetype: spacetype.standardsBuildingType().get() + spacetype.standardsSpaceType().get(),
+                necb_lib.getSpaceTypes()))
+        for st in model_spacetypes:
+            if not st in necb_spacetypes:
+                messages += f"OS:SpaceType {st} is not associated a valid NECB2011 spacetype.\n"
+
+        # if len(messages) > 0:
+        #     logging.error(f"The errors below need to be fixed in your osm file.\n{messages}\n")
+        #     raise OSMErrorException(f"The osm file {osm_file} is misconfigured.. Analysis aborted.\n")
 
     def get_threads(self):
-        return multiprocessing.cpu_count() - 2
+        return Docker.get_docker_number_of_processes()
 
     def get_local_osm_files(self):
         osm_list = {}
@@ -1056,15 +1113,22 @@ class BTAPAnalysis():
 
     # Constructor will
     def __init__(self,
-                 analysis_config_file=None,
+                 analysis_config=None,
+                 building_options = None,
+                 project_root = None,
                  git_api_token=None,
-                 aws_batch=None):
+                 aws_batch=None,
+                 baseline_results=None):
         self.credentials = None
         self.aws_batch = aws_batch
         self.docker = None
         self.database = None
         self.btap_data_df = []
         self.failed_df = []
+        self.analysis_config = analysis_config
+        self.building_options = building_options
+        self.project_root = project_root # os.path.dirname(analysis_config_file)
+        self.baseline_results = baseline_results
         # Making sure that used installed docker.
         find_docker = os.system("docker -v")
         if find_docker != 0:
@@ -1078,30 +1142,15 @@ class BTAPAnalysis():
                 f"Could not access Docker Daemon. Either it is not running, or you do not have permissions to run docker. {err}")
             exit(1)
 
-        # Load Analysis File into variable
-        if not os.path.isfile(analysis_config_file):
-            logging.error(f"could not find analysis input file at {analysis_config_file}. Exiting")
-            exit(1)
-        # Open the yaml in analysis dict.
-        with open(analysis_config_file, 'r') as stream:
-            analysis = yaml.safe_load(stream)
-
-        # Store analysis config and building_options.
-        self.analysis_config = analysis[':analysis_configuration']
-        self.building_options = analysis[':building_options']
-
         # Check user selected public version.. if so force costing to be turned off.
         if self.analysis_config[':image_name'] == 'btap_public_cli':
             self.analysis_config[':enable_costing'] = False
 
         # Set up project root.
-        self.project_root = os.path.dirname(analysis_config_file)
+
 
         # Create required paths and folders for analysis
         self.create_paths_folders()
-
-        # Initialize database
-        self.init_database()
 
         if self.analysis_config[':compute_environment'] == 'aws_batch':
             # If aws batch object was not passed.. create it.
@@ -1111,9 +1160,18 @@ class BTAPAnalysis():
         else:
             self.docker = self.build_image(git_api_token=git_api_token)
 
-    def init_database(self):
+    def get_num_of_runs_failed(self):
+        if os.path.isdir(self.failures_folder):
+            return len([name for name in os.listdir(self.failures_folder) if os.path.isfile(os.path.join(self.failures_folder, name))])
+        else:
+            return 0
 
-        self.database = BTAPDatabase()
+    def get_num_of_runs_completed(self):
+
+        if os.path.isdir(self.database_folder):
+            return len([name for name in os.listdir(self.database_folder) if os.path.isfile(os.path.join(self.database_folder, name))])
+        else:
+            return 0
 
     # This methods sets the pathnames and creates the input and output folders for the analysis. It also initilizes the
     # sql database.
@@ -1161,11 +1219,17 @@ class BTAPAnalysis():
                                           'output')
         self.results_folder = os.path.join(self.analysis_id_folder,
                                           'results')
+        self.database_folder = os.path.join(self.results_folder,
+                                          'database')
+        self.failures_folder = os.path.join(self.results_folder,
+                                            'failures')
 
         # Make input / output folder for mounting to container.
         os.makedirs(self.input_folder, exist_ok=True)
         os.makedirs(self.output_folder, exist_ok=True)
         os.makedirs(self.results_folder, exist_ok=True)
+        os.makedirs(self.database_folder, exist_ok=True)
+        os.makedirs(self.failures_folder, exist_ok=True)
         logging.info(f"local mounted input folder:{self.input_folder}")
         logging.info(f"local mounted output folder:{self.output_folder}")
 
@@ -1353,14 +1417,18 @@ class BTAPAnalysis():
             if results['eplus_fatals'] > 0:
                 # If we had fatal errors..the run was not successful after all.
                 results['success'] = False
-
         # This method organizes the data structure of the dataframe to fit into a report table.
         df = self.sort_results(results)
 
-        Session = sessionmaker(bind=self.database.get_engine())
-        session = Session()
-        df.to_sql('btap_data', con=session.get_bind(), if_exists='append', index=False)
-        session.close()
+        # Save datapoint row information to disc in case of catastrophic failure or when C.K. likes to hit Ctrl-C
+
+        pathlib.Path(self.database_folder).mkdir(parents=True, exist_ok=True)
+        df.to_csv(os.path.join(self.database_folder, f"{results[':datapoint_id']}.csv"))
+
+        #Save failures to a folder as well.
+
+        if results['success'] == False:
+            df.to_csv(os.path.join(self.failures_folder, f"{results[':datapoint_id']}.csv"))
         return results
 
     def sort_results(self, results):
@@ -1404,34 +1472,14 @@ class BTAPAnalysis():
 
     def shutdown_analysis(self):
 
-        # If aws batch was activated..kill the workflow if something went wrong.
-        if self.aws_batch != None:
-            print("Shutting down AWS Resources")
-            self.aws_batch.shutdown_batch_workflow()
+        # # If aws batch was activated..kill the workflow if something went wrong.
+        # if self.aws_batch != None:
+        #     print("Shutting down AWS Resources")
+        #     self.aws_batch.shutdown_batch_workflow()
 
         # Generate output files locally if database exists
-        if self.database != None:
-            print("Generating output files.")
-            self.btap_data_df, self.failed_df = self.database.generate_output_files(
-                analysis_id=self.analysis_config[":analysis_id"],
-                analysis_name=self.analysis_config[":analysis_name"],
-                results_folder=self.results_folder,
-                s3_bucket=self.analysis_config[":s3_bucket"],
-                compute_environment=self.analysis_config[':compute_environment'])
-        # Kill database if it exists
-        if self.database != None:
-            if self.analysis_config[':kill_database'] == True:
-                message = "Killing Database Server."
-                logging.info(message)
-                print(message)
-                self.database.kill_database()
-            else:
-                message = "Leaving database server running."
-                logging.info(message)
-                print(message)
+        self.generate_output_file(baseline_results=self.baseline_results)
 
-        # Load baseline run data into dataframe.
-        # Add eui_reference to analsys_df
 
     # This method creates a encoder and decoder of the simulation options to integers.  The ML and AI routines use float,
     # conventionally for optimization problems. Since most of the analysis that we do are discrete options for designers
@@ -1514,16 +1562,41 @@ class BTAPAnalysis():
         # problem definition and we need to avoid thread variable issues.
         return run_options
 
+    def generate_output_file(self,baseline_results = None):
+
+        # Process csv file to create single dataframe with all simulation results
+        PostProcessResults(baseline_results=baseline_results, database_folder=self.database_folder, results_folder=self.results_folder).run()
+        excel_path = os.path.join(self.results_folder,'output.xlsx')
+
+        # If this is an aws_batch run, copy the excel file to s3 for storage.
+        if self.analysis_config[':compute_environment'] == 'aws_batch':
+            self.credentials = AWSCredentials()
+            target_path = os.path.join(self.credentials.user_name, self.analysis_config[':analysis_name'], self.analysis_config[':analysis_id'], 'results', 'output.xlsx')
+            # s3 likes forward slashes.
+            target_path = target_path.replace('\\', '/')
+            message = "Uploading %s..." % target_path
+            logging.info(message)
+            S3().upload_file(excel_path, self.analysis_config[':s3_bucket'], target_path)
+        return
+
 
 # Class to Manage parametric runs.
 class BTAPParametric(BTAPAnalysis):
     def __init__(self,
-                 analysis_config_file=None,
+                 analysis_config=None,
+                 building_options = None,
+                 project_root = None,
                  git_api_token=None,
-                 aws_batch=None
+                 aws_batch=None,
+                 baseline_results=None
                  ):
         # Run super initializer to set up default variables.
-        super().__init__(analysis_config_file, git_api_token, aws_batch)
+        super().__init__(analysis_config=analysis_config,
+                         building_options=building_options,
+                         project_root=project_root,
+                         git_api_token=git_api_token,
+                         aws_batch=aws_batch,
+                         baseline_results=baseline_results)
         self.scenarios = []
 
     def run(self):
@@ -1547,10 +1620,10 @@ class BTAPParametric(BTAPAnalysis):
         return_value = None
         if self.analysis_config[':no_of_threads'] == None:
             if self.analysis_config[':compute_environment'] == 'local':
-                if self.file_number < multiprocessing.cpu_count() - 2:
+                if self.file_number < Docker.get_docker_number_of_processes():
                     return_value = self.file_number
                 else:
-                    return_value = multiprocessing.cpu_count() - 2
+                    return_value = Docker.get_docker_number_of_processes()
             elif self.analysis_config[':compute_environment'] == 'aws_batch':
                 return_value = MAX_AWS_VCPUS
         else:
@@ -1612,9 +1685,7 @@ class BTAPParametric(BTAPAnalysis):
         threaded_start = time.time()
         # Using all your processors minus 1.
         print(f'Using {self.get_threads()} threads.')
-        message = f'{self.database.get_num_of_runs_completed(self.analysis_config[":analysis_id"])} of {self.file_number} simulations completed'
-        logging.info(message)
-        print(message)
+
 
         with concurrent.futures.ThreadPoolExecutor(self.get_threads()) as executor:
             futures = []
@@ -1634,11 +1705,11 @@ class BTAPParametric(BTAPAnalysis):
                     failed_datapoints += 1
 
                 # Update user.
-                message = f'TotalRuns:{self.file_number}\tCompleted:{self.database.get_num_of_runs_completed(self.analysis_config[":analysis_id"])}\tFailed:{self.database.get_num_of_runs_failed(self.analysis_config[":analysis_id"])}\tElapsed Time: {str(datetime.timedelta(seconds=round(time.time() - threaded_start)))}'
+                message = f'TotalRuns:{self.file_number}\tCompleted:{self.get_num_of_runs_completed()}\tFailed:{self.get_num_of_runs_failed()}\tElapsed Time: {str(datetime.timedelta(seconds=round(time.time() - threaded_start)))}'
                 logging.info(message)
                 print(message)
         # At end of runs update for users.
-        message = f'{self.file_number} Simulations completed. No. of failures = {self.database.get_num_of_runs_failed(self.analysis_config[":analysis_id"])} Total Time: {str(datetime.timedelta(seconds=round(time.time() - threaded_start)))}'
+        message = f'{self.file_number} Simulations completed. No. of failures = {self.get_num_of_runs_failed()} Total Time: {str(datetime.timedelta(seconds=round(time.time() - threaded_start)))}'
         logging.info(message)
         print(message)
 
@@ -1694,23 +1765,36 @@ class BTAPProblem(ElementwiseProblem):
         # Saves results to database if successful or not.
         self.btap_optimization.save_results_to_database(results)
         analysis_id = self.btap_optimization.analysis_config[':analysis_id']
-        message = f'{self.btap_optimization.database.get_num_of_runs_completed(analysis_id)} simulations completed of {self.btap_optimization.max_number_of_simulations}. No. of failures = {self.btap_optimization.database.get_num_of_runs_failed(analysis_id)}'
+        message = f'{self.btap_optimization.get_num_of_runs_completed()} simulations completed of {self.btap_optimization.max_number_of_simulations}. No. of failures = {self.btap_optimization.get_num_of_runs_failed()}'
         logging.info(message)
         print(message)
 
         # Pass back objective function results.
         objectives = []
         for objective in self.btap_optimization.analysis_config[':algorithm'][':minimize_objectives']:
+            if not (objective in results):
+                raise FailedSimulationException(f"Objective value {objective} not found in results of simulation. Most likely due to failure of simulation runs. Stopping optimization")
             objectives.append(results[objective])
         out["F"] = np.column_stack(objectives)
 
 
 # Class to manage optimization runs.
 class BTAPOptimization(BTAPAnalysis):
-    def __init__(self, analysis_config_file=None, git_api_token=None, aws_batch=None):
-
+    def __init__(self,
+                 analysis_config=None,
+                 building_options = None,
+                 project_root = None,
+                 git_api_token=None,
+                 aws_batch=None,
+                 baseline_results=None
+                 ):
         # Run super initializer to set up default variables.
-        super().__init__(analysis_config_file, git_api_token, aws_batch)
+        super().__init__(analysis_config=analysis_config,
+                         building_options=building_options,
+                         project_root=project_root,
+                         git_api_token=git_api_token,
+                         aws_batch=aws_batch,
+                         baseline_results=baseline_results)
 
     def run(self):
         message = "success"
@@ -1724,7 +1808,7 @@ class BTAPOptimization(BTAPAnalysis):
             self.run_analysis()
 
         except FailedSimulationException as err:
-            message = f"Simulation(s) failed. Optimization cannot continue. Please review failed simulations to determine cause of error in Excel output or if possible the simulation datapoint files. \nLast failure had these inputs:\n\t {err}"
+            message = f"Simulation(s) failed. Optimization cannot continue. Please review failed simulations to determine cause of error in Excel output or if possible the simulation datapoint files. \nLast failure:\n\t {err}"
             logging.error(message)
         except botocore.exceptions.SSLError as err:
             message = f"Certificate Failure. This error occurs when AWS does not trust your security certificate. Either because you are using a VPN or your network is otherwise spoofing IPs. Please ensure that you are not on a VPN or contact your network admin. Error: {err}"
@@ -1739,7 +1823,7 @@ class BTAPOptimization(BTAPAnalysis):
     def get_threads(self):
         if self.analysis_config[':no_of_threads'] == None:
             if self.analysis_config[':compute_environment'] == 'local':
-                cpus = multiprocessing.cpu_count() - 2
+                cpus = Docker.get_docker_number_of_processes()
                 population = self.analysis_config[':algorithm'][':population']
                 if cpus > population:
                     return population
@@ -1806,7 +1890,6 @@ class BTAPOptimization(BTAPAnalysis):
         # problem definition and we need to avoid thread variable issues.
         return len(self.analysis_config[':algorithm'][':minimize_objectives'])
 
-
 # Class to manage lhs runs. Uses Scipy.. Please see link for options explanation
 # https://scikit-optimize.github.io/stable/auto_examples/sampler/initial-sampling-method.html
 class BTAPSamplingLHS(BTAPParametric):
@@ -1838,404 +1921,100 @@ class BTAPSamplingLHS(BTAPParametric):
             self.scenarios.append(run_options)
         return self.scenarios
 
-
 class BTAPIntegratedDesignProcess:
-    def __init__(self, analysis_config_file=None, git_api_token=None, aws_batch=None):
-        self.analysis_config_file = analysis_config_file
-        self.project_root = os.path.dirname(analysis_config_file)
+    def __init__(self,
+                 analysis_config=None,
+                 building_options=None,
+                 project_root=None,
+                 git_api_token=None,
+                 aws_batch=None,
+                 baseline_results = None):
+        self.analysis_config = analysis_config
+        self.building_options = building_options
+        self.project_root = project_root
         self.git_api_token = git_api_token
+        self.aws_batch = aws_batch
+        self.baseline_results = baseline_results
 
     def run(self):
-        # Create Database
-        database = BTAPDatabase()
+        # excel file container.
         output_excel_files = []
 
-        # Load Analysis File into variable
-        if not os.path.isfile(self.analysis_config_file):
-            logging.error(f"could not find analysis input file at {self.analysis_config_file}. Exiting")
-            exit(1)
-        # Open the yaml in analysis dict.
-        with open(self.analysis_config_file, 'r') as stream:
-            analysis = yaml.safe_load(stream)
-        # Run elimination
-        # Change analysis type and options
-        config = copy.deepcopy(analysis)
-        config[':analysis_configuration'][':algorithm'][':type'] = 'elimination'
-        config[':analysis_configuration'][':analysis_name'] = config[':analysis_configuration'][
-                                                                  ':analysis_name'] + '_elim'
-        config[':analysis_configuration'][':kill_database'] = True
 
-        config_file_name = os.path.join(self.project_root, 'elimination.yml')
-        with open(config_file_name, 'w') as file:
-            yaml.dump(config, file)
-        bb = BTAPElimination(analysis_config_file=config_file_name, git_api_token=self.git_api_token)
-        print("running elimination stage")
+        #Elimination block
+        analysis_suffix = '_elim'
+        algorithm_type = 'elimination'
+        temp_analysis_config = copy.deepcopy(self.analysis_config)
+        temp_building_options = copy.deepcopy(self.building_options)
+        temp_analysis_config[':algorithm'][':type'] = algorithm_type
+        temp_analysis_config[':analysis_name'] = temp_analysis_config[':analysis_name'] + analysis_suffix
+        bb = BTAPElimination(analysis_config=temp_analysis_config,
+                            building_options=temp_building_options,
+                            project_root=self.project_root,
+                            git_api_token=self.git_api_token,
+                            aws_batch=self.aws_batch,
+                            baseline_results=self.baseline_results)
+        print(f"running {algorithm_type} stage")
         bb.run()
         output_excel_files.append(os.path.join(bb.results_folder,'output.xlsx'))
-        # Run sensitivity
-        # Change analysis type and options
-        config = copy.deepcopy(analysis)
-        config[':analysis_configuration'][':algorithm'][':type'] = 'sensitivity'
-        config[':analysis_configuration'][':analysis_name'] = config[':analysis_configuration'][
-                                                                  ':analysis_name'] + '_sens'
-        config[':analysis_configuration'][':kill_database'] = True
-        config[':analysis_configuration'][':nocache'] = False
-        config_file_name = os.path.join(self.project_root, 'sensitivity.yml')
-        with open(config_file_name, 'w') as file:
-            yaml.dump(config, file)
-        bb = BTAPSensitivity(analysis_config_file=config_file_name, git_api_token=self.git_api_token)
+
+        # Sensitivity block
+        analysis_suffix = '_sens'
+        algorithm_type = 'sensitivity'
+        temp_analysis_config = copy.deepcopy(self.analysis_config)
+        temp_building_options = copy.deepcopy(self.building_options)
+        temp_analysis_config[':algorithm'][':type'] = algorithm_type
+        temp_analysis_config[':analysis_name'] = temp_analysis_config[':analysis_name'] + analysis_suffix
+        bb = BTAPSensitivity(analysis_config=temp_analysis_config,
+                            building_options=temp_building_options,
+                            project_root=self.project_root,
+                            git_api_token=self.git_api_token,
+                            aws_batch=self.aws_batch,
+                            baseline_results=self.baseline_results)
+        print(f"running {algorithm_type} stage")
         bb.run()
-        output_excel_files.append(os.path.join(bb.results_folder, 'output.xlsx'))
-        # Run optimization
-        # Change analysis type and options
-        config = copy.deepcopy(analysis)
-        config[':analysis_configuration'][':algorithm'][':type'] = 'nsga2'
-        config[':analysis_configuration'][':nocache'] = False
-        config[':analysis_configuration'][':kill_database'] = True
-        config[':analysis_configuration'][':analysis_name'] = config[':analysis_configuration'][
-                                                                  ':analysis_name'] + '_opt'
-        config_file_name = os.path.join(self.project_root, 'optimization.yml')
-        with open(config_file_name, 'w') as file:
-            yaml.dump(config, file)
-        bb = BTAPOptimization(analysis_config_file=config_file_name, git_api_token=self.git_api_token)
+        output_excel_files.append(os.path.join(bb.results_folder,'output.xlsx'))
+
+        # Sensitivity_multi_bldg_cz block
+        analysis_suffix = '_sens_multi_bldg_cz'
+        algorithm_type = 'sensitivity_multi_bldg_cz'
+        temp_analysis_config = copy.deepcopy(self.analysis_config)
+        temp_building_options = copy.deepcopy(self.building_options)
+        temp_analysis_config[':algorithm'][':type'] = algorithm_type
+        temp_analysis_config[':analysis_name'] = temp_analysis_config[':analysis_name'] + analysis_suffix
+        bb = BTAPSensitivity_multi_bldg_cz(analysis_config=temp_analysis_config,
+                                           building_options=temp_building_options,
+                                           project_root=self.project_root,
+                                           git_api_token=self.git_api_token,
+                                           aws_batch=self.aws_batch,
+                                           baseline_results=self.baseline_results)
+        print(f"running {algorithm_type} stage")
         bb.run()
-        output_excel_files.append(os.path.join(bb.results_folder, 'output.xlsx'))
+        output_excel_files.append(os.path.join(bb.results_folder,'output.xlsx'))
+
+        # Sensitivity block
+        analysis_suffix = '_opt'
+        algorithm_type = 'nsga2'
+        temp_analysis_config = copy.deepcopy(self.analysis_config)
+        temp_building_options = copy.deepcopy(self.building_options)
+        temp_analysis_config[':algorithm'][':type'] = algorithm_type
+        temp_analysis_config[':analysis_name'] = temp_analysis_config[':analysis_name'] + analysis_suffix
+        bb = BTAPOptimization(  analysis_config=temp_analysis_config,
+                                building_options=temp_building_options,
+                                project_root=self.project_root,
+                                git_api_token=self.git_api_token,
+                                aws_batch=self.aws_batch,
+                                baseline_results=self.baseline_results)
+        print(f"running {algorithm_type} stage")
+        bb.run()
+        output_excel_files.append(os.path.join(bb.results_folder,'output.xlsx'))
+
+
         # Output results from all analysis into top level output excel.
         df = pd.DataFrame()
         for file in output_excel_files:
             df = df.append(pd.read_excel(file), ignore_index=True)
         df.to_excel(excel_writer=os.path.join(bb.project_root,'output.xlsx'), sheet_name='btap_data')
-
-
-
-# Class to manage local postgres database.
-class BTAPDatabase:
-    # Contructor sets up paths and database options.
-    def __init__(self,
-                 username='docker',
-                 password='docker'):
-        self.credentials = None
-        self.btap_data_df = []
-        self.failed_df = []
-        # docker run -e POSTGRES_USER=docker -e POSTGRES_PASSWORD=docker -e POSTGRES_DB=btap
-        self.docker_client = docker.from_env()
-        message = f"Starting postgres database container on localhost."
-        logging.info(message)
-        print(message)
-        # Checking if container already is running.
-        containers = self.docker_client.containers.list(filters={'name': 'btap_postgres'})
-        if containers:
-            message = f"Found existing database. Using that."
-            logging.info(message)
-            print(message)
-            self.container = containers[0]
-            self.engine = create_engine("postgresql://docker:docker@localhost:5432/btap",
-                                        pool_pre_ping=True,
-                                        pool_size=MAX_AWS_VCPUS,
-                                        max_overflow=50,
-                                        pool_timeout=60)
-        else:
-            try:
-                self.container = self.docker_client.containers.run(
-                    # Local image name to use.
-                    name='btap_postgres',
-                    image='postgres',
-
-                    # Environment args passed to container.
-                    environment=[f"POSTGRES_USER={username}",
-                                 f"POSTGRES_PASSWORD={password}",
-                                 "POSTGRES_DB=btap"],
-                    ports={5432: 5432},
-                    # Will detach from current thread.. don't do it if you don't understand this.
-                    detach=True,
-                    # This deletes the container on exit otherwise the container
-                    # will bloat your system.
-                    auto_remove=True
-                )
-            except docker.errors.APIError as err:
-                message = f"Error creating database. {err}"
-                logging.error(message)
-                exit(1)
-
-            message = f"Waiting for database to initialize..."
-            logging.info(message)
-            print(message)
-            time.sleep(5)
-            self.engine = create_engine("postgresql://docker:docker@localhost:5432/btap",
-                                        pool_pre_ping=True,
-                                        pool_size=MAX_AWS_VCPUS,
-                                        max_overflow=50,
-                                        pool_timeout=60)
-            self.create_btap_database()
-        message = f"DatabaseServer:localhost:5432 DatabaseUserName:{docker} DatabasePassword:{password} DatabaseName:btap"
-
-    def create_btap_database(self):
-        # Create btap_data_table
-        sql_command = '''CREATE TABLE btap_data (
-                    index BIGINT, 
-                    success BOOLEAN, 
-                    eplus_warnings INTEGER,
-                    eplus_severes INTEGER,
-                    eplus_fatals INTEGER,
-                    simulation_time FLOAT(53),
-                    ":os_standards_branch" TEXT, 
-                    ":btap_costing_branch" TEXT, 
-                    ":os_version" TEXT, 
-                    simulation_btap_data_version TEXT, 
-                    simulation_date TEXT, 
-                    simulation_os_standards_revision TEXT, 
-                    simulation_os_standards_version TEXT, 
-                    run_options TEXT, 
-                    ":analysis_name" TEXT, 
-                    ":analysis_id" TEXT, 
-                    ":datapoint_id" TEXT,
-                    ":template" TEXT, 
-                    ":building_type" TEXT,
-                    ":primary_heating_fuel" TEXT,
-                    energy_principal_heating_source TEXT,
-                    ":epw_file" TEXT, 
-                    ":algorithm_type" TEXT,
-                    ":no_of_threads" TEXT,
-                    ":dcv_type" TEXT, 
-                    ":lights_type" TEXT, 
-                    ":ecm_system_name" TEXT, 
-                    ":erv_package" TEXT, 
-                    ":ext_wall_cond" TEXT, 
-                    ":ext_floor_cond" TEXT, 
-                    ":ext_roof_cond" TEXT, 
-                    ":fixed_window_cond" TEXT, 
-                    ":lights_scale" TEXT, 
-                    ":daylighting_type" TEXT, 
-                    ":boiler_eff" TEXT, 
-                    ":furnace_eff" TEXT, 
-                    ":shw_eff" TEXT, 
-                    ":ground_wall_cond" TEXT, 
-                    ":ground_floor_cond" TEXT, 
-                    ":ground_roof_cond" TEXT, 
-                    ":door_construction_cond" TEXT, 
-                    ":glass_door_cond" TEXT, 
-                    ":overhead_door_cond" TEXT, 
-                    ":skylight_cond" TEXT, 
-                    ":glass_door_solar_trans" TEXT, 
-                    ":fixed_wind_solar_trans" TEXT, 
-                    ":skylight_solar_trans" TEXT, 
-                    ":fdwr_set" TEXT, 
-                    ":srr_set" TEXT, 
-                    ":rotation_degrees" TEXT, 
-                    ":scale_x" TEXT, 
-                    ":scale_y" TEXT, 
-                    ":scale_z" TEXT, 
-                    ":pv_ground_type" TEXT, 
-                    ":pv_ground_total_area_pv_panels_m2" TEXT, 
-                    ":pv_ground_tilt_angle" TEXT, 
-                    ":pv_ground_azimuth_angle" TEXT, 
-                    ":pv_ground_module_description" TEXT,
-                    ":adv_dx_units" TEXT,
-                    ":nv_type" TEXT,
-                    ":nv_opening_fraction" TEXT,
-                    ":nv_temp_out_min" TEXT,
-                    ":nv_delta_temp_in_out" TEXT,
-                    ":chiller_type" TEXT,
-                    ":occupancy_loads_scale" TEXT,
-                    ":electrical_loads_scale" TEXT,
-                    ":oa_scale" TEXT,
-                    ":infiltration_scale" TEXT,
-                    ":airloop_economizer_type" TEXT,
-                    ":compute_environment" TEXT, 
-                    ":s3_bucket" TEXT, 
-                    ":image_name" TEXT, 
-                    ":nocache" BOOLEAN, 
-                    ":run_annual_simulation" BOOLEAN, 
-                    ":enable_costing" BOOLEAN,  
-                    ":kill_database" BOOLEAN,  
-                    ":scenario" TEXT,
-                    ":shw_scale" TEXT,
-                    heating_peak_w_per_m_sq FLOAT(53),
-                    cooling_peak_w_per_m_sq FLOAT(53),                  
-                    bc_step_code_tedi_kwh_per_m_sq FLOAT(53),
-                    bc_step_code_meui_kwh_per_m_sq FLOAT(53),
-                    bldg_conditioned_floor_area_m_sq FLOAT(53), 
-                    bldg_exterior_area_m_sq FLOAT(53), 
-                    bldg_fdwr FLOAT(53), 
-                    bldg_name TEXT, 
-                    bldg_nominal_floor_to_ceiling_height TEXT, 
-                    bldg_nominal_floor_to_floor_height TEXT, 
-                    bldg_srr FLOAT(53), 
-                    bldg_standards_building_type TEXT, 
-                    bldg_standards_number_of_above_ground_stories BIGINT, 
-                    bldg_standards_number_of_living_units TEXT, 
-                    bldg_standards_number_of_stories BIGINT, 
-                    bldg_standards_template TEXT, 
-                    bldg_surface_to_volume_ratio FLOAT(53), 
-                    bldg_volume_m_cu FLOAT(53), 
-                    cost_equipment_envelope_total_cost_per_m_sq FLOAT(53), 
-                    cost_equipment_heating_and_cooling_total_cost_per_m_sq FLOAT(53), 
-                    cost_equipment_lighting_total_cost_per_m_sq FLOAT(53), 
-                    cost_equipment_shw_total_cost_per_m_sq FLOAT(53), 
-                    cost_equipment_total_cost_per_m_sq FLOAT(53), 
-                    cost_equipment_ventilation_total_cost_per_m_sq FLOAT(53), 
-                    cost_rs_means_city TEXT, 
-                    cost_rs_means_prov TEXT, 
-                    cost_utility_ghg_electricity_kg_per_m_sq FLOAT(53), 
-                    "cost_utility_ghg_natural gas_kg_per_m_sq" FLOAT(53), 
-                    cost_utility_ghg_oil_kg_per_m_sq FLOAT(53), 
-                    cost_utility_ghg_total_kg_per_m_sq FLOAT(53), 
-                    cost_utility_neb_electricity_cost_per_m_sq FLOAT(53), 
-                    "cost_utility_neb_natural gas_cost_per_m_sq" FLOAT(53), 
-                    cost_utility_neb_oil_cost_per_m_sq FLOAT(53), 
-                    cost_utility_neb_total_cost_per_m_sq FLOAT(53), 
-                    energy_eui_additional_fuel_gj_per_m_sq FLOAT(53), 
-                    energy_eui_cooling_gj_per_m_sq FLOAT(53), 
-                    energy_eui_district_cooling_gj_per_m_sq FLOAT(53), 
-                    energy_eui_district_heating_gj_per_m_sq FLOAT(53), 
-                    energy_eui_electricity_gj_per_m_sq FLOAT(53), 
-                    energy_eui_fans_gj_per_m_sq FLOAT(53), 
-                    "energy_eui_heat recovery_gj_per_m_sq" FLOAT(53), 
-                    energy_eui_heating_gj_per_m_sq FLOAT(53), 
-                    "energy_eui_interior equipment_gj_per_m_sq" FLOAT(53), 
-                    "energy_eui_interior lighting_gj_per_m_sq" FLOAT(53), 
-                    energy_eui_natural_gas_gj_per_m_sq FLOAT(53), 
-                    energy_eui_pumps_gj_per_m_sq FLOAT(53), 
-                    energy_eui_total_gj_per_m_sq FLOAT(53), 
-                    "energy_eui_water systems_gj_per_m_sq" FLOAT(53), 
-                    energy_peak_electric_w_per_m_sq FLOAT(53), 
-                    energy_peak_natural_gas_w_per_m_sq FLOAT(53), 
-                    env_fdwr FLOAT(53), 
-                    "env_ground_floors_average_conductance-w_per_m_sq_k" FLOAT(53), 
-                    "env_ground_roofs_average_conductance-w_per_m_sq_k" TEXT, 
-                    "env_ground_walls_average_conductance-w_per_m_sq_k" TEXT, 
-                    "env_outdoor_doors_average_conductance-w_per_m_sq_k" TEXT, 
-                    "env_outdoor_floors_average_conductance-w_per_m_sq_k" TEXT, 
-                    "env_outdoor_overhead_doors_average_conductance-w_per_m_sq_k" TEXT, 
-                    "env_outdoor_roofs_average_conductance-w_per_m_sq_k" FLOAT(53), 
-                    "env_outdoor_walls_average_conductance-w_per_m_sq_k" FLOAT(53), 
-                    "env_outdoor_windows_average_conductance-w_per_m_sq_k" FLOAT(53), 
-                    "env_skylights_average_conductance-w_per_m_sq_k" TEXT, 
-                    env_srr FLOAT(53), 
-                    location_city TEXT, 
-                    location_country TEXT, 
-                    location_epw_cdd FLOAT(53), 
-                    location_epw_hdd FLOAT(53), 
-                    location_latitude FLOAT(53), 
-                    location_longitude FLOAT(53), 
-                    location_necb_climate_zone TEXT, 
-                    location_necb_hdd FLOAT(53), 
-                    location_state_province_region TEXT, 
-                    location_weather_file TEXT,                     
-                    net_site_eui_gj_per_m_sq FLOAT(53),
-                    peak_cooling_load_w_per_m_sq_necb FLOAT(53),
-                    peak_heating_load_w_per_m_sq_necb FLOAT(53),
-                    phius_annual_cooling_demand_kwh_per_m_sq FLOAT(53),
-                    phius_annual_heating_demand_kwh_per_m_sq FLOAT(53),
-                    phius_necb_meet_cooling_demand BOOLEAN,
-                    phius_necb_meet_cooling_peak_load BOOLEAN,
-                    phius_necb_meet_heating_demand BOOLEAN,
-                    phius_necb_meet_heating_peak_load BOOLEAN,
-                    phius_peak_cooling_load_w_per_m_sq FLOAT(53),
-                    phius_peak_heating_load_w_per_m_sq FLOAT(53),
-                    shw_additional_fuel_per_year FLOAT(53), 
-                    shw_electricity_per_day FLOAT(53), 
-                    shw_electricity_per_day_per_occupant FLOAT(53), 
-                    shw_electricity_per_year FLOAT(53), 
-                    shw_natural_gas_per_year FLOAT(53),
-                    shw_total_nominal_occupancy FLOAT(53), 
-                    shw_water_m_cu_per_day FLOAT(53), 
-                    shw_water_m_cu_per_day_per_occupant FLOAT(53), 
-                    shw_water_m_cu_per_year FLOAT(53), 
-                    "energy_eui_heat rejection_gj_per_m_sq" FLOAT(53), 
-                    total_site_eui_gj_per_m_sq FLOAT(53),
-                    unmet_hours_cooling FLOAT(53),
-                    unmet_hours_cooling_during_occupied FLOAT(53),
-                    unmet_hours_heating FLOAT(53),
-                    unmet_hours_heating_during_occupied FLOAT(53),
-                    container_output TEXT,
-                    datapoint_output_url TEXT,
-                    ":btap_batch_version" TEXT,
-                    container_error TEXT,
-                    docker_command TEXT
-                )'''
-        with self.engine.connect() as con:
-            rs = con.execute(sql_command)
-
-    def get_engine(self):
-        return self.engine
-
-    def get_num_of_runs_completed(self, analysis_id=None):
-        if not sqlalchemy.inspect(self.engine).has_table('btap_data'):
-            return 0
-        else:
-            if analysis_id == None:
-                command = f'SELECT COUNT(*) FROM btap_data'
-            else:
-                command = f'SELECT COUNT(*) FROM btap_data WHERE ":analysis_id" = \'{analysis_id}\''
-
-            result = self.engine.connect().execute(command)
-            return ([dict(row) for row in result][0]['count'])
-
-    def get_num_of_runs_failed(self, analysis_id=None):
-        if not sqlalchemy.inspect(self.engine).has_table('btap_data'):
-            return 0
-        else:
-            if analysis_id == None:
-                command = f'SELECT COUNT(*) FROM btap_data AND "success" = False'
-            else:
-                command = f'SELECT COUNT(*) FROM btap_data WHERE ":analysis_id" = \'{analysis_id}\' AND "success" = False'
-
-            result = self.engine.connect().execute(command)
-            return ([dict(row) for row in result][0]['count'])
-
-    def generate_output_files(self,
-                              analysis_name=None,
-                              analysis_id=None,
-                              results_folder=None,
-                              s3_bucket=None,
-                              compute_environment='local'):
-
-        # Create link to database and read all high level simulations into a dataframe.
-        sql_engine = self.get_engine()
-        sql_connection = sql_engine.connect()
-        if self.get_num_of_runs_completed(analysis_id) > 0:
-            if analysis_id == None:
-                # Get all runs in database.
-                self.btap_data_df = pd.read_sql_table('btap_data', sql_connection)
-            else:
-                command = f'SELECT * FROM btap_data WHERE ":analysis_id" = \'{analysis_id}\''
-                self.btap_data_df = pd.read_sql_query(command, sql_engine)
-
-            # PostProcess comparison to baselines.
-            self.btap_data_df = PostProcessResults().run(btap_data_df=self.btap_data_df, results_folder=results_folder)
-
-        sql_connection.close()
-
-        # output to excel
-        excel_path = os.path.join(results_folder, 'output.xlsx')
-        writer = pd.ExcelWriter(excel_path)
-
-        # btap_data from sql to excel writer
-        if isinstance(self.btap_data_df, pd.DataFrame):
-            self.btap_data_df.to_excel(writer, sheet_name='btap_data')
-        else:
-            message = 'No simulations completed.'
-            logging.error(message)
-
-        # If this is an aws_batch run, copy the excel file to s3 for storage.
-        if compute_environment == 'aws_batch':
-            self.credentials = AWSCredentials()
-            target_path = os.path.join(self.credentials.user_name, analysis_name, analysis_id, 'results', 'output.xlsx')
-            # s3 likes forward slashes.
-            target_path = target_path.replace('\\', '/')
-            message = "Uploading %s..." % target_path
-            logging.info(message)
-            S3().upload_file(excel_path, s3_bucket, target_path)
-
-        writer.close()
-        # https://stackoverflow.com/questions/56751070/pandas-xlsxwriter-writer-close-does-not-completely-close-the-excel-file
-        writer.handles = None
-        return self.btap_data_df, self.failed_df
-
-    def kill_database(self):
-        self.container.remove(force=True)
-
 
 class BTAPElimination(BTAPParametric):
 
@@ -2271,7 +2050,6 @@ class BTAPElimination(BTAPParametric):
         message = f'Number of Scenarios {len(self.scenarios)}'
         logging.info(message)
         return self.scenarios
-
 
 class BTAPSensitivity(BTAPParametric):
     def compute_scenarios(self):
@@ -2322,171 +2100,201 @@ class BTAPSensitivity_multi_bldg_cz(BTAPParametric): # Sensitivity runs for mult
         logging.info(message)
         return self.scenarios
 
+class BTAPPreflight(BTAPParametric):
+    def compute_scenarios(self):
+        # Create default options scenario. Uses first value of all arrays.
+        #precheck osm files for errors.
+        osm_files = {}
+        all_osm_files = self.get_local_osm_files()
+        for filepath in all_osm_files:
+            if  filepath in self.building_options[':building_type']:
+                osm_files[filepath] = all_osm_files[filepath]
+        #iterate through files.
+        for osm_file in osm_files:
+            run_option = copy.deepcopy(self.building_options)
+            # Set all options to nil/none.
+            for key, value in self.building_options.items():
+                run_option[key] = None
+            # lock weather location and other items.. this is simply to check if the osm files will run.
+            run_option[':epw_file'] = 'CAN_QC_Montreal-Trudeau.Intl.AP.716270_CWEC2016.epw'
+            run_option[':algorithm_type'] = self.analysis_config[':algorithm'][':type']
+            run_option[':template'] = 'NECB2011'
+            run_option[':primary_heating_fuel'] = 'Electricity'
+            # set osm file to pretest..if any.
+            run_option[':building_type'] = osm_file
+            #check basic items are in file.
+            self.check_list(osm_files[osm_file])
+            self.scenarios.append(run_option)
+
+        message = f'Number of Scenarios {len(self.scenarios)}'
+        logging.info(message)
+        return self.scenarios
+
+class BTAPReference(BTAPParametric):
+    def compute_scenarios(self):
+        # Create default options scenario. Uses first value of all arrays.
+        #precheck osm files for errors.
+        osm_files = {}
+        all_osm_files = self.get_local_osm_files()
+        for bt in self.building_options[':building_type']:
+            for fuel_type in self.building_options[':primary_heating_fuel']:
+                for epw in self.building_options[':epw_file']:
+                    for template in self.building_options[':template']:
+                        run_option = copy.deepcopy(self.building_options)
+                        # Set all options to nil/none.
+                        for key, value in self.building_options.items():
+                            run_option[key] = None
+                        run_option[':epw_file'] = epw
+                        run_option[':algorithm_type'] = self.analysis_config[':algorithm'][':type']
+                        run_option[':template'] = template
+                        run_option[':primary_heating_fuel'] = fuel_type
+                        # set osm file to pretest..if any.
+                        run_option[':building_type'] = bt
+                        self.scenarios.append(run_option)
+        message = f'Number of Scenarios {len(self.scenarios)}'
+        logging.info(message)
+        return self.scenarios
+
 # This class processed the btap_batch file to add columns as needed. This is a separate class as this can be applied
 # independant of simulation runs and optionally at simulation time as well if desired,but may have to make this
 # thread-safe if we do.
 class PostProcessResults:
-    def run(self,
-            baseline=BASELINE_RESULTS,
-            btap_data_df=None,
-            results_folder=None):
+    def __init__(self,
+                baseline_results=BASELINE_RESULTS,
+                database_folder=None,
+                results_folder=None):
+
+        filepaths = [os.path.join(database_folder, f) for f in os.listdir(database_folder) if f.endswith('.csv')]
+        btap_data_df = pd.concat(map(pd.read_csv, filepaths))
+        btap_data_df.reset_index()
+
+
         if isinstance(btap_data_df, pd.DataFrame):
-            analysis_df = btap_data_df
+            self.btap_data_df = btap_data_df
         else:
-            analysis_df = pd.read_excel(open(btap_data_df, 'rb'), sheet_name='btap_data')
-
-        self.economics(analysis_df, baseline)
-
-        download_file_paths = ['run_dir/run/in.osm',
-                               'run_dir/run/eplustbl.htm',
-                               'hourly.csv']
-        for file_path in download_file_paths:
-            self.get_files(analysis_df, results_folder, file_path=file_path )
-
-        return analysis_df
-
-    def hourly_data(self, analysis_df, output_folder):
-        message = f"Getting hourly data"
-        logging.info(message)
-        print(message)
-        # Iterate through each datapoint in analysis and collect hourly data.
-        hourly_folder = os.path.join(output_folder, 'hourly_data')
-        os.makedirs(hourly_folder, exist_ok=True)
-        s3 = boto3.resource('s3')
-        for index, row in analysis_df.iterrows():
-            if row['success'] == True:
-                if row['datapoint_output_url'].startswith('file:///'):
-                    # This is a local file. use system copy. First remove prefix
-                    hourly_data_path = os.path.join(row['datapoint_output_url'][len('file:///'):], 'hourly.csv')
-                    shutil.copyfile(hourly_data_path, os.path.join(hourly_folder, row[':datapoint_id'] + '.csv'))
-                elif row['datapoint_output_url'].startswith('https://s3'):
-                    p = re.compile(
-                        "https:\/\/s3\.console\.aws\.amazon\.com\/s3\/buckets\/(\d*)\?region=(.*)\&prefix=(.*)")
-                    m = p.match(row['datapoint_output_url'])
-                    bucket = m.group(1)
-                    region = m.group(2)
-                    prefix = m.group(3)
-                    csv_location = prefix + 'hourly.csv'
-                    target = os.path.join(hourly_folder, row[':datapoint_id'] + '.csv')
-                    message = f"Getting hourly data from S3 bucket {bucket} at path {csv_location} to {target}"
-                    logging.info(message)
-                    try:
-                        s3.Bucket(bucket).download_file(csv_location, target)
-                    except botocore.exceptions.ClientError as e:
-                        if e.response['Error']['Code'] == "404":
-                            print("The object does not exist.")
-                        else:
-                            raise
+            self.btap_data_df = pd.read_excel(open(btap_data_df, 'rb'), sheet_name='btap_data')
+        self.baseline_results = baseline_results
+        self.results_folder = results_folder
 
 
+    def run(self):
+        self.reference_comparisons()
+        self.get_files(file_paths=['run_dir/run/in.osm','run_dir/run/eplustbl.htm','hourly.csv'] )
+        self.save_excel_output()
+        return self.btap_data_df
 
-    def get_files(self, analysis_df, results_folder, file_path =r'run_dir/run/in.osm'):
-        pathlib.Path(os.path.dirname(results_folder)).mkdir(parents=True, exist_ok=True)
-        filename = os.path.basename(file_path)
-        extension = pathlib.Path(filename).suffix
-        message = f"Getting {filename} files"
-        logging.info(message)
-        print(message)
-        bin_folder = os.path.join(results_folder, filename)
-        os.makedirs(bin_folder, exist_ok=True)
-        s3 = boto3.resource('s3')
-        for index, row in analysis_df.iterrows():
-                if row['datapoint_output_url'].startswith('file:///'):
-                    # This is a local file. use system copy. First remove prefix
-                    local_file_path = os.path.join(row['datapoint_output_url'][len('file:///'):], file_path)
-                    if os.path.isfile(local_file_path):
-                        shutil.copyfile(local_file_path, os.path.join(bin_folder, row[':datapoint_id'] + extension))
-                    #shutil.copyfile(local_file_path, os.path.join(bin_folder, row[':datapoint_id'] + extension))
-                elif row['datapoint_output_url'].startswith('https://s3'):
-                    p = re.compile(
-                        "https:\/\/s3\.console\.aws\.amazon\.com\/s3\/buckets\/(\d*)\?region=(.*)\&prefix=(.*)")
-                    m = p.match(row['datapoint_output_url'])
-                    bucket = m.group(1)
-                    region = m.group(2)
-                    prefix = m.group(3)
-                    s3_file_path = prefix + file_path
-                    target = os.path.join(bin_folder, row[':datapoint_id'] + extension)
-                    message = f"Getting osm file from S3 bucket {bucket} at path {s3_file_path} to {target}"
-                    logging.info(message)
-                    print(message)
-                    try:
-                        s3.Bucket(bucket).download_file(s3_file_path, target)
-                    except botocore.exceptions.ClientError as e:
-                        if e.response['Error']['Code'] == "404":
-                            print("The object does not exist.")
-                        else:
-                            raise
+    def get_files(self, file_paths =[r'run_dir/run/in.osm']):
+        for file_path in file_paths:
+            pathlib.Path(os.path.dirname(self.results_folder)).mkdir(parents=True, exist_ok=True)
+            filename = os.path.basename(file_path)
+            extension = pathlib.Path(filename).suffix
+            message = f"Getting {filename} files"
+            logging.info(message)
+            print(message)
+            bin_folder = os.path.join(self.results_folder, filename)
+            os.makedirs(bin_folder, exist_ok=True)
+            s3 = boto3.resource('s3')
+            for index, row in self.btap_data_df.iterrows():
+                    if row['datapoint_output_url'].startswith('file:///'):
+                        # This is a local file. use system copy. First remove prefix
+                        local_file_path = os.path.join(row['datapoint_output_url'][len('file:///'):], file_path)
+                        if os.path.isfile(local_file_path):
+                            shutil.copyfile(local_file_path, os.path.join(bin_folder, row[':datapoint_id'] + extension))
+                        #shutil.copyfile(local_file_path, os.path.join(bin_folder, row[':datapoint_id'] + extension))
+                    elif row['datapoint_output_url'].startswith('https://s3'):
+                        p = re.compile(
+                            "https:\/\/s3\.console\.aws\.amazon\.com\/s3\/buckets\/(\d*)\?region=(.*)\&prefix=(.*)")
+                        m = p.match(row['datapoint_output_url'])
+                        bucket = m.group(1)
+                        region = m.group(2)
+                        prefix = m.group(3)
+                        s3_file_path = prefix + file_path
+                        target = os.path.join(bin_folder, row[':datapoint_id'] + extension)
+                        message = f"Getting file from S3 bucket {bucket} at path {s3_file_path} to {target}"
+                        logging.info(message)
+                        print(message)
+                        try:
+                            s3.Bucket(bucket).download_file(s3_file_path, target)
+                        except botocore.exceptions.ClientError as e:
+                            if e.response['Error']['Code'] == "404":
+                                print("The object does not exist.")
+                            else:
+                                raise
 
-
-
-
-    def save_excel_output(self, output_folder, btap_data_df, failed_df):
+    def save_excel_output(self):
         # Create excel object
-        excel_path = os.path.join(output_folder, 'output.xlsx')
+        excel_path = os.path.join(self.results_folder, 'output.xlsx')
         with pd.ExcelWriter(excel_path) as writer:
-            if isinstance(btap_data_df, pd.DataFrame):
-                btap_data_df.to_excel(writer, index=False, sheet_name='btap_data')
+            if isinstance(self.btap_data_df, pd.DataFrame):
+                self.btap_data_df.to_excel(writer, index=False, sheet_name='btap_data')
+                message = f'Saved Excel Output: {excel_path}'
+                logging.info(message)
+                print(message)
             else:
                 message = 'No simulations completed.'
                 logging.error(message)
 
-            # Wrtie excel
-            if isinstance(failed_df, pd.DataFrame) or isinstance(btap_data_df, pd.DataFrame):
-                message = f'Saving Excel Output: {excel_path}'
-                logging.info(message)
-                print(message)
 
-    def economics(self, analysis_df, baseline):
-        file = open(baseline, 'rb')
-        baseline_df = pd.read_excel(file, sheet_name='btap_data')
-        file.close()
-        merge_columns = [':building_type', ':template', ':primary_heating_fuel', ':epw_file']
-        df = pd.merge(analysis_df, baseline_df, how='left', left_on=merge_columns, right_on=merge_columns)
-        analysis_df['baseline_savings_energy_cost_per_m_sq'] = round(
-            (df['cost_utility_neb_total_cost_per_m_sq_x'] - df[
-                'cost_utility_neb_total_cost_per_m_sq_y']), 1)
-        analysis_df['baseline_difference_cost_equipment_total_cost_per_m_sq'] = round(
-            (df['cost_utility_neb_total_cost_per_m_sq_x'] - df[
-                'cost_utility_neb_total_cost_per_m_sq_y']), 1)
-        analysis_df['baseline_simple_payback_years'] = round(
-            (analysis_df['baseline_difference_cost_equipment_total_cost_per_m_sq'] / analysis_df[
-                'baseline_savings_energy_cost_per_m_sq']), 1)
-        analysis_df['baseline_peak_electric_percent_better'] = round(((df['energy_peak_electric_w_per_m_sq_y'] - df[
-            'energy_peak_electric_w_per_m_sq_x']) * 100.0 / df['energy_peak_electric_w_per_m_sq_y']), 1)
-        analysis_df['baseline_energy_percent_better'] = round(((df['energy_eui_total_gj_per_m_sq_y'] - df[
-            'energy_eui_total_gj_per_m_sq_x']) * 100 / df['energy_eui_total_gj_per_m_sq_y']), 1)
-        analysis_df['baseline_necb_tier'] = pd.cut(analysis_df['baseline_energy_percent_better'],
-                                                   bins=[-1000.0, -0.001, 25.00, 50.00, 60.00, 1000.0],
-                                                   labels=['non_compliant', 'tier_1', 'tier_2', 'tier_3', 'tier_4'])
-        analysis_df['baseline_ghg_percent_better'] = round(((df['cost_utility_ghg_total_kg_per_m_sq_y'] - df[
-            'cost_utility_ghg_total_kg_per_m_sq_x']) * 100 / df['cost_utility_ghg_total_kg_per_m_sq_y']), 1)
-        # NPV commented out for now.
-        # province = 'Quebec'
-        # npv_end_year = 2050
-        # ngas_rate = ceb_fuel_df.loc[(ceb_fuel_df['province'] == province) & (ceb_fuel_df['fuel_type'] == 'Natural Gas'),str(npv_start_year):str(npv_end_year)].iloc[0].reset_index(drop=True,name='values')
-        # elec_rate = ceb_fuel_df.loc[(ceb_fuel_df['province'] == province) & (ceb_fuel_df['fuel_type'] == 'Electricity'),str(npv_start_year):str(npv_end_year)].iloc[0].reset_index(drop=True, name='values')
-        # fueloil_rate = ceb_fuel_df.loc[(ceb_fuel_df['province'] == province) & (ceb_fuel_df['fuel_type'] == 'Oil'),str(npv_start_year):str(npv_end_year)].iloc[0].reset_index(drop=True, name='values')
-        #
-        # df = pd.concat([ngas_rate,elec_rate,fueloil_rate], axis=1,keys=['ngas_cost_per_gj','elec_cost_per_gj','oil_cost_per_gj'])
-        # df['saving_ngas_gj_per_m2'] = 50.0
-        # df['saving_elec_gj_per_m2'] = 50.0
-        # df['saving_oil_gj_per_m2'] = 50.0
-        # df['ngas_saving_per_m2'] = df['ngas_cost_per_gj'] * df['saving_ngas_gj_per_m2']
-        # df['elec_saving_per_m2'] = df['elec_cost_per_gj'] * df['saving_elec_gj_per_m2']
-        # df['oil_saving_per_m2'] =  df['oil_cost_per_gj'] * df['saving_oil_gj_per_m2']
-        # df['total_savings_per_m2'] = df['ngas_saving_per_m2'] + df['oil_saving_per_m2'] +df['oil_saving_per_m2']
-        # df['total_discounted_savings_per_m2'] = pv(rate=npv_discount_rate, pmt=0, nper=df.index, fv=-df['total_savings_per_m2'])
-        # df['total_cumulative_dicounted_savings_per_m2'] = np.cumsum(df['total_discounted_savings_per_m2'])
-        # print(df)
-        #
-        # final_full_year = df[df['total_cumulative_dicounted_savings_per_m2'] < 0].index.values.max()
-        # fractional_yr = -df['total_cumulative_dicounted_savings_per_m2'][final_full_year] / df['total_discounted_savings_per_m2'][final_full_year + 1]
-        # payback_period = final_full_year + fractional_yr
-        # print(payback_period)
+    def reference_comparisons(self):
+        if self.baseline_results != None:
+            file = open(self.baseline_results, 'rb')
+            self.baseline_df = pd.read_excel(file, sheet_name='btap_data')
+            file.close()
+            merge_columns = [':building_type', ':template', ':primary_heating_fuel', ':epw_file']
+            df = pd.merge(self.btap_data_df, self.baseline_df, how='left', left_on=merge_columns, right_on=merge_columns).reset_index()
+            self.btap_data_df['baseline_savings_energy_cost_per_m_sq'] = round(
+                (df['cost_utility_neb_total_cost_per_m_sq_x'] - df[
+                    'cost_utility_neb_total_cost_per_m_sq_y']), 1).values
+
+            self.btap_data_df['baseline_difference_cost_equipment_total_cost_per_m_sq'] = round(
+                (df['cost_utility_neb_total_cost_per_m_sq_x'] - df[
+                    'cost_utility_neb_total_cost_per_m_sq_y']), 1).values
+
+            self.btap_data_df['baseline_simple_payback_years'] = round(
+                (self.btap_data_df['baseline_difference_cost_equipment_total_cost_per_m_sq'] / self.btap_data_df[
+                    'baseline_savings_energy_cost_per_m_sq']), 1).values
+
+            self.btap_data_df['baseline_peak_electric_percent_better'] = round(((df['energy_peak_electric_w_per_m_sq_y'] - df[
+                'energy_peak_electric_w_per_m_sq_x']) * 100.0 / df['energy_peak_electric_w_per_m_sq_y']), 1).values
+
+            self.btap_data_df['baseline_energy_percent_better'] = round(((df['energy_eui_total_gj_per_m_sq_y'] - df[
+                'energy_eui_total_gj_per_m_sq_x']) * 100 / df['energy_eui_total_gj_per_m_sq_y']), 1).values
+
+            self.btap_data_df['baseline_necb_tier'] = pd.cut(self.btap_data_df['baseline_energy_percent_better'],
+                                                       bins=[-1000.0, -0.001, 25.00, 50.00, 60.00, 1000.0],
+                                                       labels=['non_compliant', 'tier_1', 'tier_2', 'tier_3', 'tier_4']).values
+
+            self.btap_data_df['baseline_ghg_percent_better'] = round(((df['cost_utility_ghg_total_kg_per_m_sq_y'] - df[
+                'cost_utility_ghg_total_kg_per_m_sq_x']) * 100 / df['cost_utility_ghg_total_kg_per_m_sq_y']), 1).values
+
+        def economics(self):
+            print("NPV disabled at the moment.")
+            # NPV commented out for now.
+            # province = 'Quebec'
+            # npv_end_year = 2050
+            # ngas_rate = ceb_fuel_df.loc[(ceb_fuel_df['province'] == province) & (ceb_fuel_df['fuel_type'] == 'Natural Gas'),str(npv_start_year):str(npv_end_year)].iloc[0].reset_index(drop=True,name='values')
+            # elec_rate = ceb_fuel_df.loc[(ceb_fuel_df['province'] == province) & (ceb_fuel_df['fuel_type'] == 'Electricity'),str(npv_start_year):str(npv_end_year)].iloc[0].reset_index(drop=True, name='values')
+            # fueloil_rate = ceb_fuel_df.loc[(ceb_fuel_df['province'] == province) & (ceb_fuel_df['fuel_type'] == 'Oil'),str(npv_start_year):str(npv_end_year)].iloc[0].reset_index(drop=True, name='values')
+            #
+            # df = pd.concat([ngas_rate,elec_rate,fueloil_rate], axis=1,keys=['ngas_cost_per_gj','elec_cost_per_gj','oil_cost_per_gj'])
+            # df['saving_ngas_gj_per_m2'] = 50.0
+            # df['saving_elec_gj_per_m2'] = 50.0
+            # df['saving_oil_gj_per_m2'] = 50.0
+            # df['ngas_saving_per_m2'] = df['ngas_cost_per_gj'] * df['saving_ngas_gj_per_m2']
+            # df['elec_saving_per_m2'] = df['elec_cost_per_gj'] * df['saving_elec_gj_per_m2']
+            # df['oil_saving_per_m2'] =  df['oil_cost_per_gj'] * df['saving_oil_gj_per_m2']
+            # df['total_savings_per_m2'] = df['ngas_saving_per_m2'] + df['oil_saving_per_m2'] +df['oil_saving_per_m2']
+            # df['total_discounted_savings_per_m2'] = pv(rate=npv_discount_rate, pmt=0, nper=df.index, fv=-df['total_savings_per_m2'])
+            # df['total_cumulative_dicounted_savings_per_m2'] = np.cumsum(df['total_discounted_savings_per_m2'])
+            # print(df)
+            #
+            # final_full_year = df[df['total_cumulative_dicounted_savings_per_m2'] < 0].index.values.max()
+            # fractional_yr = -df['total_cumulative_dicounted_savings_per_m2'][final_full_year] / df['total_discounted_savings_per_m2'][final_full_year + 1]
+            # payback_period = final_full_year + fractional_yr
+            # print(payback_period)
 
 
-# Main method that researchers will interface with. If this gets bigger, consider a factory method pattern.
-def btap_batch(analysis_config_file=None, git_api_token=None, aws_batch=None):
+def load_btap_yml_file(analysis_config_file):
     # Load Analysis File into variable
     if not os.path.isfile(analysis_config_file):
         logging.error(f"could not find analysis input file at {analysis_config_file}. Exiting")
@@ -2494,80 +2302,168 @@ def btap_batch(analysis_config_file=None, git_api_token=None, aws_batch=None):
     # Open the yaml in analysis dict.
     with open(analysis_config_file, 'r') as stream:
         analysis = yaml.safe_load(stream)
+    # Store analysis config and building_options.
+    analysis_config = analysis[':analysis_configuration']
+    building_options = analysis[':building_options']
+    return analysis_config, building_options
 
-    print(f"Compute Environment:{analysis[':analysis_configuration'][':compute_environment']}")
-    print(f"Analysis Type:{analysis[':analysis_configuration'][':algorithm'][':type']}")
+def get_threads(analysis_config):
+    cpus = Docker.get_docker_number_of_processes()
+    if analysis_config[':no_of_threads'] == None:
+        if analysis_config[':compute_environment'] == 'local':
+                return cpus
+        elif analysis_config[':compute_environment'] == 'aws_batch':
+            return MAX_AWS_VCPUS
+    else:
+        return analysis_config[':no_of_threads']
 
-    # If nsga2 optimization
-    if analysis[':analysis_configuration'][':algorithm'][':type'] == 'sampling-lhs':
-        opt = BTAPSamplingLHS(
+# Main method that researchers will interface with. If this gets bigger, consider a factory method pattern.
+def btap_batch(analysis_config_file=None, git_api_token=None, aws_batch=None):
+    # Load Analysis File into variable
+    if not os.path.isfile(analysis_config_file):
+        logging.error(f"could not find analysis input file at {analysis_config_file}. Exiting")
+        exit(1)
+    # Open the yaml in analysis dict
+    analysis_config, building_options = load_btap_yml_file(analysis_config_file)
+    project_root = os.path.dirname(analysis_config_file)
+
+    print(f"Compute Environment:{analysis_config[':compute_environment']}")
+    print(f"Analysis Type:{analysis_config[':algorithm'][':type']}")
+
+    if analysis_config[':compute_environment'] == 'aws_batch' and aws_batch is None:
+        # create aws image, set up aws compute env and create workflow queue.
+        # Set Analysis Id if not set
+        if (not ':analysis_id' in analysis_config ) or analysis_config[':analysis_id'] is None:
+            analysis_config[':analysis_id'] = str(uuid.uuid4())
+
+        aws_batch = AWSBatch(
+            analysis_id=analysis_config[':analysis_id'],
+            btap_image_name=analysis_config[':image_name'],
+            rebuild_image=analysis_config[':nocache'],
+            git_api_token=git_api_token,
+            os_version=analysis_config[':os_version'],
+            btap_costing_branch=analysis_config[':btap_costing_branch'],
+            os_standards_branch=analysis_config[':os_standards_branch'],
+            threads=get_threads(analysis_config)
+        )
+        # Create batch queue on aws.
+        aws_batch.create_batch_workflow()
+
+    baseline_results = None
+    # Ensure reference run is executed in all other cases unless :run_reference is false.
+    if (not ':run_reference' in analysis_config) or (analysis_config[':run_reference'] != False ) or (analysis_config[':run_reference'] is None):
+        # Run reference simulations first.
+
+        analysis_suffix = '_ref'
+        algorithm_type = 'reference'
+        temp_analysis_config = copy.deepcopy(analysis_config)
+        temp_building_options = copy.deepcopy(building_options)
+        temp_analysis_config[':algorithm'][':type'] = algorithm_type
+        temp_analysis_config[':analysis_name'] = temp_analysis_config[':analysis_name'] + analysis_suffix
+        bb = BTAPReference(analysis_config=temp_analysis_config,
+                            building_options=temp_building_options,
+                            project_root=project_root,
+                            git_api_token=git_api_token,
+                            aws_batch=aws_batch)
+        print(f"running {algorithm_type} stage")
+        bb.run()
+        baseline_results = os.path.join(bb.results_folder, 'output.xlsx')
+
+
+    # pre-flight
+    if analysis_config[':algorithm'][':type'] == 'pre-flight':
+        opt = BTAPPreflight(
             # Input file.
-            analysis_config_file=analysis_config_file,
+            analysis_config=analysis_config,
+            building_options=building_options,
+            project_root=project_root,
             git_api_token=git_api_token,
             aws_batch=aws_batch
         )
         return opt
-
-    # If nsga2 optimization
-    if analysis[':analysis_configuration'][':algorithm'][':type'] == 'nsga2':
-        opt = BTAPOptimization(
-            # Input file.
-            analysis_config_file=analysis_config_file,
-            git_api_token=git_api_token,
-            aws_batch=aws_batch
-        )
-        return opt
-    elif analysis[':analysis_configuration'][':algorithm'][':type'] == 'parametric':
-        bb = BTAPParametric(
-            # Input file.
-            analysis_config_file=analysis_config_file,
-            git_api_token=git_api_token,
-            aws_batch=aws_batch
-        )
-        return bb
-    elif analysis[':analysis_configuration'][':algorithm'][':type'] == 'elimination':
-        bb = BTAPElimination(
-            # Input file.
-            analysis_config_file=analysis_config_file,
-            git_api_token=git_api_token,
-            aws_batch=aws_batch
-        )
-        return bb
-    elif analysis[':analysis_configuration'][':algorithm'][':type'] == 'sensitivity':
-        bb = BTAPSensitivity(
-            # Input file.
-            analysis_config_file=analysis_config_file,
-            git_api_token=git_api_token,
-            aws_batch=aws_batch
-        )
-        return bb
-    elif analysis[':analysis_configuration'][':algorithm'][':type'] == 'sensitivity_multi_bldg_cz':
-        bb = BTAPSensitivity_multi_bldg_cz(
-            # Input file.
-            analysis_config_file=analysis_config_file,
-            git_api_token=git_api_token,
-            aws_batch=aws_batch
-        )
-        return bb
-    elif analysis[':analysis_configuration'][':algorithm'][':type'] == 'idp':
-        bb = BTAPIntegratedDesignProcess(
-            # Input file.
-            analysis_config_file=analysis_config_file,
-            git_api_token=git_api_token,
-            aws_batch=aws_batch
-        )
-        return bb
-    elif analysis[':analysis_configuration'][':algorithm'][':type'] == 'osm_batch':
+    elif analysis_config[':algorithm'][':type'] == 'reference':
+        # Run reference simulations first.
+        analysis_suffix = '_ref'
+        algorithm_type = 'reference'
+        temp_analysis_config = copy.deepcopy(analysis_config)
+        temp_building_options = copy.deepcopy(building_options)
+        temp_analysis_config[':algorithm'][':type'] = algorithm_type
+        temp_analysis_config[':analysis_name'] = temp_analysis_config[':analysis_name'] + analysis_suffix
+        bb = BTAPReference(analysis_config=temp_analysis_config,
+                           building_options=temp_building_options,
+                           project_root=project_root,
+                           git_api_token=git_api_token,
+                           aws_batch=aws_batch)
+        print(f"running {algorithm_type} stage")
+        bb.run()
+    # LHS
+    elif analysis_config[':algorithm'][':type'] == 'sampling-lhs':
+        return BTAPSamplingLHS(analysis_config=analysis_config,
+                               building_options=building_options,
+                               project_root=project_root,
+                               git_api_token=git_api_token,
+                               aws_batch=aws_batch,
+                               baseline_results=baseline_results)
+    # nsga2
+    elif analysis_config[':algorithm'][':type'] == 'nsga2':
+        return BTAPOptimization(analysis_config=analysis_config,
+                                building_options=building_options,
+                                project_root=project_root,
+                                git_api_token=git_api_token,
+                                aws_batch=aws_batch,
+                                baseline_results=baseline_results)
+    # parametric
+    elif analysis_config[':algorithm'][':type'] == 'parametric':
+        return BTAPParametric(analysis_config=analysis_config,
+                              building_options=building_options,
+                              project_root=project_root,
+                              git_api_token=git_api_token,
+                              aws_batch=aws_batch,
+                              baseline_results=baseline_results)
+    # elimination
+    elif analysis_config[':algorithm'][':type'] == 'elimination':
+        return BTAPElimination(analysis_config=analysis_config,
+                               building_options=building_options,
+                               project_root=project_root,
+                               git_api_token=git_api_token,
+                               aws_batch=aws_batch,
+                               baseline_results=baseline_results)
+    # Sensitivity
+    elif analysis_config[':algorithm'][':type'] == 'sensitivity':
+        return BTAPSensitivity(analysis_config=analysis_config,
+                               building_options=building_options,
+                               project_root=project_root,
+                               git_api_token=git_api_token,
+                               aws_batch=aws_batch,
+                               baseline_results=baseline_results)
+    # Sensitivity_multi_bldg_cz
+    elif analysis_config[':algorithm'][':type'] == 'sensitivity_multi_bldg_cz':
+        return BTAPSensitivity(analysis_config=analysis_config,
+                               building_options=building_options,
+                               project_root=project_root,
+                               git_api_token=git_api_token,
+                               aws_batch=aws_batch,
+                               baseline_results=baseline_results)
+    #IDP
+    elif analysis_config[':algorithm'][':type'] == 'idp':
+        return BTAPIntegratedDesignProcess(analysis_config=analysis_config,
+                                           building_options=building_options,
+                                           project_root=project_root,
+                                           git_api_token=git_api_token,
+                                           aws_batch=aws_batch,
+                                           baseline_results=baseline_results)
+    # osm_batch
+    elif analysis_config[':algorithm'][':type'] == 'osm_batch':
         # Need to force this to use the NECB2011 standards class for now.
-        bb = BTAPParametric(
-            # Input file.
-            analysis_config_file=analysis_config_file,
-            git_api_token=git_api_token,
-            aws_batch=aws_batch
-        )
-        return bb
+        return BTAPParametric(  analysis_config=analysis_config,
+                                building_options=building_options,
+                                project_root=project_root,
+                                git_api_token=git_api_token,
+                                aws_batch=aws_batch)
     else:
         message = f'Unknown algorithm type. Allowed types are nsga2 and parametric. Exiting'
         print(message)
         logging.error(message)
         exit(1)
+    if not aws_batch is None:
+        aws_batch.shutdown_batch_workflow()
