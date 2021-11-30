@@ -3,19 +3,12 @@
 :analysis_configuration:
 
   # BTAP Batch version
-  :btap_batch_version: 1.0.004
-
-  # number of threads is a stub for aws batch. Unused at the moment.
-  :no_of_threads:
+  :btap_batch_version: 1.0.005
 
   # Choices are:
   #       local : Run locally.. Good to test out runs on small batches before sending to AWS.
   #       aws_batch: use for analyses with > 1000 simulations: This is currently only available for NRCan staff.  If you would wish to make used of Amazon cloud computing, please contact us.
-  :compute_environment: aws_batch
-
-  # DO NOT CHANGE: AWS S3 Bucket...Must be created ahead of time. Must be a STRING.
-  # H&B default bucket is '834599497928' for the btap_dev account. Only used for Amazon.
-  :s3_bucket: '834599497928'
+  :compute_environment: local
 
   # Use btap_public_cli for full opensource version. For btap_private_cli to use costing. Contact us if you wish to work with costing data.
   :image_name: 'btap_private_cli'
@@ -68,7 +61,7 @@
     #{    key: '*',     variable: 'Zone Air Temperature',     frequency: 'hourly'}
   ]
   :output_meters: [
-    {    name: 'Gas:Facility',     frequency: 'hourly'},
+    {    name: 'NaturalGas:Facility',     frequency: 'hourly'},
     {    name: 'Electricity:Facility',     frequency: 'hourly'},
     # {    name: 'DISTRICTHEATING:FACILITY',     frequency: 'hourly'},
     # {    name: 'DISTRICTCOOLING:FACILITY',     frequency: 'hourly'},
