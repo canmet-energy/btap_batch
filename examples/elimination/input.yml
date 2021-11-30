@@ -3,7 +3,7 @@
 :analysis_configuration:
 
   # BTAP Batch version
-  :btap_batch_version: 1.0.004
+  :btap_batch_version: 1.0.005
 
   # Choices are:
   #       local : Run locally.. Good to test out runs on small batches before sending to AWS.
