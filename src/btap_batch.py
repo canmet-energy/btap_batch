@@ -52,9 +52,9 @@ MAX_AWS_VCPUS = 500
 # DESIRED_AWS_VCPUS = 50 # Not used currently
 # Minimum number of CPU should be set to zero.
 MIN_AWS_VCPUS = 0
-# Container allocated VCPU
+# Container allocated VCPU for AWS Batch
 CONTAINER_VCPU = 1
-# Container allocated Memory (MB)
+# Container allocated Memory (MB) for AWS Batch
 CONTAINER_MEMORY = 2000
 # Container Storage (GB)
 CONTAINER_STORAGE = 100
@@ -86,39 +86,12 @@ AWS_MAX_RETRIES = 12
 # Dockerfile url location
 DOCKERFILE_URL = 'https://raw.githubusercontent.com/canmet-energy/btap_cli/dev/Dockerfile'
 
-
 # Custom exceptions
 class FailedSimulationException(Exception):
     pass
 
 class OSMErrorException(Exception):
     pass
-
-
-class Queue():
-
-    def __init__(self,
-                 analysis_id=None,
-                 btap_image_name='btap_private_cli',
-                 rebuild_image=False,
-                 git_api_token=None,
-                 os_version=None,
-                 btap_costing_branch=None,
-                 os_standards_branch=None,
-                 threads=24
-                 ):
-        print("heelo")
-
-
-
-    def set_up(self):
-        print("Creating infrastructure")
-
-    def tear_down(self):
-        print("Tearing down queue infrastructure")
-
-    def submit_job(self):
-        print("Run job")
 
 # S3 Operations
 class S3:
@@ -134,6 +107,21 @@ class S3:
         print(message)
         logging.info(message)
         self.s3.delete_bucket(Bucket=bucket_name)
+
+
+    def check_bucket_exists(self,bucket_name):
+        bucket = self.s3.Bucket(bucket_name)
+        exists = True
+        try:
+            self.s3.meta.client.head_bucket(Bucket=bucket_name)
+        except botocore.exceptions.ClientError as e:
+            # If a client error is thrown, then check that it was a 404 error.
+            # If it was a 404 error, then the bucket does not exist.
+            error_code = e.response['Error']['Code']
+            if error_code == '404':
+                exists = False
+        return exists
+
 
     # Method to create a bucket.
     def create_bucket(self, bucket_name):
@@ -189,7 +177,6 @@ class S3:
         logging.info(f"uploading {file} to s3 bucket {bucket_name} target {target_path}")
         self.s3.upload_file(file, bucket_name, target_path)
 
-
 # Class to authenticate to AWS.
 class AWSCredentials:
     # Initialize with required clients.
@@ -229,10 +216,14 @@ class AWSCredentials:
         self.aws_batch_service_role = \
             list(filter(lambda role: role['RoleName'] == 'AWSBatchServiceRole', service_roles))[0]['Arn']
 
-
-
-# Class to run batch simulations on AWS>
+# Class to manage a AWS Batch run
 class AWSBatch:
+    @classmethod
+    def get_threads(cls):
+        return MAX_AWS_VCPUS
+
+
+
     """
     This class  manages creating an aws batch workflow, simplifies creating jobs and manages tear down of the
     aws batch. This is opposed to using the aws web console to configure the batch run. That method can lead to problems in
@@ -251,7 +242,6 @@ class AWSBatch:
                  os_version=None,
                  btap_costing_branch=None,
                  os_standards_branch=None,
-                 threads=24
                  ):
         self.credentials = AWSCredentials()
         self.bucket = self.credentials.account_id
@@ -267,11 +257,11 @@ class AWSBatch:
         # Create the aws clients required.
         config = Config(retries={'max_attempts': AWS_MAX_RETRIES, 'mode': 'standard'})
         self.ec2 = boto3.client('ec2', config=config)
-        self.batch = boto3.client('batch', config=botocore.client.Config(max_pool_connections=threads,
+        self.batch_client = boto3.client('batch', config=botocore.client.Config(max_pool_connections=self.get_threads(),
                                                                          retries={'max_attempts': AWS_MAX_RETRIES,
                                                                                   'mode': 'standard'}))
         self.iam = boto3.client('iam', config=config)
-        self.s3 = boto3.client('s3', config=botocore.client.Config(max_pool_connections=threads,
+        self.s3 = boto3.client('s3', config=botocore.client.Config(max_pool_connections=self.get_threads(),
                                                                    retries={'max_attempts': AWS_MAX_RETRIES,
                                                                             'mode': 'standard'}))
         self.cloudwatch = boto3.client('logs')
@@ -317,9 +307,9 @@ class AWSBatch:
     def setup(self):
         # This method creates analysis id for batch run. See methods for details.
         self.build_image()
-        self.create_compute_environment()
-        self.create_job_queue()
-        self.register_job_definition()
+        self.__create_compute_environment()
+        self.__create_job_queue()
+        self.__register_job_definition()
         print("Completed AWS batch initialization.")
 
     def tear_down(self):
@@ -327,16 +317,100 @@ class AWSBatch:
         message = "Shutting down AWSBatch...."
         print(message)
         logging.info(message)
-        self.delete_job_definition()
-        self.delete_job_queue()
-        self.delete_compute_environment()
+        self.__delete_job_definition()
+        self.__delete_job_queue()
+        self.__delete_compute_environment()
 
-    def submit_job(self, jobName='test', debug=False, command=["/bin/bash", "-c",
+    def submit_job(self,
+                       output_folder,
+                       local_btap_data_path,
+                       local_datapoint_input_folder,
+                       local_datapoint_output_folder,
+                       run_options):
+        try:
+            run_options[':s3_bucket'] = self.credentials.account_id
+            btap_data = {}
+            # add run options to dict.
+            btap_data.update(run_options)
+            s3_analysis_folder = os.path.join(self.credentials.user_name, run_options[':analysis_name'],
+                                              run_options[':analysis_id']).replace('\\', '/')
+            s3_datapoint_input_folder = os.path.join(s3_analysis_folder, 'input',
+                                                     run_options[':datapoint_id']).replace('\\', '/')
+            s3_output_folder = os.path.join(s3_analysis_folder, 'output').replace('\\', '/')
+            s3_datapoint_output_folder = os.path.join(s3_output_folder, run_options[':datapoint_id']).replace('\\',
+                                                                                                              '/')
+            s3_btap_data_path = os.path.join(s3_datapoint_output_folder, 'btap_data.json').replace('\\', '/')
+            s3_error_txt_path = os.path.join(s3_datapoint_output_folder, 'error.txt').replace('\\', '/')
+
+            jobName = f"{run_options[':analysis_id']}-{run_options[':datapoint_id']}"
+
+            bundle_command = f"bundle exec ruby btap_cli.rb --input_path s3://{run_options[':s3_bucket']}/{s3_datapoint_input_folder} --output_path s3://{run_options[':s3_bucket']}/{s3_output_folder} "
+            # replace \ slashes to / slash for correct s3 convention.
+            bundle_command = bundle_command.replace('\\', '/')
+
+            logging.info(
+                f"Copying from {local_datapoint_input_folder} to bucket {run_options[':s3_bucket']} folder {s3_datapoint_input_folder}")
+            S3().copy_folder_to_s3(bucket_name=run_options[':s3_bucket'],
+                                   source_folder=local_datapoint_input_folder,
+                                   target_folder=s3_datapoint_input_folder)
+            # Start timer to track simulation time.
+            start = time.time()
+            self.job(jobName=jobName, debug=True, command=["/bin/bash", "-c", bundle_command])
+            # Get btap_data from s3
+            logging.info(
+                f"Getting data from S3 bucket {run_options[':s3_bucket']} at path {s3_btap_data_path}")
+            content_object = boto3.resource('s3').Object(run_options[':s3_bucket'], s3_btap_data_path)
+            # Adding simulation high level results to btap_data df.
+            btap_data.update(json.loads(content_object.get()['Body'].read().decode('utf-8')))
+            # save url to datapoint output for Kamel.
+            btap_data[
+                'datapoint_output_url'] = f"https://s3.console.aws.amazon.com/s3/buckets/{run_options[':s3_bucket']}?region=ca-central-1&prefix={s3_datapoint_output_folder}/"
+            # Store sum of warnings errors and severes.
+            btap_data['eplus_warnings'] = sum(
+                1 for d in btap_data['eplusout_err_table'] if d.get('error_type') == 'warning')
+            btap_data['eplus_severes'] = sum(
+                1 for d in btap_data['eplusout_err_table'] if d.get('error_type') == 'severe')
+            btap_data['eplus_fatals'] = sum(
+                1 for d in btap_data['eplusout_err_table'] if d.get('error_type') == 'fatal')
+
+            # dump full run_options.yml file into database for convienience.
+            btap_data['run_options'] = yaml.dump(run_options)
+
+            # Need to zero this in costing btap_data.rb file otherwise may be NA.
+            for item in ['energy_eui_heat recovery_gj_per_m_sq', 'energy_eui_heat rejection_gj_per_m_sq']:
+                if not btap_data.get(item):
+                    btap_data[item] = 0.0
+
+            # Flag that is was successful.
+            btap_data['success'] = True
+            btap_data['simulation_time'] = time.time() - start
+            return btap_data
+
+
+        except Exception as error:
+            error_msg = ''
+            content_object = boto3.resource('s3').Object(run_options[':s3_bucket'], s3_error_txt_path)
+            print(error_msg)
+            error_msg = content_object.get()['Body'].read().decode('utf-8')
+            btap_data = {}
+            btap_data.update(run_options)
+            btap_data['success'] = False
+            btap_data['container_error'] = str(error_msg)
+            btap_data['run_options'] = yaml.dump(run_options)
+            btap_data['datapoint_output_url'] = 'file:///' + os.path.join(local_datapoint_output_folder)
+            # save btap_data json file to output folder if aws_run.
+            pathlib.Path(os.path.dirname(local_btap_data_path)).mkdir(parents=True, exist_ok=True)
+            with open(local_btap_data_path, 'w') as outfile:
+                json.dump(btap_data, outfile, indent=4)
+            return btap_data
+
+
+    def job(self, jobName='test', debug=False, command=["/bin/bash", "-c",
                                                                f"bundle exec ruby btap_cli.rb --building_type FullServiceRestaurant --template NECB2017 --enable_costing true "]):
         # Tell user.
 
         # See https://boto3.amazonaws.com/v1/documentation/api/latest/reference/services/batch.html#Batch.Client.submit_job
-        submitJobResponse = self.submit_job_wrapper(command, jobName)
+        submitJobResponse = self.__submit_job_wrapper(command, jobName)
 
         jobId = submitJobResponse['jobId']
         message = f"Submitted job_id {jobId} with job name {jobName} to the job queue {self.job_queue_id}"
@@ -348,7 +422,7 @@ class AWSBatch:
         while debug:
             # Don't hammer AWS.. make queries every minute for the run status
             time.sleep(60 + random())
-            describeJobsResponse = self.get_job_status(jobId)
+            describeJobsResponse = self.__get_job_status(jobId)
             status = describeJobsResponse['jobs'][0]['status']
             if status == 'SUCCEEDED':
                 message = 'SUCCEEDED - Job [%s - %s] %s' % (jobName, jobId, status)
@@ -549,7 +623,7 @@ class AWSBatch:
                 time.sleep(5)
 
     # This method is a helper to print/stream logs.
-    def printLogs(self, logGroupName, logStreamName, startTime):
+    def __printLogs(self, logGroupName, logStreamName, startTime):
         kwargs = {'logGroupName': logGroupName,
                   'logStreamName': logStreamName,
                   'startTime': startTime,
@@ -573,7 +647,7 @@ class AWSBatch:
         return lastTimestamp
 
     # This method is a helper to print/stream logs.
-    def getLogStream(self, logGroupName, jobName, jobId):
+    def __getLogStream(self, logGroupName, jobName, jobId):
         response = self.cloudwatch.describe_log_streams(
             logGroupName=logGroupName,
             logStreamNamePrefix=jobName + '/' + jobId
@@ -585,7 +659,7 @@ class AWSBatch:
             return logStreams[0]['logStreamName']
 
     # Short method that creates a template to increase the disk size of the containers. Default 100GB.
-    def add_storage_space_launch_template(self, sizegb=CONTAINER_STORAGE):
+    def __add_storage_space_launch_template(self, sizegb=CONTAINER_STORAGE):
         template_name = f'{self.credentials.account_id}_storage'
         launch_template = self.ec2.describe_launch_templates()['LaunchTemplates']
         if next((item for item in launch_template if item["LaunchTemplateName"] == template_name), None) == None:
@@ -613,14 +687,13 @@ class AWSBatch:
             logging.info(message)
         return template_name
 
-
-    def delete_storage_space_launch_template(self):
+    def __delete_storage_space_launch_template(self):
         template_name = f'{self.credentials.account_id}_storage'
         response = self.ec2.delete_launch_template(
             LaunchTemplateName=template_name
         )
 
-    def create_compute_environment(self):
+    def __create_compute_environment(self):
         # Inform user starting to create CE.
         message = f'Creating Compute Environment {self.compute_environment_id}'
         print(message)
@@ -628,7 +701,7 @@ class AWSBatch:
 
         # Call to create Compute environment.
         # See https://boto3.amazonaws.com/v1/documentation/api/latest/reference/services/batch.html#Batch.Client.create_compute_environment
-        response = self.batch.create_compute_environment(
+        response = self.batch_client.create_compute_environment(
             computeEnvironmentName=self.compute_environment_id,
             type='MANAGED',  # Allow AWS to manage instances.
             serviceRole=self.aws_batch_service_role,
@@ -645,13 +718,13 @@ class AWSBatch:
                 'instanceRole': 'ecsInstanceRole',
                 'launchTemplate': {
 
-                    'launchTemplateName': self.add_storage_space_launch_template()}
+                    'launchTemplateName': self.__add_storage_space_launch_template()}
             }
         )
         # Check state of creating CE.
         while True:
             # See https://boto3.amazonaws.com/v1/documentation/api/latest/reference/services/batch.html#Batch.Client.describe_compute_environments
-            describe = self.describe_compute_environments(self.compute_environment_id)
+            describe = self.__describe_compute_environments(self.compute_environment_id)
             computeEnvironment = describe['computeEnvironments'][0]
             status = computeEnvironment['status']
             # If CE is in valid state, inform user and break from loop.
@@ -665,7 +738,7 @@ class AWSBatch:
 
         return response
 
-    def delete_compute_environment(self):
+    def __delete_compute_environment(self):
         # Inform user starting to create CE.
         message = f'Disable Compute Environment {self.compute_environment_id}'
         print(message)
@@ -673,12 +746,12 @@ class AWSBatch:
 
         # First Disable CE.
         # https://boto3.amazonaws.com/v1/documentation/api/latest/reference/services/batch.html#Batch.Client.update_compute_environment
-        self.batch.update_compute_environment(computeEnvironment=self.compute_environment_id, state='DISABLED')
+        self.batch_client.update_compute_environment(computeEnvironment=self.compute_environment_id, state='DISABLED')
 
         # Wait until CE is disabled.
         while True:
             # See https://boto3.amazonaws.com/v1/documentation/api/latest/reference/services/batch.html#Batch.Client.describe_compute_environments
-            describe = self.describe_compute_environments(self.compute_environment_id)
+            describe = self.__describe_compute_environments(self.compute_environment_id)
             computeEnvironment = describe['computeEnvironments'][0]
             state = computeEnvironment['state']
             status = computeEnvironment['status']
@@ -692,25 +765,25 @@ class AWSBatch:
         message = f'Deleting Compute Environment {self.compute_environment_id}'
         print(message)
         logging.info(message)
-        self.batch.delete_compute_environment(computeEnvironment=self.compute_environment_id)
+        self.batch_client.delete_compute_environment(computeEnvironment=self.compute_environment_id)
         # Wait until CE is disabled.
         while True:
-            describe = self.describe_compute_environments(self.compute_environment_id)
+            describe = self.__describe_compute_environments(self.compute_environment_id)
             if not describe['computeEnvironments']:
                 break
             time.sleep(5)
 
-    def delete_job_queue(self):
+    def __delete_job_queue(self):
         # Disable Queue
         # Tell user
         message = f'Disable Job Queue {self.job_queue_id}'
         print(message)
         logging.info(message)
         # See https://boto3.amazonaws.com/v1/documentation/api/latest/reference/services/batch.html#Batch.Client.update_job_queue
-        self.batch.update_job_queue(jobQueue=self.job_queue_id, state='DISABLED')
+        self.batch_client.update_job_queue(jobQueue=self.job_queue_id, state='DISABLED')
         while True:
             # https://boto3.amazonaws.com/v1/documentation/api/latest/reference/services/batch.html#Batch.Client.describe_job_queues
-            describe = self.describe_job_queues(self.job_queue_id)
+            describe = self.__describe_job_queues(self.job_queue_id)
             item = describe['jobQueues'][0]
             state = item['state']
             status = item['status']
@@ -728,35 +801,35 @@ class AWSBatch:
         logging.info(message)
 
         # See https://boto3.amazonaws.com/v1/documentation/api/latest/reference/services/batch.html#Batch.Client.delete_job_queue
-        response = self.batch.delete_job_queue(jobQueue=self.job_queue_id)
+        response = self.batch_client.delete_job_queue(jobQueue=self.job_queue_id)
         # Wait until queue is deleted.
         while True:
             # See https://boto3.amazonaws.com/v1/documentation/api/latest/reference/services/batch.html#Batch.Client.describe_job_queues
-            describe = self.describe_job_queues(self.job_queue_id)
+            describe = self.__describe_job_queues(self.job_queue_id)
             if not describe['jobQueues']:
                 break
             time.sleep(5)
         return response
 
-    def delete_job_definition(self):
+    def __delete_job_definition(self):
         message = f'Disable Job Definition {self.job_def_id}'
         print(message)
         logging.info(message)
         # https://boto3.amazonaws.com/v1/documentation/api/latest/reference/services/batch.html#Batch.Client.describe_job_definitions
-        describe = self.batch.describe_job_definitions(jobDefinitionName=self.job_def_id)
+        describe = self.batch_client.describe_job_definitions(jobDefinitionName=self.job_def_id)
         # See https://boto3.amazonaws.com/v1/documentation/api/latest/reference/services/batch.html#Batch.Client.deregister_job_definition
-        response = self.batch.deregister_job_definition(
+        response = self.batch_client.deregister_job_definition(
             jobDefinition=describe['jobDefinitions'][0]['jobDefinitionArn'])
         return response
 
-    def create_job_queue(self):
+    def __create_job_queue(self):
         message = f'Creating Job Queue {self.job_queue_id}'
         logging.info(message)
         print(message)
 
-        response = self.batch.create_job_queue(jobQueueName=self.job_queue_id,
-                                               priority=100,
-                                               computeEnvironmentOrder=[
+        response = self.batch_client.create_job_queue(jobQueueName=self.job_queue_id,
+                                                 priority=100,
+                                                 computeEnvironmentOrder=[
                                                    {
                                                        'order': 0,
                                                        'computeEnvironment': self.compute_environment_id
@@ -764,7 +837,7 @@ class AWSBatch:
                                                ])
 
         while True:
-            describe = self.describe_job_queues(self.job_queue_id)
+            describe = self.__describe_job_queues(self.job_queue_id)
             jobQueue = describe['jobQueues'][0]
             status = jobQueue['status']
             state = jobQueue['state']
@@ -782,9 +855,9 @@ class AWSBatch:
 
         return response
 
-    def register_job_definition(self,
-                                unitVCpus=CONTAINER_VCPU,
-                                unitMemory=CONTAINER_MEMORY):
+    def __register_job_definition(self,
+                                  unitVCpus=CONTAINER_VCPU,
+                                  unitMemory=CONTAINER_MEMORY):
 
         # Store the aws service role arn for AWSBatchServiceRole. This role is created by default when AWSBatch
         # compute environment is created for the first time via the web console automatically.
@@ -793,9 +866,9 @@ class AWSBatch:
         logging.info(message)
         print(message)
 
-        response = self.batch.register_job_definition(jobDefinitionName=self.job_def_id,
-                                                      type='container',
-                                                      containerProperties={
+        response = self.batch_client.register_job_definition(jobDefinitionName=self.job_def_id,
+                                                        type='container',
+                                                        containerProperties={
                                                           'image': self.image_full_name,
                                                           'vcpus': unitVCpus,
                                                           'memory': unitMemory,
@@ -805,9 +878,9 @@ class AWSBatch:
 
         return response
 
-    def submit_job_wrapper(self, command, jobName, n=0):
+    def __submit_job_wrapper(self, command, jobName, n=0):
         try:
-            submitJobResponse = self.batch.submit_job(
+            submitJobResponse = self.batch_client.submit_job(
                 jobName=jobName,
                 jobQueue=self.job_queue_id,
                 jobDefinition=self.job_def_id,
@@ -822,11 +895,11 @@ class AWSBatch:
             wait_time = 2 ** n + random()
             logging.warning(f"Implementing exponential backoff for job {jobName} for {wait_time}s")
             time.sleep(wait_time)
-            return self.submit_job_wrapper(command, jobName, n=n + 1)
+            return self.__submit_job_wrapper(command, jobName, n=n + 1)
 
-    def get_job_status(self, jobId, n=0):
+    def __get_job_status(self, jobId, n=0):
         try:
-            describeJobsResponse = self.batch.describe_jobs(jobs=[jobId])
+            describeJobsResponse = self.batch_client.describe_jobs(jobs=[jobId])
             return describeJobsResponse
         except:
             if n == 8:
@@ -834,12 +907,12 @@ class AWSBatch:
             wait_time = 2 ** n + random()
             logging.warning(f"Implementing exponential backoff for job {jobId} for {wait_time}s")
             time.sleep(wait_time)
-            return self.get_job_status(jobId, n=n + 1)
+            return self.__get_job_status(jobId, n=n + 1)
 
-    def describe_job_queues(self, job_queue_id, n=0):
+    def __describe_job_queues(self, job_queue_id, n=0):
         try:
             # See https://boto3.amazonaws.com/v1/documentation/api/latest/reference/services/batch.html#Batch.Client.describe_job_queues
-            return self.batch.describe_job_queues(jobQueues=[job_queue_id])
+            return self.batch_client.describe_job_queues(jobQueues=[job_queue_id])
         except:
             if n == 8:
                 raise (
@@ -847,11 +920,11 @@ class AWSBatch:
             wait_time = 2 ** n + random()
             logging.warning(f"Implementing exponential backoff for job {job_queue_id} for {wait_time}s")
             time.sleep(wait_time)
-            return self.describe_job_queues(job_queue_id, n=n + 1)
+            return self.__describe_job_queues(job_queue_id, n=n + 1)
 
-    def describe_compute_environments(self, compute_environment_id, n=0):
+    def __describe_compute_environments(self, compute_environment_id, n=0):
         try:
-            return self.batch.describe_compute_environments(computeEnvironments=[compute_environment_id])
+            return self.batch_client.describe_compute_environments(computeEnvironments=[compute_environment_id])
         except:
             if n == 8:
                 raise (
@@ -859,14 +932,13 @@ class AWSBatch:
             wait_time = 2 ** n + random()
             logging.warning(f"Implementing exponential backoff for job {compute_environment_id} for {wait_time}s")
             time.sleep(wait_time)
-            return self.describe_compute_environments(compute_environment_id, n=n + 1)
+            return self.__describe_compute_environments(compute_environment_id, n=n + 1)
 
-
-# Class to manage local docker images.
-class Docker:
+# Class to manage local Docker batch run.
+class DockerBatch:
 
     @classmethod
-    def get_docker_number_of_processes(cls):
+    def get_threads(cls):
         # Try to access the docker daemon. If we cannot.. ask user to turn it on and then exit.
         try:
             docker.from_env()
@@ -1008,7 +1080,67 @@ class Docker:
     # run_options.yml file. This file was created ahead of this in the local_input_folder which is mounted to the
     # container. The output similarly will be placed in the local_output_folder using the datapoint_id as the new
     # folder name.
+
     def submit_job(self,
+                          output_folder,
+                          local_btap_data_path,
+                          local_datapoint_input_folder,
+                          local_datapoint_output_folder,
+                          run_options):
+        try:
+            local_error_txt_path = os.path.join(output_folder, run_options[':datapoint_id'], 'error.txt')
+            btap_data = {}
+            # add run options to dict.
+            btap_data.update(run_options)
+            # Start timer to track simulation time.
+            start = time.time()
+            result = self.job(
+                run_options=run_options,
+                local_input_folder=local_datapoint_input_folder,
+                local_output_folder=output_folder,
+                detach=False
+            )
+            # If file was not created...raise an error.
+            if not os.path.isfile(local_btap_data_path):
+                raise FileNotFoundError(errno.ENOENT, os.strerror(errno.ENOENT), local_btap_data_path)
+            # Open the btap Data file in analysis dict.
+            file = open(local_btap_data_path, 'r')
+            btap_data.update(json.load(file))
+            file.close()
+            # save output url.
+            btap_data['datapoint_output_url'] = 'file:///' + os.path.join(local_datapoint_output_folder)
+            # Store sum of warnings errors and severes.
+            btap_data['eplus_warnings'] = sum(
+                1 for d in btap_data['eplusout_err_table'] if d.get('error_type') == 'warning')
+            btap_data['eplus_severes'] = sum(
+                1 for d in btap_data['eplusout_err_table'] if d.get('error_type') == 'severe')
+            btap_data['eplus_fatals'] = sum(
+                1 for d in btap_data['eplusout_err_table'] if d.get('error_type') == 'fatal')
+            # dump full run_options.yml file into database for convienience.
+            btap_data['run_options'] = yaml.dump(run_options)
+            # Need to zero this in costing btap_data.rb file otherwise may be NA.
+            for item in ['energy_eui_heat recovery_gj_per_m_sq', 'energy_eui_heat rejection_gj_per_m_sq']:
+                if not btap_data.get(item):
+                    btap_data[item] = 0.0
+            # Flag that is was successful.
+            btap_data['success'] = True
+            btap_data['simulation_time'] = time.time() - start
+            return btap_data
+        except Exception as error:
+            error_msg = ''
+            if os.path.exists(local_error_txt_path):
+                with open(local_error_txt_path, 'r') as file:
+                    error_msg = file.read()
+            btap_data = {}
+            btap_data.update(run_options)
+            btap_data['success'] = False
+            btap_data['container_error'] = str(error_msg)
+            btap_data['run_options'] = yaml.dump(run_options)
+            btap_data['datapoint_output_url'] = 'file:///' + os.path.join(local_datapoint_output_folder)
+            return btap_data
+
+
+    def job(self,
 
                    # run_options dict is used for finding the folder after the simulation is completed to store in the database.
                    run_options=None,
@@ -1061,7 +1193,6 @@ class Docker:
 
         return result
 
-
 # Parent Analysis class.
 class BTAPAnalysis():
     # This does some simple check on the osm file to ensure that it has the required inputs for btap.
@@ -1110,9 +1241,6 @@ class BTAPAnalysis():
         #     logging.error(f"The errors below need to be fixed in your osm file.\n{messages}\n")
         #     raise OSMErrorException(f"The osm file {osm_file} is misconfigured.. Analysis aborted.\n")
 
-    def get_threads(self):
-        return Docker.get_docker_number_of_processes()
-
     def get_local_osm_files(self):
         osm_list = {}
         osm_folder = os.path.join(self.project_root, 'osm_folder')
@@ -1128,12 +1256,10 @@ class BTAPAnalysis():
                  building_options = None,
                  project_root = None,
                  git_api_token=None,
-                 aws_batch=None,
+                 batch=None,
                  baseline_results=None):
         self.credentials = None
-        self.aws_batch = aws_batch
-        self.docker = None
-        self.database = None
+        self.batch = batch
         self.btap_data_df = []
         self.failed_df = []
         self.analysis_config = analysis_config
@@ -1160,16 +1286,15 @@ class BTAPAnalysis():
 
         # Set up project root.
 
-
         # Create required paths and folders for analysis
         self.create_paths_folders()
 
         if self.analysis_config[':compute_environment'] == 'aws_batch':
             # If aws batch object was not passed.. create it.
-            if self.aws_batch == None:
+            if self.batch == None:
                 # Start batch queue if required.
                 # create aws image, set up aws compute env and create workflow queue.
-                self.aws_batch = AWSBatch(
+                self.batch = AWSBatch(
                     analysis_id=self.analysis_config[':analysis_id'],
                     btap_image_name=self.analysis_config[':image_name'],
                     rebuild_image=self.analysis_config[':nocache'],
@@ -1177,17 +1302,16 @@ class BTAPAnalysis():
                     os_version=self.analysis_config[':os_version'],
                     btap_costing_branch=self.analysis_config[':btap_costing_branch'],
                     os_standards_branch=self.analysis_config[':os_standards_branch'],
-                    threads=self.get_threads()
                 )
-                self.aws_batch.setup()
+                self.batch.setup()
         else:
-            self.docker = Docker(image_name=self.analysis_config[':image_name'],
-                            git_api_token=git_api_token,
-                            os_standards_branch=self.analysis_config[':os_standards_branch'],
-                            btap_costing_branch=self.analysis_config[':btap_costing_branch'],
-                            os_version=self.analysis_config[':os_version'],
-                            nocache=self.analysis_config[':nocache'])
-            self.docker.build_image()
+            self.batch = DockerBatch(image_name=self.analysis_config[':image_name'],
+                                      git_api_token=git_api_token,
+                                      os_standards_branch=self.analysis_config[':os_standards_branch'],
+                                      btap_costing_branch=self.analysis_config[':btap_costing_branch'],
+                                      os_version=self.analysis_config[':os_version'],
+                                      nocache=self.analysis_config[':nocache'])
+            self.batch.setup()
 
     def get_num_of_runs_failed(self):
         if os.path.isdir(self.failures_folder):
@@ -1283,7 +1407,6 @@ class BTAPAnalysis():
         run_options[':run_annual_simulation'] = self.analysis_config[':run_annual_simulation']
         run_options[':enable_costing'] = self.analysis_config[':enable_costing']
         run_options[':compute_environment'] = self.analysis_config[':compute_environment']
-        run_options[':s3_bucket'] = self.analysis_config[':s3_bucket']
         run_options[':image_name'] = self.analysis_config[':image_name']
         run_options[':output_variables'] = self.analysis_config[':output_variables']
         run_options[':output_meters'] = self.analysis_config[':output_meters']
@@ -1311,162 +1434,16 @@ class BTAPAnalysis():
             logging.info(
                 f"Copying osm file from {local_osm_dict[run_options[':building_type']]} to {local_datapoint_input_folder}")
 
-        # S3 paths
-        if self.analysis_config[':compute_environment'] == 'aws_batch':
-            return self.submit_job_aws(self.output_folder,
-                                       local_btap_data_path,
-                                       local_datapoint_input_folder,
-                                       local_datapoint_output_folder,
-                                       run_options)
-        else:
-            return self.submit_job_docker(self.output_folder,
-                                          local_btap_data_path,
-                                          local_datapoint_input_folder,
-                                          local_datapoint_output_folder,
-                                          run_options)
+        # Submit Job to batch
+        return self.batch.submit_job(self.output_folder,
+                                         local_btap_data_path,
+                                         local_datapoint_input_folder,
+                                         local_datapoint_output_folder,
+                                         run_options)
 
 
-    def submit_job_docker(self,
-                          output_folder,
-                          local_btap_data_path,
-                          local_datapoint_input_folder,
-                          local_datapoint_output_folder,
-                          run_options):
-        try:
-            local_error_txt_path = os.path.join(output_folder, run_options[':datapoint_id'], 'error.txt')
-            btap_data = {}
-            # add run options to dict.
-            btap_data.update(run_options)
-            # Start timer to track simulation time.
-            start = time.time()
-            result = self.docker.submit_job(
-                run_options=run_options,
-                local_input_folder=local_datapoint_input_folder,
-                local_output_folder=output_folder,
-                detach=False
-            )
-            # If file was not created...raise an error.
-            if not os.path.isfile(local_btap_data_path):
-                raise FileNotFoundError(errno.ENOENT, os.strerror(errno.ENOENT), local_btap_data_path)
-            # Open the btap Data file in analysis dict.
-            file = open(local_btap_data_path, 'r')
-            btap_data.update(json.load(file))
-            file.close()
-            # save output url.
-            btap_data['datapoint_output_url'] = 'file:///' + os.path.join(local_datapoint_output_folder)
-            # Store sum of warnings errors and severes.
-            btap_data['eplus_warnings'] = sum(
-                1 for d in btap_data['eplusout_err_table'] if d.get('error_type') == 'warning')
-            btap_data['eplus_severes'] = sum(
-                1 for d in btap_data['eplusout_err_table'] if d.get('error_type') == 'severe')
-            btap_data['eplus_fatals'] = sum(
-                1 for d in btap_data['eplusout_err_table'] if d.get('error_type') == 'fatal')
-            # dump full run_options.yml file into database for convienience.
-            btap_data['run_options'] = yaml.dump(run_options)
-            # Need to zero this in costing btap_data.rb file otherwise may be NA.
-            for item in ['energy_eui_heat recovery_gj_per_m_sq', 'energy_eui_heat rejection_gj_per_m_sq']:
-                if not btap_data.get(item):
-                    btap_data[item] = 0.0
-            # Flag that is was successful.
-            btap_data['success'] = True
-            btap_data['simulation_time'] = time.time() - start
-            return btap_data
-        except Exception as error:
-            error_msg = ''
-            if os.path.exists(local_error_txt_path):
-                with open(local_error_txt_path, 'r') as file:
-                    error_msg = file.read()
-            btap_data = {}
-            btap_data.update(run_options)
-            btap_data['success'] = False
-            btap_data['container_error'] = str(error_msg)
-            btap_data['run_options'] = yaml.dump(run_options)
-            btap_data['datapoint_output_url'] = 'file:///' + os.path.join(local_datapoint_output_folder)
-            return btap_data
 
 
-    def submit_job_aws(self,
-                       output_folder,
-                       local_btap_data_path,
-                       local_datapoint_input_folder,
-                       local_datapoint_output_folder,
-                       run_options):
-        try:
-            btap_data = {}
-            # add run options to dict.
-            btap_data.update(run_options)
-            self.credentials = AWSCredentials()
-            s3_analysis_folder = os.path.join(self.credentials.user_name, run_options[':analysis_name'],
-                                              run_options[':analysis_id']).replace('\\', '/')
-            s3_datapoint_input_folder = os.path.join(s3_analysis_folder, 'input',
-                                                     run_options[':datapoint_id']).replace('\\', '/')
-            s3_output_folder = os.path.join(s3_analysis_folder, 'output').replace('\\', '/')
-            s3_datapoint_output_folder = os.path.join(s3_output_folder, run_options[':datapoint_id']).replace('\\',
-                                                                                                              '/')
-            s3_btap_data_path = os.path.join(s3_datapoint_output_folder, 'btap_data.json').replace('\\', '/')
-            s3_error_txt_path = os.path.join(s3_datapoint_output_folder, 'error.txt').replace('\\', '/')
-
-            jobName = f"{run_options[':analysis_id']}-{run_options[':datapoint_id']}"
-
-            bundle_command = f"bundle exec ruby btap_cli.rb --input_path s3://{self.analysis_config[':s3_bucket']}/{s3_datapoint_input_folder} --output_path s3://{self.analysis_config[':s3_bucket']}/{s3_output_folder} "
-            # replace \ slashes to / slash for correct s3 convention.
-            bundle_command = bundle_command.replace('\\', '/')
-
-            logging.info(
-                f"Copying from {local_datapoint_input_folder} to bucket {self.analysis_config[':s3_bucket']} folder {s3_datapoint_input_folder}")
-            S3().copy_folder_to_s3(bucket_name=self.analysis_config[':s3_bucket'],
-                                   source_folder=local_datapoint_input_folder,
-                                   target_folder=s3_datapoint_input_folder)
-            # Start timer to track simulation time.
-            start = time.time()
-            self.aws_batch.submit_job(jobName=jobName, debug=True, command=["/bin/bash", "-c", bundle_command])
-            # Get btap_data from s3
-            logging.info(
-                f"Getting data from S3 bucket {self.analysis_config[':s3_bucket']} at path {s3_btap_data_path}")
-            content_object = boto3.resource('s3').Object(self.analysis_config[':s3_bucket'], s3_btap_data_path)
-            # Adding simulation high level results to btap_data df.
-            btap_data.update(json.loads(content_object.get()['Body'].read().decode('utf-8')))
-            # save url to datapoint output for Kamel.
-            btap_data[
-                'datapoint_output_url'] = f"https://s3.console.aws.amazon.com/s3/buckets/{self.analysis_config[':s3_bucket']}?region=ca-central-1&prefix={s3_datapoint_output_folder}/"
-            # Store sum of warnings errors and severes.
-            btap_data['eplus_warnings'] = sum(
-                1 for d in btap_data['eplusout_err_table'] if d.get('error_type') == 'warning')
-            btap_data['eplus_severes'] = sum(
-                1 for d in btap_data['eplusout_err_table'] if d.get('error_type') == 'severe')
-            btap_data['eplus_fatals'] = sum(
-                1 for d in btap_data['eplusout_err_table'] if d.get('error_type') == 'fatal')
-
-            # dump full run_options.yml file into database for convienience.
-            btap_data['run_options'] = yaml.dump(run_options)
-
-            # Need to zero this in costing btap_data.rb file otherwise may be NA.
-            for item in ['energy_eui_heat recovery_gj_per_m_sq', 'energy_eui_heat rejection_gj_per_m_sq']:
-                if not btap_data.get(item):
-                    btap_data[item] = 0.0
-
-            # Flag that is was successful.
-            btap_data['success'] = True
-            btap_data['simulation_time'] = time.time() - start
-            return btap_data
-
-
-        except Exception as error:
-            error_msg = ''
-            content_object = boto3.resource('s3').Object(run_options[':s3_bucket'], s3_error_txt_path)
-            print(error_msg)
-            error_msg = content_object.get()['Body'].read().decode('utf-8')
-            btap_data = {}
-            btap_data.update(run_options)
-            btap_data['success'] = False
-            btap_data['container_error'] = str(error_msg)
-            btap_data['run_options'] = yaml.dump(run_options)
-            btap_data['datapoint_output_url'] = 'file:///' + os.path.join(local_datapoint_output_folder)
-            # save btap_data json file to output folder if aws_run.
-            pathlib.Path(os.path.dirname(local_btap_data_path)).mkdir(parents=True, exist_ok=True)
-            with open(local_btap_data_path, 'w') as outfile:
-                json.dump(btap_data, outfile, indent=4)
-            return btap_data
 
     def save_results_to_database(self, results):
         if results['success'] == True:
@@ -1604,7 +1581,9 @@ class BTAPAnalysis():
     def generate_output_file(self,baseline_results = None):
 
         # Process csv file to create single dataframe with all simulation results
-        PostProcessResults(baseline_results=baseline_results, database_folder=self.database_folder, results_folder=self.results_folder).run()
+        PostProcessResults(baseline_results=baseline_results,
+                           database_folder=self.database_folder,
+                           results_folder=self.results_folder).run()
         excel_path = os.path.join(self.results_folder,'output.xlsx')
 
         # If this is an aws_batch run, copy the excel file to s3 for storage.
@@ -1615,9 +1594,8 @@ class BTAPAnalysis():
             target_path = target_path.replace('\\', '/')
             message = "Uploading %s..." % target_path
             logging.info(message)
-            S3().upload_file(excel_path, self.analysis_config[':s3_bucket'], target_path)
+            S3().upload_file(excel_path, self.credentials.account_id, target_path)
         return
-
 
 # Class to Manage parametric runs.
 class BTAPParametric(BTAPAnalysis):
@@ -1626,7 +1604,7 @@ class BTAPParametric(BTAPAnalysis):
                  building_options = None,
                  project_root = None,
                  git_api_token=None,
-                 aws_batch=None,
+                 batch=None,
                  baseline_results=None
                  ):
         # Run super initializer to set up default variables.
@@ -1634,7 +1612,7 @@ class BTAPParametric(BTAPAnalysis):
                          building_options=building_options,
                          project_root=project_root,
                          git_api_token=git_api_token,
-                         aws_batch=aws_batch,
+                         batch=batch,
                          baseline_results=baseline_results)
         self.scenarios = []
 
@@ -1654,20 +1632,6 @@ class BTAPParametric(BTAPAnalysis):
         finally:
             print("Shutdown..")
             self.shutdown_analysis()
-
-    def get_threads(self):
-        return_value = None
-        if self.analysis_config[':no_of_threads'] == None:
-            if self.analysis_config[':compute_environment'] == 'local':
-                if self.file_number < Docker.get_docker_number_of_processes():
-                    return_value = self.file_number
-                else:
-                    return_value = Docker.get_docker_number_of_processes()
-            elif self.analysis_config[':compute_environment'] == 'aws_batch':
-                return_value = MAX_AWS_VCPUS
-        else:
-            return_value = self.analysis_config[':no_of_threads']
-        return return_value
 
     # This method will compute all the possible scenarios from the input file for a parametric run.
     # This will return a list of scenario lists.
@@ -1723,10 +1687,10 @@ class BTAPParametric(BTAPAnalysis):
         # Keep track of simulation time.
         threaded_start = time.time()
         # Using all your processors minus 1.
-        print(f'Using {self.get_threads()} threads.')
+        print(f'Using {self.batch.get_threads()} threads. Please be patient.')
 
 
-        with concurrent.futures.ThreadPoolExecutor(self.get_threads()) as executor:
+        with concurrent.futures.ThreadPoolExecutor(self.batch.get_threads()) as executor:
             futures = []
             # go through each option scenario
             for run_options in self.scenarios:
@@ -1745,13 +1709,14 @@ class BTAPParametric(BTAPAnalysis):
 
                 # Update user.
                 message = f'TotalRuns:{self.file_number}\tCompleted:{self.get_num_of_runs_completed()}\tFailed:{self.get_num_of_runs_failed()}\tElapsed Time: {str(datetime.timedelta(seconds=round(time.time() - threaded_start)))}'
+
+
                 logging.info(message)
                 print(message)
         # At end of runs update for users.
         message = f'{self.file_number} Simulations completed. No. of failures = {self.get_num_of_runs_failed()} Total Time: {str(datetime.timedelta(seconds=round(time.time() - threaded_start)))}'
         logging.info(message)
         print(message)
-
 
 # Optimization problem definition class.
 class BTAPProblem(ElementwiseProblem):
@@ -1816,7 +1781,6 @@ class BTAPProblem(ElementwiseProblem):
             objectives.append(results[objective])
         out["F"] = np.column_stack(objectives)
 
-
 # Class to manage optimization runs.
 class BTAPOptimization(BTAPAnalysis):
     def __init__(self,
@@ -1824,7 +1788,7 @@ class BTAPOptimization(BTAPAnalysis):
                  building_options = None,
                  project_root = None,
                  git_api_token=None,
-                 aws_batch=None,
+                 batch=None,
                  baseline_results=None
                  ):
         # Run super initializer to set up default variables.
@@ -1832,7 +1796,7 @@ class BTAPOptimization(BTAPAnalysis):
                          building_options=building_options,
                          project_root=project_root,
                          git_api_token=git_api_token,
-                         aws_batch=aws_batch,
+                         batch=batch,
                          baseline_results=baseline_results)
 
     def run(self):
@@ -1843,7 +1807,7 @@ class BTAPOptimization(BTAPAnalysis):
             # We are forcing the use of int for discrete analysis.
             self.create_options_encoder()
 
-            # Run optimization. This will create all the input files, run and gather the results to sql.
+            # Run optimization. This will create all the input files, run and gather the results.
             self.run_analysis()
 
         except FailedSimulationException as err:
@@ -1859,21 +1823,6 @@ class BTAPOptimization(BTAPAnalysis):
             self.shutdown_analysis()
             return message
 
-    def get_threads(self):
-        if self.analysis_config[':no_of_threads'] == None:
-            if self.analysis_config[':compute_environment'] == 'local':
-                cpus = Docker.get_docker_number_of_processes()
-                population = self.analysis_config[':algorithm'][':population']
-                if cpus > population:
-                    return population
-                else:
-                    return cpus
-
-            elif self.analysis_config[':compute_environment'] == 'aws_batch':
-                return MAX_AWS_VCPUS
-
-        else:
-            return self.analysis_config[':no_of_threads']
 
     def run_analysis(self):
         print(f"Running Algorithm {self.analysis_config[':algorithm']}")
@@ -1897,8 +1846,8 @@ class BTAPOptimization(BTAPAnalysis):
         prob = self.analysis_config[':algorithm'][':prob']
         eta = self.analysis_config[':algorithm'][':eta']
         # initialize the pool
-        pool = ThreadPool(self.get_threads())
-        message = f'Using {self.get_threads()} threads.'
+        pool = ThreadPool(self.batch.get_threads())
+        message = f'Using {self.batch.get_threads()} threads.'
         logging.info(message)
         print(message)
         # Create pymoo problem. Pass self for helper methods and set up a starmap multithread pool.
@@ -1966,19 +1915,18 @@ class BTAPIntegratedDesignProcess:
                  building_options=None,
                  project_root=None,
                  git_api_token=None,
-                 aws_batch=None,
+                 batch=None,
                  baseline_results = None):
         self.analysis_config = analysis_config
         self.building_options = building_options
         self.project_root = project_root
         self.git_api_token = git_api_token
-        self.aws_batch = aws_batch
+        self.batch = batch
         self.baseline_results = baseline_results
 
     def run(self):
         # excel file container.
         output_excel_files = []
-
 
         #Elimination block
         analysis_suffix = '_elim'
@@ -1988,11 +1936,11 @@ class BTAPIntegratedDesignProcess:
         temp_analysis_config[':algorithm'][':type'] = algorithm_type
         temp_analysis_config[':analysis_name'] = temp_analysis_config[':analysis_name'] + analysis_suffix
         bb = BTAPElimination(analysis_config=temp_analysis_config,
-                            building_options=temp_building_options,
-                            project_root=self.project_root,
-                            git_api_token=self.git_api_token,
-                            aws_batch=self.aws_batch,
-                            baseline_results=self.baseline_results)
+                             building_options=temp_building_options,
+                             project_root=self.project_root,
+                             git_api_token=self.git_api_token,
+                             batch=self.batch,
+                             baseline_results=self.baseline_results)
         print(f"running {algorithm_type} stage")
         bb.run()
         output_excel_files.append(os.path.join(bb.results_folder,'output.xlsx'))
@@ -2006,11 +1954,11 @@ class BTAPIntegratedDesignProcess:
         temp_analysis_config[':algorithm'][':type'] = algorithm_type
         temp_analysis_config[':analysis_name'] = temp_analysis_config[':analysis_name'] + analysis_suffix
         bb = BTAPSensitivity(analysis_config=temp_analysis_config,
-                            building_options=temp_building_options,
-                            project_root=self.project_root,
-                            git_api_token=self.git_api_token,
-                            aws_batch=self.aws_batch,
-                            baseline_results=self.baseline_results)
+                             building_options=temp_building_options,
+                             project_root=self.project_root,
+                             git_api_token=self.git_api_token,
+                             batch=self.batch,
+                             baseline_results=self.baseline_results)
         print(f"running {algorithm_type} stage")
         bb.run()
         output_excel_files.append(os.path.join(bb.results_folder,'output.xlsx'))
@@ -2022,12 +1970,12 @@ class BTAPIntegratedDesignProcess:
         temp_building_options = copy.deepcopy(self.building_options)
         temp_analysis_config[':algorithm'][':type'] = algorithm_type
         temp_analysis_config[':analysis_name'] = temp_analysis_config[':analysis_name'] + analysis_suffix
-        bb = BTAPOptimization(  analysis_config=temp_analysis_config,
-                                building_options=temp_building_options,
-                                project_root=self.project_root,
-                                git_api_token=self.git_api_token,
-                                aws_batch=self.aws_batch,
-                                baseline_results=self.baseline_results)
+        bb = BTAPOptimization(analysis_config=temp_analysis_config,
+                              building_options=temp_building_options,
+                              project_root=self.project_root,
+                              git_api_token=self.git_api_token,
+                              batch=self.batch,
+                              baseline_results=self.baseline_results)
         print(f"running {algorithm_type} stage")
         bb.run()
         output_excel_files.append(os.path.join(bb.results_folder,'output.xlsx'))
@@ -2151,8 +2099,6 @@ class BTAPReference(BTAPParametric):
         logging.info(message)
         return self.scenarios
 
-
-
 # This class processed the btap_batch file to add columns as needed. This is a separate class as this can be applied
 # independant of simulation runs and optionally at simulation time as well if desired,but may have to make this
 # thread-safe if we do.
@@ -2198,7 +2144,7 @@ class PostProcessResults:
                         local_file_path = os.path.join(row['datapoint_output_url'][len('file:///'):], file_path)
                         if os.path.isfile(local_file_path):
                             shutil.copyfile(local_file_path, os.path.join(bin_folder, row[':datapoint_id'] + extension))
-                        #shutil.copyfile(local_file_path, os.path.join(bin_folder, row[':datapoint_id'] + extension))
+
                     elif row['datapoint_output_url'].startswith('https://s3'):
                         p = re.compile(
                             "https:\/\/s3\.console\.aws\.amazon\.com\/s3\/buckets\/(\d*)\?region=(.*)\&prefix=(.*)")
@@ -2231,7 +2177,6 @@ class PostProcessResults:
             else:
                 message = 'No simulations completed.'
                 logging.error(message)
-
 
     def reference_comparisons(self):
         if self.baseline_results != None:
@@ -2291,7 +2236,6 @@ class PostProcessResults:
             # payback_period = final_full_year + fractional_yr
             # print(payback_period)
 
-
 def load_btap_yml_file(analysis_config_file):
     # Load Analysis File into variable
     if not os.path.isfile(analysis_config_file):
@@ -2305,18 +2249,8 @@ def load_btap_yml_file(analysis_config_file):
     building_options = analysis[':building_options']
     return analysis_config, building_options
 
-def get_threads(analysis_config):
-    cpus = Docker.get_docker_number_of_processes()
-    if analysis_config[':no_of_threads'] == None:
-        if analysis_config[':compute_environment'] == 'local':
-                return cpus
-        elif analysis_config[':compute_environment'] == 'aws_batch':
-            return MAX_AWS_VCPUS
-    else:
-        return analysis_config[':no_of_threads']
-
-# Main method that researchers will interface with. If this gets bigger, consider a factory method pattern.
-def btap_batch(analysis_config_file=None, git_api_token=None, aws_batch=None):
+# Main method that re will interface with. If this gets bigger, consider a factory method pattern.
+def btap_batch(analysis_config_file=None, git_api_token=None, batch=None):
     # Load Analysis File into variable
     if not os.path.isfile(analysis_config_file):
         logging.error(f"could not find analysis input file at {analysis_config_file}. Exiting")
@@ -2328,23 +2262,22 @@ def btap_batch(analysis_config_file=None, git_api_token=None, aws_batch=None):
     print(f"Compute Environment:{analysis_config[':compute_environment']}")
     print(f"Analysis Type:{analysis_config[':algorithm'][':type']}")
 
-    if analysis_config[':compute_environment'] == 'aws_batch' and aws_batch is None:
+    if analysis_config[':compute_environment'] == 'aws_batch' and batch is None:
         # create aws image, set up aws compute env and create workflow queue.
         # Set Analysis Id if not set
         if (not ':analysis_id' in analysis_config ) or analysis_config[':analysis_id'] is None:
             analysis_config[':analysis_id'] = str(uuid.uuid4())
-        aws_batch = AWSBatch(
+        batch = AWSBatch(
             analysis_id=analysis_config[':analysis_id'],
             btap_image_name=analysis_config[':image_name'],
             rebuild_image=analysis_config[':nocache'],
             git_api_token=git_api_token,
             os_version=analysis_config[':os_version'],
             btap_costing_branch=analysis_config[':btap_costing_branch'],
-            os_standards_branch=analysis_config[':os_standards_branch'],
-            threads=get_threads(analysis_config)
+            os_standards_branch=analysis_config[':os_standards_branch']
         )
         # Create batch queue on aws.
-        aws_batch.setup()
+        batch.setup()
 
     baseline_results = None
     # Ensure reference run is executed in all other cases unless :run_reference is false.
@@ -2361,7 +2294,7 @@ def btap_batch(analysis_config_file=None, git_api_token=None, aws_batch=None):
                             building_options=temp_building_options,
                             project_root=project_root,
                             git_api_token=git_api_token,
-                            aws_batch=aws_batch)
+                            batch=batch)
         print(f"running {algorithm_type} stage")
         bb.run()
         baseline_results = os.path.join(bb.results_folder, 'output.xlsx')
@@ -2375,7 +2308,7 @@ def btap_batch(analysis_config_file=None, git_api_token=None, aws_batch=None):
             building_options=building_options,
             project_root=project_root,
             git_api_token=git_api_token,
-            aws_batch=aws_batch
+            batch=batch
         )
         return opt
     elif analysis_config[':algorithm'][':type'] == 'reference':
@@ -2390,7 +2323,7 @@ def btap_batch(analysis_config_file=None, git_api_token=None, aws_batch=None):
                             building_options=temp_building_options,
                             project_root=project_root,
                             git_api_token=git_api_token,
-                            aws_batch=aws_batch)
+                            batch=batch)
         print(f"running {algorithm_type} stage")
         bb.run()
     # LHS
@@ -2399,7 +2332,7 @@ def btap_batch(analysis_config_file=None, git_api_token=None, aws_batch=None):
                                 building_options=building_options,
                                 project_root=project_root,
                                 git_api_token=git_api_token,
-                                aws_batch=aws_batch,
+                                batch=batch,
                                 baseline_results=baseline_results)
     # nsga2
     elif analysis_config[':algorithm'][':type'] == 'nsga2':
@@ -2407,23 +2340,23 @@ def btap_batch(analysis_config_file=None, git_api_token=None, aws_batch=None):
                                 building_options=building_options,
                                 project_root=project_root,
                                 git_api_token=git_api_token,
-                                aws_batch=aws_batch,
+                                batch=batch,
                                 baseline_results=baseline_results)
     # parametric
     elif analysis_config[':algorithm'][':type'] == 'parametric':
-        return BTAPParametric(  analysis_config=analysis_config,
-                                building_options=building_options,
-                                project_root=project_root,
-                                git_api_token=git_api_token,
-                                aws_batch=aws_batch,
-                                baseline_results=baseline_results)
+        return BTAPParametric(analysis_config=analysis_config,
+                              building_options=building_options,
+                              project_root=project_root,
+                              git_api_token=git_api_token,
+                              batch=batch,
+                              baseline_results=baseline_results)
     # elimination
     elif analysis_config[':algorithm'][':type'] == 'elimination':
         return BTAPElimination( analysis_config=analysis_config,
                                 building_options=building_options,
                                 project_root=project_root,
                                 git_api_token=git_api_token,
-                                aws_batch=aws_batch,
+                                batch=batch,
                                 baseline_results=baseline_results)
     # Sensitivity
     elif analysis_config[':algorithm'][':type'] == 'sensitivity':
@@ -2431,30 +2364,31 @@ def btap_batch(analysis_config_file=None, git_api_token=None, aws_batch=None):
                                 building_options=building_options,
                                 project_root=project_root,
                                 git_api_token=git_api_token,
-                                aws_batch=aws_batch,
+                                batch=batch,
                                 baseline_results=baseline_results)
     #IDP
     elif analysis_config[':algorithm'][':type'] == 'idp':
-        return BTAPIntegratedDesignProcess(  analysis_config=analysis_config,
-                                building_options=building_options,
-                                project_root=project_root,
-                                git_api_token=git_api_token,
-                                aws_batch=aws_batch,
-                                baseline_results=baseline_results)
+        return BTAPIntegratedDesignProcess(analysis_config=analysis_config,
+                                           building_options=building_options,
+                                           project_root=project_root,
+                                           git_api_token=git_api_token,
+                                           batch=batch,
+                                           baseline_results=baseline_results)
     # osm_batch
     elif analysis_config[':algorithm'][':type'] == 'osm_batch':
         # Need to force this to use the NECB2011 standards class for now.
-        return BTAPParametric(  analysis_config=analysis_config,
-                                building_options=building_options,
-                                project_root=project_root,
-                                git_api_token=git_api_token,
-                                aws_batch=aws_batch)
+        return BTAPParametric(analysis_config=analysis_config,
+                              building_options=building_options,
+                              project_root=project_root,
+                              git_api_token=git_api_token,
+                              batch=batch)
     else:
         message = f'Unknown algorithm type. Allowed types are nsga2 and parametric. Exiting'
         print(message)
         logging.error(message)
         exit(1)
-    if not aws_batch is None:
-        aws_batch.tear_down()
+    if not batch is None:
+        batch.tear_down()
+
 
 
