@@ -5,9 +5,6 @@
   # BTAP Batch version
   :btap_batch_version: 1.0.004
 
-  # number of threads is a stub for aws batch. Unused at the moment.
-  :no_of_threads:
-
   # Choices are:
   #       local : Run locally.. Good to test out runs on small batches before sending to AWS.
   #       aws_batch: use for analyses with > 1000 simulations: This is currently only available for NRCan staff.  If you would wish to make used of Amazon cloud computing, please contact us.
