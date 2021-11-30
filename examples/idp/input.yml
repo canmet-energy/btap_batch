@@ -8,7 +8,7 @@
   # Choices are:
   #       local : Run locally.. Good to test out runs on small batches before sending to AWS.
   #       aws_batch: use for analyses with > 1000 simulations: This is currently only available for NRCan staff.  If you would wish to make used of Amazon cloud computing, please contact us.
-  :compute_environment: local
+  :compute_environment: aws_batch
 
   # Use btap_public_cli for full opensource version. For btap_private_cli to use costing. Contact us if you wish to work with costing data.
   :image_name: 'btap_private_cli'

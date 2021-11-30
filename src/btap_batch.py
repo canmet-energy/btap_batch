@@ -701,6 +701,7 @@ class AWSBatch:
 
         # Call to create Compute environment.
         # See https://boto3.amazonaws.com/v1/documentation/api/latest/reference/services/batch.html#Batch.Client.create_compute_environment
+        # and https://docs.aws.amazon.com/batch/latest/userguide/compute_environment_parameters.html#compute_environment_type
         response = self.batch_client.create_compute_environment(
             computeEnvironmentName=self.compute_environment_id,
             type='MANAGED',  # Allow AWS to manage instances.
