@@ -44,7 +44,7 @@ import atexit
 np.random.seed(123)
 seed(1)
 
-BTAP_BATCH_VERSION = '1.0.002'
+BTAP_BATCH_VERSION = '1.0.005'
 
 # Maximum AWS CPUS that AWS will allocate for the run.
 MAX_AWS_VCPUS = 500
@@ -217,6 +217,7 @@ class AWSCredentials:
             list(filter(lambda role: role['RoleName'] == 'AWSBatchServiceRole', service_roles))[0]['Arn']
 
 # Class to manage a AWS Batch run
+
 class AWSBatch:
     @classmethod
     def get_threads(cls):
@@ -452,7 +453,6 @@ class AWSBatch:
     def build_image(self, rebuild=False):
 
         self.image_tag = self.credentials.user_name
-        ic(self.image_name)
         self.image_full_name = f'{self.credentials.account_id}.dkr.ecr.{self.credentials.region_name}.amazonaws.com/' + self.image_name + ':' + self.image_tag
 
         # Todo create cloud build service role.
@@ -1924,7 +1924,7 @@ class BTAPIntegratedDesignProcess:
         self.git_api_token = git_api_token
         self.batch = batch
         self.baseline_results = baseline_results
-
+    # While not a child of BTAPAnalysis, have the same run method for consistency.
     def run(self):
         # excel file container.
         output_excel_files = []

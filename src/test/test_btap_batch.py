@@ -141,7 +141,6 @@ class TestBTAPBatch(unittest.TestCase):
         excel_path = os.path.join(bb.project_root, bb.analysis_config[':analysis_name'], bb.analysis_config[':analysis_id'], 'results', 'output.xlsx')
         assert os.path.isfile(excel_path), 'Output.xlsx was not created'
 
-
     def test_elimination(self):
         self.run_analysis(input_file=os.path.join(os.path.dirname(os.path.realpath(__file__)),'..','..','examples', 'elimination', 'input.yml'))
 
@@ -163,7 +162,6 @@ class TestBTAPBatch(unittest.TestCase):
 
     def test_parametric(self):
         self.run_analysis(input_file=os.path.join(os.path.dirname(os.path.realpath(__file__)),'..','..','examples','parametric', 'input.yml'))
-
 
 if __name__ == '__main__':
     unittest.main()
