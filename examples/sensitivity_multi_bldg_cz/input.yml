@@ -13,10 +13,6 @@
   #       aws_batch: use for analyses with > 1000 simulations: This is currently only available for NRCan staff.  If you would wish to make used of Amazon cloud computing, please contact us.
   :compute_environment: local
 
-  # DO NOT CHANGE: AWS S3 Bucket...Must be created ahead of time. Must be a STRING.
-  # H&B default bucket is '834599497928' for the btap_dev account. Only used for Amazon.
-  :s3_bucket: '834599497928'
-
   # Use btap_public_cli for full opensource version. For btap_private_cli to use costing. Contact us if you wish to work with costing data.
   :image_name: 'btap_private_cli'
 
@@ -47,10 +43,9 @@
   # Do you wish to enable automated costing for materials, labour, equipment? Disabled in btap_public_cli version.
   :enable_costing: true
 
-  # DO NOT CHANGE. Will keep the postgresql running after the analysis is complete. Turn this on if you wish to monitor the
-  # results in real-time or wish to append subsequent analyses to the database. To kill the database manually type
-  # 'docker kill btap_postgres' at any command prompt on your host system.
-  :kill_database: true
+  # Set this to true or None to perform a reference run of all the building_type, primary_heating_fuel, and location present in this file ahead of the analysis.
+  # This will automatically create comparisons to the reference cases generated in the analysis.
+  :run_reference: true
 
   #########################################  Algorithm  ###########################################################
   :algorithm:
