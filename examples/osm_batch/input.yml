@@ -3,10 +3,7 @@
 :analysis_configuration:
 
   # BTAP Batch version
-  :btap_batch_version: 1.0.004
-
-  # number of threads is a stub for aws batch. Unused at the moment.
-  :no_of_threads:
+  :btap_batch_version: 1.0.005
 
   # Choices are:
   #       local : Run locally.. Good to test out runs on small batches before sending to AWS.
@@ -62,7 +59,7 @@
     { key: '*',     variable: 'Zone Air Temperature',     frequency: 'hourly' }
   ]
   :output_meters: [
-    { name: 'Gas:Facility',     frequency: 'hourly' },
+    { name: 'NaturalGas:Facility',     frequency: 'hourly' },
     { name: 'Electricity:Facility',     frequency: 'hourly' },
     { name: 'DISTRICTHEATING:FACILITY',     frequency: 'hourly' },
     { name: 'DISTRICTCOOLING:FACILITY',     frequency: 'hourly' },

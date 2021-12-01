@@ -87,8 +87,6 @@ def run_analysis(short_city_name,
     analysis.run()
 
 
-# Create single database
-database = btap.BTAPDatabase()
 # Create parallel analysis in threads.
 with concurrent.futures.ThreadPoolExecutor(NUMBER_OF_PARALLEL_ANALYSES) as executor:
     futures = []
@@ -108,7 +106,7 @@ with concurrent.futures.ThreadPoolExecutor(NUMBER_OF_PARALLEL_ANALYSES) as execu
     for future in concurrent.futures.as_completed(futures):
         print(future.result())
 
-# output all data from database.
+#Sara, I had to eliminate the database to simplify btap_batch.. However.. all you have to do is get the output.xlsx files from
+# each run and concantenate them to a single df and then write to a new excel file.
 
-output_folder = os.path.join(os.path.dirname(os.path.realpath(__file__)))
-database.generate_output_files(analysis_id=None, output_folder=output_folder)
+
