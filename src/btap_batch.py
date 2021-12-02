@@ -636,7 +636,6 @@ class AWSBatch:
             for event in logEvents['events']:
                 lastTimestamp = event['timestamp']
                 timestamp = datetime.utcfromtimestamp(lastTimestamp / 1000.0).isoformat()
-                print
                 '[%s] %s' % ((timestamp + ".000")[:23] + 'Z', event['message'])
 
             nextToken = logEvents['nextForwardToken']
@@ -1290,29 +1289,32 @@ class BTAPAnalysis():
         # Create required paths and folders for analysis
         self.create_paths_folders()
 
-        if self.analysis_config[':compute_environment'] == 'aws_batch':
-            # If aws batch object was not passed.. create it.
-            if self.batch == None:
-                # Start batch queue if required.
-                # create aws image, set up aws compute env and create workflow queue.
-                self.batch = AWSBatch(
-                    analysis_id=self.analysis_config[':analysis_id'],
-                    btap_image_name=self.analysis_config[':image_name'],
-                    rebuild_image=self.analysis_config[':nocache'],
-                    git_api_token=git_api_token,
-                    os_version=self.analysis_config[':os_version'],
-                    btap_costing_branch=self.analysis_config[':btap_costing_branch'],
-                    os_standards_branch=self.analysis_config[':os_standards_branch'],
-                )
+        # If batch object has not been pass/created.. make one.
+        # This really should be replaced with a https://en.wikipedia.org/wiki/Factory_method_pattern.
+        if self.batch == None:
+            if self.analysis_config[':compute_environment'] == 'aws_batch':
+                # If aws batch object was not passed.. create it.
+
+                    # Start batch queue if required.
+                    # create aws image, set up aws compute env and create workflow queue.
+                    self.batch = AWSBatch(
+                        analysis_id=self.analysis_config[':analysis_id'],
+                        btap_image_name=self.analysis_config[':image_name'],
+                        rebuild_image=self.analysis_config[':nocache'],
+                        git_api_token=git_api_token,
+                        os_version=self.analysis_config[':os_version'],
+                        btap_costing_branch=self.analysis_config[':btap_costing_branch'],
+                        os_standards_branch=self.analysis_config[':os_standards_branch'],
+                    )
+                    self.batch.setup()
+            else:
+                self.batch = DockerBatch(image_name=self.analysis_config[':image_name'],
+                                          git_api_token=git_api_token,
+                                          os_standards_branch=self.analysis_config[':os_standards_branch'],
+                                          btap_costing_branch=self.analysis_config[':btap_costing_branch'],
+                                          os_version=self.analysis_config[':os_version'],
+                                          nocache=self.analysis_config[':nocache'])
                 self.batch.setup()
-        else:
-            self.batch = DockerBatch(image_name=self.analysis_config[':image_name'],
-                                      git_api_token=git_api_token,
-                                      os_standards_branch=self.analysis_config[':os_standards_branch'],
-                                      btap_costing_branch=self.analysis_config[':btap_costing_branch'],
-                                      os_version=self.analysis_config[':os_version'],
-                                      nocache=self.analysis_config[':nocache'])
-            self.batch.setup()
 
     def get_num_of_runs_failed(self):
         if os.path.isdir(self.failures_folder):
@@ -2261,22 +2263,36 @@ def load_btap_yml_file(analysis_config_file):
 
 # Main method that re will interface with. If this gets bigger, consider a factory method pattern.
 def btap_batch(analysis_config_file=None, git_api_token=None, batch=None):
+
+
     # Load Analysis File into variable
     if not os.path.isfile(analysis_config_file):
-        logging.error(f"could not find analysis input file at {analysis_config_file}. Exiting")
+        print(f"could not find analysis input file at {analysis_config_file}. Exiting")
         exit(1)
     # Open the yaml in analysis dict
     analysis_config, building_options = load_btap_yml_file(analysis_config_file)
     project_root = os.path.dirname(analysis_config_file)
+    logfile = os.path.join(project_root,'logfile.txt')
+    #remove old logfile if it is there.
+    if os.path.exists(logfile):
+        os.remove(logfile)
+    print(f"Log file created: {logfile}")
+    logging.basicConfig(filename=os.path.join(project_root,'logfile.txt'),
+                        filemode='a',
+                        format='%(asctime)s,%(msecs)d %(name)s %(levelname)s %(message)s',
+                        datefmt='%H:%M:%S',
+                        level=logging.DEBUG)
 
     print(f"Compute Environment:{analysis_config[':compute_environment']}")
     print(f"Analysis Type:{analysis_config[':algorithm'][':type']}")
 
+    # Set Analysis Id if not set
+    if (not ':analysis_id' in analysis_config) or analysis_config[':analysis_id'] is None:
+        analysis_config[':analysis_id'] = str(uuid.uuid4())
+
     if analysis_config[':compute_environment'] == 'aws_batch' and batch is None:
         # create aws image, set up aws compute env and create workflow queue.
-        # Set Analysis Id if not set
-        if (not ':analysis_id' in analysis_config ) or analysis_config[':analysis_id'] is None:
-            analysis_config[':analysis_id'] = str(uuid.uuid4())
+
         batch = AWSBatch(
             analysis_id=analysis_config[':analysis_id'],
             btap_image_name=analysis_config[':image_name'],
@@ -2287,6 +2303,15 @@ def btap_batch(analysis_config_file=None, git_api_token=None, batch=None):
             os_standards_branch=analysis_config[':os_standards_branch']
         )
         # Create batch queue on aws.
+        batch.setup()
+    elif analysis_config[':compute_environment'] == 'local' and batch is None:
+        batch = DockerBatch(image_name=analysis_config[':image_name'],
+                                 git_api_token=git_api_token,
+                                 os_standards_branch=analysis_config[':os_standards_branch'],
+                                 btap_costing_branch=analysis_config[':btap_costing_branch'],
+                                 os_version=analysis_config[':os_version'],
+                                 nocache=analysis_config[':nocache'])
+        # Create batch queue on docker desktop.
         batch.setup()
 
     baseline_results = None
