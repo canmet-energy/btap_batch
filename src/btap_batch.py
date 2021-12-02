@@ -1343,8 +1343,10 @@ class BTAPAnalysis():
         # Tell user and logger id and names
         print(f'analysis_id is: {self.analysis_config[":analysis_id"]}')
         print(f'analysis_name is: {self.analysis_config[":analysis_name"]}')
+        print(f'analysis type is: {self.analysis_config[":algorithm"][":type"]}')
         logging.info(f'analysis_id:{self.analysis_config[":analysis_id"]}')
         logging.info(f'analysis_name:{self.analysis_config[":analysis_name"]}')
+        logging.info(f'analysis type is: {self.analysis_config[":algorithm"][":type"]}')
 
         # Set analysis name folder.
         self.analysis_name_folder = os.path.join(self.project_root,
@@ -2276,12 +2278,15 @@ def btap_batch(analysis_config_file=None, git_api_token=None, batch=None):
     #remove old logfile if it is there.
     if os.path.exists(logfile):
         os.remove(logfile)
-    print(f"Log file created: {logfile}")
-    logging.basicConfig(filename=os.path.join(project_root,'logfile.txt'),
+
+    logging.basicConfig(filename=logfile,
                         filemode='a',
                         format='%(asctime)s, %(levelname)-8s [%(filename)s:%(lineno)d:%(funcName)s] %(message)s',
                         datefmt='%H:%M:%S',
                         level=logging.DEBUG)
+    message = f"Log file created: {logfile}"
+    print(message)
+    logging.info(message)
 
     print(f"Compute Environment:{analysis_config[':compute_environment']}")
     print(f"Analysis Type:{analysis_config[':algorithm'][':type']}")
