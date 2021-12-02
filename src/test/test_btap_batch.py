@@ -42,14 +42,14 @@ class TestBTAPBatch(unittest.TestCase):
 
 
         # Set aws_batch object to None intially.
-        cls.aws_batch = None
+        cls.batch = None
 
 
         # If aws_batch is selected...create single aws_batch workflow object to be used for all tests to save time.
         if cls.compute_environment == 'aws_batch':
             # create aws image, set up aws compute env and create workflow queue.
 
-            cls.aws_batch = btap.AWSBatch(
+            cls.batch = btap.AWSBatch(
                 analysis_id=str(uuid.uuid4()),
                 btap_image_name=cls.image_name,
                 rebuild_image=cls.no_cache,
@@ -57,10 +57,9 @@ class TestBTAPBatch(unittest.TestCase):
                 os_version=cls.os_version,
                 btap_costing_branch=cls.btap_costing_branch,
                 os_standards_branch=cls.os_standards_branch,
-                threads=btap.MAX_AWS_VCPUS
             )
             # Create batch queue on aws.
-            cls.aws_batch.create_batch_workflow()
+            cls.batch.setup()
 
 
         test_output_folder = os.path.join(os.getcwd(), 'test_output')
@@ -137,11 +136,10 @@ class TestBTAPBatch(unittest.TestCase):
 
         #Run analysis
         # Initialize the analysis object and run.
-        bb = btap.btap_batch( analysis_config_file=test_configuration_file, git_api_token=TestBTAPBatch.git_api_token,aws_batch=TestBTAPBatch.aws_batch)
+        bb = btap.btap_batch( analysis_config_file=test_configuration_file, git_api_token=TestBTAPBatch.git_api_token,batch=TestBTAPBatch.batch)
         bb.run()
         excel_path = os.path.join(bb.project_root, bb.analysis_config[':analysis_name'], bb.analysis_config[':analysis_id'], 'results', 'output.xlsx')
         assert os.path.isfile(excel_path), 'Output.xlsx was not created'
-
 
     def test_elimination(self):
         self.run_analysis(input_file=os.path.join(os.path.dirname(os.path.realpath(__file__)),'..','..','examples', 'elimination', 'input.yml'))
@@ -164,7 +162,6 @@ class TestBTAPBatch(unittest.TestCase):
 
     def test_parametric(self):
         self.run_analysis(input_file=os.path.join(os.path.dirname(os.path.realpath(__file__)),'..','..','examples','parametric', 'input.yml'))
-
 
 if __name__ == '__main__':
     unittest.main()
