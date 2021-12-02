@@ -1237,9 +1237,9 @@ class BTAPAnalysis():
             if not st in necb_spacetypes:
                 messages += f"OS:SpaceType {st} is not associated a valid NECB2011 spacetype.\n"
 
-        # if len(messages) > 0:
-        #     logging.error(f"The errors below need to be fixed in your osm file.\n{messages}\n")
-        #     raise OSMErrorException(f"The osm file {osm_file} is misconfigured.. Analysis aborted.\n")
+        if len(messages) > 0:
+            logging.error(f"The errors below need to be fixed in your osm file.\n{messages}\n")
+            raise OSMErrorException(f"The osm file {osm_file} is misconfigured.. Analysis aborted.\n")
 
     def get_local_osm_files(self):
         osm_list = {}
@@ -2279,7 +2279,7 @@ def btap_batch(analysis_config_file=None, git_api_token=None, batch=None):
     print(f"Log file created: {logfile}")
     logging.basicConfig(filename=os.path.join(project_root,'logfile.txt'),
                         filemode='a',
-                        format='%(asctime)s,%(msecs)d %(name)s %(levelname)s %(message)s',
+                        format='%(asctime)s, %(levelname)-8s [%(filename)s:%(lineno)d:%(funcName)s] %(message)s',
                         datefmt='%H:%M:%S',
                         level=logging.DEBUG)
 
