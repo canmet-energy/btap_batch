@@ -71,6 +71,7 @@ AWS_BATCH_DEFAULT_IMAGE = 'ami-0a06b44c462364156'
 DOCKERFILES_FOLDER = os.path.join(os.path.dirname(os.path.realpath(__file__)), 'Dockerfiles')
 # Location of previously run baseline simulations to compare with design scenarios
 BASELINE_RESULTS = os.path.join(os.path.dirname(os.path.realpath(__file__)), '..', 'resources', 'reference', 'output.xlsx')
+# Location of space_type library for NECB2011
 NECB2011_SPACETYPE_PATH = os.path.join(os.path.dirname(os.path.realpath(__file__)), '..', 'resources', 'space_type_library', 'NECB2011_space_types.osm')
 
 # These resources were created either by hand or default from the AWS web console. If moving this to another aws account,
@@ -80,20 +81,22 @@ NECB2011_SPACETYPE_PATH = os.path.join(os.path.dirname(os.path.realpath(__file__
 CLOUD_BUILD_SERVICE_ROLE = 'arn:aws:iam::834599497928:role/service-role/codebuild-test-service-role'
 # Role to give permissions to jobs to run.
 BATCH_JOB_ROLE = 'arn:aws:iam::834599497928:role/batchJobRole'
+# Role to give permissions to batch to run.
 BATCH_SERVICE_ROLE = 'arn:aws:iam::834599497928:role/service-role/AWSBatchServiceRole'
 # Max Retry attemps for aws clients.
 AWS_MAX_RETRIES = 12
 # Dockerfile url location
 DOCKERFILE_URL = 'https://raw.githubusercontent.com/canmet-energy/btap_cli/dev/Dockerfile'
 
-# Custom exceptions
+# Custom exception for a failed simulation
 class FailedSimulationException(Exception):
     pass
 
+# Custom exception for a OSM error.
 class OSMErrorException(Exception):
     pass
 
-# S3 Operations
+# Blob Storage operations
 class S3:
     # Constructor
     def __init__(self):
@@ -101,14 +104,14 @@ class S3:
         config = Config(retries={'max_attempts': AWS_MAX_RETRIES, 'mode': 'standard'})
         self.s3 = boto3.client('s3', config=config)
 
-    # Method to delete a bucket.
+    # Method to delete a bucket. Not used
     def delete_bucket(self, bucket_name):
         message = f'Deleting S3 {bucket_name}'
         print(message)
         logging.info(message)
         self.s3.delete_bucket(Bucket=bucket_name)
 
-
+    # Method to check if a bucket exists.
     def check_bucket_exists(self,bucket_name):
         bucket = self.s3.Bucket(bucket_name)
         exists = True
@@ -137,7 +140,7 @@ class S3:
             ObjectLockEnabledForBucket=False
         )
 
-    # Method to download folder.
+    # Method to download folder. Single threaded.
     def download_s3_folder(self, bucket_name, s3_folder, local_dir=None):
         """
         Download the contents of a folder directory
@@ -159,7 +162,7 @@ class S3:
         bucket = self.s3.Bucket(bucket)
         bucket.objects.filter(Prefix=folder).delete()
 
-    # Copy folder to S3
+    # Copy folder to S3. Single thread.
     def copy_folder_to_s3(self, bucket_name, source_folder, target_folder):
         # Get files in folder.
         files = glob.glob(source_folder + '/**/*', recursive=True)
@@ -173,11 +176,12 @@ class S3:
 
             self.s3.upload_file(file, bucket_name, target_path)
 
+    # Method to upload a file to S3.
     def upload_file(self, file, bucket_name, target_path):
         logging.info(f"uploading {file} to s3 bucket {bucket_name} target {target_path}")
         self.s3.upload_file(file, bucket_name, target_path)
 
-# Class to authenticate to AWS.
+# Class to authenticate to AWS and to get account information
 class AWSCredentials:
     # Initialize with required clients.
     def __init__(self):
@@ -202,22 +206,18 @@ class AWSCredentials:
 
         # get aws username from userid.
         if re.compile(".*:(.*)@.*").search(self.user_id) is None:
+            #This situation occurs when running the host machine on AWS itself.
             self.user_name = 'osdev'
         else:
+            # Otherwise it will use your aws user_id
             self.user_name = re.compile(".*:(.*)@.*").search(self.user_id)[1]
 
+        # User ARN (Not used currently)
         self.user_arn = self.sts.get_caller_identity()["Arn"]
+        # AWS Region name.
         self.region_name = boto3.Session().region_name
 
-        # Store the aws service role arn for AWSBatchServiceRole. This role is created by default when AWSBatch
-        # compute environment is created for the first time via the web console automatically.
-        # To-do: Create and delete this programmatically.
-        service_roles = self.iam.list_roles(PathPrefix='/service-role/')['Roles']
-        self.aws_batch_service_role = \
-            list(filter(lambda role: role['RoleName'] == 'AWSBatchServiceRole', service_roles))[0]['Arn']
-
 # Class to manage a AWS Batch run
-
 class AWSBatch:
     @classmethod
     def get_threads(cls):
@@ -636,7 +636,6 @@ class AWSBatch:
             for event in logEvents['events']:
                 lastTimestamp = event['timestamp']
                 timestamp = datetime.utcfromtimestamp(lastTimestamp / 1000.0).isoformat()
-                print
                 '[%s] %s' % ((timestamp + ".000")[:23] + 'Z', event['message'])
 
             nextToken = logEvents['nextForwardToken']
@@ -1194,7 +1193,7 @@ class DockerBatch:
 
         return result
 
-# Parent Analysis class.
+# Parent Analysis class from with all analysis inherit
 class BTAPAnalysis():
     # This does some simple check on the osm file to ensure that it has the required inputs for btap.
     def check_list(self,osm_file):
@@ -1290,29 +1289,32 @@ class BTAPAnalysis():
         # Create required paths and folders for analysis
         self.create_paths_folders()
 
-        if self.analysis_config[':compute_environment'] == 'aws_batch':
-            # If aws batch object was not passed.. create it.
-            if self.batch == None:
-                # Start batch queue if required.
-                # create aws image, set up aws compute env and create workflow queue.
-                self.batch = AWSBatch(
-                    analysis_id=self.analysis_config[':analysis_id'],
-                    btap_image_name=self.analysis_config[':image_name'],
-                    rebuild_image=self.analysis_config[':nocache'],
-                    git_api_token=git_api_token,
-                    os_version=self.analysis_config[':os_version'],
-                    btap_costing_branch=self.analysis_config[':btap_costing_branch'],
-                    os_standards_branch=self.analysis_config[':os_standards_branch'],
-                )
+        # If batch object has not been pass/created.. make one.
+        # This really should be replaced with a https://en.wikipedia.org/wiki/Factory_method_pattern.
+        if self.batch == None:
+            if self.analysis_config[':compute_environment'] == 'aws_batch':
+                # If aws batch object was not passed.. create it.
+
+                    # Start batch queue if required.
+                    # create aws image, set up aws compute env and create workflow queue.
+                    self.batch = AWSBatch(
+                        analysis_id=self.analysis_config[':analysis_id'],
+                        btap_image_name=self.analysis_config[':image_name'],
+                        rebuild_image=self.analysis_config[':nocache'],
+                        git_api_token=git_api_token,
+                        os_version=self.analysis_config[':os_version'],
+                        btap_costing_branch=self.analysis_config[':btap_costing_branch'],
+                        os_standards_branch=self.analysis_config[':os_standards_branch'],
+                    )
+                    self.batch.setup()
+            else:
+                self.batch = DockerBatch(image_name=self.analysis_config[':image_name'],
+                                          git_api_token=git_api_token,
+                                          os_standards_branch=self.analysis_config[':os_standards_branch'],
+                                          btap_costing_branch=self.analysis_config[':btap_costing_branch'],
+                                          os_version=self.analysis_config[':os_version'],
+                                          nocache=self.analysis_config[':nocache'])
                 self.batch.setup()
-        else:
-            self.batch = DockerBatch(image_name=self.analysis_config[':image_name'],
-                                      git_api_token=git_api_token,
-                                      os_standards_branch=self.analysis_config[':os_standards_branch'],
-                                      btap_costing_branch=self.analysis_config[':btap_costing_branch'],
-                                      os_version=self.analysis_config[':os_version'],
-                                      nocache=self.analysis_config[':nocache'])
-            self.batch.setup()
 
     def get_num_of_runs_failed(self):
         if os.path.isdir(self.failures_folder):
@@ -1719,7 +1721,7 @@ class BTAPParametric(BTAPAnalysis):
         logging.info(message)
         print(message)
 
-# Optimization problem definition class.
+# Optimization problem definition class using Pymoo
 class BTAPProblem(ElementwiseProblem):
     # Inspiration for this was drawn from examples:
     #   Discrete analysis https://pymoo.org/customization/discrete_problem.html
@@ -1782,7 +1784,7 @@ class BTAPProblem(ElementwiseProblem):
             objectives.append(results[objective])
         out["F"] = np.column_stack(objectives)
 
-# Class to manage optimization runs.
+# Class to manage optimization analysis
 class BTAPOptimization(BTAPAnalysis):
     def __init__(self,
                  analysis_config=None,
@@ -1910,6 +1912,7 @@ class BTAPSamplingLHS(BTAPParametric):
             self.scenarios.append(run_options)
         return self.scenarios
 
+# Class to manage IDP runs with group elimination,sensitivity and optimization runs.
 class BTAPIntegratedDesignProcess:
     def __init__(self,
                  analysis_config=None,
@@ -1988,6 +1991,7 @@ class BTAPIntegratedDesignProcess:
             df = df.append(pd.read_excel(file), ignore_index=True)
         df.to_excel(excel_writer=os.path.join(bb.project_root,'output.xlsx'), sheet_name='btap_data')
 
+# Class to manage Elimination analysis
 class BTAPElimination(BTAPParametric):
 
     def compute_scenarios(self):
@@ -2023,6 +2027,7 @@ class BTAPElimination(BTAPParametric):
         logging.info(message)
         return self.scenarios
 
+# Class to manage Sensitivity analysis
 class BTAPSensitivity(BTAPParametric):
     def compute_scenarios(self):
         # Create default options scenario. Uses first value of all arrays.
@@ -2044,6 +2049,7 @@ class BTAPSensitivity(BTAPParametric):
         logging.info(message)
         return self.scenarios
 
+# Class to manage preflight run with is to simply check if any custom OSM files can run.
 class BTAPPreflight(BTAPParametric):
     def compute_scenarios(self):
         # Create default options scenario. Uses first value of all arrays.
@@ -2075,6 +2081,7 @@ class BTAPPreflight(BTAPParametric):
         logging.info(message)
         return self.scenarios
 
+# Class to run reference simulations.. Based on building_type, epw_file, primary_heating_fuel_type
 class BTAPReference(BTAPParametric):
     def compute_scenarios(self):
         # Create default options scenario. Uses first value of all arrays.
@@ -2100,9 +2107,8 @@ class BTAPReference(BTAPParametric):
         logging.info(message)
         return self.scenarios
 
-# This class processed the btap_batch file to add columns as needed. This is a separate class as this can be applied
-# independant of simulation runs and optionally at simulation time as well if desired,but may have to make this
-# thread-safe if we do.
+# This class processes the btap_batch file to add columns as needed. This is a separate class as this can be applied
+# independant of simulation runs.
 class PostProcessResults:
     def __init__(self,
                 baseline_results=BASELINE_RESULTS,
@@ -2128,6 +2134,10 @@ class PostProcessResults:
         self.save_excel_output()
         return self.btap_data_df
 
+    # This method gets files from the run folders into the results folders.  This is both for S3 and local analyses.
+    # This is all done serially...if this is too slow, we should implement a parallel method using threads.. While probably
+    # Not an issue for local analyses, it may be needed for large run. Here is an example of somebody with an example of parallel
+    # downloads from S3 using threads.  https://emasquil.github.io/posts/multithreading-boto3/
     def get_files(self, file_paths =[r'run_dir/run/in.osm']):
         for file_path in file_paths:
             pathlib.Path(os.path.dirname(self.results_folder)).mkdir(parents=True, exist_ok=True)
@@ -2237,6 +2247,7 @@ class PostProcessResults:
             # payback_period = final_full_year + fractional_yr
             # print(payback_period)
 
+# Helper method to load input.yml file into data structures required by btap_batch
 def load_btap_yml_file(analysis_config_file):
     # Load Analysis File into variable
     if not os.path.isfile(analysis_config_file):
@@ -2252,22 +2263,36 @@ def load_btap_yml_file(analysis_config_file):
 
 # Main method that re will interface with. If this gets bigger, consider a factory method pattern.
 def btap_batch(analysis_config_file=None, git_api_token=None, batch=None):
+
+
     # Load Analysis File into variable
     if not os.path.isfile(analysis_config_file):
-        logging.error(f"could not find analysis input file at {analysis_config_file}. Exiting")
+        print(f"could not find analysis input file at {analysis_config_file}. Exiting")
         exit(1)
     # Open the yaml in analysis dict
     analysis_config, building_options = load_btap_yml_file(analysis_config_file)
     project_root = os.path.dirname(analysis_config_file)
+    logfile = os.path.join(project_root,'logfile.txt')
+    #remove old logfile if it is there.
+    if os.path.exists(logfile):
+        os.remove(logfile)
+    print(f"Log file created: {logfile}")
+    logging.basicConfig(filename=os.path.join(project_root,'logfile.txt'),
+                        filemode='a',
+                        format='%(asctime)s,%(msecs)d %(name)s %(levelname)s %(message)s',
+                        datefmt='%H:%M:%S',
+                        level=logging.DEBUG)
 
     print(f"Compute Environment:{analysis_config[':compute_environment']}")
     print(f"Analysis Type:{analysis_config[':algorithm'][':type']}")
 
+    # Set Analysis Id if not set
+    if (not ':analysis_id' in analysis_config) or analysis_config[':analysis_id'] is None:
+        analysis_config[':analysis_id'] = str(uuid.uuid4())
+
     if analysis_config[':compute_environment'] == 'aws_batch' and batch is None:
         # create aws image, set up aws compute env and create workflow queue.
-        # Set Analysis Id if not set
-        if (not ':analysis_id' in analysis_config ) or analysis_config[':analysis_id'] is None:
-            analysis_config[':analysis_id'] = str(uuid.uuid4())
+
         batch = AWSBatch(
             analysis_id=analysis_config[':analysis_id'],
             btap_image_name=analysis_config[':image_name'],
@@ -2278,6 +2303,15 @@ def btap_batch(analysis_config_file=None, git_api_token=None, batch=None):
             os_standards_branch=analysis_config[':os_standards_branch']
         )
         # Create batch queue on aws.
+        batch.setup()
+    elif analysis_config[':compute_environment'] == 'local' and batch is None:
+        batch = DockerBatch(image_name=analysis_config[':image_name'],
+                                 git_api_token=git_api_token,
+                                 os_standards_branch=analysis_config[':os_standards_branch'],
+                                 btap_costing_branch=analysis_config[':btap_costing_branch'],
+                                 os_version=analysis_config[':os_version'],
+                                 nocache=analysis_config[':nocache'])
+        # Create batch queue on docker desktop.
         batch.setup()
 
     baseline_results = None
