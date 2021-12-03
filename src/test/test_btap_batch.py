@@ -1,7 +1,6 @@
 import unittest
 import src.btap_batch as btap
 import os
-import logging
 import yaml
 from pathlib import Path
 import warnings
@@ -16,9 +15,6 @@ class TestBTAPBatch(unittest.TestCase):
         # Workaround for this warning https://github.com/boto/boto3/issues/454
         warnings.filterwarnings("ignore", category=ResourceWarning, message="unclosed.*<ssl.SSLSocket.*>")
 
-        # Displays logging.. Set to INFO or DEBUG for a more verbose output.
-        logging.basicConfig(level=logging.ERROR)
-
 
         # Your git token.. Do not commit this!
         cls.git_api_token = os.environ['GIT_API_TOKEN']
@@ -29,7 +25,7 @@ class TestBTAPBatch(unittest.TestCase):
         cls.os_version = '3.2.1'
 
         #Change to test on other branches.
-        cls.os_standards_branch = 'nrcan_bk'
+        cls.os_standards_branch = 'nrcan'
 
         # Branch from https://github.com/canmet-energy/btap_costing. Typically 'master'
         cls.btap_costing_branch = 'master'
@@ -72,7 +68,6 @@ class TestBTAPBatch(unittest.TestCase):
             except PermissionError as err:
                 message = f'Could not delete {test_output_folder}. Do you have a file open in that folder? Exiting'
                 print(message)
-                logging.error(message)
                 exit(1)
         print("deleted..")
 
@@ -119,7 +114,6 @@ class TestBTAPBatch(unittest.TestCase):
             except PermissionError as err:
                 message = f'Could not delete {test_output_folder}. Do you have a file open in that folder? Exiting'
                 print(message)
-                logging.error(message)
                 exit(1)
 
 
