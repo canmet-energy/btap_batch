@@ -73,11 +73,11 @@ class TestBTAPBatch(unittest.TestCase):
 
     def run_analysis(self, input_file=None):
 
-        #Get basename
-        basename = Path(input_file).stem
-
         #Get Folder name
         folder_name = os.path.dirname(input_file)
+
+        #Get basename
+        basename = Path(folder_name).stem
 
         #Load yaml file.
         # Open the yaml in analysis dict.

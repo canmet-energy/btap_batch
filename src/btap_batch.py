@@ -127,7 +127,6 @@ class S3:
 
     # Method to check if a bucket exists.
     def check_bucket_exists(self, bucket_name):
-        bucket = self.s3.Bucket(bucket_name)
         exists = True
         try:
             self.s3.meta.client.head_bucket(Bucket=bucket_name)
@@ -144,7 +143,7 @@ class S3:
         message = f'Creating S3 {bucket_name}'
         print(message)
         logging.info(message)
-        response = self.s3.create_bucket(
+        self.s3.create_bucket(
             ACL='private',
             Bucket=bucket_name,
             CreateBucketConfiguration={
@@ -213,7 +212,7 @@ class AWSCredentials:
             else:
                 print("Unexpected botocore.exceptions.ClientError error: %s" % e)
                 exit(1)
-        except botocore.exceptions.SSLError as e:
+        except botocore.exceptions.SSLError:
             logging.error(
                 "SSL validation failed.. This is usually because you are behind a VPN. Please do not use a VPN.")
             exit(1)
@@ -289,7 +288,7 @@ class AWSBatch:
         self.aws_batch_service_role = BATCH_SERVICE_ROLE
 
         # Set Analysis Id.
-        if analysis_id == None:
+        if analysis_id is None:
             self.analysis_id = uuid.uuid4()
         else:
             self.analysis_id = analysis_id
@@ -397,7 +396,7 @@ class AWSBatch:
             return btap_data
 
 
-        except Exception as error:
+        except Exception:
             error_msg = ''
             content_object = boto3.resource('s3').Object(run_options[':s3_bucket'], s3_error_txt_path)
             print(error_msg)
@@ -424,8 +423,7 @@ class AWSBatch:
         message = f"Submitted job_id {jobId} with job name {jobName} to the job queue {self.job_queue_id}"
         logging.info(message)
         running = False
-        startTime = 0
-        logGroupName = '/aws/batch/job'
+        # logGroupName = '/aws/batch/job'
         result = 'FAILED'
         while debug:
             # Don't hammer AWS.. make queries every minute for the run status
@@ -484,7 +482,7 @@ class AWSBatch:
             logging.info(message)
             print(message)
 
-        if rebuild == True:
+        if rebuild:
             message = f"User requested build from sources. image:{self.image_name}:{self.image_tag}  "
             logging.info(message)
             print(message)
@@ -638,6 +636,7 @@ class AWSBatch:
 
         lastTimestamp = ''
         while True:
+            # Note if using a linter and get warning "Expected Dictionary and got Dict" This is a false positive.
             logEvents = self.cloudwatch.get_log_events(**kwargs)
 
             for event in logEvents['events']:
@@ -1749,7 +1748,7 @@ class BTAPProblem(ElementwiseProblem):
             # Tell pymoo that the variables are discrete integers and not floats as is usually the default.
             type_var=int,
             # options to parent class (not used)
-            **kwargs)
+            **kwargs)  # Note if using a linter and get warning "Expected Dictionary and got Dict" This is a false positive.
 
     # This is the method that runs each simulation.
     def _evaluate(
@@ -2199,7 +2198,7 @@ class PostProcessResults:
         # If files are on S3
         elif row['datapoint_output_url'].startswith('https://s3'):
             p = re.compile(
-                "https:\/\/s3\.console\.aws\.amazon\.com\/s3\/buckets\/(\d*)\?region=(.*)\&prefix=(.*)")
+                "https://s3\.console\.aws\.amazon\.com/s3/buckets/(\d*)\?region=(.*)&prefix=(.*)")
             m = p.match(row['datapoint_output_url'])
             bucket = m.group(1)
             region = m.group(2)
@@ -2315,7 +2314,12 @@ def btap_batch(analysis_config_file=None, git_api_token=None, batch=None):
     # Open the yaml in analysis dict
     analysis_config, building_options = load_btap_yml_file(analysis_config_file)
     project_root = os.path.dirname(analysis_config_file)
-    logfile = os.path.join(project_root, 'logfile.txt')
+
+    # Set Analysis Id if not set
+    if (not ':analysis_id' in analysis_config) or analysis_config[':analysis_id'] is None:
+        analysis_config[':analysis_id'] = str(uuid.uuid4())
+
+    logfile = os.path.join(project_root, f"{analysis_config[':analysis_id']}.log")
     # remove old logfile if it is there.
     if os.path.exists(logfile):
         os.remove(logfile)
@@ -2332,9 +2336,7 @@ def btap_batch(analysis_config_file=None, git_api_token=None, batch=None):
     print(f"Compute Environment:{analysis_config[':compute_environment']}")
     print(f"Analysis Type:{analysis_config[':algorithm'][':type']}")
 
-    # Set Analysis Id if not set
-    if (not ':analysis_id' in analysis_config) or analysis_config[':analysis_id'] is None:
-        analysis_config[':analysis_id'] = str(uuid.uuid4())
+
 
     if analysis_config[':compute_environment'] == 'aws_batch' and batch is None:
         # create aws image, set up aws compute env and create workflow queue.
