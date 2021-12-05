@@ -1,9 +1,5 @@
 import src.btap_batch as btap
 import os
-import logging
-
-# Displays logging.. Set to INFO or DEBUG for a more verbose output.
-logging.basicConfig(level=logging.ERROR)
 
 # Your git token.. Do not commit this!
 git_api_token = os.environ['GIT_API_TOKEN']

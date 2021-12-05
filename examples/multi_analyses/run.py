@@ -1,6 +1,5 @@
 import src.btap_batch as btap
 import os
-import logging
 import yaml
 from datetime import date
 import re
@@ -11,9 +10,6 @@ import concurrent.futures
 # Set this to 1 if running locally...or 14 if running on aws.
 NUMBER_OF_PARALLEL_ANALYSES = 1
 
-
-# Displays logging.. Set to INFO or DEBUG for a more verbose output.
-logging.basicConfig(level=logging.ERROR)
 OPTIONS_FILE = os.path.join(os.path.dirname(os.path.realpath(__file__)), 'input.yml')
 building_types = [
     #     'SecondarySchool',
