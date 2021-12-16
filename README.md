@@ -57,15 +57,13 @@ was very difficult to do with NREL's PAT interface.
 Using AWS batch also reduces the cost of simulations and enables researchers to use AWS dashboards to monitor the simulation runs. BTAP_BATCH
 takes advantage of Amazons cost-effective batch queue system to complete simulations. 
  
-# Costing: btap_private_cli vs btap_public_cli engines
+# Costing
 BTAP provide costing for baseline and ecm design scenarios. The cost is unlike most tools where a simple cost-per-area is 
 applied. BTAP take into account the geometry of the buiding, and the occupancy type, and sized to adjust cost for piping, 
-size of ductwork, wiring and other impacts that are critical to costing estimates. Cost is done with help of commercial third
-party data, as such is only contained in the 'btap_private_cli' image_name. To utilize this feature you must have a licence 
+size of ductwork, wiring and other impacts that are critical to costing estimates. To utilize this feature you must have a licence 
 from NRCan's IP office. We will then grant access to you via your github account. 
 
-The non-cost version that is freely available called 'btap_public_cli' is available by changing the :image_name field in the input yml
-file. You will still need a github token set up on your system to run the analysis. This accesses NREL's Openstudio 
+You will still need a github token set up on your system to run the analysis even if you do not use costing. This accesses NREL's Openstudio 
 Standards repository that contains the code for most North American building standards including Canada's NECB, as well 
 as an array of energy conservation measures. 
  

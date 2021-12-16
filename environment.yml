@@ -44,6 +44,7 @@ dependencies:
   - flask-compress=1.10.1=pyhd8ed1ab_0
   - freetype=2.10.4=h546665d_1
   - future=0.18.2=py39haa95532_1
+  - genson=1.2.2
   - greenlet=1.1.1=py39h415ef7b_0
   - icecream=2.1.1=pyhd8ed1ab_0
   - idna=3.1=pyhd3deb0d_0
@@ -55,6 +56,7 @@ dependencies:
   - jmespath=0.10.0=pyh9f0ad1d_0
   - joblib=1.0.1=pyhd8ed1ab_0
   - jpeg=9d=h8ffe710_0
+  - jsonschema=4.2.1
   - kiwisolver=1.3.2=py39h2e07f2f_0
   - krb5=1.19.2=hbae68bd_2
   - lcms2=2.12=h2a16943_0
@@ -142,3 +144,4 @@ dependencies:
     - dash-table==5.0.0
     - pymoo==0.5.0
     - openstudio==3.2.1
+

@@ -1,0 +1,926 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "type": "object",
+  "properties": {
+    ":analysis_configuration": {
+      "description": "",
+      "type": "object",
+      "properties": {
+        ":compute_environment": {
+          "type": "string",
+          "enum": [
+            "local",
+            "aws_batch"
+          ],
+          "default": "local"
+        },
+        ":nocache": {
+          "Default": true,
+          "type": "boolean"
+        },
+        ":os_standards_branch": {
+          "default": "nrcan",
+          "type": "string"
+        },
+        ":btap_costing_branch": {
+          "default": "master",
+          "type": "string"
+        },
+        ":os_version": {
+          "default": "3.2.1",
+          "type": "string",
+          "enum": [
+            "3.2.1"
+          ]
+        },
+        ":analysis_name": {
+          "default": "test_analysis",
+          "type": "string"
+        },
+        ":enable_costing": {
+          "default": true,
+          "type": "boolean"
+        },
+        ":run_reference": {
+          "default": true,
+          "type": "boolean"
+        },
+        ":algorithm": {
+          "type": "object",
+          "properties": {
+            ":type": {
+              "type": "string",
+              "default": "pre-flight",
+              "enum": [
+                "pre-flight",
+                "reference",
+                "sampling-lhs",
+                "nsga2",
+                "parametric",
+                "elimination",
+                "sensitivity",
+                "idp",
+                "osm_batch"
+              ]
+            }
+          },
+          "allOf": [
+            {
+              "if": {
+                "properties": {
+                  ":type": {
+                    "const": "nsga2"
+                  }
+                }
+              },
+              "then": {
+                "properties": {
+                  ":population": {
+                    "default": 5,
+                    "type": "integer"
+                  },
+                  ":n_generations": {
+                    "default": 1,
+                    "type": "integer"
+                  },
+                  ":prob": {
+                    "default": 0.85,
+                    "type": "number"
+                  },
+                  ":eta": {
+                    "default": 3.0,
+                    "type": "number"
+                  },
+                  ":minimize_objectives": {
+                    "type": "array",
+                    "items": {
+                      "type": "string",
+                      "enum": [
+                        "heating_peak_w_per_m_sq",
+                        "cooling_peak_w_per_m_sq",
+                        "bc_step_code_tedi_kwh_per_m_sq",
+                        "bc_step_code_meui_kwh_per_m_sq",
+                        "cost_utility_ghg_total_kg_per_m_sq",
+                        "cost_utility_neb_total_cost_per_m_sq",
+                        "energy_eui_total_gj_per_m_sq",
+                        "cost_equipment_total_cost_per_m_sq"
+                      ]
+                    }
+                  }
+                },
+                "required": [
+                  ":population",
+                  ":n_generations",
+                  ":prob",
+                  ":eta",
+                  ":minimize_objectives"
+                ]
+              }
+            },
+            {
+              "if": {
+                "properties": {
+                  ":type": {
+                    "const": "sampling-lhs"
+                  }
+                }
+              },
+              "then": {
+                "properties": {
+                  ":n_samples": {
+                    "default": 10,
+                    "type": "integer"
+                  },
+                  ":lhs_type": {
+                    "default": "classic",
+                    "type": "string"
+                  },
+                  ":random_seed": {
+                    "default": 1,
+                    "type": "integer"
+                  }
+                },
+                "required": [
+                  ":n_samples",
+                  ":lhs_type",
+                  ":random_seed"
+                ]
+              }
+            }
+          ]
+        },
+        ":output_variables": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "key": {
+                "type": "string"
+              },
+              "variable": {
+                "type": "string"
+              },
+              "frequency": {
+                "type": "string"
+              }
+            },
+            "required": [
+              "frequency",
+              "key",
+              "variable"
+            ]
+          }
+        },
+        ":output_meters": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "name": {
+                "type": "string"
+              },
+              "frequency": {
+                "type": "string"
+              }
+            },
+            "required": [
+              "frequency",
+              "name"
+            ]
+          }
+        }
+      },
+      "required": [
+        ":algorithm",
+        ":analysis_name",
+        ":btap_costing_branch",
+        ":compute_environment",
+        ":enable_costing",
+        ":nocache",
+        ":os_standards_branch",
+        ":os_version",
+        ":output_meters",
+        ":output_variables"
+      ]
+    },
+    ":building_options": {
+      "type": "object",
+      "properties": {
+        ":building_type": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "default": [
+            "FullServiceRestaurant"
+          ],
+          "minItems": 1
+        },
+        ":template": {
+          "type": "array",
+          "items": {
+            "default": [
+              "NECB2011"
+            ],
+            "type": "string",
+            "enum": [
+              "NECB2011",
+              "NECB2015",
+              "NECB2017",
+              "NECB2020",
+              "BTAPPRE1980",
+              "BTAP1980TO2010"
+            ]
+          },
+          "minItems": 1
+        },
+        ":epw_file": {
+          "type": "array",
+          "items": {
+            "default": [
+              "CAN_QC_Montreal-Trudeau.Intl.AP.716270_CWEC2016.epw"
+            ],
+            "type": "string",
+            "enum": [
+              "CAN_QC_Montreal-Trudeau.Intl.AP.716270_CWEC2016.epw",
+              "CAN_NS_Halifax.Dockyard.713280_CWEC2016.epw",
+              "CAN_AB_Edmonton.Intl.AP.711230_CWEC2016.epw",
+              "CAN_BC_Vancouver.Intl.AP.718920_CWEC2016.epw",
+              "CAN_AB_Calgary.Intl.AP.718770_CWEC2016.epw",
+              "CAN_ON_Toronto.Pearson.Intl.AP.716240_CWEC2016.epw",
+              "CAN_YT_Whitehorse.Intl.AP.719640_CWEC2016.epw"
+            ]
+          },
+          "minItems": 1
+        },
+        ":primary_heating_fuel": {
+          "type": "array",
+          "items": {
+            "default": [
+              "NECB_Default"
+            ],
+            "type": "string",
+            "enum": [
+              "Electricity",
+              "NaturalGas",
+              "FuelOilNo2"
+            ]
+          },
+          "default": "Electricity",
+          "minItems": 1
+        },
+        ":dcv_type": {
+          "type": "array",
+          "items": {
+            "default": [
+              "NECB_Default"
+            ],
+            "type": "string",
+            "enum": [
+              "NECB_Default",
+              "No_DCV",
+              "Occupancy_based_DCV",
+              "CO2_based_DCV"
+            ]
+          },
+          "minItems": 1
+        },
+        ":lights_type": {
+          "type": "array",
+          "items": {
+            "default": [
+              "NECB_Default"
+            ],
+            "type": "string",
+            "enum": [
+              "NECB_Default",
+              "LED"
+            ]
+          },
+          "minItems": 1
+        },
+        ":lights_scale": {
+          "type": "array",
+          "items": {
+            "default": [
+              "NECB_Default"
+            ],
+            "type": "string"
+          },
+          "minItems": 1
+        },
+        ":daylighting_type": {
+          "type": "array",
+          "items": {
+            "default": [
+              "NECB_Default"
+            ],
+            "type": "string",
+            "enum": [
+              "NECB_Default",
+              "add_daylighting_controls"
+            ]
+          },
+          "minItems": 1
+        },
+        ":ecm_system_name": {
+          "type": "array",
+          "items": {
+            "default": [
+              "NECB_Default"
+            ],
+            "type": "string",
+            "enum": [
+              "NECB_Default",
+              "HS09_CCASHP_Baseboard",
+              "HS08_CCASHP_VRF",
+              "HS11_ASHP_PTHP",
+              "HS12_ASHP_Baseboard",
+              "HS13_ASHP_VRF"
+            ]
+          },
+          "minItems": 1
+        },
+        ":erv_package": {
+          "default": [
+            "NECB_Default"
+          ],
+          "type": "array",
+          "items": {
+            "default": [
+              "NECB_Default"
+            ],
+            "type": "string",
+            "enum": [
+              "NECB_Default",
+              "NECB_Default_All",
+              "Plate-All",
+              "Plate-Existing",
+              "Rotary-All",
+              "Rotary-Existing"
+            ]
+          },
+          "minItems": 1
+        },
+        ":boiler_eff": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "enum": [
+              "NECB_Default",
+              "NECB 88% Efficient Condensing Boiler",
+              "NECB 85% Efficient Condensing Boiler",
+              "NECB 91% Efficient Condensing Boiler",
+              "NECB 94% Efficient Condensing Boiler",
+              "Viessmann Vitocrossal 300 CT3-17 96.2% Efficient Condensing Gas Boiler"
+            ]
+          },
+          "default": [
+            "NECB_Default"
+          ],
+          "minItems": 1
+        },
+        ":furnace_eff": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "enum": [
+              "NECB_Default",
+              "NECB 85% Efficient Condensing Gas Furnace",
+              "NECB 88% Efficient Condensing Gas Furnace",
+              "NECB 91% Efficient Condensing Gas Furnace",
+              "NECB 94% Efficient Condensing Gas Furnace"
+            ],
+            "default": [
+              "NECB_Default"
+            ],
+            "minItems": 1
+          }
+        },
+        ":shw_eff": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "enum": [
+              "NECB_Default",
+              "Natural Gas Power Vent with Electric Ignition",
+              "Natural Gas Direct Vent with Electric Ignition",
+              "Natural Gas 85% Efficient SHW",
+              "Natural Gas 88% Efficient SHW",
+              "Natural Gas Power Vent with Electric Ignition 97% Efficient"
+            ]
+          },
+          "default": [
+            "NECB_Default"
+          ],
+          "minItems": 1
+        },
+        ":ext_wall_cond": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "enum": [
+              "NECB_Default",
+              "0.314",
+              "0.278",
+              "0.247",
+              "0.210",
+              "0.183"
+            ]
+          },
+          "default": [
+            "NECB_Default"
+          ],
+          "minItems": 1
+        },
+        ":ext_floor_cond": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "enum": [
+              "NECB_Default",
+              "0.227",
+              "0.183",
+              "0.162",
+              "0.142"
+            ]
+          },
+          "default": [
+            "NECB_Default"
+          ],
+          "minItems": 1
+        },
+        ":ext_roof_cond": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "enum": [
+              "NECB_Default",
+              "0.227",
+              "0.193",
+              "0.183",
+              "0.162",
+              "0.142",
+              "0.138",
+              "0.121"
+            ]
+          },
+          "default": [
+            "NECB_Default"
+          ],
+          "minItems": 1
+        },
+        ":ground_wall_cond": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "enum": [
+              "NECB_Default",
+              "0.568",
+              "0.379",
+              "0.284",
+              "0.210"
+            ]
+          },
+          "default": [
+            "NECB_Default"
+          ],
+          "minItems": 1
+        },
+        ":ground_floor_cond": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "enum": [
+              "NECB_Default",
+              "0.758",
+              "0.379"
+            ]
+          },
+          "default": [
+            "NECB_Default"
+          ],
+          "minItems": 1
+        },
+        ":ground_roof_cond": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "enum": [
+              "NECB_Default",
+              "0.568",
+              "0.379",
+              "0.284",
+              "0.210"
+            ]
+          },
+          "default": [
+            "NECB_Default"
+          ],
+          "minItems": 1
+        },
+        ":door_construction_cond": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "enum": [
+              "NECB_Default",
+              "2.4",
+              "2.2",
+              "1.6"
+            ]
+          },
+          "default": [
+            "NECB_Default"
+          ],
+          "minItems": 1
+        },
+        ":fixed_window_cond": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "enum": [
+              "NECB_Default",
+              "2.4",
+              "2.2",
+              "1.6"
+            ]
+          },
+          "default": [
+            "NECB_Default"
+          ],
+          "minItems": 1
+        },
+        ":glass_door_cond": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "enum": [
+              "NECB_Default",
+              "2.4",
+              "2.2",
+              "1.6"
+            ]
+          },
+          "default": [
+            "NECB_Default"
+          ],
+          "minItems": 1
+        },
+        ":overhead_door_cond": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "enum": [
+              "NECB_Default",
+              "2.4",
+              "2.2",
+              "1.6"
+            ]
+          },
+          "default": [
+            "NECB_Default"
+          ],
+          "minItems": 1
+        },
+        ":skylight_cond": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "enum": [
+              "NECB_Default",
+              "2.4",
+              "2.2",
+              "1.6"
+            ]
+          },
+          "default": [
+            "NECB_Default"
+          ],
+          "minItems": 1
+        },
+        ":glass_door_solar_trans": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "enum": [
+              "NECB_Default",
+              "0.05",
+              "0.95"
+            ]
+          },
+          "default": [
+            "NECB_Default"
+          ],
+          "minItems": 1
+        },
+        ":fixed_wind_solar_trans": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "default": [
+            "NECB_Default"
+          ],
+          "minItems": 1
+        },
+        ":skylight_solar_trans": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "default": [
+            "NECB_Default"
+          ],
+          "minItems": 1
+        },
+        ":fdwr_set": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "default": [
+            "NECB_Default"
+          ],
+          "minItems": 1
+        },
+        ":srr_set": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "enum": [
+              "NECB_Default",
+              "0.10",
+              "0.05",
+              "0.03",
+              "0.0"
+            ]
+          },
+          "default": [
+            "NECB_Default"
+          ],
+          "minItems": 1
+        },
+        ":rotation_degrees": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "enum": [
+              "NECB_Default",
+              "0.0",
+              "45.0",
+              "90.0",
+              "135.0",
+              "180.0",
+              "225.0",
+              "270.0",
+              "315.0",
+              "360.0"
+            ]
+          },
+          "default": [
+            "NECB_Default"
+          ],
+          "minItems": 1
+        },
+        ":scale_x": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        ":scale_y": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        ":scale_z": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        ":pv_ground_type": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "enum": [
+              "NECB_Default",
+              "add_pv_ground"
+            ]
+          }
+        },
+        ":pv_ground_total_area_pv_panels_m2": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        ":pv_ground_tilt_angle": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "default": [
+            "NECB_Default"
+          ],
+          "minItems": 1
+        },
+        ":pv_ground_azimuth_angle": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "default": [
+            "NECB_Default"
+          ],
+          "minItems": 1
+        },
+        ":pv_ground_module_description": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "enum": [
+              "NECB_Default",
+              "Premium",
+              "ThinFilm"
+            ]
+          },
+          "default": [
+            "NECB_Default"
+          ],
+          "minItems": 1
+        },
+        ":adv_dx_units": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "enum": [
+              "NECB_Default",
+              "Carrier WeatherExpert"
+            ]
+          },
+          "default": [
+            "NECB_Default"
+          ],
+          "minItems": 1
+        },
+        ":nv_type": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "enum": [
+              "NECB_Default",
+              "add_nv"
+            ]
+          },
+          "default": [
+            "NECB_Default"
+          ],
+          "minItems": 1
+        },
+        ":nv_opening_fraction": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "default": [
+            "NECB_Default"
+          ],
+          "minItems": 1
+        },
+        ":nv_temp_out_min": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "enum": [
+              "NECB_Default",
+              "10.0",
+              "11.0",
+              "12.0",
+              "13.0",
+              "14.0",
+              "15.0",
+              "16.0",
+              "17.0",
+              "18.0"
+            ]
+          },
+          "default": [
+            "NECB_Default"
+          ],
+          "minItems": 1
+        },
+        ":nv_delta_temp_in_out": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "enum": [
+              "NECB_Default",
+              "0.5",
+              "1.0",
+              "1.5",
+              "2.0",
+              "2.5"
+            ]
+          },
+          "default": [
+            "NECB_Default"
+          ],
+          "minItems": 1
+        },
+        ":occupancy_loads_scale": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "default": [
+            "NECB_Default"
+          ],
+          "minItems": 1
+        },
+        ":electrical_loads_scale": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "default": [
+            "NECB_Default"
+          ],
+          "minItems": 1
+        },
+        ":oa_scale": {
+          "type": "array",
+          "items": {
+            "type": "string" ,
+            "default": [
+              "NECB_Default"
+            ],
+            "minItems": 1
+          }
+        },
+        ":infiltration_scale": {
+          "type": "array",
+          "items": {
+            "type": "string" ,
+            "default": [
+              "NECB_Default"
+            ],
+            "minItems": 1
+          }
+        },
+        ":chiller_type": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "enum": [
+              "NECB_Default",
+              "VSD"
+            ]
+          },
+          "default": [
+            "NECB_Default"
+          ],
+          "minItems": 1
+        },
+        ":airloop_economizer_type": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "enum": [
+              "NECB_Default",
+              "DifferentialEnthalpy",
+              "DifferentialDryBulb"
+            ]
+          },
+          "default": [
+            "NECB_Default"
+          ],
+          "minItems": 1
+        },
+        ":shw_scale": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "default": [
+            "NECB_Default"
+          ],
+          "minItems": 1
+        }
+      },
+      "required": [
+        ":building_type",
+        ":epw_file",
+        ":primary_heating_fuel",
+        ":template"
+      ]
+    }
+  },
+  "required": [
+    ":analysis_configuration",
+    ":building_options"
+  ]
+}
+

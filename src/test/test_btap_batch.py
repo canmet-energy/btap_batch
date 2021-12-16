@@ -1,11 +1,23 @@
 import unittest
+from unittest import TestCase
 import src.btap_batch as btap
 import os
-import yaml
 from pathlib import Path
 import warnings
 import shutil
 import uuid
+import jsonschema
+import json
+import glob
+import icecream as ic
+import pathlib
+import yaml
+
+THIS_FOLDER = pathlib.Path(__file__).parent.resolve()
+PROJECT_FOLDER = os.path.join(pathlib.Path(__file__).parent.resolve(), '..', '..')
+# Location of input.yml schema
+BTAP_BATCH_INPUT_SCHEMA = os.path.join(
+    os.path.dirname(os.path.realpath(__file__)), '..','..', 'resources', 'btap_batch_json_schema.json')
 
 class TestBTAPBatch(unittest.TestCase):
     first_test = True
@@ -30,11 +42,8 @@ class TestBTAPBatch(unittest.TestCase):
         # Branch from https://github.com/canmet-energy/btap_costing. Typically 'master'
         cls.btap_costing_branch = 'master'
 
-        # Branch from https://github.com/canmet-energy/btap_costing. Typically 'master'
-        cls.image_name = 'btap_private_cli'
-
         # Use no_cache
-        cls.no_cache = False
+        cls.no_cache =  False
 
 
         # Set aws_batch object to None intially.
@@ -58,7 +67,7 @@ class TestBTAPBatch(unittest.TestCase):
             cls.batch.setup()
 
 
-        test_output_folder = os.path.join(os.getcwd(), 'test_output')
+        test_output_folder = os.path.join(THIS_FOLDER, 'test_output')
         print(f"deleting {test_output_folder}.....")
         # Check if folder exists
         if os.path.isdir(test_output_folder):
@@ -90,7 +99,6 @@ class TestBTAPBatch(unittest.TestCase):
         analysis[':analysis_configuration'][':compute_environment'] = TestBTAPBatch.compute_environment
         analysis[':analysis_configuration'][':os_standards_branch'] = TestBTAPBatch.os_standards_branch
         analysis[':analysis_configuration'][':btap_costing_branch'] = TestBTAPBatch.btap_costing_branch
-        analysis[':analysis_configuration'][':image_name'] = TestBTAPBatch.image_name
         analysis[':analysis_configuration'][':os_version'] = TestBTAPBatch.os_version
 
 
@@ -135,6 +143,30 @@ class TestBTAPBatch(unittest.TestCase):
         excel_path = os.path.join(bb.project_root, bb.analysis_config[':analysis_name'], bb.analysis_config[':analysis_id'], 'results', 'output.xlsx')
         assert os.path.isfile(excel_path), 'Output.xlsx was not created'
 
+    def test_validate_input_yml_files(self):
+        yaml_files = glob.glob(PROJECT_FOLDER + '/**/input.yml', recursive=True)
+
+        with open(BTAP_BATCH_INPUT_SCHEMA) as json_file:
+            schema = json.load(json_file)
+
+        for yml_file in yaml_files:
+            import jsonschema
+            with open(yml_file, "r") as stream:
+                try:
+                    file_yml = (yaml.safe_load(stream))
+                    jsonschema.validate(instance=file_yml, schema=schema)
+                except yaml.YAMLError as exc:
+                    print(exc)
+                    print("The yml file is not structured correctly. Please fix your file.")
+                    mark = exc.problem_mark
+                    print(f'File "{analysis_config_file}:{mark.line + 1}"')
+                    return self.fail()
+                except jsonschema.exceptions.ValidationError as error:
+                    print(
+                        f"Your input file contains invalid options according to the btap schema. Please ensure your inputs are correct. If you are a developer, ensure that you have added your new options to the json schema defined here {BTAP_BATCH_INPUT_SCHEMA}. See below error.")
+                    print(f"{error.message} at  {error.json_path} in {yml_file}")
+                    return self.fail()
+
     def test_elimination(self):
         self.run_analysis(input_file=os.path.join(os.path.dirname(os.path.realpath(__file__)),'..','..','examples', 'elimination', 'input.yml'))
 
@@ -159,6 +191,4 @@ class TestBTAPBatch(unittest.TestCase):
 
 if __name__ == '__main__':
     unittest.main()
-
-
 

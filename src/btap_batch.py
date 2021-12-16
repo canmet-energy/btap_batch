@@ -1,6 +1,6 @@
 # docker image prune -f -a ; docker container prune -f ; docker volume prune -f ; docker builder prune -a -f
 
-# docker kill (docker ps -q -a --filter "ancestor=btap_private_cli")
+# docker kill (docker ps -q -a --filter "ancestor=btap_cli")
 from icecream import ic
 import itertools
 import copy
@@ -43,16 +43,25 @@ import atexit
 from functools import partial
 import tqdm
 import csv
+import jsonschema
 
-np.random.seed(123)
-seed(1)
-
+# The path to this script file.
+THIS_FILES_FOLDER = os.path.dirname(os.path.realpath(__file__))
+# The path to the btap_batch folder.
+BTAP_BATCH_ROOT_FOLDER = os.path.join(THIS_FILES_FOLDER,'..')
+# The path to the resource folder.
+RESOURCES_FOLDER = os.path.join(BTAP_BATCH_ROOT_FOLDER,'resources')
+# Location of Docker folder that contains information to build the btap image locally and on aws.
+DOCKERFILES_FOLDER = os.path.join(THIS_FILES_FOLDER, 'Dockerfiles')
+# Location of input.yml schema
+BTAP_BATCH_INPUT_SCHEMA = os.path.join(RESOURCES_FOLDER, 'btap_batch_json_schema.json')
+# Location of space_type library for NECB2011
+NECB2011_SPACETYPE_PATH = os.path.join(RESOURCES_FOLDER,
+                                       'space_type_library', 'NECB2011_space_types.osm')
+#BTAP Version
 BTAP_BATCH_VERSION = '1.0.005'
-
 # Maximum AWS CPUS that AWS will allocate for the run.
 MAX_AWS_VCPUS = 500
-# Number of VCPUs that AWSBatch will initialize with.
-# DESIRED_AWS_VCPUS = 50 # Not used currently
 # Minimum number of CPU should be set to zero.
 MIN_AWS_VCPUS = 0
 # Container allocated VCPU for AWS Batch
@@ -69,16 +78,6 @@ AWS_BATCH_COMPUTE_INSTANCE_TYPES = ['optimal']
 # Using the public Amazon Linux 2 AMI to make use of overlay disk storage. Has all aws goodies already installed,
 # makeing secure session manager possible, and has docker pre-installed.
 AWS_BATCH_DEFAULT_IMAGE = 'ami-0a06b44c462364156'
-
-# Location of Docker folder that contains information to build the btap image locally and on aws.
-DOCKERFILES_FOLDER = os.path.join(os.path.dirname(os.path.realpath(__file__)), 'Dockerfiles')
-# Location of previously run baseline simulations to compare with design scenarios
-BASELINE_RESULTS = os.path.join(
-    os.path.dirname(os.path.realpath(__file__)), '..', 'resources', 'reference', 'output.xlsx')
-# Location of space_type library for NECB2011
-NECB2011_SPACETYPE_PATH = os.path.join(os.path.dirname(os.path.realpath(__file__)), '..', 'resources',
-                                       'space_type_library', 'NECB2011_space_types.osm')
-
 # These resources were created either by hand or default from the AWS web console. If moving this to another aws account,
 # recreate these 3 items in the new account. Also create s3 bucket to use named based account id like we did here.
 # That should be all you need.. Ideally these should be created programmatically.
@@ -92,25 +91,24 @@ BATCH_SERVICE_ROLE = 'arn:aws:iam::834599497928:role/service-role/AWSBatchServic
 AWS_MAX_RETRIES = 12
 # Dockerfile url location
 DOCKERFILE_URL = 'https://raw.githubusercontent.com/canmet-energy/btap_cli/dev/Dockerfile'
+# Set the image name used locally and on aws.
+BTAP_IMAGE_NAME = 'btap_cli'
+
+np.random.seed(123)
+seed(1)
 
 
 # Custom exception for a failed simulation
-
-
 class FailedSimulationException(Exception):
     pass
 
 
 # Custom exception for a OSM error.
-
-
 class OSMErrorException(Exception):
     pass
 
 
 # Blob Storage operations
-
-
 class S3:
     # Constructor
     def __init__(self):
@@ -249,7 +247,7 @@ class AWSBatch:
 
     def __init__(self,
                  analysis_id=None,
-                 btap_image_name='btap_private_cli',
+                 btap_image_name=BTAP_IMAGE_NAME,
                  rebuild_image=False,
                  git_api_token=None,
                  os_version=None,
@@ -957,7 +955,7 @@ class DockerBatch:
 
     def __init__(self,
                  # name of docker image created
-                 image_name='btap_private_cli',
+                 image_name= BTAP_IMAGE_NAME,
                  # If set to true will force a rebuild of the image to the most recent sources.
                  nocache=False,
                  # git token for accessing private repos
@@ -981,7 +979,7 @@ class DockerBatch:
         # if nocache set to True.. will build image from scratch.
         self.nocache = nocache
         # Get the folder of this python file.
-        self.dir_path = os.path.dirname(os.path.realpath(__file__))
+        self.dir_path = THIS_FILES_FOLDER
         # determines folder of docker folder relative to this file.
         self.dockerfile = os.path.join(DOCKERFILES_FOLDER, self.image_name)
         # Copies Dockerfile from btap_cli repository
@@ -994,9 +992,8 @@ class DockerBatch:
                 "Could not set up SSL certificate. Are you behind a VPN? This will interfere with SSL certificates.")
             exit(1)
 
-        file = open(os.path.join(self.dockerfile, 'Dockerfile'), 'wb')
-        file.write(r.content)
-        file.close()
+        with open(os.path.join(self.dockerfile, 'Dockerfile'), 'wb') as file:
+            file.write(r.content)
         # get a docker client object to run docker commands.
         self.docker_client = docker.from_env()
         # initialize image to None.. will assign later.
@@ -1176,10 +1173,10 @@ class DockerBatch:
         }
         # Runnning docker command
         run_options[
-            'docker_command'] = f"docker run --rm -v {local_output_folder}:/btap_costing/utilities/btap_cli/output -v {local_input_folder}:/btap_costing/utilities/btap_cli/input {run_options[':image_name']} bundle exec ruby btap_cli.rb"
+            'docker_command'] = f"docker run --rm -v {local_output_folder}:/btap_costing/utilities/btap_cli/output -v {local_input_folder}:/btap_costing/utilities/btap_cli/input {BTAP_IMAGE_NAME} bundle exec ruby btap_cli.rb"
         result = self.docker_client.containers.run(
             # Local image name to use.
-            image=run_options[':image_name'],
+            image=BTAP_IMAGE_NAME,
 
             # Command issued to container.
             command='bundle exec ruby btap_cli.rb',
@@ -1283,10 +1280,6 @@ class BTAPAnalysis():
                 f"Could not access Docker Daemon. Either it is not running, or you do not have permissions to run docker. {err}")
             exit(1)
 
-        # Check user selected public version.. if so force costing to be turned off.
-        if self.analysis_config[':image_name'] == 'btap_public_cli':
-            self.analysis_config[':enable_costing'] = False
-
         # Set up project root.
 
         # Create required paths and folders for analysis
@@ -1302,7 +1295,7 @@ class BTAPAnalysis():
                 # create aws image, set up aws compute env and create workflow queue.
                 self.batch = AWSBatch(
                     analysis_id=self.analysis_config[':analysis_id'],
-                    btap_image_name=self.analysis_config[':image_name'],
+                    btap_image_name=BTAP_IMAGE_NAME,
                     rebuild_image=self.analysis_config[':nocache'],
                     git_api_token=git_api_token,
                     os_version=self.analysis_config[':os_version'],
@@ -1311,7 +1304,7 @@ class BTAPAnalysis():
                 )
                 self.batch.setup()
             else:
-                self.batch = DockerBatch(image_name=self.analysis_config[':image_name'],
+                self.batch = DockerBatch(image_name=BTAP_IMAGE_NAME,
                                          git_api_token=git_api_token,
                                          os_standards_branch=self.analysis_config[':os_standards_branch'],
                                          btap_costing_branch=self.analysis_config[':btap_costing_branch'],
@@ -1413,10 +1406,10 @@ class BTAPAnalysis():
         run_options[':datapoint_id'] = str(uuid.uuid4())
         run_options[':analysis_id'] = self.analysis_config[':analysis_id']
         run_options[':analysis_name'] = self.analysis_config[':analysis_name']
-        run_options[':run_annual_simulation'] = self.analysis_config[':run_annual_simulation']
+        run_options[':run_annual_simulation'] = True
         run_options[':enable_costing'] = self.analysis_config[':enable_costing']
         run_options[':compute_environment'] = self.analysis_config[':compute_environment']
-        run_options[':image_name'] = self.analysis_config[':image_name']
+        run_options[':image_name'] = BTAP_IMAGE_NAME
         run_options[':output_variables'] = self.analysis_config[':output_variables']
         run_options[':output_meters'] = self.analysis_config[':output_meters']
         run_options[':algorithm_type'] = self.analysis_config[':algorithm'][':type']
@@ -2126,7 +2119,7 @@ class BTAPReference(BTAPParametric):
 # independant of simulation runs.
 class PostProcessResults:
     def __init__(self,
-                 baseline_results=BASELINE_RESULTS,
+                 baseline_results=None,
                  database_folder=None,
                  results_folder=None):
 
@@ -2292,13 +2285,28 @@ class PostProcessResults:
 
 # Helper method to load input.yml file into data structures required by btap_batch
 def load_btap_yml_file(analysis_config_file):
+    with open(BTAP_BATCH_INPUT_SCHEMA) as json_file:
+        schema = json.load(json_file)
     # Load Analysis File into variable
     if not os.path.isfile(analysis_config_file):
         logging.error(f"could not find analysis input file at {analysis_config_file}. Exiting")
         exit(1)
     # Open the yaml in analysis dict.
     with open(analysis_config_file, 'r') as stream:
-        analysis = yaml.safe_load(stream)
+        try:
+            analysis = yaml.safe_load(stream)
+            jsonschema.validate(instance=analysis, schema=schema)
+        except yaml.YAMLError as exc:
+            print(exc)
+            print("The yml file is not structured correctly. Please fix your file.")
+            mark = exc.problem_mark
+            print(f'File "{analysis_config_file}:{mark.line +1}"')
+            exit(1)
+        except jsonschema.exceptions.ValidationError as error:
+            print(f"Your input file contains invalid options according to the btap schema. Please ensure your inputs are correct. If you are a developer, ensure that you have added your new options to the json schema defined here {BTAP_BATCH_INPUT_SCHEMA}. See below error.")
+            print(f"{error.message} at  {error.json_path} in {analysis_config_file}")
+            exit(1)
+
     # Store analysis config and building_options.
     analysis_config = analysis[':analysis_configuration']
     building_options = analysis[':building_options']
@@ -2336,6 +2344,11 @@ def btap_batch(analysis_config_file=None, git_api_token=None, batch=None):
     print(f"Compute Environment:{analysis_config[':compute_environment']}")
     print(f"Analysis Type:{analysis_config[':algorithm'][':type']}")
 
+    #Force disable costing if no costing branch was provided.
+    if analysis_config[':btap_costing_branch'] is None or analysis_config[':btap_costing_branch'] == '':
+        print("btap_costing_branch is not defined. Disabling capital costing engine.")
+        analysis_config[':enable_costing'] = False
+
 
 
     if analysis_config[':compute_environment'] == 'aws_batch' and batch is None:
@@ -2343,7 +2356,7 @@ def btap_batch(analysis_config_file=None, git_api_token=None, batch=None):
 
         batch = AWSBatch(
             analysis_id=analysis_config[':analysis_id'],
-            btap_image_name=analysis_config[':image_name'],
+            btap_image_name=BTAP_IMAGE_NAME,
             rebuild_image=analysis_config[':nocache'],
             git_api_token=git_api_token,
             os_version=analysis_config[':os_version'],
@@ -2353,7 +2366,7 @@ def btap_batch(analysis_config_file=None, git_api_token=None, batch=None):
         # Create batch queue on aws.
         batch.setup()
     elif analysis_config[':compute_environment'] == 'local' and batch is None:
-        batch = DockerBatch(image_name=analysis_config[':image_name'],
+        batch = DockerBatch(image_name=BTAP_IMAGE_NAME,
                             git_api_token=git_api_token,
                             os_standards_branch=analysis_config[':os_standards_branch'],
                             btap_costing_branch=analysis_config[':btap_costing_branch'],
