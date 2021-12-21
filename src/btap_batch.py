@@ -2240,6 +2240,8 @@ class PostProcessResults:
             self.baseline_df = pd.read_excel(file, sheet_name='btap_data')
             file.close()
             merge_columns = [':building_type', ':template', ':primary_heating_fuel', ':epw_file']
+            # print(self.baseline_df) #Sara
+            # print(self.btap_data_df) #Sara
             df = pd.merge(self.btap_data_df, self.baseline_df, how='left', left_on=merge_columns,
                           right_on=merge_columns).reset_index()  # Note: in this case, the 'x' suffix stands for the proposed building; and 'y' stands for the baseline building
 
@@ -2310,41 +2312,44 @@ class PostProcessResults:
         energy_price_ngas = ceb_fuel_df.loc[(ceb_fuel_df['province'] == province) & (ceb_fuel_df['fuel_type'] == 'Natural Gas'),str(self.npv_start_year):str(self.npv_end_year)].iloc[0].reset_index(drop=True,name='values')
         energy_price_fueloil = ceb_fuel_df.loc[(ceb_fuel_df['province'] == province) & (ceb_fuel_df['fuel_type'] == 'Oil'),str(self.npv_start_year):str(self.npv_end_year)].iloc[0].reset_index(drop=True, name='values')
 
-        # Calculate cashflows difference between the reference and proposed building for the period of npv_start_year to npv_end_year;
-        # Then calculate NPV difference between the reference and proposed building for the period of npv_start_year to npv_end_year:
-        baseline_difference_cashflows_elec = energy_price_elec * (self.btap_data_df['baseline_difference_energy_eui_electricity_gj_per_m_sq'].values[0])
-        baseline_difference_cashflows_ngas = energy_price_ngas * (self.btap_data_df['baseline_difference_energy_eui_natural_gas_gj_per_m_sq'].values[0])
-        baseline_difference_cashflows_fueloil = energy_price_fueloil * (self.btap_data_df['baseline_difference_energy_eui_additional_fuel_gj_per_m_sq'].values[0])
-        if self.btap_data_df[':primary_heating_fuel'].values[0] == 'Electricity':  #TODO: Question: what if dual fuel?
-            self.btap_data_df['baseline_difference_npv_elec'] = self.btap_data_df['baseline_difference_cost_equipment_total_cost_per_m_sq'].values[0] + npf.npv(self.discount_rate, baseline_difference_cashflows_elec)
-            self.btap_data_df['baseline_difference_npv_ngas'] = 0.0
-            self.btap_data_df['baseline_difference_npv_fueloil'] = 0.0
-        elif self.btap_data_df[':primary_heating_fuel'].values[0] == 'NaturalGas':
-            self.btap_data_df['baseline_difference_npv_elec'] = 0.0
-            self.btap_data_df['baseline_difference_npv_ngas'] = self.btap_data_df['baseline_difference_cost_equipment_total_cost_per_m_sq'].values[0] + npf.npv(self.discount_rate, baseline_difference_cashflows_ngas)
-            self.btap_data_df['baseline_difference_npv_fueloil'] = 0.0
-        else:
-            self.btap_data_df['baseline_difference_npv_elec'] = 0.0
-            self.btap_data_df['baseline_difference_npv_ngas'] = 0.0
-            self.btap_data_df['baseline_difference_npv_fueloil'] = self.btap_data_df['baseline_difference_cost_equipment_total_cost_per_m_sq'].values[0] + npf.npv(self.discount_rate, baseline_difference_cashflows_fueloil)
+        # Count how many datapoints the proposed building (self.btap_data_df) has
+        number_of_datappoints = len(self.btap_data_df)
+        print(number_of_datappoints)
+        self.btap_data_df['baseline_difference_npv_elec'] = 0.0
+        self.btap_data_df['baseline_difference_npv_ngas'] = 0.0
+        self.btap_data_df['baseline_difference_npv_fueloil'] = 0.0
+        self.btap_data_df['proposed_building_npv_elec'] = 0.0
+        self.btap_data_df['proposed_building_npv_ngas'] = 0.0
+        self.btap_data_df['proposed_building_npv_fueloil'] = 0.0
 
-        # Calculate cashflows of the proposed building for the period of npv_start_year to npv_end_year;
-        # Then calculate NPV of the proposed building for the period of npv_start_year to npv_end_year:
-        proposed_building_cashflows_elec = energy_price_elec * (self.btap_data_df['energy_eui_electricity_gj_per_m_sq'].values[0])
-        proposed_building_cashflows_ngas = energy_price_ngas * (self.btap_data_df['energy_eui_natural_gas_gj_per_m_sq'].values[0])
-        proposed_building_cashflows_fueloil = energy_price_fueloil * (self.btap_data_df['energy_eui_additional_fuel_gj_per_m_sq'].values[0])
-        if self.btap_data_df[':primary_heating_fuel'].values[0] == 'Electricity':
-            self.btap_data_df['proposed_building_npv_elec'] = self.btap_data_df['cost_equipment_total_cost_per_m_sq'].values[0] + npf.npv(self.discount_rate, proposed_building_cashflows_elec)
-            self.btap_data_df['proposed_building_npv_ngas'] = 0.0
-            self.btap_data_df['proposed_building_npv_fueloil'] = 0.0
-        elif self.btap_data_df[':primary_heating_fuel'].values[0] == 'NaturalGas':
-            self.btap_data_df['proposed_building_npv_elec'] = 0.0
-            self.btap_data_df['proposed_building_npv_ngas'] = self.btap_data_df['cost_equipment_total_cost_per_m_sq'].values[0] + npf.npv(self.discount_rate, proposed_building_cashflows_ngas)
-            self.btap_data_df['proposed_building_npv_fueloil'] = 0.0
-        else:
-            self.btap_data_df['proposed_building_npv_elec'] = 0.0
-            self.btap_data_df['proposed_building_npv_ngas'] = 0.0
-            self.btap_data_df['proposed_building_npv_fueloil'] = self.btap_data_df['cost_equipment_total_cost_per_m_sq'].values[0] + npf.npv(self.discount_rate, proposed_building_cashflows_fueloil)
+        for i in range(0,number_of_datappoints):
+            # Calculate cashflows difference between the reference and proposed building for the period of npv_start_year to npv_end_year;
+            # Then calculate NPV difference between the reference and proposed building for the period of npv_start_year to npv_end_year:
+            # Note: of there is on-site energy generation (e.g. PV), it should be considered in the calculation of EUI.
+            # If so, it has been assumed that on-site energy generated is only applicable to electricity. # TODO: does this assumption make sense?
+            # So, electricity EUI of proposed building is re-calculated for NPV. It will be: ['energy_eui_electricity_gj_per_m_sq' - ('total_site_eui_gj_per_m_sq' - 'net_site_eui_gj_per_m_sq')]
+            # And, difference in electricity EUI of proposed and reference building is re-calculated for NPV. It will be: ['baseline_difference_energy_eui_electricity_gj_per_m_sq' + ('total_site_eui_gj_per_m_sq' - 'net_site_eui_gj_per_m_sq')]
+            baseline_difference_energy_price_elec = energy_price_elec * (self.btap_data_df['baseline_difference_energy_eui_electricity_gj_per_m_sq'].values[i])
+            baseline_difference_energy_price_ngas = energy_price_ngas * (self.btap_data_df['baseline_difference_energy_eui_natural_gas_gj_per_m_sq'].values[i])
+            baseline_difference_energy_price_fueloil = energy_price_fueloil * (self.btap_data_df['baseline_difference_energy_eui_additional_fuel_gj_per_m_sq'].values[i])
+            if npf.npv(self.discount_rate, baseline_difference_energy_price_elec) > 0.0:
+                self.btap_data_df['baseline_difference_npv_elec'].iloc[i] = self.btap_data_df['baseline_difference_cost_equipment_total_cost_per_m_sq'].values[i] + npf.npv(self.discount_rate, baseline_difference_energy_price_elec)
+            elif npf.npv(self.discount_rate, baseline_difference_energy_price_ngas) > 0.0:
+                self.btap_data_df['baseline_difference_npv_ngas'].iloc[i] = self.btap_data_df['baseline_difference_cost_equipment_total_cost_per_m_sq'].values[i] + npf.npv(self.discount_rate, baseline_difference_energy_price_ngas)
+            elif npf.npv(self.discount_rate, baseline_difference_energy_price_fueloil) > 0.0:
+                self.btap_data_df['baseline_difference_npv_fueloil'].iloc[i] = self.btap_data_df['baseline_difference_cost_equipment_total_cost_per_m_sq'].values[i] + npf.npv(self.discount_rate, baseline_difference_energy_price_fueloil)
+
+            # Calculate cashflows of the proposed building for the period of npv_start_year to npv_end_year;
+            # Then calculate NPV of the proposed building for the period of npv_start_year to npv_end_year:
+            proposed_building_energy_price_elec = energy_price_elec * (self.btap_data_df['energy_eui_electricity_gj_per_m_sq'].values[i])
+            proposed_building_energy_price_ngas = energy_price_ngas * (self.btap_data_df['energy_eui_natural_gas_gj_per_m_sq'].values[i])
+            proposed_building_energy_price_fueloil = energy_price_fueloil * (self.btap_data_df['energy_eui_additional_fuel_gj_per_m_sq'].values[i])
+            if npf.npv(self.discount_rate, proposed_building_energy_price_elec) > 0.0:
+                self.btap_data_df['proposed_building_npv_elec'].iloc[i] = self.btap_data_df['cost_equipment_total_cost_per_m_sq'].values[i] + npf.npv(self.discount_rate, proposed_building_energy_price_elec)
+            elif npf.npv(self.discount_rate, proposed_building_energy_price_ngas) > 0.0:
+                self.btap_data_df['proposed_building_npv_ngas'].iloc[i] = self.btap_data_df['cost_equipment_total_cost_per_m_sq'].values[i] + npf.npv(self.discount_rate, proposed_building_energy_price_ngas)
+            elif npf.npv(self.discount_rate, proposed_building_energy_price_fueloil) > 0.0:
+                self.btap_data_df['proposed_building_npv_fueloil'].iloc[i] = self.btap_data_df['cost_equipment_total_cost_per_m_sq'].values[i] + npf.npv(self.discount_rate, proposed_building_energy_price_fueloil)
 
 
         # TODO: Sara's Question: is it ok if I delete the below commented lines?
@@ -2548,3 +2553,4 @@ def btap_batch(analysis_config_file=None, git_api_token=None, batch=None):
         exit(1)
     if not batch is None:
         batch.tear_down()
+
