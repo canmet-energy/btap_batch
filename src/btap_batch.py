@@ -43,7 +43,7 @@ import atexit
 from functools import partial
 import tqdm
 import csv
-import numpy_financial as npf  #Sara
+import numpy_financial as npf  #Sara TODO: Question: environment.yml needs to be updated
 
 np.random.seed(123)
 seed(1)
@@ -2132,7 +2132,7 @@ class PostProcessResults:
                  results_folder=None
                  ):
 
-        self.npv_start_year = 2020  #Sara
+        self.npv_start_year = 2020  #Sara TODO: Question: is this correct to have npv_start_year, npv_end_year, and discount_rate here?
         self.npv_end_year = 2050
         self.discount_rate = 0.03
 
@@ -2240,24 +2240,22 @@ class PostProcessResults:
             self.baseline_df = pd.read_excel(file, sheet_name='btap_data')
             file.close()
             merge_columns = [':building_type', ':template', ':primary_heating_fuel', ':epw_file']
-            # print(self.baseline_df) #Sara
-            # print(self.btap_data_df) #Sara
             df = pd.merge(self.btap_data_df, self.baseline_df, how='left', left_on=merge_columns,
-                          right_on=merge_columns).reset_index()  # Note: in this case, the 'x' suffix stands for the proposed building; and 'y' stands for the baseline building
+                          right_on=merge_columns).reset_index()  # Note: in this case, the 'x' suffix stands for the proposed building; and 'y' stands for the baseline (reference) building
 
             self.btap_data_df['baseline_savings_energy_cost_per_m_sq'] = round(
                 (df['cost_utility_neb_total_cost_per_m_sq_y'] - df[
                     'cost_utility_neb_total_cost_per_m_sq_x']), 1).values
 
-            self.btap_data_df['baseline_difference_energy_eui_electricity_gj_per_m_sq'] = round(  #Sara
+            self.btap_data_df['baseline_difference_energy_eui_electricity_gj_per_m_sq'] = round(
                 (df['energy_eui_electricity_gj_per_m_sq_y'] - df[
                     'energy_eui_electricity_gj_per_m_sq_x']), 1).values
 
-            self.btap_data_df['baseline_difference_energy_eui_natural_gas_gj_per_m_sq'] = round(  #Sara
+            self.btap_data_df['baseline_difference_energy_eui_natural_gas_gj_per_m_sq'] = round(
                 (df['energy_eui_natural_gas_gj_per_m_sq_y'] - df[
                     'energy_eui_natural_gas_gj_per_m_sq_x']), 1).values
 
-            self.btap_data_df['baseline_difference_energy_eui_additional_fuel_gj_per_m_sq'] = round(  #Sara
+            self.btap_data_df['baseline_difference_energy_eui_additional_fuel_gj_per_m_sq'] = round(
                 (df['energy_eui_additional_fuel_gj_per_m_sq_y'] - df[
                     'energy_eui_additional_fuel_gj_per_m_sq_x']), 1).values
 
@@ -2284,7 +2282,7 @@ class PostProcessResults:
             self.btap_data_df['baseline_ghg_percent_better'] = round(((df['cost_utility_ghg_total_kg_per_m_sq_y'] - df[
                 'cost_utility_ghg_total_kg_per_m_sq_x']) * 100 / df['cost_utility_ghg_total_kg_per_m_sq_y']), 1).values
 
-            self.economics()  #Sara
+            self.economics()
 
     def economics(self):
 
@@ -2314,7 +2312,6 @@ class PostProcessResults:
 
         # Count how many datapoints the proposed building (self.btap_data_df) has
         number_of_datappoints = len(self.btap_data_df)
-        print(number_of_datappoints)
         self.btap_data_df['baseline_difference_npv_elec'] = 0.0
         self.btap_data_df['baseline_difference_npv_ngas'] = 0.0
         self.btap_data_df['baseline_difference_npv_fueloil'] = 0.0
@@ -2329,7 +2326,10 @@ class PostProcessResults:
             # If so, it has been assumed that on-site energy generated is only applicable to electricity. # TODO: does this assumption make sense?
             # So, electricity EUI of proposed building is re-calculated for NPV. It will be: ['energy_eui_electricity_gj_per_m_sq' - ('total_site_eui_gj_per_m_sq' - 'net_site_eui_gj_per_m_sq')]
             # And, difference in electricity EUI of proposed and reference building is re-calculated for NPV. It will be: ['baseline_difference_energy_eui_electricity_gj_per_m_sq' + ('total_site_eui_gj_per_m_sq' - 'net_site_eui_gj_per_m_sq')]
-            baseline_difference_energy_price_elec = energy_price_elec * (self.btap_data_df['baseline_difference_energy_eui_electricity_gj_per_m_sq'].values[i])
+            if self.btap_data_df['total_site_eui_gj_per_m_sq'].values[i] == self.btap_data_df['net_site_eui_gj_per_m_sq'].values[i]:
+                baseline_difference_energy_price_elec = energy_price_elec * (self.btap_data_df['baseline_difference_energy_eui_electricity_gj_per_m_sq'].values[i])
+            else:
+                baseline_difference_energy_price_elec = energy_price_elec * (self.btap_data_df['baseline_difference_energy_eui_electricity_gj_per_m_sq'].values[i] + self.btap_data_df['total_site_eui_gj_per_m_sq'].values[i] - self.btap_data_df['net_site_eui_gj_per_m_sq'].values[i])
             baseline_difference_energy_price_ngas = energy_price_ngas * (self.btap_data_df['baseline_difference_energy_eui_natural_gas_gj_per_m_sq'].values[i])
             baseline_difference_energy_price_fueloil = energy_price_fueloil * (self.btap_data_df['baseline_difference_energy_eui_additional_fuel_gj_per_m_sq'].values[i])
             if npf.npv(self.discount_rate, baseline_difference_energy_price_elec) > 0.0:
@@ -2341,7 +2341,10 @@ class PostProcessResults:
 
             # Calculate cashflows of the proposed building for the period of npv_start_year to npv_end_year;
             # Then calculate NPV of the proposed building for the period of npv_start_year to npv_end_year:
-            proposed_building_energy_price_elec = energy_price_elec * (self.btap_data_df['energy_eui_electricity_gj_per_m_sq'].values[i])
+            if self.btap_data_df['total_site_eui_gj_per_m_sq'].values[i] == self.btap_data_df['net_site_eui_gj_per_m_sq'].values[i]:
+                proposed_building_energy_price_elec = energy_price_elec * (self.btap_data_df['energy_eui_electricity_gj_per_m_sq'].values[i])
+            else:
+                proposed_building_energy_price_elec = energy_price_elec * (self.btap_data_df['energy_eui_electricity_gj_per_m_sq'].values[i] - (self.btap_data_df['total_site_eui_gj_per_m_sq'].values[i] - self.btap_data_df['net_site_eui_gj_per_m_sq'].values[i]))
             proposed_building_energy_price_ngas = energy_price_ngas * (self.btap_data_df['energy_eui_natural_gas_gj_per_m_sq'].values[i])
             proposed_building_energy_price_fueloil = energy_price_fueloil * (self.btap_data_df['energy_eui_additional_fuel_gj_per_m_sq'].values[i])
             if npf.npv(self.discount_rate, proposed_building_energy_price_elec) > 0.0:
@@ -2553,4 +2556,3 @@ def btap_batch(analysis_config_file=None, git_api_token=None, batch=None):
         exit(1)
     if not batch is None:
         batch.tear_down()
-
