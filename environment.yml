@@ -1,4 +1,15 @@
-name: C:\Users\sgilani\btap_batch\env
+# based on install commands:
+# conda create --prefix ./envs python=3.9
+# conda install -c conda-forge boto3 conda dash dash-core-components dash-html-components dash-renderer dash-table docker-py icecream openpyxl pandas pip plotly psycopg2 pyyaml scikit-learn scikit-optimize sqlalchemy
+# pip install pymoo dash-bootstrap-components
+
+#packages and depencies locked versions below.
+# conda env create --prefix ./env --file environment.yml
+#List lock versions
+# conda env export
+# Update environment based on this file.
+# conda env update --prefix ./env --file environment.yml  --prune
+name: btap_batch
 channels:
   - conda-forge
   - defaults
