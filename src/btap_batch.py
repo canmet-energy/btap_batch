@@ -43,7 +43,7 @@ import atexit
 from functools import partial
 import tqdm
 import csv
-import numpy_financial as npf  #Sara TODO: Question: environment.yml needs to be updated
+import numpy_financial as npf  #Sara TODO: Question: environment.yml needs to be updated YES
 
 np.random.seed(123)
 seed(1)
@@ -2129,12 +2129,15 @@ class PostProcessResults:
     def __init__(self,
                  baseline_results=BASELINE_RESULTS,
                  database_folder=None,
-                 results_folder=None
+                 results_folder=None,
+                 npv_start_year=2020,
+                 npv_end_year=2050,
+                 discount_rate=0.03
                  ):
 
-        self.npv_start_year = 2020  #Sara TODO: Question: is this correct to have npv_start_year, npv_end_year, and discount_rate here?
-        self.npv_end_year = 2050
-        self.discount_rate = 0.03
+        self.npv_start_year = npv_start_year
+        self.npv_end_year = npv_end_year
+        self.discount_rate = discount_rate
 
         filepaths = [os.path.join(database_folder, f) for f in os.listdir(database_folder) if f.endswith('.csv')]
         btap_data_df = pd.concat(map(pd.read_csv, filepaths))
@@ -2319,60 +2322,83 @@ class PostProcessResults:
         self.btap_data_df['proposed_building_npv_ngas'] = 0.0
         self.btap_data_df['proposed_building_npv_fueloil'] = 0.0
 
-        for i in range(0,number_of_datappoints):
-            # Calculate cashflows difference between the reference and proposed building for the period of npv_start_year to npv_end_year;
-            # Then calculate NPV difference between the reference and proposed building for the period of npv_start_year to npv_end_year:
-            # Note: of there is on-site energy generation (e.g. PV), it should be considered in the calculation of EUI.
-            # If so, it has been assumed that on-site energy generated is only applicable to electricity. # TODO: does this assumption make sense?
-            # So, electricity EUI of proposed building is re-calculated for NPV. It will be: ['energy_eui_electricity_gj_per_m_sq' - ('total_site_eui_gj_per_m_sq' - 'net_site_eui_gj_per_m_sq')]
-            # And, difference in electricity EUI of proposed and reference building is re-calculated for NPV. It will be: ['baseline_difference_energy_eui_electricity_gj_per_m_sq' + ('total_site_eui_gj_per_m_sq' - 'net_site_eui_gj_per_m_sq')]
-            if self.btap_data_df['total_site_eui_gj_per_m_sq'].values[i] == self.btap_data_df['net_site_eui_gj_per_m_sq'].values[i]:
-                baseline_difference_energy_price_elec = energy_price_elec * (self.btap_data_df['baseline_difference_energy_eui_electricity_gj_per_m_sq'].values[i])
-            else:
-                baseline_difference_energy_price_elec = energy_price_elec * (self.btap_data_df['baseline_difference_energy_eui_electricity_gj_per_m_sq'].values[i] + self.btap_data_df['total_site_eui_gj_per_m_sq'].values[i] - self.btap_data_df['net_site_eui_gj_per_m_sq'].values[i])
-            baseline_difference_energy_price_ngas = energy_price_ngas * (self.btap_data_df['baseline_difference_energy_eui_natural_gas_gj_per_m_sq'].values[i])
-            baseline_difference_energy_price_fueloil = energy_price_fueloil * (self.btap_data_df['baseline_difference_energy_eui_additional_fuel_gj_per_m_sq'].values[i])
-            if npf.npv(self.discount_rate, baseline_difference_energy_price_elec) > 0.0:
-                self.btap_data_df['baseline_difference_npv_elec'].iloc[i] = self.btap_data_df['baseline_difference_cost_equipment_total_cost_per_m_sq'].values[i] + npf.npv(self.discount_rate, baseline_difference_energy_price_elec)
-            elif npf.npv(self.discount_rate, baseline_difference_energy_price_ngas) > 0.0:
-                self.btap_data_df['baseline_difference_npv_ngas'].iloc[i] = self.btap_data_df['baseline_difference_cost_equipment_total_cost_per_m_sq'].values[i] + npf.npv(self.discount_rate, baseline_difference_energy_price_ngas)
-            elif npf.npv(self.discount_rate, baseline_difference_energy_price_fueloil) > 0.0:
-                self.btap_data_df['baseline_difference_npv_fueloil'].iloc[i] = self.btap_data_df['baseline_difference_cost_equipment_total_cost_per_m_sq'].values[i] + npf.npv(self.discount_rate, baseline_difference_energy_price_fueloil)
+        #-------------------------------------------------------------------------------------------------------------------------------------------------------------
+        ##### Part I: Calculate difference in NPV of proposed and reference buildings (including equipment and energy cost)
+        # Note: If there is on-site energy generation (e.g. PV), it should be considered in the calculation of EUI for the calculation of energy use cost.
+        # To do so, it has been assumed that on-site energy generation is only for electricity.
+        # The difference in electricity EUI of proposed and reference building is re-calculated for NPV. It will be: ['baseline_difference_energy_eui_electricity_gj_per_m_sq' + ('total_site_eui_gj_per_m_sq' - 'net_site_eui_gj_per_m_sq')]
+        # Note that if there is no on-site energy generation, 'total_site_eui_gj_per_m_sq' and 'net_site_eui_gj_per_m_sq' will be equal.
+        # Note: 'total_site_eui_gj_per_m_sq' is the gross energy consumed by the building (REF: https://unmethours.com/question/25416/what-is-the-difference-between-site-energy-and-source-energy/)
+        # Note: 'net_site_eui_gj_per_m_sq' is the final energy consumed by the building after accounting for on-site energy generations (e.g. PV) (REF: https://unmethours.com/question/25416/what-is-the-difference-between-site-energy-and-source-energy/)
+        # Part I has two steps:
+        # Step I: Calculate the difference in energy use cost of the reference and proposed building for the period of npv_start_year to npv_end_year.
+        # Step II: Calculate NPV difference between the reference and proposed building for the period of npv_start_year to npv_end_year.
+        self.btap_data_df['baseline_difference_npv_elec'] = self.btap_data_df.apply(lambda x: x['baseline_difference_cost_equipment_total_cost_per_m_sq'] + npf.npv(self.discount_rate, energy_price_elec * (x['baseline_difference_energy_eui_electricity_gj_per_m_sq'] + x['total_site_eui_gj_per_m_sq'] - x['net_site_eui_gj_per_m_sq'])) if npf.npv(self.discount_rate, energy_price_elec * (x['baseline_difference_energy_eui_electricity_gj_per_m_sq'] + x['total_site_eui_gj_per_m_sq'] - x['net_site_eui_gj_per_m_sq']))>0.0 else 0.0, axis=1)
+        self.btap_data_df['baseline_difference_npv_ngas'] = self.btap_data_df.apply(lambda x: x['baseline_difference_cost_equipment_total_cost_per_m_sq'] + npf.npv(self.discount_rate, energy_price_ngas * x['baseline_difference_energy_eui_natural_gas_gj_per_m_sq']) if npf.npv(self.discount_rate, energy_price_ngas * x['baseline_difference_energy_eui_natural_gas_gj_per_m_sq'])>0.0 else 0.0, axis=1)
+        self.btap_data_df['baseline_difference_npv_fueloil'] = self.btap_data_df.apply(lambda x: x['baseline_difference_cost_equipment_total_cost_per_m_sq'] + npf.npv(self.discount_rate, energy_price_fueloil * x['baseline_difference_energy_eui_additional_fuel_gj_per_m_sq']) if npf.npv(self.discount_rate, energy_price_fueloil * x['baseline_difference_energy_eui_additional_fuel_gj_per_m_sq'])>0.0 else 0.0, axis=1)
 
-            # Calculate cashflows of the proposed building for the period of npv_start_year to npv_end_year;
-            # Then calculate NPV of the proposed building for the period of npv_start_year to npv_end_year:
-            if self.btap_data_df['total_site_eui_gj_per_m_sq'].values[i] == self.btap_data_df['net_site_eui_gj_per_m_sq'].values[i]:
-                proposed_building_energy_price_elec = energy_price_elec * (self.btap_data_df['energy_eui_electricity_gj_per_m_sq'].values[i])
-            else:
-                proposed_building_energy_price_elec = energy_price_elec * (self.btap_data_df['energy_eui_electricity_gj_per_m_sq'].values[i] - (self.btap_data_df['total_site_eui_gj_per_m_sq'].values[i] - self.btap_data_df['net_site_eui_gj_per_m_sq'].values[i]))
-            proposed_building_energy_price_ngas = energy_price_ngas * (self.btap_data_df['energy_eui_natural_gas_gj_per_m_sq'].values[i])
-            proposed_building_energy_price_fueloil = energy_price_fueloil * (self.btap_data_df['energy_eui_additional_fuel_gj_per_m_sq'].values[i])
-            if npf.npv(self.discount_rate, proposed_building_energy_price_elec) > 0.0:
-                self.btap_data_df['proposed_building_npv_elec'].iloc[i] = self.btap_data_df['cost_equipment_total_cost_per_m_sq'].values[i] + npf.npv(self.discount_rate, proposed_building_energy_price_elec)
-            elif npf.npv(self.discount_rate, proposed_building_energy_price_ngas) > 0.0:
-                self.btap_data_df['proposed_building_npv_ngas'].iloc[i] = self.btap_data_df['cost_equipment_total_cost_per_m_sq'].values[i] + npf.npv(self.discount_rate, proposed_building_energy_price_ngas)
-            elif npf.npv(self.discount_rate, proposed_building_energy_price_fueloil) > 0.0:
-                self.btap_data_df['proposed_building_npv_fueloil'].iloc[i] = self.btap_data_df['cost_equipment_total_cost_per_m_sq'].values[i] + npf.npv(self.discount_rate, proposed_building_energy_price_fueloil)
+        #-------------------------------------------------------------------------------------------------------------------------------------------------------------
+        ##### Part II: Calculate NPV of proposed buildings (including equipment and energy cost)
+        # Note: If there is on-site energy generation (e.g. PV), it should be considered in the calculation of EUI for the calculation of energy use cost.
+        # To do so, it has been assumed that on-site energy generation is only for electricity.
+        # So, electricity EUI of proposed building is re-calculated for NPV. It will be: ['energy_eui_electricity_gj_per_m_sq' - ('total_site_eui_gj_per_m_sq' - 'net_site_eui_gj_per_m_sq')]
+        # Note that if there is no on-site energy generation, 'total_site_eui_gj_per_m_sq' and 'net_site_eui_gj_per_m_sq' will be equal.
+        # Note: 'total_site_eui_gj_per_m_sq' is the gross energy consumed by the building (REF: https://unmethours.com/question/25416/what-is-the-difference-between-site-energy-and-source-energy/)
+        # Note: 'net_site_eui_gj_per_m_sq' is the final energy consumed by the building after accounting for on-site energy generations (e.g. PV) (REF: https://unmethours.com/question/25416/what-is-the-difference-between-site-energy-and-source-energy/)
+        # Part II has two steps:
+        # Step I: Calculate energy cost of the proposed building for the period of npv_start_year to npv_end_year:
+        # Step II: Calculate NPV of the proposed building for the period of npv_start_year to npv_end_year:
+        self.btap_data_df['proposed_building_npv_elec'] = self.btap_data_df.apply(lambda x: x['cost_equipment_total_cost_per_m_sq'] + npf.npv(self.discount_rate, energy_price_elec * (x['energy_eui_electricity_gj_per_m_sq'] - (x['total_site_eui_gj_per_m_sq'] - x['net_site_eui_gj_per_m_sq']))) if npf.npv(self.discount_rate, energy_price_elec * (x['energy_eui_electricity_gj_per_m_sq'] - (x['total_site_eui_gj_per_m_sq'] - x['net_site_eui_gj_per_m_sq'])))>0.0 else 0.0, axis=1)
+        self.btap_data_df['proposed_building_npv_ngas'] = self.btap_data_df.apply(lambda x: x['cost_equipment_total_cost_per_m_sq'] + npf.npv(self.discount_rate, energy_price_ngas * x['energy_eui_natural_gas_gj_per_m_sq']) if npf.npv(self.discount_rate, energy_price_ngas * x['energy_eui_natural_gas_gj_per_m_sq'])>0.0 else 0.0, axis=1)
+        self.btap_data_df['proposed_building_npv_fueloil'] = self.btap_data_df.apply(lambda x: x['cost_equipment_total_cost_per_m_sq'] + npf.npv(self.discount_rate, energy_price_fueloil * x['energy_eui_additional_fuel_gj_per_m_sq']) if npf.npv(self.discount_rate, energy_price_fueloil * x['energy_eui_additional_fuel_gj_per_m_sq'])>0.0 else 0.0, axis=1)
 
 
-        # TODO: Sara's Question: is it ok if I delete the below commented lines?
-        # df = pd.concat([ngas_rate,elec_rate,fueloil_rate], axis=1,keys=['ngas_cost_per_gj','elec_cost_per_gj','oil_cost_per_gj'])
-        # df['saving_ngas_gj_per_m2'] = 50.0
-        # df['saving_elec_gj_per_m2'] = 50.0
-        # df['saving_oil_gj_per_m2'] = 50.0
-        # df['ngas_saving_per_m2'] = df['ngas_cost_per_gj'] * df['saving_ngas_gj_per_m2']
-        # df['elec_saving_per_m2'] = df['elec_cost_per_gj'] * df['saving_elec_gj_per_m2']
-        # df['oil_saving_per_m2'] =  df['oil_cost_per_gj'] * df['saving_oil_gj_per_m2']
-        # df['total_savings_per_m2'] = df['ngas_saving_per_m2'] + df['oil_saving_per_m2'] +df['oil_saving_per_m2']
-        # df['total_discounted_savings_per_m2'] = pv(rate=npv_discount_rate, pmt=0, nper=df.index, fv=-df['total_savings_per_m2'])
-        # df['total_cumulative_dicounted_savings_per_m2'] = np.cumsum(df['total_discounted_savings_per_m2'])
-        # print(df)
+        # for i in range(0,number_of_datappoints):  # TODO: use lambda function
+        #     #-------------------------------------------------------------------------------------------------------------------------------------------------
+        #     ##### Part I: Calculate difference in NPV of proposed and reference buildings (including equipment and energy cost)
         #
-        # final_full_year = df[df['total_cumulative_dicounted_savings_per_m2'] < 0].index.values.max()
-        # fractional_yr = -df['total_cumulative_dicounted_savings_per_m2'][final_full_year] / df['total_discounted_savings_per_m2'][final_full_year + 1]
-        # payback_period = final_full_year + fractional_yr
-        # print(payback_period)
-
+        #     # Note: If there is on-site energy generation (e.g. PV), it should be considered in the calculation of EUI for the calculation of energy use cost.
+        #     # To do so, it has been assumed that on-site energy generation is only for electricity.
+        #     # The difference in electricity EUI of proposed and reference building is re-calculated for NPV. It will be: ['baseline_difference_energy_eui_electricity_gj_per_m_sq' + ('total_site_eui_gj_per_m_sq' - 'net_site_eui_gj_per_m_sq')]
+        #     # Note that if there is no on-site energy generation, 'total_site_eui_gj_per_m_sq' and 'net_site_eui_gj_per_m_sq' will be equal.
+        #     # Note: 'total_site_eui_gj_per_m_sq' is the gross energy consumed by the building (REF: https://unmethours.com/question/25416/what-is-the-difference-between-site-energy-and-source-energy/)
+        #     # Note: 'net_site_eui_gj_per_m_sq' is the final energy consumed by the building after accounting for on-site energy generations (e.g. PV) (REF: https://unmethours.com/question/25416/what-is-the-difference-between-site-energy-and-source-energy/)
+        #
+        #     # Step I: Calculate the difference in energy use cost of the reference and proposed building for the period of npv_start_year to npv_end_year.
+        #     baseline_difference_energy_cost_elec = energy_price_elec * (self.btap_data_df['baseline_difference_energy_eui_electricity_gj_per_m_sq'].values[i] + self.btap_data_df['total_site_eui_gj_per_m_sq'].values[i] - self.btap_data_df['net_site_eui_gj_per_m_sq'].values[i])
+        #     baseline_difference_energy_cost_ngas = energy_price_ngas * (self.btap_data_df['baseline_difference_energy_eui_natural_gas_gj_per_m_sq'].values[i])
+        #     baseline_difference_energy_cost_fueloil = energy_price_fueloil * (self.btap_data_df['baseline_difference_energy_eui_additional_fuel_gj_per_m_sq'].values[i])
+        #
+        #     # Step II: Calculate NPV difference between the reference and proposed building for the period of npv_start_year to npv_end_year:
+        #     if npf.npv(self.discount_rate, baseline_difference_energy_cost_elec) > 0.0:
+        #         self.btap_data_df['baseline_difference_npv_elec'].iloc[i] = self.btap_data_df['baseline_difference_cost_equipment_total_cost_per_m_sq'].values[i] + npf.npv(self.discount_rate, baseline_difference_energy_cost_elec)
+        #     elif npf.npv(self.discount_rate, baseline_difference_energy_cost_ngas) > 0.0:
+        #         self.btap_data_df['baseline_difference_npv_ngas'].iloc[i] = self.btap_data_df['baseline_difference_cost_equipment_total_cost_per_m_sq'].values[i] + npf.npv(self.discount_rate, baseline_difference_energy_cost_ngas)
+        #     elif npf.npv(self.discount_rate, baseline_difference_energy_cost_fueloil) > 0.0:
+        #         self.btap_data_df['baseline_difference_npv_fueloil'].iloc[i] = self.btap_data_df['baseline_difference_cost_equipment_total_cost_per_m_sq'].values[i] + npf.npv(self.discount_rate, baseline_difference_energy_cost_fueloil)
+        #
+        #     #-------------------------------------------------------------------------------------------------------------------------------------------------
+        #     ##### Part II: Calculate NPV of proposed buildings (including equipment and energy cost)
+        #
+        #     # Note: If there is on-site energy generation (e.g. PV), it should be considered in the calculation of EUI for the calculation of energy use cost.
+        #     # To do so, it has been assumed that on-site energy generation is only for electricity.
+        #     # So, electricity EUI of proposed building is re-calculated for NPV. It will be: ['energy_eui_electricity_gj_per_m_sq' - ('total_site_eui_gj_per_m_sq' - 'net_site_eui_gj_per_m_sq')]
+        #     # Note that if there is no on-site energy generation, 'total_site_eui_gj_per_m_sq' and 'net_site_eui_gj_per_m_sq' will be equal.
+        #     # Note: 'total_site_eui_gj_per_m_sq' is the gross energy consumed by the building (REF: https://unmethours.com/question/25416/what-is-the-difference-between-site-energy-and-source-energy/)
+        #     # Note: 'net_site_eui_gj_per_m_sq' is the final energy consumed by the building after accounting for on-site energy generations (e.g. PV) (REF: https://unmethours.com/question/25416/what-is-the-difference-between-site-energy-and-source-energy/)
+        #
+        #     # Step I: Calculate energy cost of the proposed building for the period of npv_start_year to npv_end_year:
+        #     proposed_building_energy_cost_elec = energy_price_elec * (self.btap_data_df['energy_eui_electricity_gj_per_m_sq'].values[i] - (self.btap_data_df['total_site_eui_gj_per_m_sq'].values[i] - self.btap_data_df['net_site_eui_gj_per_m_sq'].values[i]))
+        #     proposed_building_energy_cost_ngas = energy_price_ngas * (self.btap_data_df['energy_eui_natural_gas_gj_per_m_sq'].values[i])
+        #     proposed_building_energy_cost_fueloil = energy_price_fueloil * (self.btap_data_df['energy_eui_additional_fuel_gj_per_m_sq'].values[i])
+        #
+        #     # Step II: Calculate NPV of the proposed building for the period of npv_start_year to npv_end_year:
+        #     if npf.npv(self.discount_rate, proposed_building_energy_cost_elec) > 0.0:
+        #         self.btap_data_df['proposed_building_npv_elec'].iloc[i] = self.btap_data_df['cost_equipment_total_cost_per_m_sq'].values[i] + npf.npv(self.discount_rate, proposed_building_energy_cost_elec)
+        #     elif npf.npv(self.discount_rate, proposed_building_energy_cost_ngas) > 0.0:
+        #         self.btap_data_df['proposed_building_npv_ngas'].iloc[i] = self.btap_data_df['cost_equipment_total_cost_per_m_sq'].values[i] + npf.npv(self.discount_rate, proposed_building_energy_cost_ngas)
+        #     elif npf.npv(self.discount_rate, proposed_building_energy_cost_fueloil) > 0.0:
+        #         self.btap_data_df['proposed_building_npv_fueloil'].iloc[i] = self.btap_data_df['cost_equipment_total_cost_per_m_sq'].values[i] + npf.npv(self.discount_rate, proposed_building_energy_cost_fueloil)
 
 # Helper method to load input.yml file into data structures required by btap_batch
 def load_btap_yml_file(analysis_config_file):
@@ -2556,3 +2582,10 @@ def btap_batch(analysis_config_file=None, git_api_token=None, batch=None):
         exit(1)
     if not batch is None:
         batch.tear_down()
+
+#### TODO Sara will delete the below lines before committing
+sara_npv = PostProcessResults(
+    baseline_results=r'C:\Users\sgilani\btap_batch\examples\parametric\parametric_example_ref\9637741d-07f7-4340-aeec-8d719e3f6cae\results\output.xlsx',
+    database_folder=r'C:\Users\sgilani\btap_batch\examples\parametric\parametric_example\9637741d-07f7-4340-aeec-8d719e3f6cae\results\database',
+    results_folder=r'C:\Users\sgilani\btap_batch\examples\parametric\parametric_example\9637741d-07f7-4340-aeec-8d719e3f6cae\results')
+sara_npv.run()
