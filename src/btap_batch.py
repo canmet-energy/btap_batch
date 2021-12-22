@@ -2313,15 +2313,6 @@ class PostProcessResults:
         energy_price_ngas = ceb_fuel_df.loc[(ceb_fuel_df['province'] == province) & (ceb_fuel_df['fuel_type'] == 'Natural Gas'),str(self.npv_start_year):str(self.npv_end_year)].iloc[0].reset_index(drop=True,name='values')
         energy_price_fueloil = ceb_fuel_df.loc[(ceb_fuel_df['province'] == province) & (ceb_fuel_df['fuel_type'] == 'Oil'),str(self.npv_start_year):str(self.npv_end_year)].iloc[0].reset_index(drop=True, name='values')
 
-        # Count how many datapoints the proposed building (self.btap_data_df) has
-        number_of_datappoints = len(self.btap_data_df)
-        self.btap_data_df['baseline_difference_npv_elec'] = 0.0
-        self.btap_data_df['baseline_difference_npv_ngas'] = 0.0
-        self.btap_data_df['baseline_difference_npv_fueloil'] = 0.0
-        self.btap_data_df['proposed_building_npv_elec'] = 0.0
-        self.btap_data_df['proposed_building_npv_ngas'] = 0.0
-        self.btap_data_df['proposed_building_npv_fueloil'] = 0.0
-
         #-------------------------------------------------------------------------------------------------------------------------------------------------------------
         ##### Part I: Calculate difference in NPV of proposed and reference buildings (including equipment and energy cost)
         # Note: If there is on-site energy generation (e.g. PV), it should be considered in the calculation of EUI for the calculation of energy use cost and NPV.
