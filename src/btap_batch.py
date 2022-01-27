@@ -45,15 +45,16 @@ import tqdm
 import csv
 import jsonschema
 import numpy_financial as npf
+
 np.random.seed(123)
 seed(1)
 
 # The path to this script file.
 THIS_FILES_FOLDER = os.path.dirname(os.path.realpath(__file__))
 # The path to the btap_batch folder.
-BTAP_BATCH_ROOT_FOLDER = os.path.join(THIS_FILES_FOLDER,'..')
+BTAP_BATCH_ROOT_FOLDER = os.path.join(THIS_FILES_FOLDER, '..')
 # The path to the resource folder.
-RESOURCES_FOLDER = os.path.join(BTAP_BATCH_ROOT_FOLDER,'resources')
+RESOURCES_FOLDER = os.path.join(BTAP_BATCH_ROOT_FOLDER, 'resources')
 # Location of Docker folder that contains information to build the btap image locally and on aws.
 DOCKERFILES_FOLDER = os.path.join(THIS_FILES_FOLDER, 'Dockerfiles')
 # Location of input.yml schema
@@ -61,7 +62,11 @@ BTAP_BATCH_INPUT_SCHEMA = os.path.join(RESOURCES_FOLDER, 'btap_batch_json_schema
 # Location of space_type library for NECB2011
 NECB2011_SPACETYPE_PATH = os.path.join(RESOURCES_FOLDER,
                                        'space_type_library', 'NECB2011_space_types.osm')
-#BTAP Version
+# Costs for fuel from the CER in CSV file from from https://apps.cer-rec.gc.ca/ftrppndc/dflt.aspx?GoCTemplateCulture=en-CA
+CLEAN_ENERGY_REGULATOR_FUEL_RATES = os.path.join(RESOURCES_FOLDER, 'cer_fuel_end_use_prices.csv')
+
+
+# BTAP Version
 BTAP_BATCH_VERSION = '1.0.005'
 # Maximum AWS CPUS that AWS will allocate for the run.
 MAX_AWS_VCPUS = 500
@@ -958,7 +963,7 @@ class DockerBatch:
 
     def __init__(self,
                  # name of docker image created
-                 image_name= BTAP_IMAGE_NAME,
+                 image_name=BTAP_IMAGE_NAME,
                  # If set to true will force a rebuild of the image to the most recent sources.
                  nocache=False,
                  # git token for accessing private repos
@@ -991,8 +996,8 @@ class DockerBatch:
         try:
             r = requests.get(url, allow_redirects=True)
         except requests.exceptions.SSLError as err:
-            logging.error(
-                "Could not set up SSL certificate. Are you behind a VPN? This will interfere with SSL certificates.")
+            message = "Could not set up SSL certificate. Are you behind a VPN? This will interfere with SSL certificates."
+            logging.error(message)
             exit(1)
 
         with open(os.path.join(self.dockerfile, 'Dockerfile'), 'wb') as file:
@@ -2133,6 +2138,7 @@ class PostProcessResults:
         self.npv_start_year = npv_start_year
         self.npv_end_year = npv_end_year
         self.discount_rate = discount_rate
+        self.correlation_df = None
 
         filepaths = [os.path.join(database_folder, f) for f in os.listdir(database_folder) if f.endswith('.csv')]
         btap_data_df = pd.concat(map(pd.read_csv, filepaths))
@@ -2223,69 +2229,138 @@ class PostProcessResults:
         # Create excel object
         excel_path = os.path.join(self.results_folder, 'output.xlsx')
         with pd.ExcelWriter(excel_path) as writer:
-            if isinstance(self.btap_data_df, pd.DataFrame):
+            if isinstance(self.btap_data_df, pd.DataFrame) :
                 self.btap_data_df.to_excel(writer, index=False, sheet_name='btap_data')
-                message = f'Saved Excel Output: {excel_path}'
+                message = f'BTAP Data sheet to file: {excel_path}'
                 logging.info(message)
                 print(message)
+                if isinstance(self.correlation_df, pd.DataFrame):
+                    self.correlation_df.to_excel(writer, index=False, sheet_name='correlations')
+                    message = f'Correlation sheet to file: {excel_path}'
+                    logging.info(message)
+                    print(message)
             else:
                 message = 'No simulations completed.'
                 logging.error(message)
 
     def reference_comparisons(self):
         if self.baseline_results != None:
-            file = open(self.baseline_results, 'rb')
-            self.baseline_df = pd.read_excel(file, sheet_name='btap_data')
-            file.close()
+            self.baseline_df = None
+            with open(self.baseline_results, 'rb') as file:
+                self.baseline_df = pd.read_excel(file, sheet_name='btap_data')
+
+            # Merge will be based on these columns together.
             merge_columns = [':building_type', ':template', ':primary_heating_fuel', ':epw_file']
-            df = pd.merge(self.btap_data_df, self.baseline_df, how='left', left_on=merge_columns,
-                          right_on=merge_columns).reset_index()  # Note: in this case, the 'x' suffix stands for the proposed building; and 'y' stands for the baseline (reference) building
+            # Reducing size of baseline_df to save memory from the resulting merge.
+            reduced_baseline_df = self.baseline_df[[
+              'cost_utility_neb_total_cost_per_m_sq',
+              'energy_eui_electricity_gj_per_m_sq',
+              'energy_eui_natural_gas_gj_per_m_sq',
+              'energy_eui_additional_fuel_gj_per_m_sq',
+              'cost_equipment_total_cost_per_m_sq',
+              'energy_peak_electric_w_per_m_sq',
+              'energy_eui_total_gj_per_m_sq',
+              'cost_utility_ghg_total_kg_per_m_sq',
+              ':building_type',
+              ':template',
+              ':primary_heating_fuel',
+              ':epw_file'
+              ]]
+            self.btap_data_df = pd.merge(self.btap_data_df,
+                          reduced_baseline_df,
+                          how='left',
+                          left_on=merge_columns,
+                          right_on=merge_columns,
+                          suffixes=('', '_baseline')
+                                         ) # Note: in this case, the 'x' suffix stands for the proposed building; and 'y' stands for the baseline (reference) building
+            self.btap_data_df = self.btap_data_df.reset_index()
+
+
 
             self.btap_data_df['baseline_savings_energy_cost_per_m_sq'] = round(
-                (df['cost_utility_neb_total_cost_per_m_sq_y'] - df[
-                    'cost_utility_neb_total_cost_per_m_sq_x']), 1).values
+                (self.btap_data_df['cost_utility_neb_total_cost_per_m_sq_baseline'] - self.btap_data_df[
+                    'cost_utility_neb_total_cost_per_m_sq']), 1).values
 
             self.btap_data_df['baseline_difference_energy_eui_electricity_gj_per_m_sq'] = round(
-                (df['energy_eui_electricity_gj_per_m_sq_y'] - df[
-                    'energy_eui_electricity_gj_per_m_sq_x']), 1).values
+                (self.btap_data_df['energy_eui_electricity_gj_per_m_sq_baseline'] - self.btap_data_df[
+                    'energy_eui_electricity_gj_per_m_sq']), 1).values
 
             self.btap_data_df['baseline_difference_energy_eui_natural_gas_gj_per_m_sq'] = round(
-                (df['energy_eui_natural_gas_gj_per_m_sq_y'] - df[
-                    'energy_eui_natural_gas_gj_per_m_sq_x']), 1).values
+                (self.btap_data_df['energy_eui_natural_gas_gj_per_m_sq_baseline'] - self.btap_data_df[
+                    'energy_eui_natural_gas_gj_per_m_sq']), 1).values
 
             self.btap_data_df['baseline_difference_energy_eui_additional_fuel_gj_per_m_sq'] = round(
-                (df['energy_eui_additional_fuel_gj_per_m_sq_y'] - df[
-                    'energy_eui_additional_fuel_gj_per_m_sq_x']), 1).values
+                (self.btap_data_df['energy_eui_additional_fuel_gj_per_m_sq_baseline'] - self.btap_data_df[
+                    'energy_eui_additional_fuel_gj_per_m_sq']), 1).values
 
             self.btap_data_df['baseline_difference_cost_equipment_total_cost_per_m_sq'] = round(
-                (df['cost_equipment_total_cost_per_m_sq_y'] - df[
-                    'cost_equipment_total_cost_per_m_sq_x']), 1).values
+                (self.btap_data_df['cost_equipment_total_cost_per_m_sq_baseline'] - self.btap_data_df[
+                    'cost_equipment_total_cost_per_m_sq']), 1).values
 
             self.btap_data_df['baseline_simple_payback_years'] = round(
                 (self.btap_data_df['baseline_difference_cost_equipment_total_cost_per_m_sq'] / self.btap_data_df[
                     'baseline_savings_energy_cost_per_m_sq']), 1).values
 
             self.btap_data_df['baseline_peak_electric_percent_better'] = round(
-                ((df['energy_peak_electric_w_per_m_sq_y'] - df[
-                    'energy_peak_electric_w_per_m_sq_x']) * 100.0 / df['energy_peak_electric_w_per_m_sq_y']), 1).values
+                ((self.btap_data_df['energy_peak_electric_w_per_m_sq_baseline'] - self.btap_data_df[
+                    'energy_peak_electric_w_per_m_sq']) * 100.0 / self.btap_data_df['energy_peak_electric_w_per_m_sq_baseline']), 1).values
 
-            self.btap_data_df['baseline_energy_percent_better'] = round(((df['energy_eui_total_gj_per_m_sq_y'] - df[
-                'energy_eui_total_gj_per_m_sq_x']) * 100 / df['energy_eui_total_gj_per_m_sq_y']), 1).values
+            self.btap_data_df['baseline_energy_percent_better'] = round(((self.btap_data_df['energy_eui_total_gj_per_m_sq_baseline'] - self.btap_data_df[
+                'energy_eui_total_gj_per_m_sq']) * 100 / self.btap_data_df['energy_eui_total_gj_per_m_sq_baseline']), 1).values
 
             self.btap_data_df['baseline_necb_tier'] = pd.cut(self.btap_data_df['baseline_energy_percent_better'],
                                                              bins=[-1000.0, -0.001, 25.00, 50.00, 60.00, 1000.0],
                                                              labels=['non_compliant', 'tier_1', 'tier_2', 'tier_3',
                                                                      'tier_4']).values
 
-            self.btap_data_df['baseline_ghg_percent_better'] = round(((df['cost_utility_ghg_total_kg_per_m_sq_y'] - df[
-                'cost_utility_ghg_total_kg_per_m_sq_x']) * 100 / df['cost_utility_ghg_total_kg_per_m_sq_y']), 1).values
+            self.btap_data_df['baseline_ghg_percent_better'] = round(((self.btap_data_df['cost_utility_ghg_total_kg_per_m_sq_baseline'] - self.btap_data_df[
+                'cost_utility_ghg_total_kg_per_m_sq']) * 100 / self.btap_data_df['cost_utility_ghg_total_kg_per_m_sq_baseline']), 1).values
 
             self.economics()
+            # Correlation analysis for coupled variables.. Deactivated.
+            #self.correlation()
+
+    #this is an attempt to determine which variables are have high correlation with each other.  A work in progress.
+    def correlation(self):
+        # calculate the spearman's correlation between two variables
+        from scipy.stats import spearmanr
+
+        name = []
+        energy_eui_total_gj_per_m_sq = []
+        total_npv = []
+        cost_utility_ghg_total_kg_per_m_sq = []
+
+        for col in self.btap_data_df.columns:
+            if col.startswith(':') and len(np.unique(self.btap_data_df[col].astype(str))) > 1:
+                name.append(col)
+                # EUI
+                coef, p = spearmanr(self.btap_data_df['energy_eui_total_gj_per_m_sq'],  self.btap_data_df[col].astype(str))
+                energy_eui_total_gj_per_m_sq.append(abs(coef))
+
+                # NPV
+                npv = self.btap_data_df['proposed_building_npv_elec'] + self.btap_data_df['proposed_building_npv_ngas'] + self.btap_data_df['proposed_building_npv_fueloil']
+                coef, p = spearmanr(npv,  self.btap_data_df[col].astype(str))
+                total_npv.append(abs(coef))
+
+                # GHG
+                cost_utility_ghg_total_kg_per_m_sq
+                coef, p = spearmanr(self.btap_data_df['cost_utility_ghg_total_kg_per_m_sq'] ,  self.btap_data_df[col].astype(str))
+                cost_utility_ghg_total_kg_per_m_sq.append(abs(coef))
+
+        df = pd.DataFrame(list(zip(name, energy_eui_total_gj_per_m_sq,total_npv,cost_utility_ghg_total_kg_per_m_sq)),
+                          columns=['name', 'energy_eui_total_gj_per_m_sq','total_npv','cost_utility_ghg_total_kg_per_m_sq'])
+
+        self.correlation_df = df.sort_values(by=['energy_eui_total_gj_per_m_sq'], ascending=False)
+        return self.correlation_df
+
+
+
+
 
     def economics(self):
 
         # Get energy end-use prices (CER data from https://apps.cer-rec.gc.ca/ftrppndc/dflt.aspx?GoCTemplateCulture=en-CA)
-        ceb_fuel_df = pd.read_csv(os.path.join(os.path.realpath(__file__), '..', 'resources','ceb_fuel_end_use_prices.csv'))
+        cer_fuel_df = pd.read_csv(CLEAN_ENERGY_REGULATOR_FUEL_RATES)
 
         # Find which province the proposed building is located in
         provinces_names_map = {'QC': 'Quebec',
@@ -2304,11 +2379,17 @@ class PostProcessResults:
         province = provinces_names_map[self.btap_data_df['location_state_province_region'].values[0]]
 
         # Get energy end-use prices (CER data from https://apps.cer-rec.gc.ca/ftrppndc/dflt.aspx?GoCTemplateCulture=en-CA)
-        energy_price_elec = ceb_fuel_df.loc[(ceb_fuel_df['province'] == province) & (ceb_fuel_df['fuel_type'] == 'Electricity'),str(self.npv_start_year):str(self.npv_end_year)].iloc[0].reset_index(drop=True, name='values')
-        energy_price_ngas = ceb_fuel_df.loc[(ceb_fuel_df['province'] == province) & (ceb_fuel_df['fuel_type'] == 'Natural Gas'),str(self.npv_start_year):str(self.npv_end_year)].iloc[0].reset_index(drop=True,name='values')
-        energy_price_fueloil = ceb_fuel_df.loc[(ceb_fuel_df['province'] == province) & (ceb_fuel_df['fuel_type'] == 'Oil'),str(self.npv_start_year):str(self.npv_end_year)].iloc[0].reset_index(drop=True, name='values')
+        energy_price_elec = \
+            cer_fuel_df.loc[(cer_fuel_df['province'] == province) & (cer_fuel_df['fuel_type'] == 'Electricity'),
+            str(self.npv_start_year):str(self.npv_end_year)].iloc[0].reset_index(drop=True, name='values')
+        energy_price_ngas = \
+            cer_fuel_df.loc[(cer_fuel_df['province'] == province) & (cer_fuel_df['fuel_type'] == 'Natural Gas'),
+            str(self.npv_start_year):str(self.npv_end_year)].iloc[0].reset_index(drop=True, name='values')
+        energy_price_fueloil = \
+            cer_fuel_df.loc[(cer_fuel_df['province'] == province) & (cer_fuel_df['fuel_type'] == 'Oil'),
+            str(self.npv_start_year):str(self.npv_end_year)].iloc[0].reset_index(drop=True, name='values')
 
-        #-------------------------------------------------------------------------------------------------------------------------------------------------------------
+        # -------------------------------------------------------------------------------------------------------------------------------------------------------------
         ##### Part I: Calculate difference in NPV of proposed and reference buildings (including equipment and energy cost)
         # Note: If there is on-site energy generation (e.g. PV), it should be considered in the calculation of EUI for the calculation of energy use cost and NPV.
         # To do so, it has been assumed that on-site energy generation is only for electricity.
@@ -2319,11 +2400,32 @@ class PostProcessResults:
         # Part I has two steps:
         # Step I: Calculate the difference in energy use cost of the reference and proposed building for the period of npv_start_year to npv_end_year.
         # Step II: Calculate NPV difference between the reference and proposed building for the period of npv_start_year to npv_end_year.
-        self.btap_data_df['baseline_difference_npv_elec'] = self.btap_data_df.apply(lambda x: x['baseline_difference_cost_equipment_total_cost_per_m_sq'] + npf.npv(self.discount_rate, energy_price_elec * (x['baseline_difference_energy_eui_electricity_gj_per_m_sq'] + x['total_site_eui_gj_per_m_sq'] - x['net_site_eui_gj_per_m_sq'])) if npf.npv(self.discount_rate, energy_price_elec * (x['baseline_difference_energy_eui_electricity_gj_per_m_sq'] + x['total_site_eui_gj_per_m_sq'] - x['net_site_eui_gj_per_m_sq']))>0.0 else 0.0, axis=1)
-        self.btap_data_df['baseline_difference_npv_ngas'] = self.btap_data_df.apply(lambda x: x['baseline_difference_cost_equipment_total_cost_per_m_sq'] + npf.npv(self.discount_rate, energy_price_ngas * x['baseline_difference_energy_eui_natural_gas_gj_per_m_sq']) if npf.npv(self.discount_rate, energy_price_ngas * x['baseline_difference_energy_eui_natural_gas_gj_per_m_sq'])>0.0 else 0.0, axis=1)
-        self.btap_data_df['baseline_difference_npv_fueloil'] = self.btap_data_df.apply(lambda x: x['baseline_difference_cost_equipment_total_cost_per_m_sq'] + npf.npv(self.discount_rate, energy_price_fueloil * x['baseline_difference_energy_eui_additional_fuel_gj_per_m_sq']) if npf.npv(self.discount_rate, energy_price_fueloil * x['baseline_difference_energy_eui_additional_fuel_gj_per_m_sq'])>0.0 else 0.0, axis=1)
+        self.btap_data_df['baseline_difference_npv_elec'] = self.btap_data_df.apply(
+            lambda x: x['baseline_difference_cost_equipment_total_cost_per_m_sq'] + npf.npv(self.discount_rate,
+                                                                                            energy_price_elec * (x[
+                                                                                                                     'baseline_difference_energy_eui_electricity_gj_per_m_sq'] +
+                                                                                                                 x[
+                                                                                                                     'total_site_eui_gj_per_m_sq'] -
+                                                                                                                 x[
+                                                                                                                     'net_site_eui_gj_per_m_sq'])) if npf.npv(
+                self.discount_rate, energy_price_elec * (
+                        x['baseline_difference_energy_eui_electricity_gj_per_m_sq'] + x[
+                    'total_site_eui_gj_per_m_sq'] - x['net_site_eui_gj_per_m_sq'])) > 0.0 else 0.0, axis=1)
+        self.btap_data_df['baseline_difference_npv_ngas'] = self.btap_data_df.apply(
+            lambda x: x['baseline_difference_cost_equipment_total_cost_per_m_sq'] + npf.npv(self.discount_rate,
+                                                                                            energy_price_ngas * x[
+                                                                                                'baseline_difference_energy_eui_natural_gas_gj_per_m_sq']) if npf.npv(
+                self.discount_rate,
+                energy_price_ngas * x['baseline_difference_energy_eui_natural_gas_gj_per_m_sq']) > 0.0 else 0.0, axis=1)
+        self.btap_data_df['baseline_difference_npv_fueloil'] = self.btap_data_df.apply(
+            lambda x: x['baseline_difference_cost_equipment_total_cost_per_m_sq'] + npf.npv(self.discount_rate,
+                                                                                            energy_price_fueloil * x[
+                                                                                                'baseline_difference_energy_eui_additional_fuel_gj_per_m_sq']) if npf.npv(
+                self.discount_rate,
+                energy_price_fueloil * x['baseline_difference_energy_eui_additional_fuel_gj_per_m_sq']) > 0.0 else 0.0,
+            axis=1)
 
-        #-------------------------------------------------------------------------------------------------------------------------------------------------------------
+        # -------------------------------------------------------------------------------------------------------------------------------------------------------------
         ##### Part II: Calculate NPV of proposed buildings (including equipment and energy cost)
         # Note: If there is on-site energy generation (e.g. PV), it should be considered in the calculation of EUI for the calculation of energy use cost and NPV.
         # To do so, it has been assumed that on-site energy generation is only for electricity.
@@ -2334,9 +2436,20 @@ class PostProcessResults:
         # Part II has two steps:
         # Step I: Calculate energy cost of the proposed building for the period of npv_start_year to npv_end_year:
         # Step II: Calculate NPV of the proposed building for the period of npv_start_year to npv_end_year:
-        self.btap_data_df['proposed_building_npv_elec'] = self.btap_data_df.apply(lambda x: x['cost_equipment_total_cost_per_m_sq'] + npf.npv(self.discount_rate, energy_price_elec * (x['energy_eui_electricity_gj_per_m_sq'] - (x['total_site_eui_gj_per_m_sq'] - x['net_site_eui_gj_per_m_sq']))) if npf.npv(self.discount_rate, energy_price_elec * (x['energy_eui_electricity_gj_per_m_sq'] - (x['total_site_eui_gj_per_m_sq'] - x['net_site_eui_gj_per_m_sq'])))>0.0 else 0.0, axis=1)
-        self.btap_data_df['proposed_building_npv_ngas'] = self.btap_data_df.apply(lambda x: x['cost_equipment_total_cost_per_m_sq'] + npf.npv(self.discount_rate, energy_price_ngas * x['energy_eui_natural_gas_gj_per_m_sq']) if npf.npv(self.discount_rate, energy_price_ngas * x['energy_eui_natural_gas_gj_per_m_sq'])>0.0 else 0.0, axis=1)
-        self.btap_data_df['proposed_building_npv_fueloil'] = self.btap_data_df.apply(lambda x: x['cost_equipment_total_cost_per_m_sq'] + npf.npv(self.discount_rate, energy_price_fueloil * x['energy_eui_additional_fuel_gj_per_m_sq']) if npf.npv(self.discount_rate, energy_price_fueloil * x['energy_eui_additional_fuel_gj_per_m_sq'])>0.0 else 0.0, axis=1)
+        self.btap_data_df['proposed_building_npv_elec'] = self.btap_data_df.apply(
+            lambda x: x['cost_equipment_total_cost_per_m_sq'] + npf.npv(self.discount_rate, energy_price_elec * (
+                    x['energy_eui_electricity_gj_per_m_sq'] - (
+                    x['total_site_eui_gj_per_m_sq'] - x['net_site_eui_gj_per_m_sq']))) if npf.npv(
+                self.discount_rate, energy_price_elec * (x['energy_eui_electricity_gj_per_m_sq'] - (
+                        x['total_site_eui_gj_per_m_sq'] - x['net_site_eui_gj_per_m_sq']))) > 0.0 else 0.0, axis=1)
+        self.btap_data_df['proposed_building_npv_ngas'] = self.btap_data_df.apply(
+            lambda x: x['cost_equipment_total_cost_per_m_sq'] + npf.npv(self.discount_rate, energy_price_ngas * x[
+                'energy_eui_natural_gas_gj_per_m_sq']) if npf.npv(self.discount_rate, energy_price_ngas * x[
+                'energy_eui_natural_gas_gj_per_m_sq']) > 0.0 else 0.0, axis=1)
+        self.btap_data_df['proposed_building_npv_fueloil'] = self.btap_data_df.apply(
+            lambda x: x['cost_equipment_total_cost_per_m_sq'] + npf.npv(self.discount_rate, energy_price_fueloil * x[
+                'energy_eui_additional_fuel_gj_per_m_sq']) if npf.npv(self.discount_rate, energy_price_fueloil * x[
+                'energy_eui_additional_fuel_gj_per_m_sq']) > 0.0 else 0.0, axis=1)
 
 
 # Helper method to load input.yml file into data structures required by btap_batch
@@ -2356,10 +2469,11 @@ def load_btap_yml_file(analysis_config_file):
             print(exc)
             print("The yml file is not structured correctly. Please fix your file.")
             mark = exc.problem_mark
-            print(f'File "{analysis_config_file}:{mark.line +1}"')
+            print(f'File "{analysis_config_file}:{mark.line + 1}"')
             exit(1)
         except jsonschema.exceptions.ValidationError as error:
-            print(f"Your input file contains invalid options according to the btap schema. Please ensure your inputs are correct. If you are a developer, ensure that you have added your new options to the json schema defined here {BTAP_BATCH_INPUT_SCHEMA}. See below error.")
+            print(
+                f"Your input file contains invalid options according to the btap schema. Please ensure your inputs are correct. If you are a developer, ensure that you have added your new options to the json schema defined here {BTAP_BATCH_INPUT_SCHEMA}. See below error.")
             print(f"{error.message} at  {error.json_path} in {analysis_config_file}")
             exit(1)
 
@@ -2400,12 +2514,10 @@ def btap_batch(analysis_config_file=None, git_api_token=None, batch=None):
     print(f"Compute Environment:{analysis_config[':compute_environment']}")
     print(f"Analysis Type:{analysis_config[':algorithm'][':type']}")
 
-    #Force disable costing if no costing branch was provided.
+    # Force disable costing if no costing branch was provided.
     if analysis_config[':btap_costing_branch'] is None or analysis_config[':btap_costing_branch'] == '':
         print("btap_costing_branch is not defined. Disabling capital costing engine.")
         analysis_config[':enable_costing'] = False
-
-
 
     if analysis_config[':compute_environment'] == 'aws_batch' and batch is None:
         # create aws image, set up aws compute env and create workflow queue.
@@ -2541,3 +2653,4 @@ def btap_batch(analysis_config_file=None, git_api_token=None, batch=None):
         exit(1)
     if not batch is None:
         batch.tear_down()
+

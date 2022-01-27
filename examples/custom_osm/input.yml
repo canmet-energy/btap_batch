@@ -93,7 +93,7 @@
 #      'CAN_YT_Whitehorse.Intl.AP.719640_CWEC2016.epw'
   ]
   :primary_heating_fuel: [
-       'Electricitysdfasdf',
+       'Electricity',
  #      'NaturalGas',
  #      'FuelOilNo2'
   ]
