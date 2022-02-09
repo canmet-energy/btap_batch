@@ -1946,39 +1946,39 @@ class BTAPIntegratedDesignProcess:
         # excel file container.
         output_excel_files = []
 
-        # # Elimination block
-        # analysis_suffix = '_elim'
-        # algorithm_type = 'elimination'
-        # temp_analysis_config = copy.deepcopy(self.analysis_config)
-        # temp_building_options = copy.deepcopy(self.building_options)
-        # temp_analysis_config[':algorithm'][':type'] = algorithm_type
-        # temp_analysis_config[':analysis_name'] = temp_analysis_config[':analysis_name'] + analysis_suffix
-        # bb = BTAPElimination(analysis_config=temp_analysis_config,
-        #                      building_options=temp_building_options,
-        #                      project_root=self.project_root,
-        #                      git_api_token=self.git_api_token,
-        #                      batch=self.batch,
-        #                      baseline_results=self.baseline_results)
-        # print(f"running {algorithm_type} stage")
-        # bb.run()
-        # output_excel_files.append(os.path.join(bb.results_folder, 'output.xlsx'))
-        #
-        # # Sensitivity block
-        # analysis_suffix = '_sens'
-        # algorithm_type = 'sensitivity'
-        # temp_analysis_config = copy.deepcopy(self.analysis_config)
-        # temp_building_options = copy.deepcopy(self.building_options)
-        # temp_analysis_config[':algorithm'][':type'] = algorithm_type
-        # temp_analysis_config[':analysis_name'] = temp_analysis_config[':analysis_name'] + analysis_suffix
-        # bb = BTAPSensitivity(analysis_config=temp_analysis_config,
-        #                      building_options=temp_building_options,
-        #                      project_root=self.project_root,
-        #                      git_api_token=self.git_api_token,
-        #                      batch=self.batch,
-        #                      baseline_results=self.baseline_results)
-        # print(f"running {algorithm_type} stage")
-        # bb.run()
-        # output_excel_files.append(os.path.join(bb.results_folder, 'output.xlsx'))
+        # Elimination block
+        analysis_suffix = '_elim'
+        algorithm_type = 'elimination'
+        temp_analysis_config = copy.deepcopy(self.analysis_config)
+        temp_building_options = copy.deepcopy(self.building_options)
+        temp_analysis_config[':algorithm'][':type'] = algorithm_type
+        temp_analysis_config[':analysis_name'] = temp_analysis_config[':analysis_name'] + analysis_suffix
+        bb = BTAPElimination(analysis_config=temp_analysis_config,
+                             building_options=temp_building_options,
+                             project_root=self.project_root,
+                             git_api_token=self.git_api_token,
+                             batch=self.batch,
+                             baseline_results=self.baseline_results)
+        print(f"running {algorithm_type} stage")
+        bb.run()
+        output_excel_files.append(os.path.join(bb.results_folder, 'output.xlsx'))
+
+        # Sensitivity block
+        analysis_suffix = '_sens'
+        algorithm_type = 'sensitivity'
+        temp_analysis_config = copy.deepcopy(self.analysis_config)
+        temp_building_options = copy.deepcopy(self.building_options)
+        temp_analysis_config[':algorithm'][':type'] = algorithm_type
+        temp_analysis_config[':analysis_name'] = temp_analysis_config[':analysis_name'] + analysis_suffix
+        bb = BTAPSensitivity(analysis_config=temp_analysis_config,
+                             building_options=temp_building_options,
+                             project_root=self.project_root,
+                             git_api_token=self.git_api_token,
+                             batch=self.batch,
+                             baseline_results=self.baseline_results)
+        print(f"running {algorithm_type} stage")
+        bb.run()
+        output_excel_files.append(os.path.join(bb.results_folder, 'output.xlsx'))
 
         # Sensitivity block
         analysis_suffix = '_opt'
