@@ -1946,56 +1946,39 @@ class BTAPIntegratedDesignProcess:
         # excel file container.
         output_excel_files = []
 
-        # Elimination block
-        analysis_suffix = '_elim'
-        algorithm_type = 'elimination'
-        temp_analysis_config = copy.deepcopy(self.analysis_config)
-        temp_building_options = copy.deepcopy(self.building_options)
-        temp_analysis_config[':algorithm'][':type'] = algorithm_type
-        temp_analysis_config[':analysis_name'] = temp_analysis_config[':analysis_name'] + analysis_suffix
-        bb = BTAPElimination(analysis_config=temp_analysis_config,
-                             building_options=temp_building_options,
-                             project_root=self.project_root,
-                             git_api_token=self.git_api_token,
-                             batch=self.batch,
-                             baseline_results=self.baseline_results)
-        print(f"running {algorithm_type} stage")
-        bb.run()
-        output_excel_files.append(os.path.join(bb.results_folder, 'output.xlsx'))
-
-        # Sensitivity block
-        analysis_suffix = '_sens'
-        algorithm_type = 'sensitivity'
-        temp_analysis_config = copy.deepcopy(self.analysis_config)
-        temp_building_options = copy.deepcopy(self.building_options)
-        temp_analysis_config[':algorithm'][':type'] = algorithm_type
-        temp_analysis_config[':analysis_name'] = temp_analysis_config[':analysis_name'] + analysis_suffix
-        bb = BTAPSensitivity(analysis_config=temp_analysis_config,
-                             building_options=temp_building_options,
-                             project_root=self.project_root,
-                             git_api_token=self.git_api_token,
-                             batch=self.batch,
-                             baseline_results=self.baseline_results)
-        print(f"running {algorithm_type} stage")
-        bb.run()
-        output_excel_files.append(os.path.join(bb.results_folder, 'output.xlsx'))
-
-        # Sensitivity_multi_bldg_cz block
-        analysis_suffix = '_sens_multi_bldg_cz'
-        algorithm_type = 'sensitivity_multi_bldg_cz'
-        temp_analysis_config = copy.deepcopy(self.analysis_config)
-        temp_building_options = copy.deepcopy(self.building_options)
-        temp_analysis_config[':algorithm'][':type'] = algorithm_type
-        temp_analysis_config[':analysis_name'] = temp_analysis_config[':analysis_name'] + analysis_suffix
-        bb = BTAPSensitivity_multi_bldg_cz(analysis_config=temp_analysis_config,
-                                           building_options=temp_building_options,
-                                           project_root=self.project_root,
-                                           git_api_token=self.git_api_token,
-                                           aws_batch=self.aws_batch,
-                                           baseline_results=self.baseline_results)
-        print(f"running {algorithm_type} stage")
-        bb.run()
-        output_excel_files.append(os.path.join(bb.results_folder,'output.xlsx'))
+        # # Elimination block
+        # analysis_suffix = '_elim'
+        # algorithm_type = 'elimination'
+        # temp_analysis_config = copy.deepcopy(self.analysis_config)
+        # temp_building_options = copy.deepcopy(self.building_options)
+        # temp_analysis_config[':algorithm'][':type'] = algorithm_type
+        # temp_analysis_config[':analysis_name'] = temp_analysis_config[':analysis_name'] + analysis_suffix
+        # bb = BTAPElimination(analysis_config=temp_analysis_config,
+        #                      building_options=temp_building_options,
+        #                      project_root=self.project_root,
+        #                      git_api_token=self.git_api_token,
+        #                      batch=self.batch,
+        #                      baseline_results=self.baseline_results)
+        # print(f"running {algorithm_type} stage")
+        # bb.run()
+        # output_excel_files.append(os.path.join(bb.results_folder, 'output.xlsx'))
+        #
+        # # Sensitivity block
+        # analysis_suffix = '_sens'
+        # algorithm_type = 'sensitivity'
+        # temp_analysis_config = copy.deepcopy(self.analysis_config)
+        # temp_building_options = copy.deepcopy(self.building_options)
+        # temp_analysis_config[':algorithm'][':type'] = algorithm_type
+        # temp_analysis_config[':analysis_name'] = temp_analysis_config[':analysis_name'] + analysis_suffix
+        # bb = BTAPSensitivity(analysis_config=temp_analysis_config,
+        #                      building_options=temp_building_options,
+        #                      project_root=self.project_root,
+        #                      git_api_token=self.git_api_token,
+        #                      batch=self.batch,
+        #                      baseline_results=self.baseline_results)
+        # print(f"running {algorithm_type} stage")
+        # bb.run()
+        # output_excel_files.append(os.path.join(bb.results_folder, 'output.xlsx'))
 
         # Sensitivity block
         analysis_suffix = '_opt'
@@ -2080,33 +2063,6 @@ class BTAPSensitivity(BTAPParametric):
         logging.info(message)
         return self.scenarios
 
-class BTAPSensitivity_multi_bldg_cz(BTAPParametric): # Sensitivity runs for multiple building types and climate zones
-    def compute_scenarios(self):
-        # Create default options scenario. Uses first value of all arrays.
-        default_options = copy.deepcopy(self.building_options)
-        for key, value in self.building_options.items():
-            default_options[key] = value[0]
-        dic_bldg = {k: self.building_options[k] for k in [':building_type']}
-        dic_cz = {k: self.building_options[k] for k in [':epw_file']}
-
-        # Create scenarios
-        for key, value in self.building_options.items():
-            for index_bldg in range(0,len(dic_bldg[':building_type'])):
-                for index_cz in range(0,len(dic_cz[':epw_file'])):
-                    if isinstance(value, list) and len(value) > 1 and key != ':building_type' and key != ':epw_file':
-                        for item in value:
-                            run_option = copy.deepcopy(default_options)
-                            run_option[':algorithm_type'] = self.analysis_config[':algorithm'][':type']
-                            run_option[':building_type'] = dic_bldg[':building_type'][index_bldg]
-                            run_option[':epw_file'] = dic_cz[':epw_file'][index_cz]
-                            run_option[key] = item
-                            run_option[':scenario'] = key
-                            # append scenario to list.
-                            self.scenarios.append(run_option)
-
-        message = f'Number of Scenarios {len(self.scenarios)}'
-        logging.info(message)
-        return self.scenarios
 
 # Class to manage preflight run with is to simply check if any custom OSM files can run.
 class BTAPPreflight(BTAPParametric):
@@ -2564,13 +2520,23 @@ def btap_batch(analysis_config_file=None, git_api_token=None, batch=None):
                               project_root=project_root,
                               git_api_token=git_api_token,
                               batch=batch)
+    # sensitivity_multi_bldg_cz
     elif analysis_config[':algorithm'][':type'] == 'sensitivity_multi_bldg_cz':
-        return BTAPSensitivity(analysis_config=analysis_config,
-                               building_options=building_options,
-                               project_root=project_root,
-                               git_api_token=git_api_token,
-                               batch=batch,
-                               baseline_results=baseline_results)
+        return BTAPSensitivity_multi_bldg_cz(analysis_config=analysis_config,
+                                             building_options=building_options,
+                                             project_root=project_root,
+                                             git_api_token=git_api_token,
+                                             batch=batch,
+                                             baseline_results=baseline_results)
+    # BTAPIntegratedDesignProcess_multi_bldg_cz
+    elif analysis_config[':algorithm'][':type'] == 'idp_multi_bldg_cz':
+        return BTAPIntegratedDesignProcess_multi_bldg_cz(analysis_config=analysis_config,
+                                                         building_options=building_options,
+                                                         project_root=project_root,
+                                                         git_api_token=git_api_token,
+                                                         batch=batch,
+                                                         baseline_results=baseline_results)
+
     else:
         message = f'Unknown algorithm type. Allowed types are nsga2 and parametric. Exiting'
         print(message)
@@ -2579,3 +2545,310 @@ def btap_batch(analysis_config_file=None, git_api_token=None, batch=None):
     if not batch is None:
 
         batch.tear_down()
+
+
+class BTAPIntegratedDesignProcess_multi_bldg_cz:
+    def __init__(self,
+                 analysis_config=None,
+                 building_options=None,
+                 project_root=None,
+                 git_api_token=None,
+                 batch=None,
+                 baseline_results=None):
+        self.analysis_config = analysis_config
+        self.building_options = building_options
+        self.project_root = project_root
+        self.git_api_token = git_api_token
+        self.batch = batch
+        self.baseline_results = baseline_results
+
+    def run(self):
+        # excel file container.
+        output_excel_files = []
+
+        # Elimination_multi_bldg_cz block
+        analysis_suffix = '_elim_multi_bldg_cz'
+        algorithm_type = 'elimination_multi_bldg_cz'
+        temp_analysis_config = copy.deepcopy(self.analysis_config)
+        temp_building_options = copy.deepcopy(self.building_options)
+        temp_analysis_config[':algorithm'][':type'] = algorithm_type
+        temp_analysis_config[':analysis_name'] = temp_analysis_config[':analysis_name'] + analysis_suffix
+        bb = BTAPElimination_multi_bldg_cz(analysis_config=temp_analysis_config,
+                                           building_options=temp_building_options,
+                                           project_root=self.project_root,
+                                           git_api_token=self.git_api_token,
+                                           batch=self.batch,
+                                           baseline_results=self.baseline_results)
+        print(f"running {algorithm_type} stage")
+        bb.run()
+        output_excel_files.append(os.path.join(bb.results_folder, 'output.xlsx'))
+
+        # Sensitivity_multi_bldg_cz block
+        analysis_suffix = '_sens_multi_bldg_cz'
+        algorithm_type = 'sensitivity_multi_bldg_cz'
+        temp_analysis_config = copy.deepcopy(self.analysis_config)
+        temp_building_options = copy.deepcopy(self.building_options)
+        temp_analysis_config[':algorithm'][':type'] = algorithm_type
+        temp_analysis_config[':analysis_name'] = temp_analysis_config[':analysis_name'] + analysis_suffix
+        bb = BTAPSensitivity_multi_bldg_cz(analysis_config=temp_analysis_config,
+                                           building_options=temp_building_options,
+                                           project_root=self.project_root,
+                                           git_api_token=self.git_api_token,
+                                           aws_batch=self.aws_batch,
+                                           baseline_results=self.baseline_results)
+        print(f"running {algorithm_type} stage")
+        bb.run()
+        output_excel_files.append(os.path.join(bb.results_folder,'output.xlsx'))
+
+        # Optimization_multi_bldg_cz block
+        analysis_suffix = '_opt_multi_bldg_cz'
+        algorithm_type = 'nsga2'
+        temp_analysis_config = copy.deepcopy(self.analysis_config)
+        temp_building_options = copy.deepcopy(self.building_options)
+        temp_analysis_config[':algorithm'][':type'] = algorithm_type
+        temp_analysis_config[':analysis_name'] = temp_analysis_config[':analysis_name'] + analysis_suffix
+        bb = BTAPOptimization_multi_bldg_cz(analysis_config=temp_analysis_config,
+                                            building_options=temp_building_options,
+                                            project_root=self.project_root,
+                                            git_api_token=self.git_api_token,
+                                            batch=self.batch,
+                                            baseline_results=self.baseline_results)
+        print(f"running {algorithm_type} stage")
+        bb.run()
+        output_excel_files.append(os.path.join(bb.results_folder, 'output.xlsx'))
+
+        # Output results from all analysis into top level output excel.
+        df = pd.DataFrame()
+        for file in output_excel_files:
+            df = df.append(pd.read_excel(file), ignore_index=True)
+        df.to_excel(excel_writer=os.path.join(bb.project_root, 'output.xlsx'), sheet_name='btap_data')
+
+# Class to manage sensitivity_multi_bldg_cz analysis
+class BTAPSensitivity_multi_bldg_cz(BTAPParametric): # Sensitivity runs for multiple building types and climate zones
+    def compute_scenarios(self):
+        # Create default options scenario. Uses first value of all arrays.
+        default_options = copy.deepcopy(self.building_options)
+        for key, value in self.building_options.items():
+            default_options[key] = value[0]
+        dic_bldg = {k: self.building_options[k] for k in [':building_type']}
+        dic_cz = {k: self.building_options[k] for k in [':epw_file']}
+
+        # Create scenarios
+        for key, value in self.building_options.items():
+            for index_bldg in range(0,len(dic_bldg[':building_type'])):
+                for index_cz in range(0,len(dic_cz[':epw_file'])):
+                    if isinstance(value, list) and len(value) > 1 and key != ':building_type' and key != ':epw_file':
+                        for item in value:
+                            run_option = copy.deepcopy(default_options)
+                            run_option[':algorithm_type'] = self.analysis_config[':algorithm'][':type']
+                            run_option[':building_type'] = dic_bldg[':building_type'][index_bldg]
+                            run_option[':epw_file'] = dic_cz[':epw_file'][index_cz]
+                            run_option[key] = item
+                            run_option[':scenario'] = key
+                            # append scenario to list.
+                            self.scenarios.append(run_option)
+
+        message = f'Number of Scenarios {len(self.scenarios)}'
+        logging.info(message)
+        return self.scenarios
+
+# Class to manage elimination_multi_bldg_cz analysis
+class BTAPElimination_multi_bldg_cz(BTAPParametric):
+
+    def compute_scenarios(self):
+        self.elimination_parameters = [  #TODO: check parameters I want to include
+            [':reference', 'do nothing'],
+            [':electrical_loads_scale', '0.0'],
+            [':infiltration_scale', '0.0'],
+            [':lights_scale', '0.0'],
+            [':oa_scale', '0.0'],
+            [':occupancy_loads_scale', '0.0'],
+            [':shw_scale', '0.0'],
+            [':ext_wall_cond', '0.01'],
+            [':ext_roof_cond', '0.01'],
+            [':ground_floor_cond', '0.01'],
+            [':ground_wall_cond', '0.01'],
+            [':fixed_window_cond', '0.01'],
+            [':fixed_wind_solar_trans', '0.01']
+        ]
+
+        # Create default options scenario. Uses first value of all arrays.
+        default_options = copy.deepcopy(self.building_options)
+        for key, value in self.building_options.items():
+            default_options[key] = value[0]
+        dic_bldg = {k: self.building_options[k] for k in [':building_type']}
+        dic_cz = {k: self.building_options[k] for k in [':epw_file']}
+
+        # Create scenarios
+        for elimination_parameter in self.elimination_parameters:
+            for index_bldg in range(0,len(dic_bldg[':building_type'])):
+                for index_cz in range(0,len(dic_cz[':epw_file'])):
+                    run_option = copy.deepcopy(default_options)
+                    run_option[':algorithm_type'] = self.analysis_config[':algorithm'][':type']
+                    run_option[':building_type'] = dic_bldg[':building_type'][index_bldg]
+                    run_option[':epw_file'] = dic_cz[':epw_file'][index_cz]
+                    if elimination_parameter[0] != ':reference':
+                        run_option[elimination_parameter[0]] = elimination_parameter[1]
+                    run_option[':scenario'] = elimination_parameter[0]
+                    # append scenario to list.
+                    self.scenarios.append(run_option)
+
+        message = f'Number of Scenarios {len(self.scenarios)}'
+        logging.info(message)
+        return self.scenarios
+
+# Class to manage optimization_multi_bldg_cz analysis
+class BTAPOptimization_multi_bldg_cz(BTAPAnalysis):
+    def __init__(self,
+                 analysis_config=None,
+                 building_options=None,
+                 project_root=None,
+                 git_api_token=None,
+                 batch=None,
+                 baseline_results=None
+                 ):
+        # Run super initializer to set up default variables.
+        super().__init__(analysis_config=analysis_config,
+                         building_options=building_options,
+                         project_root=project_root,
+                         git_api_token=git_api_token,
+                         batch=batch,
+                         baseline_results=baseline_results)
+
+    def run(self):
+
+        message = "success"
+        try:
+            # Create options encoder. This method creates an object to translate variable options
+            # from a list of object to a list of integers. Pymoo and most optimizers operate on floats and strings.
+            # We are forcing the use of int for discrete analysis.
+            self.create_options_encoder_multi_bldg_cz()
+
+            # Run optimization. This will create all the input files, run and gather the results.
+            # self.run_analysis()
+
+        except FailedSimulationException as err:
+            message = f"Simulation(s) failed. Optimization cannot continue. Please review failed simulations to determine cause of error in Excel output or if possible the simulation datapoint files. \nLast failure:\n\t {err}"
+            logging.error(message)
+        except botocore.exceptions.SSLError as err:
+            message = f"Certificate Failure. This error occurs when AWS does not trust your security certificate. Either because you are using a VPN or your network is otherwise spoofing IPs. Please ensure that you are not on a VPN or contact your network admin. Error: {err}"
+            logging.error(message)
+        except Exception as err:
+            message = f"Unknown Error.{err} {traceback.format_exc()}"
+            logging.error(message)
+        finally:
+            self.shutdown_analysis()
+            return message
+
+    def run_analysis(self):
+        print(f"Running Algorithm {self.analysis_config[':algorithm']}")
+        print(f"Number of Variables: {self.number_of_variables()}")
+        print(f"Number of minima objectives: {self.number_of_minimize_objectives()}")
+        print(f"Number of possible designs: {self.number_of_possible_designs}")
+        max_number_of_individuals = int(self.analysis_config[':algorithm'][':population']) * int(
+            self.analysis_config[':algorithm'][':n_generations'])
+        if self.number_of_possible_designs < max_number_of_individuals:
+            self.max_number_of_simulations = self.number_of_possible_designs
+        else:
+            self.max_number_of_simulations = max_number_of_individuals
+
+            print("Starting Simulations.")
+
+            # Get algorithm information from yml data entered by user.
+            # Type: only nsga2 is supported. See options here.
+            # https://pymoo.org/algorithms/nsga2.html
+            type = self.analysis_config[':algorithm'][':type']
+            pop_size = self.analysis_config[':algorithm'][':population']
+            n_gen = self.analysis_config[':algorithm'][':n_generations']
+            prob = self.analysis_config[':algorithm'][':prob']
+            eta = self.analysis_config[':algorithm'][':eta']
+
+            message = f'Using {self.batch.get_threads()} threads.'
+            logging.info(message)
+            print(message)
+            # Sometime the progress bar appears before the print statement above. This paused the execution slightly.
+            time.sleep(0.01)
+
+            # Set up progress bar tracker.
+            with tqdm.tqdm(desc=f"Optimization Progress", total=self.max_number_of_simulations, colour='green') as pbar:
+                # Need to make pbar available to the __evaluate method.
+                self.pbar = pbar
+                # Create thread pool object.
+                with ThreadPool(self.batch.get_threads()) as pool:
+                    # Create pymoo problem. Pass self for helper methods and set up a starmap multithread pool.
+                    problem = BTAPProblem(btap_optimization=self, runner=pool.starmap,
+                                          func_eval=starmap_parallelized_eval)
+                    # configure the algorithm.
+                    method = get_algorithm(type,
+                                           pop_size=pop_size,
+                                           sampling=get_sampling("int_random"),
+                                           crossover=get_crossover("int_sbx", prob=prob, eta=eta),
+                                           mutation=get_mutation("int_pm", eta=eta),
+                                           eliminate_duplicates=True,
+                                           )
+                    # set to optimize minimize the problem n_gen os the max number of generations before giving up.
+                    self.res = minimize(problem,
+                                        method,
+                                        termination=('n_gen', n_gen),
+                                        seed=1
+                                        )
+                    # Scatter().add(res.F).show()
+                    # Let the user know the runtime.
+                    print('Execution Time:', self.res.exec_time)
+
+    # convieniance interface to get number of minimized objectives.
+    def number_of_minimize_objectives(self):
+        # Returns the number of variables Note this is not a class variable self like the others. That is because this method is used in the
+        # problem definition and we need to avoid thread variable issues.
+        return len(self.analysis_config[':algorithm'][':minimize_objectives'])
+    
+    def create_options_encoder_multi_bldg_cz(self):
+        # Determine options the users defined and contants and variable for the analysis. Options / lists that the user
+        # provided only one options (a list of size 1) in the analysis input file are to be consider constants in the simulation.
+        # this may simplify the calculations that the optimizer has to conduct.
+
+        # Create building and climate zones options
+        dic_bldg = {k: self.building_options[k] for k in [':building_type']}
+        dic_cz = {k: self.building_options[k] for k in [':epw_file']}
+        # print(dic_bldg, dic_cz)
+        # print("self.building_options_type", type(self.building_options))
+        building_options_excl_bldg_cz = self.building_options.copy()
+        building_options_excl_bldg_cz = {key: building_options_excl_bldg_cz[key] for key in building_options_excl_bldg_cz if key not in [':building_type', ':epw_file']}
+        # print("building_options_excl_bldg_cz", building_options_excl_bldg_cz)
+
+        # Keep track of total possible scenarios to tell user.
+        for index_bldg in range(0, len(dic_bldg[':building_type'])):
+            for index_cz in range(0, len(dic_cz[':epw_file'])):
+                # Create a dict of the constants.
+                self.constants = {}
+                # Create a dict of encoders/decoders.
+                self.option_encoder = {}
+
+                self.number_of_possible_designs = 1
+
+                self.constants[':building_type'] = dic_bldg[':building_type'][index_bldg]
+                self.constants[':epw_file'] = dic_cz[':epw_file'][index_cz]
+
+                # Interate through all the building_options_excl_bldg_cz contained in the analysis input yml file.
+                for key, value in building_options_excl_bldg_cz.items():
+                    # print("key&value", key, value)
+                    # If the options for that building charecteristic are > 1 it is a variable to be take part in optimization.
+                    if isinstance(value, list) and len(value) > 1 and key != ':building_type' and key != ':epw_file':
+                        self.number_of_possible_designs *= len(value)
+                        # Create the encoder for the building option / key.
+                        self.option_encoder[key] = {}
+                        self.option_encoder[key]['encoder'] = preprocessing.LabelEncoder().fit(value)
+                    elif isinstance(value, list) and len(value) == 1 and key != ':building_type' and key != ':epw_file':
+                        # add the constant to the constant hash.
+                        self.constants[key] = value[0]
+                    else:
+                        # Otherwise warn user that nothing was provided.
+                        raise (f"building option {key} was set to empty. Please enter a value for it.")
+
+                # Return the variables.. but the return value is not really use since these are access via the object variable self anyways.
+                # print("self.constants", self.constants)
+                # print("self.option_encoder", self.option_encoder)
+                # return self.constants, self.option_encoder
+
+                # Run optimization. This will create all the input files, run and gather the results.
+                self.run_analysis()
