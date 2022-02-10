@@ -2656,7 +2656,7 @@ class BTAPSensitivity_multi_bldg_cz(BTAPParametric): # Sensitivity runs for mult
 class BTAPElimination_multi_bldg_cz(BTAPParametric):
 
     def compute_scenarios(self):
-        self.elimination_parameters = [  #TODO: check parameters I want to include
+        self.elimination_parameters = [
             [':reference', 'do nothing'],
             [':electrical_loads_scale', '0.0'],
             [':infiltration_scale', '0.0'],
@@ -2665,11 +2665,13 @@ class BTAPElimination_multi_bldg_cz(BTAPParametric):
             [':occupancy_loads_scale', '0.0'],
             [':shw_scale', '0.0'],
             [':ext_wall_cond', '0.01'],
+            [':ext_floor_cond', '0.01'],
             [':ext_roof_cond', '0.01'],
             [':ground_floor_cond', '0.01'],
             [':ground_wall_cond', '0.01'],
             [':fixed_window_cond', '0.01'],
-            [':fixed_wind_solar_trans', '0.01']
+            [':fixed_wind_solar_trans', '0.01'],
+            [':fixed_wind_solar_trans', '1.0']
         ]
 
         # Create default options scenario. Uses first value of all arrays.
