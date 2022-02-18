@@ -293,3 +293,8 @@
       'NECB_Default',
     #    '0.5'
   ]
+  :baseline_system_zones_map_option: [ # Options: (1) 'NECB_Default'/'none'/nil (i.e. 'one_sys_per_bldg'), (2) 'one_sys_per_dwelling_unit', (3) 'one_sys_per_bldg'
+   'NECB_Default',
+#   'one_sys_per_bldg', # Note: this option is the default  (i.e. 'NECB_Default')
+   'one_sys_per_dwelling_unit'
+ ]
