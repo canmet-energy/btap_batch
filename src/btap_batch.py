@@ -2246,9 +2246,10 @@ class PostProcessResults:
             df = pd.merge(self.btap_data_df, self.baseline_df, how='left', left_on=merge_columns,
                           right_on=merge_columns).reset_index()  # Note: in this case, the 'x' suffix stands for the proposed building; and 'y' stands for the baseline (reference) building
 
-            self.btap_data_df['baseline_savings_energy_cost_per_m_sq'] = round(
-                (df['cost_utility_neb_total_cost_per_m_sq_y'] - df[
-                    'cost_utility_neb_total_cost_per_m_sq_x']), 1).values
+            if (('cost_utility_neb_total_cost_per_m_sq_y' in df.columns) and ('cost_utility_neb_total_cost_per_m_sq_x' in df.columns)):
+                self.btap_data_df['baseline_savings_energy_cost_per_m_sq'] = round(
+                    (df['cost_utility_neb_total_cost_per_m_sq_y'] - df[
+                        'cost_utility_neb_total_cost_per_m_sq_x']), 1).values
 
             self.btap_data_df['baseline_difference_energy_eui_electricity_gj_per_m_sq'] = round(
                 (df['energy_eui_electricity_gj_per_m_sq_y'] - df[
@@ -2262,13 +2263,15 @@ class PostProcessResults:
                 (df['energy_eui_additional_fuel_gj_per_m_sq_y'] - df[
                     'energy_eui_additional_fuel_gj_per_m_sq_x']), 1).values
 
-            self.btap_data_df['baseline_difference_cost_equipment_total_cost_per_m_sq'] = round(
-                (df['cost_equipment_total_cost_per_m_sq_y'] - df[
-                    'cost_equipment_total_cost_per_m_sq_x']), 1).values
+            if (('cost_equipment_total_cost_per_m_sq_y' in df.columns) and ('cost_equipment_total_cost_per_m_sq_x' in df.columns)):
+                self.btap_data_df['baseline_difference_cost_equipment_total_cost_per_m_sq'] = round(
+                    (df['cost_equipment_total_cost_per_m_sq_y'] - df[
+                        'cost_equipment_total_cost_per_m_sq_x']), 1).values
 
-            self.btap_data_df['baseline_simple_payback_years'] = round(
-                (self.btap_data_df['baseline_difference_cost_equipment_total_cost_per_m_sq'] / self.btap_data_df[
-                    'baseline_savings_energy_cost_per_m_sq']), 1).values
+            if (('baseline_difference_cost_equipment_total_cost_per_m_sq' in df.columns) and ('baseline_savings_energy_cost_per_m_sq' in df.columns)):
+                self.btap_data_df['baseline_simple_payback_years'] = round(
+                    (self.btap_data_df['baseline_difference_cost_equipment_total_cost_per_m_sq'] / self.btap_data_df[
+                        'baseline_savings_energy_cost_per_m_sq']), 1).values
 
             self.btap_data_df['baseline_peak_electric_percent_better'] = round(
                 ((df['energy_peak_electric_w_per_m_sq_y'] - df[
@@ -2324,9 +2327,10 @@ class PostProcessResults:
         # Part I has two steps:
         # Step I: Calculate the difference in energy use cost of the reference and proposed building for the period of npv_start_year to npv_end_year.
         # Step II: Calculate NPV difference between the reference and proposed building for the period of npv_start_year to npv_end_year.
-        self.btap_data_df['baseline_difference_npv_elec'] = self.btap_data_df.apply(lambda x: x['baseline_difference_cost_equipment_total_cost_per_m_sq'] + npf.npv(self.discount_rate, energy_price_elec * (x['baseline_difference_energy_eui_electricity_gj_per_m_sq'] + x['total_site_eui_gj_per_m_sq'] - x['net_site_eui_gj_per_m_sq'])) if npf.npv(self.discount_rate, energy_price_elec * (x['baseline_difference_energy_eui_electricity_gj_per_m_sq'] + x['total_site_eui_gj_per_m_sq'] - x['net_site_eui_gj_per_m_sq']))>0.0 else 0.0, axis=1)
-        self.btap_data_df['baseline_difference_npv_ngas'] = self.btap_data_df.apply(lambda x: x['baseline_difference_cost_equipment_total_cost_per_m_sq'] + npf.npv(self.discount_rate, energy_price_ngas * x['baseline_difference_energy_eui_natural_gas_gj_per_m_sq']) if npf.npv(self.discount_rate, energy_price_ngas * x['baseline_difference_energy_eui_natural_gas_gj_per_m_sq'])>0.0 else 0.0, axis=1)
-        self.btap_data_df['baseline_difference_npv_fueloil'] = self.btap_data_df.apply(lambda x: x['baseline_difference_cost_equipment_total_cost_per_m_sq'] + npf.npv(self.discount_rate, energy_price_fueloil * x['baseline_difference_energy_eui_additional_fuel_gj_per_m_sq']) if npf.npv(self.discount_rate, energy_price_fueloil * x['baseline_difference_energy_eui_additional_fuel_gj_per_m_sq'])>0.0 else 0.0, axis=1)
+        if ('baseline_difference_cost_equipment_total_cost_per_m_sq' in self.btap_data_df.columns):
+            self.btap_data_df['baseline_difference_npv_elec'] = self.btap_data_df.apply(lambda x: x['baseline_difference_cost_equipment_total_cost_per_m_sq'] + npf.npv(self.discount_rate, energy_price_elec * (x['baseline_difference_energy_eui_electricity_gj_per_m_sq'] + x['total_site_eui_gj_per_m_sq'] - x['net_site_eui_gj_per_m_sq'])) if npf.npv(self.discount_rate, energy_price_elec * (x['baseline_difference_energy_eui_electricity_gj_per_m_sq'] + x['total_site_eui_gj_per_m_sq'] - x['net_site_eui_gj_per_m_sq']))>0.0 else 0.0, axis=1)
+            self.btap_data_df['baseline_difference_npv_ngas'] = self.btap_data_df.apply(lambda x: x['baseline_difference_cost_equipment_total_cost_per_m_sq'] + npf.npv(self.discount_rate, energy_price_ngas * x['baseline_difference_energy_eui_natural_gas_gj_per_m_sq']) if npf.npv(self.discount_rate, energy_price_ngas * x['baseline_difference_energy_eui_natural_gas_gj_per_m_sq'])>0.0 else 0.0, axis=1)
+            self.btap_data_df['baseline_difference_npv_fueloil'] = self.btap_data_df.apply(lambda x: x['baseline_difference_cost_equipment_total_cost_per_m_sq'] + npf.npv(self.discount_rate, energy_price_fueloil * x['baseline_difference_energy_eui_additional_fuel_gj_per_m_sq']) if npf.npv(self.discount_rate, energy_price_fueloil * x['baseline_difference_energy_eui_additional_fuel_gj_per_m_sq'])>0.0 else 0.0, axis=1)
 
         #-------------------------------------------------------------------------------------------------------------------------------------------------------------
         ##### Part II: Calculate NPV of proposed buildings (including equipment and energy cost)
@@ -2339,9 +2343,10 @@ class PostProcessResults:
         # Part II has two steps:
         # Step I: Calculate energy cost of the proposed building for the period of npv_start_year to npv_end_year:
         # Step II: Calculate NPV of the proposed building for the period of npv_start_year to npv_end_year:
-        self.btap_data_df['proposed_building_npv_elec'] = self.btap_data_df.apply(lambda x: x['cost_equipment_total_cost_per_m_sq'] + npf.npv(self.discount_rate, energy_price_elec * (x['energy_eui_electricity_gj_per_m_sq'] - (x['total_site_eui_gj_per_m_sq'] - x['net_site_eui_gj_per_m_sq']))) if npf.npv(self.discount_rate, energy_price_elec * (x['energy_eui_electricity_gj_per_m_sq'] - (x['total_site_eui_gj_per_m_sq'] - x['net_site_eui_gj_per_m_sq'])))>0.0 else 0.0, axis=1)
-        self.btap_data_df['proposed_building_npv_ngas'] = self.btap_data_df.apply(lambda x: x['cost_equipment_total_cost_per_m_sq'] + npf.npv(self.discount_rate, energy_price_ngas * x['energy_eui_natural_gas_gj_per_m_sq']) if npf.npv(self.discount_rate, energy_price_ngas * x['energy_eui_natural_gas_gj_per_m_sq'])>0.0 else 0.0, axis=1)
-        self.btap_data_df['proposed_building_npv_fueloil'] = self.btap_data_df.apply(lambda x: x['cost_equipment_total_cost_per_m_sq'] + npf.npv(self.discount_rate, energy_price_fueloil * x['energy_eui_additional_fuel_gj_per_m_sq']) if npf.npv(self.discount_rate, energy_price_fueloil * x['energy_eui_additional_fuel_gj_per_m_sq'])>0.0 else 0.0, axis=1)
+        if ('cost_equipment_total_cost_per_m_sq' in self.btap_data_df.columns):
+            self.btap_data_df['proposed_building_npv_elec'] = self.btap_data_df.apply(lambda x: x['cost_equipment_total_cost_per_m_sq'] + npf.npv(self.discount_rate, energy_price_elec * (x['energy_eui_electricity_gj_per_m_sq'] - (x['total_site_eui_gj_per_m_sq'] - x['net_site_eui_gj_per_m_sq']))) if npf.npv(self.discount_rate, energy_price_elec * (x['energy_eui_electricity_gj_per_m_sq'] - (x['total_site_eui_gj_per_m_sq'] - x['net_site_eui_gj_per_m_sq'])))>0.0 else 0.0, axis=1)
+            self.btap_data_df['proposed_building_npv_ngas'] = self.btap_data_df.apply(lambda x: x['cost_equipment_total_cost_per_m_sq'] + npf.npv(self.discount_rate, energy_price_ngas * x['energy_eui_natural_gas_gj_per_m_sq']) if npf.npv(self.discount_rate, energy_price_ngas * x['energy_eui_natural_gas_gj_per_m_sq'])>0.0 else 0.0, axis=1)
+            self.btap_data_df['proposed_building_npv_fueloil'] = self.btap_data_df.apply(lambda x: x['cost_equipment_total_cost_per_m_sq'] + npf.npv(self.discount_rate, energy_price_fueloil * x['energy_eui_additional_fuel_gj_per_m_sq']) if npf.npv(self.discount_rate, energy_price_fueloil * x['energy_eui_additional_fuel_gj_per_m_sq'])>0.0 else 0.0, axis=1)
 
 
 # Helper method to load input.yml file into data structures required by btap_batch
