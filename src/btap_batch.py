@@ -2125,19 +2125,22 @@ class BTAPReference(BTAPParametric):
 
 # This class processes the btap_batch file to add columns as needed. This is a separate class as this can be applied
 # independant of simulation runs.
-class PostProcessResults:
+class PostProcessResults():
     def __init__(self,
                  baseline_results=BASELINE_RESULTS,
                  database_folder=None,
                  results_folder=None,
                  npv_start_year=2020,
                  npv_end_year=2050,
-                 discount_rate=0.03
+                 discount_rate=0.03,
+                 # analysis_config=None
                  ):
 
         self.npv_start_year = npv_start_year
         self.npv_end_year = npv_end_year
         self.discount_rate = discount_rate
+        # self.analysis_config = analysis_config
+        # print('analysis_config is', analysis_config)
 
         filepaths = [os.path.join(database_folder, f) for f in os.listdir(database_folder) if f.endswith('.csv')]
         btap_data_df = pd.concat(map(pd.read_csv, filepaths))
@@ -2154,6 +2157,7 @@ class PostProcessResults:
         self.reference_comparisons()
         self.get_files(file_paths=['run_dir/run/in.osm', 'run_dir/run/eplustbl.htm', 'hourly.csv'])
         self.save_excel_output()
+        self.operation_on_hourly()
         return self.btap_data_df
 
     # This method gets files from the run folders into the results folders.  This is both for S3 and local analyses.
@@ -2236,6 +2240,85 @@ class PostProcessResults:
             else:
                 message = 'No simulations completed.'
                 logging.error(message)
+
+    def operation_on_hourly(self):
+        print('results_folder is', self.results_folder)
+        # analysis_config_file = r'C:\Users\sgilani\btap_batch\examples\parametric\input.yml'
+        # analysis_config, building_options = load_btap_yml_file(analysis_config_file)
+        # output_var_operation = analysis_config[':output_variables']
+        # print('output_var_operation is', output_var_operation)
+        # print('output_var_operation type is', type(output_var_operation))
+        # operation_case = output_var_operation[0]['operation']
+        # print('operation_case is', operation_case)
+
+        # print('analysis_config is', self.analysis_config)
+        dir_results = self.results_folder
+        for folder_hourly in os.listdir(dir_results):
+            dir_hourly = os.path.join(self.results_folder, folder_hourly)
+            if folder_hourly == 'hourly.csv':
+                # print('dir_hourly is', dir_hourly)
+                config_folder = "\\".join(dir_hourly.split("\\")[:-4])
+                # print('config_folder is', config_folder)
+                analysis_config_file = os.path.join(config_folder, 'input.yml')
+                # print('config_file is', analysis_config_file)
+                analysis_config, building_options = load_btap_yml_file(analysis_config_file)
+                output_var_operation = analysis_config[':output_variables']
+                print('output_var_operation is', output_var_operation)
+                output_var_operation_length = len(output_var_operation)
+                print('output_var_operation_length is', output_var_operation_length)
+
+                datapoint_number = 0.0
+                df_output = []
+                for file_object in os.listdir(dir_hourly):
+                    output_file = os.path.join(dir_hourly, "sum_hourly_res.csv")
+                    if file_object != 'sum_hourly_res.csv':
+                        datapoint = os.path.join(dir_hourly, file_object)
+                        datapoint_empty = os.stat(datapoint).st_size == 0
+
+                        if datapoint_empty == False:
+                            df = pd.read_csv(datapoint)
+                            df_columns = df.columns
+
+                            if datapoint_number == 0.0:
+                                df_output = []
+                                df_output = pd.DataFrame(columns=df_columns)
+
+                            df_names = df['Name']
+                            df_names = df_names.to_list()
+                            print('df_names is', df_names)
+                            df_names_duplicate = [i for n, i in enumerate(df_names) if
+                                                  i in df_names[:n]]  # Find duplicate items in df_names
+                            print('df_names_duplicate is', df_names_duplicate)
+                            df_names_duplicate = [i for n, i in enumerate(df_names_duplicate) if
+                                                  i not in df_names_duplicate[
+                                                       :n]]  # Remove duplicate names from df_names_duplicate
+                            print('df_names_duplicate is', df_names_duplicate)
+                            for count_operation_var in range(0,output_var_operation_length):
+                                print(count_operation_var)
+                                operation_var = output_var_operation[count_operation_var]['variable']
+                                operation_case = output_var_operation[count_operation_var]['operation']
+                                operation_unit = output_var_operation[count_operation_var]['unit']
+                                print('operation_var is', operation_var)
+                                print('operation_case is', operation_case)
+                                print('operation_unit is', operation_unit)
+                                if operation_var not in df_output['Name']:
+                                    z = df.loc[df['Name'] == operation_var]
+                                    if operation_case == 'sum':
+                                        if operation_unit == 'GJ':
+                                            value_sum = z.iloc[:,4:].sum(axis=0) / 10**9
+                                            value_sum['Units'] = 'GJ'
+                                        elif operation_unit == 'kWh':
+                                            value_sum = 277.778 * z.iloc[:,4:].sum(axis=0) / 10**9
+                                            value_sum['Units'] = 'kWh'
+                                        value_sum['datapoint_id'] = z['datapoint_id'].iloc[0]
+                                        value_sum['Name'] = z['Name'].iloc[0]
+                                        value_sum['KeyValue'] = ""
+                                        df_output = df_output.append(value_sum, True)
+
+                            datapoint_number += 1.0
+
+                if len(df_output) > 0.0:
+                    df_output.to_csv(output_file, index=False)
 
     def reference_comparisons(self):
         if self.baseline_results != None:

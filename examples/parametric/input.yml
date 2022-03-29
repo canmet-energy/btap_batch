@@ -49,7 +49,9 @@
     :type: parametric
 
 ###########################################     Hourly Data     #######################################################
-  :output_variables: []
+  :output_variables: [
+    { key: '*',     variable: 'Zone Air Temperature',     frequency: 'hourly',     operation: '*',     unit: '*' }
+  ]
   :output_meters: []
 
 #########################################  BUILDING OPTIONS (All inputs should be 'strings') ###########################################################
