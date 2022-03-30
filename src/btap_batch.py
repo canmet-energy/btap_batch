@@ -2308,10 +2308,16 @@ class PostProcessResults():
                                         elif operation_unit == 'kWh':
                                             value_sum = 277.778 * df_operation_var.iloc[:,4:].sum(axis=0) / 10**9
                                             value_sum['Units'] = 'kWh'
+                                        elif operation_unit != '*':
+                                            message = f"Unknown unit for the sum operation on hourly outputs. Allowed units are GJ and kWh."
+                                            logging.error(message)
                                         value_sum['datapoint_id'] = df_operation_var['datapoint_id'].iloc[0]
                                         value_sum['Name'] = df_operation_var['Name'].iloc[0]
                                         value_sum['KeyValue'] = ""
                                         df_output = df_output.append(value_sum, True)
+                                    elif operation_case != '*':
+                                        message = f"Unknown operation type on hourly outputs. Allowed operation type is sum."
+                                        logging.error(message)
                             # Go to the next datapoint
                             datapoint_number += 1.0
 

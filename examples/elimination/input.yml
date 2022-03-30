@@ -51,7 +51,7 @@
 
 ###########################################     Hourly Data     #######################################################
   :output_variables: [
-    {    key: '*',     variable: 'Zone Air Temperature',     frequency: 'hourly'}
+    {    key: '*',     variable: 'Zone Air Temperature',     frequency: 'hourly',     operation: '*',     unit: '*' }
   ]
   :output_meters: [
     {    name: 'NaturalGas:Facility',     frequency: 'hourly'},
