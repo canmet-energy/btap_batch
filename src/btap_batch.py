@@ -1254,6 +1254,22 @@ class BTAPAnalysis():
                     osm_list[os.path.splitext(file)[0]] = os.path.join(osm_folder, file)
         return osm_list
 
+    def get_local_weather_files(self):
+        epw_list = {}
+        stat_list = {}
+        ddy_list = {}
+        osm_folder = os.path.join(self.project_root, 'osm_folder')
+        if pathlib.Path(osm_folder).is_dir():
+            for file in os.listdir(osm_folder):
+                if file.endswith(".epw"):
+                    epw_list[file] = os.path.join(osm_folder, file)
+                elif file.endswith(".stat"):
+                    stat_list[file] = os.path.join(osm_folder, file)
+                elif file.endswith(".ddy"):
+                    ddy_list[file] = os.path.join(osm_folder, file)
+
+        return epw_list,stat_list,ddy_list
+
     # Constructor will
     def __init__(self,
                  analysis_config=None,
@@ -1441,6 +1457,17 @@ class BTAPAnalysis():
             shutil.copy(local_osm_dict[run_options[':building_type']], local_datapoint_input_folder)
             logging.info(
                 f"Copying osm file from {local_osm_dict[run_options[':building_type']]} to {local_datapoint_input_folder}")
+
+        # Save custom weather files if required.
+        local_epw_dict,local_stat_dict,local_ddy_dict = self.get_local_weather_files()
+        if run_options[':epw_file'] in local_epw_dict:
+            shutil.copy(local_epw_dict[run_options[':epw_file']], local_datapoint_input_folder)
+            stat_file = run_options[':epw_file'].replace(".epw",".stat")
+            shutil.copy(local_stat_dict[stat_file], local_datapoint_input_folder)
+            ddy_file = run_options[':epw_file'].replace(".epw",".ddy")
+            shutil.copy(local_ddy_dict[ddy_file], local_datapoint_input_folder)
+            logging.info(
+                f"Copying epw,stat, and ddy files from {local_epw_dict[run_options[':epw_file']]} to {local_datapoint_input_folder}")
 
         # Submit Job to batch
         return self.batch.submit_job(self.output_folder,
