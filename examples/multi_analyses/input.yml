@@ -65,7 +65,12 @@
     ]
 
 ###########################################     Hourly Data     #######################################################
-  :output_variables: []
+  # Note: the 'operation' and 'unit' keys in :output_variables are for performing operations on hourly output.
+  # For now, allowed operation type is 'sum'; allowed units are 'GJ' and 'kWh'.
+  :output_variables: [
+    { key: '*',     variable: 'Zone Air Temperature',     frequency: 'hourly',     operation: '*',     unit: '*' },
+    { key: '*',     variable: 'Lights Total Heating Energy',     frequency: 'hourly',     operation: 'sum',     unit: 'GJ' }
+  ]
   :output_meters: []
 
 #########################################  BUILDING OPTIONS  ###########################################################
