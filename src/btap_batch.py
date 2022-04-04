@@ -2332,14 +2332,17 @@ class PostProcessResults():
                     # Save the df_output as the output_file
                     df_output.to_csv(output_file, index=False)
 
-                    # Copy sum_hourly_res.csv to s3 for storage.
-                    sum_hourly_res_path = os.path.join(self.results_folder, 'hourly.csv', 'sum_hourly_res.csv')
-                    self.credentials = AWSCredentials()
-                    target_path_on_aws = os.path.join(self.credentials.user_name, "\\".join(sum_hourly_res_path.split("\\")[-5:]))
-                    target_path_on_aws = target_path_on_aws.replace('\\', '/')  # s3 likes forward slashes.
-                    message = "Uploading %s..." % target_path_on_aws
-                    logging.info(message)
-                    S3().upload_file(sum_hourly_res_path, self.credentials.account_id, target_path_on_aws)
+                    # Copy sum_hourly_res.csv to s3 for storage if run on AWS.
+                    try:
+                        sum_hourly_res_path = os.path.join(self.results_folder, 'hourly.csv', 'sum_hourly_res.csv')
+                        self.credentials = AWSCredentials()
+                        target_path_on_aws = os.path.join(self.credentials.user_name, "\\".join(sum_hourly_res_path.split("\\")[-5:]))
+                        target_path_on_aws = target_path_on_aws.replace('\\', '/')  # s3 likes forward slashes.
+                        message = "Uploading %s..." % target_path_on_aws
+                        logging.info(message)
+                        S3().upload_file(sum_hourly_res_path, self.credentials.account_id, target_path_on_aws)
+                    except:
+                        print('Run locally. No need to copy sum_hourly_res.csv to s3')
 
     def reference_comparisons(self):
         if self.baseline_results != None:
