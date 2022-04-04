@@ -2132,15 +2132,12 @@ class PostProcessResults():
                  results_folder=None,
                  npv_start_year=2020,
                  npv_end_year=2050,
-                 discount_rate=0.03,
-                 # analysis_config=None
+                 discount_rate=0.03
                  ):
 
         self.npv_start_year = npv_start_year
         self.npv_end_year = npv_end_year
         self.discount_rate = discount_rate
-        # self.analysis_config = analysis_config
-        # print('analysis_config is', analysis_config)
 
         filepaths = [os.path.join(database_folder, f) for f in os.listdir(database_folder) if f.endswith('.csv')]
         btap_data_df = pd.concat(map(pd.read_csv, filepaths))
