@@ -81,10 +81,10 @@ as an array of energy conservation measures.
 * [AWS CLI on Windows, install the AWS CLI version 2 on Windows](https://docs.aws.amazon.com/cli/latest/userguide/install-cliv2-windows.html).
 * [NRCan btap_dev AWS account credentials set up on your computer](https://docs.aws.amazon.com/cli/latest/userguide/cli-configure-files.html) for Amazon HPC runs(Optional). 
 * A powerful multi-core computer to run simulations fast locally. (24 core/48 thread with 32GB+)
-* [OpenStudio App 1.2.1](https://github.com/openstudiocoalition/OpenStudioApplication/releases/tag/v1.2.1) (optional) 
-To create custom geometry models. 
-* [SketchUp 2021](https://help.sketchup.com/en/downloading-older-versions) (optional) To create custom geometry models.
-* [OpenStudio SketchUp Plugin 1.2.1](https://github.com/openstudiocoalition/openstudio-sketchup-plugin/releases/tag/v1.2.1) (optional) To modify OpenStudio Models in SketchUp.
+* [OpenStudio 3.2.1](https://github.com/NREL/OpenStudio/releases/tag/v3.2.1) (optional) Required to use the OpenStudio App and the SketchUp plugin.
+* [OpenStudio App 1.2.1](https://github.com/openstudiocoalition/OpenStudioApplication/releases/tag/v1.2.1) (optional) To view BTAP models and to create custom geometry models (must have OpenStudio v3.2.1 installed first).
+* [SketchUp 2021](https://help.sketchup.com/en/downloading-older-versions) (optional) To view BTAP models and create custom geometry models in SketchUp.
+* [OpenStudio SketchUp Plugin 1.2.1](https://github.com/openstudiocoalition/openstudio-sketchup-plugin/releases/tag/v1.2.1) (optional) To modify OpenStudio models in SketchUp.
 
 ## Test Requirements are Met
 ### Miniconda
