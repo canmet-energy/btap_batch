@@ -23,7 +23,7 @@ Note: Work is underway under the General Infrastructure PERD project to add olde
 
 ### Commercial Building Geometries
 BTAP comes with the standard geometries built-in commercial building spacetype geometric models. The are based on the U.S. DOE reference building archetypes, but gutted of everything except the geometry and space type information. You can find a list of the buildings [here](./docs/BtapBuildingGeometryLibrary.md)
-You can also create your own buildings using the OpenStudio Sketchup Plug-in included in the OpenStudio Installation. Other tools support conversion to an openstudio model including Revit, and eQuest. More information on creating your model is kept [here](todo)
+You can also create your own buildings using the OpenStudio SketchUp Plug-in included in the OpenStudio Installation. Other tools support conversion to an openstudio model including Revit, and eQuest. More information on creating your model is kept [here](todo)
  
 ### Costed Cities Supported. 
 We use a third party resource to cost aspects of the models that BTAP generates. The cities that are supported are listed [here](./docs/CostingSupportedCities.md).
@@ -81,9 +81,10 @@ as an array of energy conservation measures.
 * [AWS CLI on Windows, install the AWS CLI version 2 on Windows](https://docs.aws.amazon.com/cli/latest/userguide/install-cliv2-windows.html).
 * [NRCan btap_dev AWS account credentials set up on your computer](https://docs.aws.amazon.com/cli/latest/userguide/cli-configure-files.html) for Amazon HPC runs(Optional). 
 * A powerful multi-core computer to run simulations fast locally. (24 core/48 thread with 32GB+)
-* [Sketchup 2020](https://www.sketchup.com/sketchup/2020/SketchUpPro-exe) (optional) To create custom geometry models.
-* [OpenStudio App 1.0.1](https://github.com/openstudiocoalition/OpenStudioApplication/releases/tag/v1.0.1) (optional) 
+* [OpenStudio App 1.2.1](https://github.com/openstudiocoalition/OpenStudioApplication/releases/tag/v1.2.1) (optional) 
 To create custom geometry models. 
+* [SketchUp 2021](https://help.sketchup.com/en/downloading-older-versions) (optional) To create custom geometry models.
+* [OpenStudio SketchUp Plugin 1.2.1](https://github.com/openstudiocoalition/openstudio-sketchup-plugin/releases/tag/v1.2.1) (optional) To modify OpenStudio Models in SketchUp.
 
 ## Test Requirements are Met
 ### Miniconda
@@ -247,9 +248,9 @@ portion of that analysis for early design support by automating the runs for the
 may help validate the initial baseline model and help determine which energy conservation measures to consider.
 
 ## Create Custom OSM File
-You can create a custom osm file by using Sketchup 2020 with the OpenStudio Plugin. 
+You can create a custom osm file by using SketchUp 2021 with the OpenStudio Plugin. 
 ### Geometry
-You can view the intructional videos on how to create geometric models using sketchup and the openstudio plug-in. 
+You can view the intructional videos on how to create geometric models using SketchUp and the OpenStudio plug-in. 
 Here is a video to perform takeoffs from a DWG file. You can also import PDF files and do the same procedure. 
 [NREL Take-Off Video Part 1](https://www.youtube.com/watch?v=T41MXqlvp0E)
 

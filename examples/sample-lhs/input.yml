@@ -20,13 +20,13 @@
 
   # Branch from https://github.com/NREL/openstudio-standards. Typically 'nrcan_prod' branch.
   # Developers or people liking to work on unstable code can use 'nrcan'
-  :os_standards_branch: '04e8f4947f9755ad8fc87a2cd96fe2e677125844'
+  :os_standards_branch: 'nrcan_prod'
 
   # Branch from https://github.com/canmet-energy/btap_costing. Typically 'nrcan_prod'
   # Developers or people liking to work on unstable code can use 'master'
-  :btap_costing_branch: 'master'
+  :btap_costing_branch: ''
 
-  # DO NOT CHANGE: Openstudio Version only 3.0.1 available
+  # DO NOT CHANGE: Openstudio Version 3.2.1 currently used.
   :os_version: '3.2.1'
 
   # The name of the analysis. Can be a user friendly name. This is how it will appear on your local system or on the S3
@@ -38,7 +38,7 @@
   :run_annual_simulation: true
 
   # Do you wish to enable automated costing for materials, labour, equipment? Disabled in btap_public_cli version.
-  :enable_costing: true
+  :enable_costing: false
 
   # Set this to true or None to perform a reference run of all the building_type, primary_heating_fuel, and location present in this file ahead of the analysis.
   # This will automatically create comparisons to the reference cases generated in the analysis.
