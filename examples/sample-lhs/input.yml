@@ -20,13 +20,13 @@
 
   # Branch from https://github.com/NREL/openstudio-standards. Typically 'nrcan_prod' branch.
   # Developers or people liking to work on unstable code can use 'nrcan'
-  :os_standards_branch: '04e8f4947f9755ad8fc87a2cd96fe2e677125844'
+  :os_standards_branch: 'nrcan_prod'
 
   # Branch from https://github.com/canmet-energy/btap_costing. Typically 'nrcan_prod'
   # Developers or people liking to work on unstable code can use 'master'
-  :btap_costing_branch: 'master'
+  :btap_costing_branch: ''
 
-  # DO NOT CHANGE: Openstudio Version only 3.0.1 available
+  # DO NOT CHANGE: Openstudio Version 3.2.1 currently used.
   :os_version: '3.2.1'
 
   # The name of the analysis. Can be a user friendly name. This is how it will appear on your local system or on the S3
@@ -38,7 +38,7 @@
   :run_annual_simulation: true
 
   # Do you wish to enable automated costing for materials, labour, equipment? Disabled in btap_public_cli version.
-  :enable_costing: true
+  :enable_costing: false
 
   # Set this to true or None to perform a reference run of all the building_type, primary_heating_fuel, and location present in this file ahead of the analysis.
   # This will automatically create comparisons to the reference cases generated in the analysis.
@@ -56,8 +56,11 @@
     :random_seed: 1
 
 ###########################################     Hourly Data     #######################################################
+  # Note: the 'operation' and 'unit' keys in :output_variables are for performing operations on hourly output.
+  # For now, allowed operation type is 'sum'; allowed units are 'GJ' and 'kWh'.
   :output_variables: [
-    #{    key: '*',     variable: 'Zone Air Temperature',     frequency: 'hourly'}
+    { key: '*',     variable: 'Zone Air Temperature',     frequency: 'hourly',     operation: '*',     unit: '*' },
+    { key: '*',     variable: 'Lights Total Heating Energy',     frequency: 'hourly',     operation: 'sum',     unit: 'GJ' }
   ]
   :output_meters: [
     {    name: 'NaturalGas:Facility',     frequency: 'hourly'},
@@ -289,12 +292,12 @@
   :adv_dx_units: [ 'NECB_Default',
                    #'Carrier WeatherExpert'
   ]
-  :nv_type: [ 'NECB_Default',
+  :nv_type: [ 'NECB_Default',   # Two options: (1) nil/none/false/'NECB_Default', (2) 'add_nv'
               'add_nv'
   ]
-  :nv_opening_fraction: [ 'NECB_Default' ]
-  :nv_temp_out_min: [ 'NECB_Default' ]
-  :nv_delta_temp_in_out: [ 'NECB_Default' ]
+  :nv_opening_fraction: [ 'NECB_Default' ] #options: (1) nil/none/false (2) 'NECB_Default' (i.e. 0.1) (3) opening fraction of windows, which can be a float number between 0.0 and 1.0
+  :nv_temp_out_min: [ 'NECB_Default' ] #options: (1) nil/none/false (2) 'NECB_Default' (i.e. 13.0 based on inputs from Michel Tardif re a real school in QC) (3) minimum outdoor air temperature (in Celsius) below which natural ventilation is shut down
+  :nv_delta_temp_in_out: [ 'NECB_Default' ] #options: (1) nil/none/false (2) 'NECB_Default' (i.e. 1.0 based on inputs from Michel Tardif re a real school in QC) (3) temperature difference (in Celsius) between the indoor and outdoor air temperatures below which ventilation is shut down
   :occupancy_loads_scale: [ 'NECB_Default' ]
   :electrical_loads_scale: [ 'NECB_Default' ]
   :oa_scale: [ 'NECB_Default' ]
@@ -311,3 +314,8 @@
       'NECB_Default',
       #'0.5'
   ]
+  :baseline_system_zones_map_option: [ # Options: (1) 'NECB_Default'/'none'/nil (i.e. 'one_sys_per_bldg'), (2) 'one_sys_per_dwelling_unit', (3) 'one_sys_per_bldg'
+   'NECB_Default',
+#   'one_sys_per_bldg', # Note: this option is the default  (i.e. 'NECB_Default')
+   'one_sys_per_dwelling_unit'
+ ]

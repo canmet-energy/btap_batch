@@ -28,9 +28,9 @@
 
   # Branch from https://github.com/canmet-energy/btap_costing. Typically 'nrcan_prod'
   # Developers or people liking to work on unstable code can use 'master'
-  :btap_costing_branch: 'nrcan_prod'
+  :btap_costing_branch: ''
 
-  # DO NOT CHANGE: Openstudio Version only 3.0.1 available
+  # DO NOT CHANGE: Openstudio Version 3.2.1 currently used.
   :os_version: '3.2.1'
 
   # The name of the analysis. Can be a user friendly name. This is how it will appear on your local system or on the S3
@@ -55,8 +55,11 @@
 
 
   ###########################################     Hourly Data     #######################################################
+  # Note: the 'operation' and 'unit' keys in :output_variables are for performing operations on hourly output.
+  # For now, allowed operation type is 'sum'; allowed units are 'GJ' and 'kWh'.
   :output_variables: [
-    { key: '*',     variable: 'Zone Air Temperature',     frequency: 'hourly' }
+    { key: '*',     variable: 'Zone Air Temperature',     frequency: 'hourly',     operation: '*',     unit: '*' },
+    { key: '*',     variable: 'Lights Total Heating Energy',     frequency: 'hourly',     operation: 'sum',     unit: 'GJ' }
   ]
   :output_meters: [
     { name: 'NaturalGas:Facility',     frequency: 'hourly' },
