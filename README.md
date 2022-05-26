@@ -322,9 +322,9 @@ Local Volumes   4         0         624MB     624MB (100%)
 Build Cache     0         0         0B        0B
 ```
 
-You can remove the images, containers and volumes all at once with the command. Warning! This will delete all your containers from your system. Make sure you have backed up any work to a safe location.  See [docker documentation on this](https://docs.docker.com/engine/reference/commandline/system_prune/) for more information. 
+You can remove the images, containers and volumes all at once with the following command. Warning! This will delete all your containers from your system. Make sure you have backed up any work to a safe location.  See [docker documentation on this](https://docs.docker.com/engine/reference/commandline/system_prune/) for more information. 
 ```
-docker prune -a -f --volumes
+docker system prune -a -f --volumes
 ```
 
 ## Troubleshooting
