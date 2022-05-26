@@ -11,7 +11,7 @@ The most common used cases for BTAP is to:
 * examine the cost effective performance of codes and standards across Canada.
 * examine design pathways to Net-Zero Buildings.
 
-BTAP almost exclusively runs on the cloud. There are options ways to run it locally on Linux and Windows systems and via command line. If you are interested in this approach please contact phylroy.lopez@canada.ca .  
+BTAP almost exclusively runs on the cloud. There are options ways to run it locally on Linux and Windows systems and via command line. If you are interested in this approach please contact phylroy.lopez@nrcan-rncan.gc.ca .  
 
 ### Vintage Supported
 The project currently supports the following vintages for both code rulesets and incremental costing of utility costs and incremental capital costs.  
@@ -19,7 +19,7 @@ The project currently supports the following vintages for both code rulesets and
 * NECB2015
 * NECB2017
 
-Note: Work is underway under the General Infrastructure PERD project to add older vintages to the ruleset library. Please contact Chris.Kirney@canada.ca for more details on this initiative. 
+Note: Work is underway under the General Infrastructure PERD project to add older vintages to the ruleset library. Please contact chris.kirney@nrcan-rncan.gc.ca for more details on this initiative. 
 
 ### Commercial Building Geometries
 BTAP comes with the standard geometries built-in commercial building spacetype geometric models. The are based on the U.S. DOE reference building archetypes, but gutted of everything except the geometry and space type information. You can find a list of the buildings [here](./docs/BtapBuildingGeometryLibrary.md)
