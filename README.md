@@ -1,5 +1,8 @@
 # eSim 2022 Workshop
-For those attending the eSim 2022 workshop on BTAP I have a few additional instructions in addition to those below for hardware, software and getting started. These are not mandatory but will let you take part in some of the exercises. Although OpenStudio-3.2.1 and the OpenStudioApp-1.2.1 are listed as optional in the requirements section below, they will be used for the exercises. In addition, attached are some files that we will be using.
+For those attending the eSim 2022 workshop on BTAP there are a couple of additional instructions in addition to those below for hardware, software and getting started. These are not mandatory but will let you take part in some of the exercises. 
+
+## Additional Instructions
+Although OpenStudio-3.2.1 and the OpenStudioApp-1.2.1 are listed as optional in the requirements section below, they will be used for the exercises. In addition, look in the esim2022 folder for the exercies1.osm and exercise2.osm files and instructions on what to do with them. 
 
 # BTAP Batch
 BTAP Batch allows you to run paramteric and optimization analysis on your local machine and on the Amazon Cloud. You can
