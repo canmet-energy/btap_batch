@@ -1,3 +1,6 @@
+# eSim 2022
+For those attending the eSim 2022 workshop on BTAP I have a few additional instructions in addition to those below for hardware, software and getting started. These are not mandatory but will let you take part in some of the exercises. Although OpenStudio-3.2.1 and the OpenStudioApp-1.2.1 are listed as optional in the requirements section below, they will be used for the exercises. In addition, attached are some files that we will be using.
+
 # BTAP Batch
 BTAP Batch allows you to run paramteric and optimization analysis on your local machine and on the Amazon Cloud. You can
 select the parameters you wish to analyse by modifying an input .yml file, and run the simulation.  BTAP_BATCH will produce the 
