@@ -456,6 +456,9 @@ class AWSBatch:
         return result
 
     def build_image(self, rebuild=False):
+        
+        # Ensure image is rebuilt if requested
+        rebuild=self.rebuild_image
 
         self.image_tag = self.credentials.user_name
         self.image_full_name = f'{self.credentials.account_id}.dkr.ecr.{self.credentials.region_name}.amazonaws.com/' + self.image_name + ':' + self.image_tag
