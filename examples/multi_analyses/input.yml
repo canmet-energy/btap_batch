@@ -271,7 +271,8 @@
   ]
   :adv_dx_units: [
       'NECB_Default',
-      'Carrier WeatherExpert'
+      'Carrier WeatherExpert',
+      'Lennox Model L Ultra High Efficiency'
   ]
   :nv_type: [  # Two options: (1) nil/none/false/'NECB_Default', (2) 'add_nv'
     'NECB_Default',

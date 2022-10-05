@@ -288,7 +288,8 @@
   :pv_ground_azimuth_angle: [ 'NECB_Default' ]
   :pv_ground_module_description: [ 'NECB_Default' ]
   :adv_dx_units: [ 'NECB_Default',
-                   #'Carrier WeatherExpert'
+                   #'Carrier WeatherExpert',
+                   #'Lennox Model L Ultra High Efficiency'
   ]
   :nv_type: [ 'NECB_Default',
               'add_nv'
