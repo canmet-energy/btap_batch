@@ -456,6 +456,9 @@ class AWSBatch:
         return result
 
     def build_image(self, rebuild=False):
+        
+        # Ensure image is rebuilt if requested
+        rebuild=self.rebuild_image
 
         self.image_tag = self.credentials.user_name
         self.image_full_name = f'{self.credentials.account_id}.dkr.ecr.{self.credentials.region_name}.amazonaws.com/' + self.image_name + ':' + self.image_tag
@@ -2129,15 +2132,8 @@ class PostProcessResults():
     def __init__(self,
                  baseline_results=BASELINE_RESULTS,
                  database_folder=None,
-                 results_folder=None,
-                 npv_start_year=2020,
-                 npv_end_year=2050,
-                 discount_rate=0.03
+                 results_folder=None
                  ):
-
-        self.npv_start_year = npv_start_year
-        self.npv_end_year = npv_end_year
-        self.discount_rate = discount_rate
 
         filepaths = [os.path.join(database_folder, f) for f in os.listdir(database_folder) if f.endswith('.csv')]
         btap_data_df = pd.concat(map(pd.read_csv, filepaths))
@@ -2392,65 +2388,10 @@ class PostProcessResults():
             self.btap_data_df['baseline_ghg_percent_better'] = round(((df['cost_utility_ghg_total_kg_per_m_sq_y'] - df[
                 'cost_utility_ghg_total_kg_per_m_sq_x']) * 100 / df['cost_utility_ghg_total_kg_per_m_sq_y']), 1).values
 
-            self.economics()
-
-    def economics(self):
-
-        # Get energy end-use prices (CER data from https://apps.cer-rec.gc.ca/ftrppndc/dflt.aspx?GoCTemplateCulture=en-CA)
-        ceb_fuel_df = pd.read_csv(os.path.join(os.path.realpath(__file__), '..', 'resources','ceb_fuel_end_use_prices.csv'))
-
-        # Find which province the proposed building is located in
-        provinces_names_map = {'QC': 'Quebec',
-                               'NL': 'Newfoundland and Labrador',
-                               'NS': 'Nova Scotia',
-                               'PE': 'Prince Edward Island',
-                               'ON': 'Ontario',
-                               'MB': 'Manitoba',
-                               'SK': 'Saskatchewan',
-                               'AB': 'Alberta',
-                               'BC': 'British Columbia',
-                               'YT': 'Yukon',
-                               'NT': 'Northwest Territories',
-                               'NB': 'New Brunswick',
-                               'NU': 'Nunavut'}
-        province = provinces_names_map[self.btap_data_df['location_state_province_region'].values[0]]
-
-        # Get energy end-use prices (CER data from https://apps.cer-rec.gc.ca/ftrppndc/dflt.aspx?GoCTemplateCulture=en-CA)
-        energy_price_elec = ceb_fuel_df.loc[(ceb_fuel_df['province'] == province) & (ceb_fuel_df['fuel_type'] == 'Electricity'),str(self.npv_start_year):str(self.npv_end_year)].iloc[0].reset_index(drop=True, name='values')
-        energy_price_ngas = ceb_fuel_df.loc[(ceb_fuel_df['province'] == province) & (ceb_fuel_df['fuel_type'] == 'Natural Gas'),str(self.npv_start_year):str(self.npv_end_year)].iloc[0].reset_index(drop=True,name='values')
-        energy_price_fueloil = ceb_fuel_df.loc[(ceb_fuel_df['province'] == province) & (ceb_fuel_df['fuel_type'] == 'Oil'),str(self.npv_start_year):str(self.npv_end_year)].iloc[0].reset_index(drop=True, name='values')
-
-        #-------------------------------------------------------------------------------------------------------------------------------------------------------------
-        ##### Part I: Calculate difference in NPV of proposed and reference buildings (including equipment and energy cost)
-        # Note: If there is on-site energy generation (e.g. PV), it should be considered in the calculation of EUI for the calculation of energy use cost and NPV.
-        # To do so, it has been assumed that on-site energy generation is only for electricity.
-        # The difference in electricity EUI of proposed and reference building is re-calculated for NPV. It will be: ['baseline_difference_energy_eui_electricity_gj_per_m_sq' + ('total_site_eui_gj_per_m_sq' - 'net_site_eui_gj_per_m_sq')]
-        # Note that if there is no on-site energy generation, 'total_site_eui_gj_per_m_sq' and 'net_site_eui_gj_per_m_sq' will be equal.
-        # Note: 'total_site_eui_gj_per_m_sq' is the gross energy consumed by the building (REF: https://unmethours.com/question/25416/what-is-the-difference-between-site-energy-and-source-energy/)
-        # Note: 'net_site_eui_gj_per_m_sq' is the final energy consumed by the building after accounting for on-site energy generations (e.g. PV) (REF: https://unmethours.com/question/25416/what-is-the-difference-between-site-energy-and-source-energy/)
-        # Part I has two steps:
-        # Step I: Calculate the difference in energy use cost of the reference and proposed building for the period of npv_start_year to npv_end_year.
-        # Step II: Calculate NPV difference between the reference and proposed building for the period of npv_start_year to npv_end_year.
-        if ('baseline_difference_cost_equipment_total_cost_per_m_sq' in self.btap_data_df.columns):
-            self.btap_data_df['baseline_difference_npv_elec'] = self.btap_data_df.apply(lambda x: x['baseline_difference_cost_equipment_total_cost_per_m_sq'] + npf.npv(self.discount_rate, energy_price_elec * (x['baseline_difference_energy_eui_electricity_gj_per_m_sq'] + x['total_site_eui_gj_per_m_sq'] - x['net_site_eui_gj_per_m_sq'])) if npf.npv(self.discount_rate, energy_price_elec * (x['baseline_difference_energy_eui_electricity_gj_per_m_sq'] + x['total_site_eui_gj_per_m_sq'] - x['net_site_eui_gj_per_m_sq']))>0.0 else 0.0, axis=1)
-            self.btap_data_df['baseline_difference_npv_ngas'] = self.btap_data_df.apply(lambda x: x['baseline_difference_cost_equipment_total_cost_per_m_sq'] + npf.npv(self.discount_rate, energy_price_ngas * x['baseline_difference_energy_eui_natural_gas_gj_per_m_sq']) if npf.npv(self.discount_rate, energy_price_ngas * x['baseline_difference_energy_eui_natural_gas_gj_per_m_sq'])>0.0 else 0.0, axis=1)
-            self.btap_data_df['baseline_difference_npv_fueloil'] = self.btap_data_df.apply(lambda x: x['baseline_difference_cost_equipment_total_cost_per_m_sq'] + npf.npv(self.discount_rate, energy_price_fueloil * x['baseline_difference_energy_eui_additional_fuel_gj_per_m_sq']) if npf.npv(self.discount_rate, energy_price_fueloil * x['baseline_difference_energy_eui_additional_fuel_gj_per_m_sq'])>0.0 else 0.0, axis=1)
-
-        #-------------------------------------------------------------------------------------------------------------------------------------------------------------
-        ##### Part II: Calculate NPV of proposed buildings (including equipment and energy cost)
-        # Note: If there is on-site energy generation (e.g. PV), it should be considered in the calculation of EUI for the calculation of energy use cost and NPV.
-        # To do so, it has been assumed that on-site energy generation is only for electricity.
-        # Electricity EUI of proposed building is re-calculated for NPV. It will be: ['energy_eui_electricity_gj_per_m_sq' - ('total_site_eui_gj_per_m_sq' - 'net_site_eui_gj_per_m_sq')]
-        # Note that if there is no on-site energy generation, 'total_site_eui_gj_per_m_sq' and 'net_site_eui_gj_per_m_sq' will be equal.
-        # Note: 'total_site_eui_gj_per_m_sq' is the gross energy consumed by the building (REF: https://unmethours.com/question/25416/what-is-the-difference-between-site-energy-and-source-energy/)
-        # Note: 'net_site_eui_gj_per_m_sq' is the final energy consumed by the building after accounting for on-site energy generations (e.g. PV) (REF: https://unmethours.com/question/25416/what-is-the-difference-between-site-energy-and-source-energy/)
-        # Part II has two steps:
-        # Step I: Calculate energy cost of the proposed building for the period of npv_start_year to npv_end_year:
-        # Step II: Calculate NPV of the proposed building for the period of npv_start_year to npv_end_year:
-        if ('cost_equipment_total_cost_per_m_sq' in self.btap_data_df.columns):
-            self.btap_data_df['proposed_building_npv_elec'] = self.btap_data_df.apply(lambda x: x['cost_equipment_total_cost_per_m_sq'] + npf.npv(self.discount_rate, energy_price_elec * (x['energy_eui_electricity_gj_per_m_sq'] - (x['total_site_eui_gj_per_m_sq'] - x['net_site_eui_gj_per_m_sq']))) if npf.npv(self.discount_rate, energy_price_elec * (x['energy_eui_electricity_gj_per_m_sq'] - (x['total_site_eui_gj_per_m_sq'] - x['net_site_eui_gj_per_m_sq'])))>0.0 else 0.0, axis=1)
-            self.btap_data_df['proposed_building_npv_ngas'] = self.btap_data_df.apply(lambda x: x['cost_equipment_total_cost_per_m_sq'] + npf.npv(self.discount_rate, energy_price_ngas * x['energy_eui_natural_gas_gj_per_m_sq']) if npf.npv(self.discount_rate, energy_price_ngas * x['energy_eui_natural_gas_gj_per_m_sq'])>0.0 else 0.0, axis=1)
-            self.btap_data_df['proposed_building_npv_fueloil'] = self.btap_data_df.apply(lambda x: x['cost_equipment_total_cost_per_m_sq'] + npf.npv(self.discount_rate, energy_price_fueloil * x['energy_eui_additional_fuel_gj_per_m_sq']) if npf.npv(self.discount_rate, energy_price_fueloil * x['energy_eui_additional_fuel_gj_per_m_sq'])>0.0 else 0.0, axis=1)
+            if (('npv_total_per_m_sq_y' in df.columns) and ('npv_total_per_m_sq_x' in df.columns)):
+                self.btap_data_df['baseline_difference_npv_total_per_m_sq'] = round(
+                    (df['npv_total_per_m_sq_y'] - df[
+                        'npv_total_per_m_sq_x']), 1).values
 
 
 # Helper method to load input.yml file into data structures required by btap_batch
