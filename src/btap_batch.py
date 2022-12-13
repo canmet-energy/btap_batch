@@ -11,7 +11,14 @@ from sklearn import preprocessing
 from pymoo.factory import get_algorithm, get_crossover, get_mutation, get_sampling
 from pymoo.optimize import minimize
 from pymoo.core.problem import ElementwiseProblem
-from pymoo.core.problem import starmap_parallelized_eval
+# from pymoo.core.problem import starmap_parallelized_eval
+from pymoo.core.problem import StarmapParallelization
+from pymoo.operators.crossover.sbx import SBX
+from pymoo.operators.sampling.rnd import IntegerRandomSampling
+from pymoo.operators.mutation.pm import PolynomialMutation
+from pymoo.algorithms.soo.nonconvex.ga import GA
+from pymoo.operators.repair.rounding import RoundingRepair
+
 from multiprocessing.pool import ThreadPool
 import docker
 from docker.errors import DockerException
@@ -456,9 +463,9 @@ class AWSBatch:
         return result
 
     def build_image(self, rebuild=False):
-        
+
         # Ensure image is rebuilt if requested
-        rebuild=self.rebuild_image
+        rebuild = self.rebuild_image
 
         self.image_tag = self.credentials.user_name
         self.image_full_name = f'{self.credentials.account_id}.dkr.ecr.{self.credentials.region_name}.amazonaws.com/' + self.image_name + ':' + self.image_tag
@@ -1867,27 +1874,29 @@ class BTAPOptimization(BTAPAnalysis):
                 # Need to make pbar available to the __evaluate method.
                 self.pbar = pbar
                 # Create thread pool object.
-                with ThreadPool(self.batch.get_threads()) as pool:
-                    # Create pymoo problem. Pass self for helper methods and set up a starmap multithread pool.
-                    problem = BTAPProblem(btap_optimization=self, runner=pool.starmap,
-                                          func_eval=starmap_parallelized_eval)
-                    # configure the algorithm.
-                    method = get_algorithm(type,
-                                           pop_size=pop_size,
-                                           sampling=get_sampling("int_random"),
-                                           crossover=get_crossover("int_sbx", prob=prob, eta=eta),
-                                           mutation=get_mutation("int_pm", eta=eta),
-                                           eliminate_duplicates=True,
-                                           )
-                    # set to optimize minimize the problem n_gen os the max number of generations before giving up.
-                    self.res = minimize(problem,
-                                        method,
-                                        termination=('n_gen', n_gen),
-                                        seed=1
-                                        )
-                    # Scatter().add(res.F).show()
-                    # Let the user know the runtime.
-                    print('Execution Time:', self.res.exec_time)
+                n_threads = self.batch.get_threads()
+                pool = ThreadPool(n_threads)
+                runner = StarmapParallelization(pool.starmap)
+                # Create pymoo problem. Pass self for helper methods and set up a starmap multithread pool.
+                problem = BTAPProblem(btap_optimization=self, elementwise_runner=runner)
+                # configure the algorithm.
+
+                method = GA(pop_size=pop_size,
+                            sampling=IntegerRandomSampling(),
+                            crossover=SBX(prob=prob, eta=eta, vtype=float, repair=RoundingRepair()),
+                            mutation=PolynomialMutation(prob=prob, eta=eta, vtype=float, repair=RoundingRepair()),
+                            eliminate_duplicates=True,
+                            )
+                # set to optimize minimize the problem n_gen os the max number of generations before giving up.
+                self.res = minimize(problem,
+                                    method,
+                                    termination=('n_gen', n_gen),
+                                    seed=1
+                                    )
+                # Scatter().add(res.F).show()
+                # Let the user know the runtime.
+                print('Execution Time:', self.res.exec_time)
+                pool.close()
 
     # convieniance interface to get number of minimized objectives.
     def number_of_minimize_objectives(self):
@@ -2222,12 +2231,12 @@ class PostProcessResults():
                     raise
             # Copy output files ('run_dir/run/in.osm', 'run_dir/run/eplustbl.htm', 'hourly.csv') to s3 for storage.
             self.credentials = AWSCredentials()
-            target_path_on_aws = os.path.join("/".join(s3_file_path.split("/")[:3]),'results', file_path, row[':datapoint_id'] + extension)
-            target_path_on_aws = target_path_on_aws.replace('\\', '/') # s3 likes forward slashes.
+            target_path_on_aws = os.path.join("/".join(s3_file_path.split("/")[:3]), 'results', file_path,
+                                              row[':datapoint_id'] + extension)
+            target_path_on_aws = target_path_on_aws.replace('\\', '/')  # s3 likes forward slashes.
             message = "Uploading %s..." % target_path_on_aws
             logging.info(message)
             S3().upload_file(target_on_local, self.credentials.account_id, target_path_on_aws)
-
 
     def save_excel_output(self):
         # Create excel object
@@ -2294,7 +2303,7 @@ class PostProcessResults():
                                 df_output = pd.DataFrame(columns=df_columns)
 
                             # Go through each variable of output_var; Do below items for only the ones that their value for 'operation' in the .yml file is not '*'
-                            for count_operation_var in range(0,output_var_length):
+                            for count_operation_var in range(0, output_var_length):
                                 operation_var = output_var[count_operation_var]['variable']
                                 operation_case = output_var[count_operation_var]['operation']
                                 operation_unit = output_var[count_operation_var]['unit']
@@ -2302,10 +2311,10 @@ class PostProcessResults():
                                     df_operation_var = df.loc[df['Name'] == operation_var]
                                     if operation_case == 'sum':
                                         if operation_unit == 'GJ':
-                                            value_sum = df_operation_var.iloc[:,4:].sum(axis=0) / 10**9
+                                            value_sum = df_operation_var.iloc[:, 4:].sum(axis=0) / 10 ** 9
                                             value_sum['Units'] = 'GJ'
                                         elif operation_unit == 'kWh':
-                                            value_sum = 277.778 * df_operation_var.iloc[:,4:].sum(axis=0) / 10**9
+                                            value_sum = 277.778 * df_operation_var.iloc[:, 4:].sum(axis=0) / 10 ** 9
                                             value_sum['Units'] = 'kWh'
                                         elif operation_unit != '*':
                                             message = f"Unknown unit for the sum operation on hourly outputs. Allowed units are GJ and kWh."
@@ -2313,7 +2322,8 @@ class PostProcessResults():
                                         value_sum['datapoint_id'] = df_operation_var['datapoint_id'].iloc[0]
                                         value_sum['Name'] = df_operation_var['Name'].iloc[0]
                                         value_sum['KeyValue'] = ""
-                                        df_output = df_output.append(value_sum, True)
+                                        # df_output = df_output.append(value_sum, True)
+                                        df_output = pd.concat([df_output, value_sum], ignore_index=True)
                                     elif operation_case != '*':
                                         message = f"Unknown operation type on hourly outputs. Allowed operation type is sum."
                                         logging.error(message)
@@ -2329,7 +2339,8 @@ class PostProcessResults():
                     try:
                         sum_hourly_res_path = os.path.join(self.results_folder, 'hourly.csv', 'sum_hourly_res.csv')
                         self.credentials = AWSCredentials()
-                        target_path_on_aws = os.path.join(self.credentials.user_name, "\\".join(sum_hourly_res_path.split("\\")[-5:]))
+                        target_path_on_aws = os.path.join(self.credentials.user_name,
+                                                          "\\".join(sum_hourly_res_path.split("\\")[-5:]))
                         target_path_on_aws = target_path_on_aws.replace('\\', '/')  # s3 likes forward slashes.
                         message = "Uploading %s..." % target_path_on_aws
                         logging.info(message)
@@ -2346,7 +2357,8 @@ class PostProcessResults():
             df = pd.merge(self.btap_data_df, self.baseline_df, how='left', left_on=merge_columns,
                           right_on=merge_columns).reset_index()  # Note: in this case, the 'x' suffix stands for the proposed building; and 'y' stands for the baseline (reference) building
 
-            if (('cost_utility_neb_total_cost_per_m_sq_y' in df.columns) and ('cost_utility_neb_total_cost_per_m_sq_x' in df.columns)):
+            if (('cost_utility_neb_total_cost_per_m_sq_y' in df.columns) and (
+                    'cost_utility_neb_total_cost_per_m_sq_x' in df.columns)):
                 self.btap_data_df['baseline_savings_energy_cost_per_m_sq'] = round(
                     (df['cost_utility_neb_total_cost_per_m_sq_y'] - df[
                         'cost_utility_neb_total_cost_per_m_sq_x']), 1).values
@@ -2363,12 +2375,14 @@ class PostProcessResults():
                 (df['energy_eui_additional_fuel_gj_per_m_sq_y'] - df[
                     'energy_eui_additional_fuel_gj_per_m_sq_x']), 1).values
 
-            if (('cost_equipment_total_cost_per_m_sq_y' in df.columns) and ('cost_equipment_total_cost_per_m_sq_x' in df.columns)):
+            if (('cost_equipment_total_cost_per_m_sq_y' in df.columns) and (
+                    'cost_equipment_total_cost_per_m_sq_x' in df.columns)):
                 self.btap_data_df['baseline_difference_cost_equipment_total_cost_per_m_sq'] = round(
                     (df['cost_equipment_total_cost_per_m_sq_y'] - df[
                         'cost_equipment_total_cost_per_m_sq_x']), 1).values
 
-            if (('baseline_difference_cost_equipment_total_cost_per_m_sq' in df.columns) and ('baseline_savings_energy_cost_per_m_sq' in df.columns)):
+            if (('baseline_difference_cost_equipment_total_cost_per_m_sq' in df.columns) and (
+                    'baseline_savings_energy_cost_per_m_sq' in df.columns)):
                 self.btap_data_df['baseline_simple_payback_years'] = round(
                     (self.btap_data_df['baseline_difference_cost_equipment_total_cost_per_m_sq'] / self.btap_data_df[
                         'baseline_savings_energy_cost_per_m_sq']), 1).values
@@ -2439,8 +2453,6 @@ def btap_batch(analysis_config_file=None, git_api_token=None, batch=None):
 
     print(f"Compute Environment:{analysis_config[':compute_environment']}")
     print(f"Analysis Type:{analysis_config[':algorithm'][':type']}")
-
-
 
     if analysis_config[':compute_environment'] == 'aws_batch' and batch is None:
         # create aws image, set up aws compute env and create workflow queue.
