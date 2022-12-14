@@ -1,17 +1,14 @@
 # docker image prune -f -a ; docker container prune -f ; docker volume prune -f ; docker builder prune -a -f
 
 # docker kill (docker ps -q -a --filter "ancestor=btap_private_cli")
-from icecream import ic
 import itertools
 import copy
 import concurrent.futures
 from concurrent.futures import ThreadPoolExecutor, as_completed
 import shutil
 from sklearn import preprocessing
-from pymoo.factory import get_algorithm, get_crossover, get_mutation, get_sampling
 from pymoo.optimize import minimize
 from pymoo.core.problem import ElementwiseProblem
-# from pymoo.core.problem import starmap_parallelized_eval
 from pymoo.core.problem import StarmapParallelization
 from pymoo.operators.crossover.sbx import SBX
 from pymoo.operators.sampling.rnd import IntegerRandomSampling
@@ -22,6 +19,8 @@ from pymoo.operators.repair.rounding import RoundingRepair
 from multiprocessing.pool import ThreadPool
 import docker
 from docker.errors import DockerException
+from podman import PodmanClient
+
 import json
 import yaml
 import errno
@@ -50,7 +49,6 @@ import atexit
 from functools import partial
 import tqdm
 import csv
-import numpy_financial as npf
 
 np.random.seed(123)
 seed(1)
@@ -87,7 +85,8 @@ BASELINE_RESULTS = os.path.join(
 NECB2011_SPACETYPE_PATH = os.path.join(os.path.dirname(os.path.realpath(__file__)), '..', 'resources',
                                        'space_type_library', 'NECB2011_space_types.osm')
 
-# These resources were created either by hand or default from the AWS web console. If moving this to another aws account,
+# These resources were created either by hand or default from the AWS web console.
+# If moving this to another aws account,
 # recreate these 3 items in the new account. Also create s3 bucket to use named based account id like we did here.
 # That should be all you need.. Ideally these should be created programmatically.
 # Role used to build images on AWS Codebuild and ECR.
@@ -215,7 +214,8 @@ class AWSCredentials:
         except botocore.exceptions.ClientError as e:
             if e.response['Error']['Code'] == 'ExpiredToken':
                 logging.error(
-                    "Your session has expired while running. Please renew your aws credentials and consider running this in an amazon instance if your run is longer than 2 hours")
+                    "Your session has expired while running. Please renew your aws credentials and consider running "
+                    "this in an amazon instance if your run is longer than 2 hours")
                 exit(1)
             else:
                 print("Unexpected botocore.exceptions.ClientError error: %s" % e)
@@ -241,14 +241,14 @@ class AWSCredentials:
 
 # Class to manage a AWS Batch run
 class AWSBatch:
-    @classmethod
-    def get_threads(cls):
+
+    def get_threads(self):
         return MAX_AWS_VCPUS
 
     """
     This class  manages creating an aws batch workflow, simplifies creating jobs and manages tear down of the
-    aws batch. This is opposed to using the aws web console to configure the batch run. That method can lead to problems in
-    management and replication.
+    aws batch. This is opposed to using the aws web console to configure the batch run. 
+    That method can lead to problems in management and replication.
 
     This follows the principal that this class should be all your need to run an aws batch workflow on a
     clean aws system provided by nrcan's CIOSB. This may be used outside of NRCan's network, but has not been tested to
@@ -290,9 +290,11 @@ class AWSBatch:
         # Todo create cloud build service role.
         self.cloudbuild_service_role = CLOUD_BUILD_SERVICE_ROLE
 
-        # This is the role with permissions inside the docker containers. Created by aws web console. (todo: automate creations and destruction)
+        # This is the role with permissions inside the docker containers.
+        # Created by aws web console. (todo: automate creations and destruction)
         self.batch_job_role = BATCH_JOB_ROLE
-        # This is the role with the permissions to create batch runs. Created by aws web console. (todo: automate creations and destruction)
+        # This is the role with the permissions to create batch runs.
+        # Created by aws web console. (todo: automate creations and destruction)
         self.aws_batch_service_role = BATCH_SERVICE_ROLE
 
         # Set Analysis Id.
@@ -954,17 +956,73 @@ class AWSBatch:
 # Class to manage local Docker batch run.
 class DockerBatch:
 
-    @classmethod
-    def get_threads(cls):
+    def native_get_container_client(self):
+        return docker.from_env()
+
+    def native_build_image(self, dockerfile=None, image_name = None, nocache=None, buildargs=None, force_rm=True):
+        image, json_log = self.container_client.images.build(
+            # Path to docker file.
+            path=dockerfile,
+            # Image name
+            tag=image_name,
+            # nocache flag to build use cache or build from scratch.
+            nocache=nocache,
+            # ENV variables used in Dockerfile.
+            buildargs=buildargs,
+            # remove temp containers.
+            forcerm=force_rm
+        )
+        for chunk in json_log:
+            if 'stream' in chunk:
+                for line in chunk['stream'].splitlines():
+                    logging.debug(line)
+        return image
+
+    def native_get_image_by_name(self, image_name=None):
+        try:
+            image = self.container_client.images.get(name=image_name)
+        except docker.errors.ImageNotFound as err:
+            image = None
+        return image
+
+    def native_run_btap_cli_container(self, detach=None,
+                                      local_input_folder=None,
+                                      local_output_folder=None,
+                                      run_options=None,
+                                      volumes=None):
+        # Running docker command
+        run_options[
+            'docker_command'] = f"docker run --rm -v {local_output_folder}:/btap_costing/utilities/btap_cli/output -v {local_input_folder}:/btap_costing/utilities/btap_cli/input {run_options[':image_name']} bundle exec ruby btap_cli.rb"
+        result = self.container_client.containers.run(
+            # Local image name to use.
+            image=run_options[':image_name'],
+
+            # Command issued to container.
+            command='bundle exec ruby btap_cli.rb',
+
+            # host volume mount points and setting to read and write.
+            volumes=volumes,
+            # Will detach from current thread.. don't do it if you don't understand this.
+            detach=detach,
+            # This deletes the container on exit otherwise the container
+            # will bloat your system.
+            auto_remove=True
+        )
+        return result
+
+
+    def get_threads(self):
         # Try to access the docker daemon. If we cannot.. ask user to turn it on and then exit.
         try:
-            docker.from_env()
+            self.native_get_container_client()
         except DockerException as err:
             logging.error(
                 f"Could not access Docker Daemon. Either it is not running, or you do not have permissions to run docker. {err}. Could not get number of cpus used in Docker.")
             exit(1)
         # Return number of cpus minus 2 to give a bit of slack.
         return int(docker.from_env().containers.run(image='alpine', command='nproc --all', remove=True)) - 2
+
+
 
     def __init__(self,
                  # name of docker image created
@@ -1009,7 +1067,7 @@ class DockerBatch:
         file.write(r.content)
         file.close()
         # get a docker client object to run docker commands.
-        self.docker_client = docker.from_env()
+        self.container_client = self.native_get_container_client()
         # initialize image to None.. will assign later.
         self.image = None
 
@@ -1050,33 +1108,20 @@ class DockerBatch:
         # Will build image if does not already exist or if nocache is set true.
 
         # Get image if it exists.
-        image = None
-        try:
-            image = self.docker_client.images.get(name=self.image_name)
-        except docker.errors.ImageNotFound as err:
-            image = None
+        image = self.native_get_image_by_name(image_name=self.image_name)
+
 
         if image == None or self.nocache == True:
             message = f'Building Image:{self.image_name} will take ~10m... '
             logging.info(message)
             print(message)
-            image, json_log = self.docker_client.images.build(
-                # Path to docker file.
-                path=self.dockerfile,
-                # Image name
-                tag=self.image_name,
-                # nocache flag to build use cache or build from scratch.
-                nocache=self.nocache,
-                # ENV variables used in Dockerfile.
-                buildargs=buildargs,
-                # remove temp containers.
-                forcerm=True
-            )
-            for chunk in json_log:
-                if 'stream' in chunk:
-                    for line in chunk['stream'].splitlines():
-                        logging.debug(line)
-            # let use know that the image built sucessfully.
+            image = self.native_build_image(dockerfile=self.dockerfile,
+                                            image_name=self.image_name,
+                                            nocache=self.nocache,
+                                            buildargs=buildargs,
+                                            force_rm=True)
+
+            # let use know that the image built successfully.
             message = f'Image built in {(time.time() - start) / 60}m'
             logging.info(message)
             print(message)
@@ -1088,6 +1133,7 @@ class DockerBatch:
 
         # return image.. also is a part of the object.
         return self.image
+
 
     # This method will run the simulation with the general command. It passes all the information via the
     # run_options.yml file. This file was created ahead of this in the local_input_folder which is mounted to the
@@ -1185,26 +1231,82 @@ class DockerBatch:
                 'bind': '/btap_costing/utilities/btap_cli/input',
                 'mode': 'rw'},
         }
-        # Runnning docker command
-        run_options[
-            'docker_command'] = f"docker run --rm -v {local_output_folder}:/btap_costing/utilities/btap_cli/output -v {local_input_folder}:/btap_costing/utilities/btap_cli/input {run_options[':image_name']} bundle exec ruby btap_cli.rb"
-        result = self.docker_client.containers.run(
-            # Local image name to use.
-            image=run_options[':image_name'],
-
-            # Command issued to container.
-            command='bundle exec ruby btap_cli.rb',
-
-            # host volume mount points and setting to read and write.
-            volumes=volumes,
-            # Will detach from current thread.. don't do it if you don't understand this.
-            detach=detach,
-            # This deletes the container on exit otherwise the container
-            # will bloat your system.
-            auto_remove=True
-        )
+        result = self.native_run_btap_cli_container(detach, local_input_folder, local_output_folder, run_options,
+                                                    volumes)
 
         return result
+
+
+
+class PodmanBatch(DockerBatch):
+    def __init__(self,
+                 # name of docker image created
+                 image_name='btap_private_cli',
+                 # If set to true will force a rebuild of the image to the most recent sources.
+                 nocache=False,
+                 # git token for accessing private repos
+                 git_api_token='None',
+                 # Standards branch or revision to be used.
+                 os_standards_branch='nrcan',
+                 # btap_costing branch or revision to be used.
+                 btap_costing_branch='master',
+                 # openstudio version (used to access old versions if needed)
+                 os_version='3.0.1'):
+        print('hello')
+
+        def native_get_container_client(self):
+            return
+
+        def native_build_image(self, dockerfile=None, image_name=None, nocache=None, buildargs=None, force_rm=True):
+            image, json_log = self.container_client.images.build(
+                # Path to docker file.
+                path=dockerfile,
+                # Image name
+                tag=image_name,
+                # nocache flag to build use cache or build from scratch.
+                nocache=nocache,
+                # ENV variables used in Dockerfile.
+                buildargs=buildargs,
+                # remove temp containers.
+                forcerm=force_rm
+            )
+            for chunk in json_log:
+                if 'stream' in chunk:
+                    for line in chunk['stream'].splitlines():
+                        logging.debug(line)
+            return image
+
+        def native_get_image_by_name(self, image_name=None):
+            try:
+                image = self.container_client.images.get(name=image_name)
+            except docker.errors.ImageNotFound as err:
+                image = None
+            return image
+
+        def native_run_btap_cli_container(self, detach=None,
+                                          local_input_folder=None,
+                                          local_output_folder=None,
+                                          run_options=None,
+                                          volumes=None):
+            # Running docker command
+            run_options[
+                'docker_command'] = f"docker run --rm -v {local_output_folder}:/btap_costing/utilities/btap_cli/output -v {local_input_folder}:/btap_costing/utilities/btap_cli/input {run_options[':image_name']} bundle exec ruby btap_cli.rb"
+            result = self.container_client.containers.run(
+                # Local image name to use.
+                image=run_options[':image_name'],
+
+                # Command issued to container.
+                command='bundle exec ruby btap_cli.rb',
+
+                # host volume mount points and setting to read and write.
+                volumes=volumes,
+                # Will detach from current thread.. don't do it if you don't understand this.
+                detach=detach,
+                # This deletes the container on exit otherwise the container
+                # will bloat your system.
+                auto_remove=True
+            )
+            return result
 
 
 # Parent Analysis class from with all analysis inherit
@@ -1321,13 +1423,21 @@ class BTAPAnalysis():
                     os_standards_branch=self.analysis_config[':os_standards_branch'],
                 )
                 self.batch.setup()
+            elif self.analysis_config[':compute_environment'] == 'local_podman':
+                self.batch = PodmanBatch(image_name=self.analysis_config[':image_name'],
+                                             git_api_token=git_api_token,
+                                             os_standards_branch=self.analysis_config[':os_standards_branch'],
+                                             btap_costing_branch=self.analysis_config[':btap_costing_branch'],
+                                             os_version=self.analysis_config[':os_version'],
+                                             nocache=self.analysis_config[':nocache'])
             else:
                 self.batch = DockerBatch(image_name=self.analysis_config[':image_name'],
-                                         git_api_token=git_api_token,
-                                         os_standards_branch=self.analysis_config[':os_standards_branch'],
-                                         btap_costing_branch=self.analysis_config[':btap_costing_branch'],
-                                         os_version=self.analysis_config[':os_version'],
-                                         nocache=self.analysis_config[':nocache'])
+                                             git_api_token=git_api_token,
+                                             os_standards_branch=self.analysis_config[':os_standards_branch'],
+                                             btap_costing_branch=self.analysis_config[':btap_costing_branch'],
+                                             os_version=self.analysis_config[':os_version'],
+                                             nocache=self.analysis_config[':nocache'])
+
                 self.batch.setup()
 
     def get_num_of_runs_failed(self):
@@ -2151,7 +2261,7 @@ class PostProcessResults():
         if isinstance(btap_data_df, pd.DataFrame):
             self.btap_data_df = btap_data_df
         else:
-            self.btap_data_df = pd.read_excel(open(btap_data_df, 'rb'), sheet_name='btap_data')
+            self.btap_data_df = pd.read_excel(open(str(btap_data_df), 'rb'), sheet_name='btap_data')
         self.baseline_results = baseline_results
         self.results_folder = results_folder
 
@@ -2274,6 +2384,7 @@ class PostProcessResults():
 
                 datapoint_number = 0.0
                 df_output = []
+                output_file = None
                 for file_object in os.listdir(folder_in_results_path):
                     # Set path of the output file that will be generated by the operation_on_hourly_output method
                     output_file = os.path.join(folder_in_results_path, "sum_hourly_res.csv")
@@ -2308,6 +2419,7 @@ class PostProcessResults():
                                 operation_case = output_var[count_operation_var]['operation']
                                 operation_unit = output_var[count_operation_var]['unit']
                                 if operation_var not in df_output['Name']:
+                                    value_sum = None
                                     df_operation_var = df.loc[df['Name'] == operation_var]
                                     if operation_case == 'sum':
                                         if operation_unit == 'GJ':
@@ -2322,8 +2434,8 @@ class PostProcessResults():
                                         value_sum['datapoint_id'] = df_operation_var['datapoint_id'].iloc[0]
                                         value_sum['Name'] = df_operation_var['Name'].iloc[0]
                                         value_sum['KeyValue'] = ""
-                                        # df_output = df_output.append(value_sum, True)
-                                        df_output = pd.concat([df_output, value_sum], ignore_index=True)
+                                        df_output = df_output.append(value_sum, True)
+                                        #df_output = pd.concat([df_output, value_sum], ignore_index=True)
                                     elif operation_case != '*':
                                         message = f"Unknown operation type on hourly outputs. Allowed operation type is sum."
                                         logging.error(message)
@@ -2477,6 +2589,16 @@ def btap_batch(analysis_config_file=None, git_api_token=None, batch=None):
                             nocache=analysis_config[':nocache'])
         # Create batch queue on docker desktop.
         batch.setup()
+    elif analysis_config[':compute_environment'] == 'local_podman' and batch is None:
+        batch = PodmanBatch(image_name=analysis_config[':image_name'],
+                            git_api_token=git_api_token,
+                            os_standards_branch=analysis_config[':os_standards_branch'],
+                            btap_costing_branch=analysis_config[':btap_costing_branch'],
+                            os_version=analysis_config[':os_version'],
+                            nocache=analysis_config[':nocache'])
+        # Create batch queue on docker desktop.
+        batch.setup()
+
 
     baseline_results = None
     # Ensure reference run is executed in all other cases unless :run_reference is false.

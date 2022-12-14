@@ -1,5 +1,5 @@
-# Dependancies based on the following pip install Dec 12, 2022
-# pip install icecream scikit-learn pymoo==0.6.0 pyyaml boto3 pandas scikit-optimize openstudio==3.2.1 tqdm numpy_financial docker openpyxl pypiwin32
+# Dependencies based on the following pip install Dec 12, 2022
+# pip install icecream scikit-learn pymoo==0.6.0 pyyaml boto3 pandas scikit-optimize openstudio==3.2.1 tqdm numpy_financial docker openpyxl podman pypiwin32
 about-time==3.1.1
 alive-progress==2.4.1
 asttokens==2.2.1
@@ -55,3 +55,7 @@ tqdm==4.64.1
 urllib3==1.26.13
 websocket-client==1.4.2
 wrapt==1.14.1
+podman==4.3.0
+pyxdg==0.28
+toml==0.10.2
+
