@@ -1237,7 +1237,6 @@ class DockerBatch:
         return result
 
 
-
 class PodmanBatch(DockerBatch):
     def __init__(self,
                  # name of docker image created
@@ -1307,6 +1306,51 @@ class PodmanBatch(DockerBatch):
                 auto_remove=True
             )
             return result
+
+def batch_factory(
+                  compute_environment=None,
+                  analysis_id=None,
+                  btap_image_name=None,
+                  nocache=None,
+                  os_version=None,
+                  btap_costing_branch=None,
+                  os_standards_branch=None,
+                  git_api_token=None):
+    batch = None
+    if compute_environment == 'aws_batch':
+        # create aws image, set up aws compute env and create workflow queue.
+
+        batch = AWSBatch( analysis_id=analysis_id,
+                          btap_image_name=btap_image_name,
+                          rebuild_image=nocache,
+                          git_api_token=git_api_token,
+                          os_version=os_version,
+                          btap_costing_branch=btap_costing_branch,
+                          os_standards_branch=os_standards_branch
+                          )
+        # Create batch queue on aws.
+        batch.setup()
+    elif compute_environment == 'local':
+        batch = DockerBatch(image_name=btap_image_name,
+                            git_api_token=git_api_token,
+                            os_standards_branch=os_standards_branch,
+                            btap_costing_branch=btap_costing_branch,
+                            os_version=os_version,
+                            nocache=nocache
+                            )
+        # Create batch queue on docker desktop.
+        batch.setup()
+    elif compute_environment == 'local_podman':
+        batch = PodmanBatch(image_name=btap_image_name,
+                            git_api_token=git_api_token,
+                            os_standards_branch=os_standards_branch,
+                            btap_costing_branch=btap_costing_branch,
+                            os_version=os_version,
+                            nocache=nocache)
+        # Create batch queue on docker desktop.
+        batch.setup()
+    return batch
+
 
 
 # Parent Analysis class from with all analysis inherit
@@ -1408,37 +1452,17 @@ class BTAPAnalysis():
         # If batch object has not been pass/created.. make one.
         # This really should be replaced with a https://en.wikipedia.org/wiki/Factory_method_pattern.
         if self.batch == None:
-            if self.analysis_config[':compute_environment'] == 'aws_batch':
-                # If aws batch object was not passed.. create it.
-
-                # Start batch queue if required.
-                # create aws image, set up aws compute env and create workflow queue.
-                self.batch = AWSBatch(
-                    analysis_id=self.analysis_config[':analysis_id'],
-                    btap_image_name=self.analysis_config[':image_name'],
-                    rebuild_image=self.analysis_config[':nocache'],
-                    git_api_token=git_api_token,
-                    os_version=self.analysis_config[':os_version'],
-                    btap_costing_branch=self.analysis_config[':btap_costing_branch'],
-                    os_standards_branch=self.analysis_config[':os_standards_branch'],
+            self.batch=batch_factory(
+                compute_environment=self.analysis_config[':compute_environment'],
+                analysis_id=self.analysis_config[':analysis_id'],
+                btap_image_name=self.analysis_config[':image_name'],
+                nocache=self.analysis_config[':nocache'],
+                git_api_token=git_api_token,
+                os_version=self.analysis_config[':os_version'],
+                btap_costing_branch=self.analysis_config[':btap_costing_branch'],
+                os_standards_branch=self.analysis_config[':os_standards_branch']
                 )
-                self.batch.setup()
-            elif self.analysis_config[':compute_environment'] == 'local_podman':
-                self.batch = PodmanBatch(image_name=self.analysis_config[':image_name'],
-                                             git_api_token=git_api_token,
-                                             os_standards_branch=self.analysis_config[':os_standards_branch'],
-                                             btap_costing_branch=self.analysis_config[':btap_costing_branch'],
-                                             os_version=self.analysis_config[':os_version'],
-                                             nocache=self.analysis_config[':nocache'])
-            else:
-                self.batch = DockerBatch(image_name=self.analysis_config[':image_name'],
-                                             git_api_token=git_api_token,
-                                             os_standards_branch=self.analysis_config[':os_standards_branch'],
-                                             btap_costing_branch=self.analysis_config[':btap_costing_branch'],
-                                             os_version=self.analysis_config[':os_version'],
-                                             nocache=self.analysis_config[':nocache'])
 
-                self.batch.setup()
 
     def get_num_of_runs_failed(self):
         if os.path.isdir(self.failures_folder):
@@ -2565,39 +2589,18 @@ def btap_batch(analysis_config_file=None, git_api_token=None, batch=None):
 
     print(f"Compute Environment:{analysis_config[':compute_environment']}")
     print(f"Analysis Type:{analysis_config[':algorithm'][':type']}")
-
-    if analysis_config[':compute_environment'] == 'aws_batch' and batch is None:
-        # create aws image, set up aws compute env and create workflow queue.
-
-        batch = AWSBatch(
+    if batch != None:
+        batch = batch_factory(
+            compute_environment=analysis_config[':compute_environment'],
             analysis_id=analysis_config[':analysis_id'],
             btap_image_name=analysis_config[':image_name'],
-            rebuild_image=analysis_config[':nocache'],
+            nocache=analysis_config[':nocache'],
             git_api_token=git_api_token,
             os_version=analysis_config[':os_version'],
             btap_costing_branch=analysis_config[':btap_costing_branch'],
             os_standards_branch=analysis_config[':os_standards_branch']
         )
-        # Create batch queue on aws.
-        batch.setup()
-    elif analysis_config[':compute_environment'] == 'local' and batch is None:
-        batch = DockerBatch(image_name=analysis_config[':image_name'],
-                            git_api_token=git_api_token,
-                            os_standards_branch=analysis_config[':os_standards_branch'],
-                            btap_costing_branch=analysis_config[':btap_costing_branch'],
-                            os_version=analysis_config[':os_version'],
-                            nocache=analysis_config[':nocache'])
-        # Create batch queue on docker desktop.
-        batch.setup()
-    elif analysis_config[':compute_environment'] == 'local_podman' and batch is None:
-        batch = PodmanBatch(image_name=analysis_config[':image_name'],
-                            git_api_token=git_api_token,
-                            os_standards_branch=analysis_config[':os_standards_branch'],
-                            btap_costing_branch=analysis_config[':btap_costing_branch'],
-                            os_version=analysis_config[':os_version'],
-                            nocache=analysis_config[':nocache'])
-        # Create batch queue on docker desktop.
-        batch.setup()
+
 
 
     baseline_results = None
@@ -2710,3 +2713,7 @@ def btap_batch(analysis_config_file=None, git_api_token=None, batch=None):
         exit(1)
     if not batch is None:
         batch.tear_down()
+
+
+
+    return batch
