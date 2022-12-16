@@ -324,7 +324,7 @@ class AWSBatch:
         atexit.register(self.tear_down)
 
     def setup(self):
-        # This method creates analysis id for batch run. See methods for details.
+        # This method creates batch infrastructure for user.
         self.build_image()
         self.__create_compute_environment()
         self.__create_job_queue()
@@ -332,6 +332,7 @@ class AWSBatch:
         print("Completed AWS batch initialization.")
 
     def tear_down(self):
+        # This method creates batch infrastructure for user.
         # This method manages the teardown of the batch workflow. See methods for details.
         message = "Shutting down AWSBatch...."
         print(message)
@@ -1053,6 +1054,13 @@ class DockerBatch:
         self.dir_path = os.path.dirname(os.path.realpath(__file__))
         # determines folder of docker folder relative to this file.
         self.dockerfile = os.path.join(DOCKERFILES_FOLDER, self.image_name)
+        self.get_dockerfile_from_git(dockerfile_path=self.dockerfile)
+        # get a docker client object to run docker commands.
+        self.container_client = self.native_get_container_client()
+        # initialize image to None.. will assign later.
+        self.image = None
+
+    def get_dockerfile_from_git(self, dockerfile_path=None):
         # Copies Dockerfile from btap_cli repository
         url = DOCKERFILE_URL
         r = None
@@ -1062,14 +1070,9 @@ class DockerBatch:
             logging.error(
                 "Could not set up SSL certificate. Are you behind a VPN? This will interfere with SSL certificates.")
             exit(1)
-
-        file = open(os.path.join(self.dockerfile, 'Dockerfile'), 'wb')
+        file = open(os.path.join(dockerfile_path, 'Dockerfile'), 'wb')
         file.write(r.content)
         file.close()
-        # get a docker client object to run docker commands.
-        self.container_client = self.native_get_container_client()
-        # initialize image to None.. will assign later.
-        self.image = None
 
     def setup(self):
         self.build_image()
@@ -1311,7 +1314,7 @@ def batch_factory(
                   compute_environment=None,
                   analysis_id=None,
                   btap_image_name=None,
-                  nocache=None,
+                  nocache=True,
                   os_version=None,
                   btap_costing_branch=None,
                   os_standards_branch=None,
@@ -2589,7 +2592,7 @@ def btap_batch(analysis_config_file=None, git_api_token=None, batch=None):
 
     print(f"Compute Environment:{analysis_config[':compute_environment']}")
     print(f"Analysis Type:{analysis_config[':algorithm'][':type']}")
-    if batch != None:
+    if batch == None:
         batch = batch_factory(
             compute_environment=analysis_config[':compute_environment'],
             analysis_id=analysis_config[':analysis_id'],
