@@ -1,12 +1,15 @@
 import docker
 import logging
 import os
+# Do not delete this import...This will set up certificates based on the host system.
+import pip_system_certs.wrapt_requests
 import requests
 import time
 import json,yaml
 import errno
 from .constants import *
 from docker.errors import DockerException
+from icecream import ic
 
 
 # Class to manage local Docker batch run.
@@ -16,6 +19,13 @@ class DockerBatch:
         return docker.from_env()
 
     def native_build_image(self, dockerfile=None, image_name = None, nocache=None, buildargs=None, force_rm=True):
+
+        buildargs_string = ''
+        for key, value in buildargs.items():
+            buildargs_string += f"--build-arg {key}={value} "
+        docker_build_command = f"docker build -t {image_name} {buildargs_string} {dockerfile}"
+        print(docker_build_command)
+
         image, json_log = self.container_client.images.build(
             # Path to docker file.
             path=dockerfile,

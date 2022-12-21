@@ -11,6 +11,9 @@ import datetime
 import pathlib
 from random import random
 import sys
+# Do not delete this import...This will set up certificates based on the host system. This
+# also must be right ahead of the requests import.
+import pip_system_certs.wrapt_requests
 import requests
 import glob
 from .constants import AWS_MAX_RETRIES, MAX_AWS_VCPUS, MIN_AWS_VCPUS, CLOUD_BUILD_SERVICE_ROLE, BATCH_JOB_ROLE
