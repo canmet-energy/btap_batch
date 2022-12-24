@@ -1,6 +1,5 @@
 import docker
 import logging
-import os
 # Do not delete this import...This will set up certificates based on the host system.
 import pip_system_certs.wrapt_requests
 import requests
@@ -91,34 +90,13 @@ class DockerBatch:
 
 
     def __init__(self,
-                 # name of docker image created
-                 image_name='btap_private_cli',
-                 # If set to true will force a rebuild of the image to the most recent sources.
-                 nocache=False,
-                 # git token for accessing private repos
-                 git_api_token='None',
-                 # Standards branch or revision to be used.
-                 os_standards_branch='nrcan',
-                 # btap_costing branch or revision to be used.
-                 btap_costing_branch='master',
-                 # openstudio version (used to access old versions if needed)
-                 os_version='3.0.1'):
-        # Git api token
-        self.git_api_token = git_api_token
-        # https://github.com/NREL/openstudio-standards/branches should ideally use nrcan
-        self.os_standards_branch = os_standards_branch
-        # https://github.com/NREL/openstudio-standards/branches should ideally use master
-        self.btap_costing_branch = btap_costing_branch
-        # OS version.. currently supports 3.0.1
-        self.os_version = os_version
-        # image name
-        self.image_name = image_name
-        # if nocache set to True.. will build image from scratch.
-        self.nocache = nocache
+                 engine=None):
+        self.engine = engine
+
         # Get the folder of this python file.
         self.dir_path = os.path.dirname(os.path.realpath(__file__))
         # determines folder of docker folder relative to this file.
-        self.dockerfile = os.path.join(DOCKERFILES_FOLDER, self.image_name)
+        self.dockerfile = os.path.join(DOCKERFILES_FOLDER, self.engine.analysis_config[':image_name'])
         self.get_dockerfile_from_git(dockerfile_path=self.dockerfile)
         # get a docker client object to run docker commands.
         self.container_client = self.native_get_container_client()
@@ -146,16 +124,16 @@ class DockerBatch:
         # Set timer to track how long it took to build.
         start = time.time()
         # add info to logger.
-        message = f"Building image:{self.image_name}"
+        message = f"Building image:{self.engine.analysis_config[':image_name']}"
         logging.info(message)
         print(message)
-        message = f"OS Version:{self.os_version}"
+        message = f"OS Version:{self.engine.analysis_config[':os_version']}"
         logging.info(message)
         print(message)
-        message = f"BTAP_COSTING Branch:{self.btap_costing_branch}"
+        message = f"BTAP_COSTING Branch:{self.engine.analysis_config[':btap_costing_branch']}"
         logging.info(message)
         print(message)
-        message = f"OS_STANDARDS Branch:{self.os_standards_branch}"
+        message = f"OS_STANDARDS Branch:{self.engine.analysis_config[':os_standards_branch']}"
         logging.info(message)
         print(message)
         message = f"Dockerfolder being use to build image:{self.dockerfile}"
@@ -164,30 +142,30 @@ class DockerBatch:
 
         buildargs = {
             # Git token to access private repositories.
-            'GIT_API_TOKEN': self.git_api_token,
+            'GIT_API_TOKEN': self.engine.git_api_token,
             # Openstudio version.... like '3.0.1'
-            'OPENSTUDIO_VERSION': self.os_version,
+            'OPENSTUDIO_VERSION': self.engine.analysis_config[':os_version'],
             # BTAP costing branch. Usually 'master'
-            'BTAP_COSTING_BRANCH': self.btap_costing_branch,
+            'BTAP_COSTING_BRANCH': self.engine.analysis_config[':btap_costing_branch'],
             # Openstudio standards branch Usually 'nrcan'
-            'OS_STANDARDS_BRANCH': self.os_standards_branch
+            'OS_STANDARDS_BRANCH': self.engine.analysis_config[':os_standards_branch']
         }
 
         # Will build image if does not already exist or if nocache is set true.
 
         # Get image if it exists.
-        image = self.native_get_image_by_name(image_name=self.image_name)
+        self.image = self.native_get_image_by_name(image_name=self.engine.analysis_config[':image_name'])
 
 
-        if image == None or self.nocache == True:
-            message = f'Building Image:{self.image_name} will take ~10m... '
+        if self.image == None or self.engine.analysis_config[':nocache'] == True:
+            message = f'Building Image:{self.engine.analysis_config[":image_name"]} will take ~10m... '
             logging.info(message)
             print(message)
-            image = self.native_build_image(dockerfile=self.dockerfile,
-                                            image_name=self.image_name,
-                                            nocache=self.nocache,
-                                            buildargs=buildargs,
-                                            force_rm=True)
+            self.image = self.native_build_image(dockerfile=self.dockerfile,
+                                                 image_name=self.engine.analysis_config[':image_name'],
+                                                 nocache=self.engine.analysis_config[':nocache'],
+                                                 buildargs=self.engine.docker_build_args,
+                                                 force_rm=True)
 
             # let use know that the image built successfully.
             message = f'Image built in {(time.time() - start) / 60}m'
@@ -197,7 +175,6 @@ class DockerBatch:
             message = "Using existing image."
             logging.info(message)
             print(message)
-        self.image = image
 
         # return image.. also is a part of the object.
         return self.image

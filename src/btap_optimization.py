@@ -17,15 +17,17 @@ import tqdm
 from .exceptions import FailedSimulationException
 from .btap_analysis import BTAPAnalysis
 # Optimization problem definition class using Pymoo
+
+
 class BTAPProblem(ElementwiseProblem):
     # Inspiration for this was drawn from examples:
     #   Discrete analysis https://pymoo.org/customization/discrete_problem.html
-    #   Stapmap Multithreaded https://pymoo.org/problems/parallelization.html
+    #   Stapmap Multi-threaded https://pymoo.org/problems/parallelization.html
     def __init__(self,
                  # Required btap object already initialized to help run the optimization.
                  btap_optimization=None,
                  **kwargs):
-        # Make analysis object visible throught class.
+        # Make analysis object visible throughout class.
         self.btap_optimization = btap_optimization
 
         # Initialize super with information from [':algorithm'] in input file.
@@ -33,8 +35,8 @@ class BTAPProblem(ElementwiseProblem):
             # Number of variables that are present in the yml file.
             n_var=self.btap_optimization.number_of_variables(),
             # Number of minimize_objectives in input file.
-            n_obj=len(self.btap_optimization.analysis_config[':algorithm'][':minimize_objectives']),
-            # We never have contraints.
+            n_obj=len(self.btap_optimization.engine.analysis_config[':algorithm'][':minimize_objectives']),
+            # We never have constraints.
             n_constr=0,
             # set the lower bound array of variable options.. all start a zero. So an array of zeros.
             xl=[0] * self.btap_optimization.number_of_variables(),
@@ -44,7 +46,8 @@ class BTAPProblem(ElementwiseProblem):
             # Tell pymoo that the variables are discrete integers and not floats as is usually the default.
             type_var=int,
             # options to parent class (not used)
-            **kwargs)  # Note if using a linter and get warning "Expected Dictionary and got Dict" This is a false positive.
+            # Note if using a linter and get warning "Expected Dictionary and got Dict" This is a false positive.
+            **kwargs)
 
     # This is the method that runs each simulation.
     def _evaluate(
@@ -57,9 +60,9 @@ class BTAPProblem(ElementwiseProblem):
             *args,
             **kwargs):
 
-        # Converts discrete integers contains in x argument back into values that btap understands. So for example. if x was a list
-        # of zeros, it would convert this to the dict of the first item in each list of the variables in the building_options
-        # section of the input yml file.
+        # Converts discrete integers contains in x argument back into values that btap understands. So for example.,if
+        # x was a list of zeros, it would convert this to the dict of the first item in each list of the variables in
+        # the building_options section of the input yml file.
         run_options = self.btap_optimization.generate_run_option_file(x.tolist())
 
         # Run simulation
@@ -67,16 +70,18 @@ class BTAPProblem(ElementwiseProblem):
 
         # Saves results to database if successful or not.
         self.btap_optimization.save_results_to_database(results)
-        analysis_id = self.btap_optimization.analysis_config[':analysis_id']
-        message = f'{self.btap_optimization.get_num_of_runs_completed()} simulations completed of {self.btap_optimization.max_number_of_simulations}. No. of failures = {self.btap_optimization.get_num_of_runs_failed()}'
+        message = f'{self.btap_optimization.get_num_of_runs_completed()} simulations completed of ' \
+                  f'{self.btap_optimization.max_number_of_simulations}. No. of failures = ' \
+                  f'{self.btap_optimization.get_num_of_runs_failed()}'
         logging.info(message)
         self.btap_optimization.pbar.update(1)
         # Pass back objective function results.
         objectives = []
-        for objective in self.btap_optimization.analysis_config[':algorithm'][':minimize_objectives']:
+        for objective in self.btap_optimization.engine.analysis_config[':algorithm'][':minimize_objectives']:
             if not (objective in results):
                 raise FailedSimulationException(
-                    f"Objective value {objective} not found in results of simulation. Most likely due to failure of simulation runs. Stopping optimization")
+                    f"Objective value {objective} not found in results of simulation. "
+                    f"Most likely due to failure of simulation runs. Stopping optimization")
             objectives.append(results[objective])
 
         out["F"] = np.column_stack(objectives)
@@ -85,20 +90,13 @@ class BTAPProblem(ElementwiseProblem):
 # Class to manage optimization analysis
 class BTAPOptimization(BTAPAnalysis):
     def __init__(self,
-                 analysis_config=None,
-                 building_options=None,
-                 project_root=None,
-                 git_api_token=None,
-                 batch=None,
-                 baseline_results=None
+                 engine=None,
+                 batch=None
                  ):
         # Run super initializer to set up default variables.
-        super().__init__(analysis_config=analysis_config,
-                         building_options=building_options,
-                         project_root=project_root,
-                         git_api_token=git_api_token,
-                         batch=batch,
-                         baseline_results=baseline_results)
+        super().__init__(engine=engine,
+                         batch=batch)
+        self.max_number_of_simulations = None
 
     def run(self):
 
@@ -113,10 +111,14 @@ class BTAPOptimization(BTAPAnalysis):
             self.run_analysis()
 
         except FailedSimulationException as err:
-            message = f"Simulation(s) failed. Optimization cannot continue. Please review failed simulations to determine cause of error in Excel output or if possible the simulation datapoint files. \nLast failure:\n\t {err}"
+            message = f"Simulation(s) failed. Optimization cannot continue. Please review failed simulations to " \
+                      f"determine cause of error in Excel output or if possible the simulation datapoint files. " \
+                      f"\nLast failure:\n\t {err}"
             logging.error(message)
         except botocore.exceptions.SSLError as err:
-            message = f"Certificate Failure. This error occurs when AWS does not trust your security certificate. Either because you are using a VPN or your network is otherwise spoofing IPs. Please ensure that you are not on a VPN or contact your network admin. Error: {err}"
+            message = f"Certificate Failure. This error occurs when AWS does not trust your security certificate. " \
+                      f"Either because you are using a VPN or your network is otherwise spoofing IPs. Please ensure " \
+                      f"that you are not on a VPN or contact your network admin. Error: {err}"
             logging.error(message)
         except Exception as err:
             message = f"Unknown Error.{err} {traceback.format_exc()}"
@@ -126,12 +128,12 @@ class BTAPOptimization(BTAPAnalysis):
             return message
 
     def run_analysis(self):
-        print(f"Running Algorithm {self.analysis_config[':algorithm']}")
+        print(f"Running Algorithm {self.engine.analysis_config[':algorithm']}")
         print(f"Number of Variables: {self.number_of_variables()}")
         print(f"Number of minima objectives: {self.number_of_minimize_objectives()}")
         print(f"Number of possible designs: {self.number_of_possible_designs}")
-        max_number_of_individuals = int(self.analysis_config[':algorithm'][':population']) * int(
-            self.analysis_config[':algorithm'][':n_generations'])
+        max_number_of_individuals = int(self.engine.analysis_config[':algorithm'][':population']) * int(
+            self.engine.analysis_config[':algorithm'][':n_generations'])
         if self.number_of_possible_designs < max_number_of_individuals:
             self.max_number_of_simulations = self.number_of_possible_designs
         else:
@@ -142,11 +144,10 @@ class BTAPOptimization(BTAPAnalysis):
             # Get algorithm information from yml data entered by user.
             # Type: only nsga2 is supported. See options here.
             # https://pymoo.org/algorithms/nsga2.html
-            type = self.analysis_config[':algorithm'][':type']
-            pop_size = self.analysis_config[':algorithm'][':population']
-            n_gen = self.analysis_config[':algorithm'][':n_generations']
-            prob = self.analysis_config[':algorithm'][':prob']
-            eta = self.analysis_config[':algorithm'][':eta']
+            pop_size = self.engine.analysis_config[':algorithm'][':population']
+            n_gen = self.engine.analysis_config[':algorithm'][':n_generations']
+            prob = self.engine.analysis_config[':algorithm'][':prob']
+            eta = self.engine.analysis_config[':algorithm'][':eta']
 
             message = f'Using {self.batch.get_threads()} threads.'
             logging.info(message)
@@ -162,7 +163,7 @@ class BTAPOptimization(BTAPAnalysis):
                 n_threads = self.batch.get_threads()
                 pool = ThreadPool(n_threads)
                 runner = StarmapParallelization(pool.starmap)
-                # Create pymoo problem. Pass self for helper methods and set up a starmap multithread pool.
+                # Create pymoo problem. Pass self for helper methods and set up a starmap multi-thread pool.
                 problem = BTAPProblem(btap_optimization=self, elementwise_runner=runner)
                 # configure the algorithm.
 
@@ -173,18 +174,14 @@ class BTAPOptimization(BTAPAnalysis):
                             eliminate_duplicates=True,
                             )
                 # set to optimize minimize the problem n_gen os the max number of generations before giving up.
-                self.res = minimize(problem,
-                                    method,
-                                    termination=('n_gen', n_gen),
-                                    seed=1
-                                    )
+                self.res = minimize(problem, method, termination=('n_gen', n_gen), seed=1)
                 # Scatter().add(res.F).show()
                 # Let the user know the runtime.
                 print('Execution Time:', self.res.exec_time)
                 pool.close()
 
-    # convieniance interface to get number of minimized objectives.
+    # convenience interface to get number of minimized objectives.
     def number_of_minimize_objectives(self):
-        # Returns the number of variables Note this is not a class variable self like the others. That is because this method is used in the
-        # problem definition and we need to avoid thread variable issues.
-        return len(self.analysis_config[':algorithm'][':minimize_objectives'])
+        # Returns the number of variables Note this is not a class variable self like the others. That is because
+        # this method is used in the problem definition and we need to avoid thread variable issues.
+        return len(self.engine.analysis_config[':algorithm'][':minimize_objectives'])

@@ -161,22 +161,12 @@ class AWSBatch:
     """
 
     def __init__(self,
-                 analysis_id=None,
-                 btap_image_name='btap_private_cli',
-                 rebuild_image=False,
-                 git_api_token=None,
-                 os_version=None,
-                 btap_costing_branch=None,
-                 os_standards_branch=None,
+                 engine=None,
                  ):
         self.credentials = AWSCredentials()
         self.bucket = self.credentials.account_id
-        self.image_name = btap_image_name
-        self.rebuild_image = rebuild_image
-        self.git_api_token = git_api_token
-        self.os_version = os_version
-        self.btap_costing_branch = btap_costing_branch
-        self.os_standards_branch = os_standards_branch
+        self.engine = engine
+
 
         # Create the aws clients required.
         config = Config(retries={'max_attempts': AWS_MAX_RETRIES, 'mode': 'standard'})
@@ -203,13 +193,11 @@ class AWSBatch:
         self.aws_batch_service_role = BATCH_SERVICE_ROLE
 
         # Set Analysis Id.
-        if analysis_id is None:
-            self.analysis_id = uuid.uuid4()
-        else:
-            self.analysis_id = analysis_id
+        if engine.analysis_config[':analysis_id'] is None:
+            engine.analysis_config[':analysis_id'] = uuid.uuid4()
 
         # Compute id is the same as analysis id but stringed.
-        self.compute_environment_id = f"{self.credentials.user_name.replace('.', '_')}-{self.analysis_id}"
+        self.compute_environment_id = f"{self.credentials.user_name.replace('.', '_')}-{engine.analysis_config[':analysis_id']}"
 
         # Set up the job def as a suffix of the compute_environment_id"
         self.job_def_id = f"{self.compute_environment_id}_job_def"
@@ -370,44 +358,41 @@ class AWSBatch:
                 sys.stdout.flush()
         return result
 
-    def build_image(self, rebuild=False):
-
-        # Ensure image is rebuilt if requested
-        rebuild = self.rebuild_image
+    def build_image(self):
 
         self.image_tag = self.credentials.user_name
-        self.image_full_name = f'{self.credentials.account_id}.dkr.ecr.{self.credentials.region_name}.amazonaws.com/' + self.image_name + ':' + self.image_tag
+        self.image_full_name = f'{self.credentials.account_id}.dkr.ecr.{self.credentials.region_name}.amazonaws.com/' + self.engine.analysis_config[':image_name'] + ':' + self.image_tag
 
         # Todo create cloud build service role.
 
         repositories = self.ecr.describe_repositories()['repositories']
-        if next((item for item in repositories if item["repositoryName"] == self.image_name), None) == None:
-            message = f"Creating repository {self.image_name}"
+        if next((item for item in repositories if item["repositoryName"] == self.engine.analysis_config[':image_name']), None) == None:
+            message = f"Creating repository {self.engine.analysis_config[':image_name']}"
             logging.info(message)
-            self.ecr.create_repository(repositoryName=self.image_name)
+            self.ecr.create_repository(repositoryName=self.engine.analysis_config[':image_name'])
         else:
-            message = f"Repository {self.image_name} already exists. Using existing."
+            message = f"Repository {self.engine.analysis_config[':image_name']} already exists. Using existing."
             logging.info(message)
 
         # Check if image exists.. if not it will create an image from the latest git hub reps.
         # Get list of tags for image name on aws.
         available_tags = sum(
             [d.get('imageTags', [None]) for d in
-             self.ecr.describe_images(repositoryName=self.image_name)['imageDetails']],
+             self.ecr.describe_images(repositoryName=self.engine.analysis_config[':image_name'])['imageDetails']],
             [])
 
         if not self.image_tag in available_tags:
-            message = f"The tag {self.image_tag} does not exist in the AWS ECR repository for {self.image_name}. Creating from latest sources."
+            message = f"The tag {self.image_tag} does not exist in the AWS ECR repository for {self.engine.analysis_config[':image_name']}. Creating from latest sources."
             logging.info(message)
             print(message)
 
-        if rebuild:
-            message = f"User requested build from sources. image:{self.image_name}:{self.image_tag}  "
+        if self.engine.rebuild_image:
+            message = f"User requested build from sources. image:{self.engine.analysis_config[':image_name']}:{self.image_tag}  "
             logging.info(message)
             print(message)
 
-        if rebuild == True or not self.image_tag in available_tags:
-            message = f"Building image from sources.\n\ttag:{self.image_tag}\n\timage:{self.image_name}\n\tos_version:{self.os_version}\n\tbtap_costing_branch:{self.btap_costing_branch}\n\tos_standards_branch:{self.os_standards_branch}"
+        if self.engine.rebuild_image == True or not self.image_tag in available_tags:
+            message = f"Building image from sources.\n\ttag:{self.image_tag}\n\timage:{self.engine.analysis_config[':image_name']}\n\tos_version:{self.engine.analysis_config[':os_version']}\n\tbtap_costing_branch:{self.engine.analysis_config[':btap_costing_branch']}\n\tos_standards_branch:{self.engine.analysis_config[':os_standards_branch']}"
             logging.info(message)
             print(message)
             # Codebuild image.
@@ -415,29 +400,29 @@ class AWSBatch:
 
             # Upload files to S3 using custom s3 class to a user folder.
             s3 = S3()
-            source_folder = os.path.join(DOCKERFILES_FOLDER, self.image_name)
+            source_folder = os.path.join(DOCKERFILES_FOLDER, self.engine.analysis_config[':image_name'])
             # Copies Dockerfile from btap_cli repository
             url = DOCKERFILE_URL
             r = requests.get(url, allow_redirects=True)
             with open(os.path.join(source_folder, 'Dockerfile'), 'wb') as file:
                 file.write(r.content)
 
-            s3.copy_folder_to_s3(self.bucket, source_folder, self.credentials.user_name + '/' + self.image_name)
-            s3_location = 's3://' + self.bucket + '/' + self.credentials.user_name + '/' + self.image_name
+            s3.copy_folder_to_s3(self.bucket, source_folder, self.credentials.user_name + '/' + self.engine.analysis_config[':image_name'])
+            s3_location = 's3://' + self.bucket + '/' + self.credentials.user_name + '/' + self.engine.analysis_config[':image_name']
             message = f"Copied build configuration files:\n\t from {source_folder}\n to \n\t {s3_location}"
             logging.info(message)
             print(message)
 
             # create project if it does not exist. This set the environment variables for the build. Note: if you change add
             # ENV to the build process.. you must DELETE the build project first!!!
-            if not self.image_name in codebuild.list_projects()['projects']:
+            if not self.engine.analysis_config[':image_name'] in codebuild.list_projects()['projects']:
                 # create build project
                 codebuild.create_project(
-                    name=self.image_name,
+                    name=self.engine.analysis_config[':image_name'],
                     description='string',
                     source={
                         'type': 'S3',
-                        'location': self.bucket + '/' + self.credentials.user_name + '/' + self.image_name + '/'
+                        'location': self.bucket + '/' + self.credentials.user_name + '/' + self.engine.analysis_config[':image_name'] + '/'
                     },
                     artifacts={
                         'type': 'NO_ARTIFACTS',
@@ -457,7 +442,7 @@ class AWSBatch:
                             },
                             {
                                 "name": "IMAGE_REPO_NAME",
-                                "value": self.image_name
+                                "value": self.engine.analysis_config[':image_name']
                             },
                             {
                                 "name": "IMAGE_TAG",
@@ -465,19 +450,19 @@ class AWSBatch:
                             },
                             {
                                 "name": "GIT_API_TOKEN",
-                                "value": self.git_api_token
+                                "value": self.engine.git_api_token
                             },
                             {
                                 "name": "OS_STANDARDS_BRANCH",
-                                "value": self.os_standards_branch
+                                "value": self.engine.analysis_config[':os_standards_branch']
                             },
                             {
                                 "name": "BTAP_COSTING_BRANCH",
-                                "value": self.btap_costing_branch
+                                "value": self.engine.analysis_config[':btap_costing_branch']
                             },
                             {
                                 "name": "OPENSTUDIO_VERSION",
-                                "value": self.os_version
+                                "value": self.engine.analysis_config[':os_version']
                             },
                         ],
                         'privilegedMode': True
@@ -487,13 +472,13 @@ class AWSBatch:
 
             # Start building image.
             start = time.time()
-            message = f'Building Image {self.image_name} on Amazon CloudBuild, will take ~10m'
+            message = f'Building Image {self.engine.analysis_config[":image_name"]} on Amazon CloudBuild, will take ~10m'
             print(message)
             logging.info(message)
             environmentVariablesOverride = [
                 {
                     "name": "IMAGE_REPO_NAME",
-                    "value": self.image_name
+                    "value": self.engine.analysis_config[':image_name']
                 },
                 {
                     "name": "IMAGE_TAG",
@@ -501,28 +486,28 @@ class AWSBatch:
                 },
                 {
                     "name": "GIT_API_TOKEN",
-                    "value": self.git_api_token
+                    "value": self.engine.git_api_token
                 },
                 {
                     "name": "OS_STANDARDS_BRANCH",
-                    "value": self.os_standards_branch
+                    "value": self.engine.analysis_config[':os_standards_branch']
                 },
                 {
                     "name": "BTAP_COSTING_BRANCH",
-                    "value": self.btap_costing_branch
+                    "value": self.engine.analysis_config[':btap_costing_branch']
                 },
                 {
                     "name": "OPENSTUDIO_VERSION",
-                    "value": self.os_version
+                    "value": self.engine.analysis_config[':os_version']
                 }]
-            source_location = self.bucket + '/' + self.credentials.user_name + '/' + self.image_name + '/'
+            source_location = self.bucket + '/' + self.credentials.user_name + '/' + self.engine.analysis_config[':image_name'] + '/'
             message = f'Code build image env overrides {environmentVariablesOverride}'
             logging.info(message)
 
             message = f"Building from sources at {source_location}"
             logging.info(message)
 
-            response = codebuild.start_build(projectName=self.image_name,
+            response = codebuild.start_build(projectName=self.engine.analysis_config[':image_name'],
                                              sourceTypeOverride='S3',
                                              sourceLocationOverride=source_location,
                                              environmentVariablesOverride=environmentVariablesOverride
@@ -533,7 +518,7 @@ class AWSBatch:
                 status = codebuild.batch_get_builds(ids=[build_id])['builds'][0]['buildStatus']
                 # If CE is in valid state, inform user and break from loop.
                 if status == 'SUCCEEDED':
-                    message = f'Image {self.image_name} Created on Amazon. \nImage built in {time.time() - start}'
+                    message = f'Image {self.engine.analysis_config[":image_name"]} Created on Amazon. \nImage built in {time.time() - start}'
                     logging.info(message)
                     print(message)
                     break

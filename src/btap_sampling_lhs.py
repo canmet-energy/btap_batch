@@ -19,19 +19,18 @@ class BTAPSamplingLHS(BTAPParametric):
         space = Space(list(map(lambda x, y: (x, y), xl, xu)))
         # set random seed.
 
-        np.random.seed(self.analysis_config[':algorithm'][':random_seed'])
+        np.random.seed(self.engine.analysis_config[':algorithm'][':random_seed'])
 
         # Create the lhs algorithm.
-        lhs = Lhs(lhs_type=self.analysis_config[':algorithm'][':lhs_type'], criterion=None)
+        lhs = Lhs(lhs_type=self.engine.analysis_config[':algorithm'][':lhs_type'], criterion=None)
         # Get samples
-        samples = lhs.generate(space.dimensions, n_samples=self.analysis_config[':algorithm'][':n_samples'])
+        samples = lhs.generate(space.dimensions, n_samples=self.engine.analysis_config[':algorithm'][':n_samples'])
         # create run_option for each scenario.
-        for x in samples:
-            # Converts discrete integers contains in x argument back into values that btap understands. So for example. if x was a list
-            # of zeros, it would convert this to the dict of the first item in each list of the variables in the building_options
-            # section of the input yml file.
-            run_options = self.generate_run_option_file(x)
+        for sample in samples:
+            # Converts discrete integers contains in x argument back into values that btap understands.
+            # So for example. if x was a list of zeros, it would convert this to the dict of the first item in each
+            # list of the variables in the building_options section of the input yml file.
+            run_options = self.generate_run_option_file(sample)
             run_options[':scenario'] = 'lhs'
             self.scenarios.append(run_options)
         return self.scenarios
-

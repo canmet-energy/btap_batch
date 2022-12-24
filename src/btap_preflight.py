@@ -11,17 +11,17 @@ class BTAPPreflight(BTAPParametric):
         osm_files = {}
         all_osm_files = self.get_local_osm_files()
         for filepath in all_osm_files:
-            if filepath in self.building_options[':building_type']:
+            if filepath in self.engine.building_options[':building_type']:
                 osm_files[filepath] = all_osm_files[filepath]
         # iterate through files.
         for osm_file in osm_files:
-            run_option = copy.deepcopy(self.building_options)
+            run_option = copy.deepcopy(self.engine.building_options)
             # Set all options to nil/none.
-            for key, value in self.building_options.items():
+            for key, value in self.engine.building_options.items():
                 run_option[key] = None
             # lock weather location and other items.. this is simply to check if the osm files will run.
             run_option[':epw_file'] = 'CAN_QC_Montreal-Trudeau.Intl.AP.716270_CWEC2016.epw'
-            run_option[':algorithm_type'] = self.analysis_config[':algorithm'][':type']
+            run_option[':algorithm_type'] = self.engine.analysis_config[':algorithm'][':type']
             run_option[':template'] = 'NECB2011'
             run_option[':primary_heating_fuel'] = 'Electricity'
             # set osm file to pretest..if any.
@@ -33,4 +33,3 @@ class BTAPPreflight(BTAPParametric):
         message = f'Number of Scenarios {len(self.scenarios)}'
         logging.info(message)
         return self.scenarios
-

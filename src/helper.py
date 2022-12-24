@@ -4,37 +4,16 @@ import yaml
 from .aws_batch import AWSBatch
 from .docker_batch import DockerBatch
 
-def batch_factory(
-                  compute_environment=None,
-                  analysis_id=None,
-                  btap_image_name=None,
-                  nocache=True,
-                  os_version=None,
-                  btap_costing_branch=None,
-                  os_standards_branch=None,
-                  git_api_token=None):
-    batch = None
-    if compute_environment == 'aws_batch':
-        # create aws image, set up aws compute env and create workflow queue.
 
-        batch = AWSBatch( analysis_id=analysis_id,
-                          btap_image_name=btap_image_name,
-                          rebuild_image=nocache,
-                          git_api_token=git_api_token,
-                          os_version=os_version,
-                          btap_costing_branch=btap_costing_branch,
-                          os_standards_branch=os_standards_branch
-                          )
+def batch_factory(engine=None):
+    batch = None
+    if engine.analysis_config[':compute_environment'] == 'aws_batch':
+        # create aws image, set up aws compute env and create workflow queue.
+        batch = AWSBatch(engine=engine)
         # Create batch queue on aws.
         batch.setup()
-    elif compute_environment == 'local':
-        batch = DockerBatch(image_name=btap_image_name,
-                            git_api_token=git_api_token,
-                            os_standards_branch=os_standards_branch,
-                            btap_costing_branch=btap_costing_branch,
-                            os_version=os_version,
-                            nocache=nocache
-                            )
+    elif engine.analysis_config[':compute_environment'] == 'local':
+        batch = DockerBatch(engine=engine)
         # Create batch queue on docker desktop.
         batch.setup()
     return batch

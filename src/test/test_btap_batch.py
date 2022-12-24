@@ -6,6 +6,7 @@ from pathlib import Path
 import warnings
 import shutil
 import uuid
+from src.btap_engine import BTAPEngine
 
 class TestBTAPBatch(unittest.TestCase):
     first_test = True
@@ -130,9 +131,9 @@ class TestBTAPBatch(unittest.TestCase):
 
         #Run analysis
         # Initialize the analysis object and run.
-        bb = btap.btap_batch( analysis_config_file=test_configuration_file, git_api_token=TestBTAPBatch.git_api_token,batch=TestBTAPBatch.batch)
+        bb = btap.btap_batch( analysis_config_file=test_configuration_file,batch=TestBTAPBatch.batch)
         bb.run()
-        excel_path = os.path.join(bb.project_root, bb.analysis_config[':analysis_name'], bb.analysis_config[':analysis_id'], 'results', 'output.xlsx')
+        excel_path = os.path.join(bb.engine.project_root, bb.engine.analysis_config[':analysis_name'], bb.engine.analysis_config[':analysis_id'], 'results', 'output.xlsx')
         assert os.path.isfile(excel_path), 'Output.xlsx was not created'
 
     def test_elimination(self):

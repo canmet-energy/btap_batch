@@ -19,8 +19,9 @@ from sklearn import preprocessing
 from .exceptions import OSMErrorException
 from docker.errors import DockerException
 from .aws_batch import AWSCredentials,S3
-from .helper import load_btap_yml_file,batch_factory
+from .helper import batch_factory
 from .constants import BASELINE_RESULTS, NECB2011_SPACETYPE_PATH, BTAP_BATCH_VERSION
+from .btap_engine import BTAPEngine
 
 # This class processes the btap_batch file to add columns as needed. This is a separate class as this can be applied
 # independant of simulation runs.
@@ -153,7 +154,8 @@ class PostProcessResults():
                 # Find path of the .yml file
                 yml_file_path = os.path.join(yml_file_folder_path, 'input.yml')
                 # Get inputs in the .yml file
-                analysis_config, building_options = load_btap_yml_file(yml_file_path)
+                engine = BTAPEngine(analysis_config_file=yml_file_path)
+                analysis_config = engine.analysis_config
                 # Get variables specified in the :output_variables variable
                 output_var = analysis_config[':output_variables']
                 # Get number of variables specified in the :output_variables variable
@@ -347,7 +349,7 @@ class BTAPAnalysis():
 
     def get_local_osm_files(self):
         osm_list = {}
-        osm_folder = os.path.join(self.project_root, 'osm_folder')
+        osm_folder = os.path.join(self.engine.project_root, 'osm_folder')
         if pathlib.Path(osm_folder).is_dir():
             for file in os.listdir(osm_folder):
                 if file.endswith(".osm"):
@@ -356,20 +358,14 @@ class BTAPAnalysis():
 
     # Constructor will
     def __init__(self,
-                 analysis_config=None,
-                 building_options=None,
-                 project_root=None,
-                 git_api_token=None,
-                 batch=None,
-                 baseline_results=None):
+                 engine=None,
+                 batch=None):
         self.credentials = None
         self.batch = batch
         self.btap_data_df = []
         self.failed_df = []
-        self.analysis_config = analysis_config
-        self.building_options = building_options
-        self.project_root = project_root  # os.path.dirname(analysis_config_file)
-        self.baseline_results = baseline_results
+        self.engine = engine
+
 
         # Making sure that used installed docker.
         find_docker = os.system("docker -v")
@@ -384,28 +380,13 @@ class BTAPAnalysis():
                 f"Could not access Docker Daemon. Either it is not running, or you do not have permissions to run docker. {err}")
             exit(1)
 
-        # Check user selected public version.. if so force costing to be turned off.
-        if self.analysis_config[':image_name'] == 'btap_public_cli':
-            self.analysis_config[':enable_costing'] = False
-
-        # Set up project root.
-
         # Create required paths and folders for analysis
         self.create_paths_folders()
 
         # If batch object has not been pass/created.. make one.
         # This really should be replaced with a https://en.wikipedia.org/wiki/Factory_method_pattern.
-        if self.batch == None:
-            self.batch=batch_factory(
-                compute_environment=self.analysis_config[':compute_environment'],
-                analysis_id=self.analysis_config[':analysis_id'],
-                btap_image_name=self.analysis_config[':image_name'],
-                nocache=self.analysis_config[':nocache'],
-                git_api_token=git_api_token,
-                os_version=self.analysis_config[':os_version'],
-                btap_costing_branch=self.analysis_config[':btap_costing_branch'],
-                os_standards_branch=self.analysis_config[':os_standards_branch']
-                )
+        if self.batch is None:
+            self.batch = batch_factory(engine=self.engine)
 
 
     def get_num_of_runs_failed(self):
@@ -428,26 +409,26 @@ class BTAPAnalysis():
     def create_paths_folders(self):
 
         # Create analysis folder
-        os.makedirs(self.project_root, exist_ok=True)
+        os.makedirs(self.engine.project_root, exist_ok=True)
 
         # Create unique id for the analysis if not given.
-        if not ':analysis_id' in self.analysis_config or self.analysis_config[':analysis_id'] == None:
-            self.analysis_config[':analysis_id'] = str(uuid.uuid4())
+        if self.engine.analysis_config[':analysis_id'] is None:
+            self.engine.analysis_config[':analysis_id'] = str(uuid.uuid4())
 
         # Tell user and logger id and names
-        print(f'analysis_id is: {self.analysis_config[":analysis_id"]}')
-        print(f'analysis_name is: {self.analysis_config[":analysis_name"]}')
-        print(f'analysis type is: {self.analysis_config[":algorithm"][":type"]}')
-        logging.info(f'analysis_id:{self.analysis_config[":analysis_id"]}')
-        logging.info(f'analysis_name:{self.analysis_config[":analysis_name"]}')
-        logging.info(f'analysis type is: {self.analysis_config[":algorithm"][":type"]}')
+        print(f'analysis_id is: {self.engine.analysis_config[":analysis_id"]}')
+        print(f'analysis_name is: {self.engine.analysis_config[":analysis_name"]}')
+        print(f'analysis type is: {self.engine.analysis_config[":algorithm"][":type"]}')
+        logging.info(f'analysis_id:{self.engine.analysis_config[":analysis_id"]}')
+        logging.info(f'analysis_name:{self.engine.analysis_config[":analysis_name"]}')
+        logging.info(f'analysis type is: {self.engine.analysis_config[":algorithm"][":type"]}')
 
         # Set analysis name folder.
-        self.analysis_name_folder = os.path.join(self.project_root,
-                                                 self.analysis_config[':analysis_name'])
-        logging.info(f'analysis_folder:{self.analysis_config[":analysis_name"]}')
+        self.analysis_name_folder = os.path.join(self.engine.project_root, self.engine.analysis_config[':analysis_name'])
+        logging.info(f'analysis_folder:{self.analysis_name_folder}')
         self.analysis_id_folder = os.path.join(self.analysis_name_folder,
-                                               self.analysis_config[':analysis_id'])
+                                               self.engine.analysis_config[':analysis_id'])
+        logging.info(f'analysis_id_folder:{self.analysis_id_folder}')
 
         # Tell log we are deleting previous runs.
         message = f'Deleting previous runs from: {self.analysis_name_folder}'
@@ -500,15 +481,15 @@ class BTAPAnalysis():
         # Create datapoint id and path to folder where input file should be saved.
         run_options[':btap_batch_version'] = BTAP_BATCH_VERSION
         run_options[':datapoint_id'] = str(uuid.uuid4())
-        run_options[':analysis_id'] = self.analysis_config[':analysis_id']
-        run_options[':analysis_name'] = self.analysis_config[':analysis_name']
-        run_options[':run_annual_simulation'] = self.analysis_config[':run_annual_simulation']
-        run_options[':enable_costing'] = self.analysis_config[':enable_costing']
-        run_options[':compute_environment'] = self.analysis_config[':compute_environment']
-        run_options[':image_name'] = self.analysis_config[':image_name']
-        run_options[':output_variables'] = self.analysis_config[':output_variables']
-        run_options[':output_meters'] = self.analysis_config[':output_meters']
-        run_options[':algorithm_type'] = self.analysis_config[':algorithm'][':type']
+        run_options[':analysis_id'] = self.engine.analysis_config[':analysis_id']
+        run_options[':analysis_name'] = self.engine.analysis_config[':analysis_name']
+        run_options[':run_annual_simulation'] = self.engine.analysis_config[':run_annual_simulation']
+        run_options[':enable_costing'] = self.engine.analysis_config[':enable_costing']
+        run_options[':compute_environment'] = self.engine.analysis_config[':compute_environment']
+        run_options[':image_name'] = self.engine.analysis_config[':image_name']
+        run_options[':output_variables'] = self.engine.analysis_config[':output_variables']
+        run_options[':output_meters'] = self.engine.analysis_config[':output_meters']
+        run_options[':algorithm_type'] = self.engine.analysis_config[':algorithm'][':type']
 
         # Local Paths
         local_datapoint_input_folder = os.path.join(self.input_folder, run_options[':datapoint_id'])
@@ -583,14 +564,14 @@ class BTAPAnalysis():
         return df
 
     def shutdown_analysis(self):
-        self.generate_output_file(baseline_results=self.baseline_results)
+        self.generate_output_file(baseline_results=self.engine.baseline_results)
 
     # This method creates a encoder and decoder of the simulation options to integers.  The ML and AI routines use float,
     # conventionally for optimization problems. Since most of the analysis that we do are discrete options for designers
     # we need to convert all inputs, string, float or int, into  to enumerated integer representations for the optimizer to
     # work.
     def create_options_encoder(self):
-        # Determine options the users defined and contants and variable for the analysis. Options / lists that the user
+        # Determine options the users defined and constants and variable for the analysis. Options / lists that the user
         # provided only one options (a list of size 1) in the analysis input file are to be consider constants in the simulation.
         # this may simplify the calculations that the optimizer has to conduct.
 
@@ -602,7 +583,7 @@ class BTAPAnalysis():
         # Keep track of total possible scenarios to tell user.
         self.number_of_possible_designs = 1
         # Interate through all the building_options contained in the analysis input yml file.
-        for key, value in self.building_options.items():
+        for key, value in self.engine.building_options.items():
             # If the options for that building charecteristic are > 1 it is a variable to be take part in optimization.
             if isinstance(value, list) and len(value) > 1:
                 self.number_of_possible_designs *= len(value)
@@ -653,15 +634,15 @@ class BTAPAnalysis():
             run_options[key_name] = str(encoder.inverse_transform([x_option])[0])
         # Tell user the options through std out.
         run_options[':scenario'] = 'optimize'
-        run_options[':algorithm_type'] = self.analysis_config[':algorithm'][':type']
-        run_options[':output_variables'] = self.analysis_config[':output_variables']
-        run_options[':output_meters'] = self.analysis_config[':output_meters']
+        run_options[':algorithm_type'] = self.engine.analysis_config[':algorithm'][':type']
+        run_options[':output_variables'] = self.engine.analysis_config[':output_variables']
+        run_options[':output_meters'] = self.engine.analysis_config[':output_meters']
         message = f"Running Option Variables {run_options}"
         logging.info(message)
         # Add the constants to the run options dict.
         run_options.update(self.constants)
         # Add the analysis setting to the run options dict.
-        run_options.update(self.analysis_config)
+        run_options.update(self.engine.analysis_config)
         # Returns the dict.. Note this is not a class variable self like the others. That is because this method is used in the
         # problem definition and we need to avoid thread variable issues.
         return run_options
@@ -675,10 +656,10 @@ class BTAPAnalysis():
         excel_path = os.path.join(self.results_folder, 'output.xlsx')
 
         # If this is an aws_batch run, copy the excel file to s3 for storage.
-        if self.analysis_config[':compute_environment'] == 'aws_batch':
+        if self.engine.analysis_config[':compute_environment'] == 'aws_batch':
             self.credentials = AWSCredentials()
-            target_path = os.path.join(self.credentials.user_name, self.analysis_config[':analysis_name'],
-                                       self.analysis_config[':analysis_id'], 'results', 'output.xlsx')
+            target_path = os.path.join(self.credentials.user_name, self.engine.analysis_config[':analysis_name'],
+                                       self.engine.analysis_config[':analysis_id'], 'results', 'output.xlsx')
             # s3 likes forward slashes.
             target_path = target_path.replace('\\', '/')
             message = "Uploading %s..." % target_path
