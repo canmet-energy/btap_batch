@@ -1,0 +1,262 @@
+{
+	"Electricity": {
+		"NECB_Default":{
+			"HighriseApartment": {
+				"boiler_eff": [
+					"NECB 88% Efficient Condensing Boiler",
+					"Viessmann Vitocrossal 300 CT3-17 96.2% Efficient Condensing Gas Boiler"
+				],
+				"chiller_type": [
+					"VSD"
+				],
+				"furnace_eff": [
+					"NECB 85% Efficient Condensing Gas Furnace"
+				]
+			},
+            "LowriseApartment": {
+				"boiler_eff": [
+					"NECB 88% Efficient Condensing Boiler",
+					"Viessmann Vitocrossal 300 CT3-17 96.2% Efficient Condensing Gas Boiler"
+				],
+				"chiller_type": [
+					"VSD"
+				],
+				"furnace_eff": [
+					"NECB 85% Efficient Condensing Gas Furnace"
+				]
+			},
+            "MidriseApartment": {
+				"boiler_eff": [
+					"NECB 88% Efficient Condensing Boiler",
+					"Viessmann Vitocrossal 300 CT3-17 96.2% Efficient Condensing Gas Boiler"
+				],
+				"chiller_type": [
+					"VSD"
+				],
+				"furnace_eff": [
+					"NECB 85% Efficient Condensing Gas Furnace"
+				]
+			},
+			"SmallOffice": {
+				"boiler_eff": [
+					"NECB 88% Efficient Condensing Boiler",
+					"Viessmann Vitocrossal 300 CT3-17 96.2% Efficient Condensing Gas Boiler"
+				],
+				"chiller_type": [
+					"VSD"
+				],
+				"furnace_eff": [
+					"NECB 85% Efficient Condensing Gas Furnace"
+				]
+			},
+            "MediumOffice": {
+				"boiler_eff": [
+					"NECB 88% Efficient Condensing Boiler",
+					"Viessmann Vitocrossal 300 CT3-17 96.2% Efficient Condensing Gas Boiler"
+				],
+				"furnace_eff": [
+					"NECB 85% Efficient Condensing Gas Furnace"
+				]
+			},
+			"LargeOffice": {
+				"boiler_eff": [
+					"NECB 88% Efficient Condensing Boiler",
+					"Viessmann Vitocrossal 300 CT3-17 96.2% Efficient Condensing Gas Boiler"
+				],
+				"furnace_eff": [
+					"NECB 85% Efficient Condensing Gas Furnace"
+				]
+			},
+			"PrimarySchool": {
+				"boiler_eff": [
+					"NECB 88% Efficient Condensing Boiler",
+					"Viessmann Vitocrossal 300 CT3-17 96.2% Efficient Condensing Gas Boiler"
+				],
+				"chiller_type": [
+					"VSD"
+				],
+				"furnace_eff": [
+					"NECB 85% Efficient Condensing Gas Furnace"
+				]
+			},
+			"SecondarySchool": {
+				"boiler_eff": [
+					"NECB 88% Efficient Condensing Boiler",
+					"Viessmann Vitocrossal 300 CT3-17 96.2% Efficient Condensing Gas Boiler"
+				],
+				"chiller_type": [
+					"VSD"
+				],
+				"furnace_eff": [
+					"NECB 85% Efficient Condensing Gas Furnace"
+				]
+			}
+		},
+		"HS09_CCASHP_Baseboard": {
+			"adv_dx_units": [
+				"Carrier WeatherExpert",
+				"Lennox Model L Ultra High Efficiency"
+			],
+			"boiler_eff": [
+				"NECB 88% Efficient Condensing Boiler",
+				"Viessmann Vitocrossal 300 CT3-17 96.2% Efficient Condensing Gas Boiler"
+			],
+			"chiller_type": [
+				"VSD"
+			],
+			"furnace_eff": [
+				"NECB 85% Efficient Condensing Gas Furnace"
+			]
+		},
+		"HS08_CCASHP_VRF": {
+			"airloop_economizer_type": [
+				"DifferentialEnthalpy",
+				"DifferentialDryBulb"
+			],
+			"adv_dx_units": [
+				"Carrier WeatherExpert",
+				"Lennox Model L Ultra High Efficiency"
+			],
+			"boiler_eff": [
+				"NECB 88% Efficient Condensing Boiler",
+				"Viessmann Vitocrossal 300 CT3-17 96.2% Efficient Condensing Gas Boiler"
+			],
+			"chiller_type": [
+				"VSD"
+			],
+			"furnace_eff": [
+				"NECB 85% Efficient Condensing Gas Furnace"
+			]
+		},
+		"HS11_ASHP_PTHP": {
+			"airloop_economizer_type": [
+				"DifferentialEnthalpy",
+				"DifferentialDryBulb"
+			],
+			"adv_dx_units": [
+				"Carrier WeatherExpert",
+				"Lennox Model L Ultra High Efficiency"
+			],
+			"boiler_eff": [
+				"NECB 88% Efficient Condensing Boiler",
+				"Viessmann Vitocrossal 300 CT3-17 96.2% Efficient Condensing Gas Boiler"
+			],
+			"chiller_type": [
+				"VSD"
+			],
+			"furnace_eff": [
+				"NECB 85% Efficient Condensing Gas Furnace"
+			]
+		},
+		"HS12_ASHP_Baseboard": {
+			"adv_dx_units": [
+				"Carrier WeatherExpert",
+				"Lennox Model L Ultra High Efficiency"
+			],
+			"boiler_eff": [
+				"NECB 88% Efficient Condensing Boiler",
+				"Viessmann Vitocrossal 300 CT3-17 96.2% Efficient Condensing Gas Boiler"
+			],
+			"chiller_type": [
+				"VSD"
+			],
+			"furnace_eff": [
+				"NECB 85% Efficient Condensing Gas Furnace"
+			]
+		}
+	},
+	"NaturalGas": {
+		"NECB_Default":{
+			"HighriseApartment": {
+				"chiller_type": [
+					"VSD"
+				]
+			},
+			"LowriseApartment": {
+				"chiller_type": [
+					"VSD"
+				]
+			},
+			"MidriseApartment": {
+				"chiller_type": [
+					"VSD"
+				]
+			},
+			"SmallOffice": {
+				"chiller_type": [
+					"VSD"
+				]
+			},
+			"PrimarySchool": {
+				"chiller_type": [
+					"VSD"
+				]
+			},
+			"SecondarySchool": {
+				"chiller_type": [
+					"VSD"
+				]
+			}
+		},
+		"HS09_CCASHP_Baseboard": {
+			"adv_dx_units": [
+				"Carrier WeatherExpert",
+				"Lennox Model L Ultra High Efficiency"
+			],
+			"boiler_eff": [
+				"NECB 88% Efficient Condensing Boiler",
+				"Viessmann Vitocrossal 300 CT3-17 96.2% Efficient Condensing Gas Boiler"
+			],
+			"chiller_type": [
+				"VSD"
+			]
+		},
+		"HS08_CCASHP_VRF": {
+			"airloop_economizer_type": [
+				"DifferentialEnthalpy",
+				"DifferentialDryBulb"
+			],
+			"adv_dx_units": [
+				"Carrier WeatherExpert",
+				"Lennox Model L Ultra High Efficiency"
+			],
+			"boiler_eff": [
+				"NECB 88% Efficient Condensing Boiler",
+				"Viessmann Vitocrossal 300 CT3-17 96.2% Efficient Condensing Gas Boiler"
+			],
+			"chiller_type": [
+				"VSD"
+			]
+		},
+		"HS11_ASHP_PTHP": {
+			"airloop_economizer_type": [
+				"DifferentialEnthalpy",
+				"DifferentialDryBulb"
+			],
+			"adv_dx_units": [
+				"Carrier WeatherExpert",
+				"Lennox Model L Ultra High Efficiency"
+			],
+			"boiler_eff": [
+				"NECB 88% Efficient Condensing Boiler",
+				"Viessmann Vitocrossal 300 CT3-17 96.2% Efficient Condensing Gas Boiler"
+			],
+			"chiller_type": [
+				"VSD"
+			]
+		},
+		"HS12_ASHP_Baseboard": {
+			"adv_dx_units": [
+				"Carrier WeatherExpert",
+				"Lennox Model L Ultra High Efficiency"
+			],
+			"boiler_eff": [
+				"NECB 88% Efficient Condensing Boiler",
+				"Viessmann Vitocrossal 300 CT3-17 96.2% Efficient Condensing Gas Boiler"
+			],
+			"chiller_type": [
+				"VSD"
+			]
+		}
+	}
+}
