@@ -53,10 +53,10 @@ def btap_batch(analysis_config_file=None, batch=None):
     print(message)
     logging.info(message)
 
-    print(f"Compute Environment:{engine.analysis_config[':compute_environment']}")
+    print(f"Compute Environment:{engine.compute_environment}")
     print(f"Analysis Type:{engine.analysis_config[':algorithm'][':type']}")
     if batch is None:
-        batch = batch_factory(engine)
+        batch = batch_factory(engine=engine)
 
     # Ensure reference run is executed in all other cases unless :run_reference is false.
     if (engine.analysis_config.get(':run_reference') is not False) or (engine.analysis_config.get(':run_reference') is None):

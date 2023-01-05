@@ -7,15 +7,19 @@ from .docker_batch import DockerBatch
 
 def batch_factory(engine=None):
     batch = None
-    if engine.analysis_config[':compute_environment'] == 'aws_batch':
+    if engine.compute_environment == 'aws_batch':
         # create aws image, set up aws compute env and create workflow queue.
-        batch = AWSBatch(engine=engine)
+        batch = AWSBatch()
+        batch.set_engine(engine=engine)
         # Create batch queue on aws.
         batch.setup()
-    elif engine.analysis_config[':compute_environment'] == 'local':
-        batch = DockerBatch(engine=engine)
+    elif engine.compute_environment == 'local_docker' or engine.compute_environment == 'local' :
+        batch = DockerBatch()
+        batch.set_engine(engine=engine)
         # Create batch queue on docker desktop.
         batch.setup()
+    else:
+        exit(1)
     return batch
 
 

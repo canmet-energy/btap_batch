@@ -479,14 +479,12 @@ class BTAPAnalysis():
         # Save run options to a unique folder. Run options is modified to contain datapoint id, analysis_id and
         # other run information.
         # Create datapoint id and path to folder where input file should be saved.
-        run_options[':btap_batch_version'] = BTAP_BATCH_VERSION
         run_options[':datapoint_id'] = str(uuid.uuid4())
         run_options[':analysis_id'] = self.engine.analysis_config[':analysis_id']
         run_options[':analysis_name'] = self.engine.analysis_config[':analysis_name']
         run_options[':run_annual_simulation'] = self.engine.analysis_config[':run_annual_simulation']
         run_options[':enable_costing'] = self.engine.analysis_config[':enable_costing']
-        run_options[':compute_environment'] = self.engine.analysis_config[':compute_environment']
-        run_options[':image_name'] = self.engine.analysis_config[':image_name']
+        run_options[':compute_environment'] = self.engine.compute_environment
         run_options[':output_variables'] = self.engine.analysis_config[':output_variables']
         run_options[':output_meters'] = self.engine.analysis_config[':output_meters']
         run_options[':algorithm_type'] = self.engine.analysis_config[':algorithm'][':type']
@@ -512,11 +510,10 @@ class BTAPAnalysis():
                 f"Copying osm file from {local_osm_dict[run_options[':building_type']]} to {local_datapoint_input_folder}")
 
         # Submit Job to batch
-        return self.batch.submit_job(self.output_folder,
-                                     local_btap_data_path,
-                                     local_datapoint_input_folder,
-                                     local_datapoint_output_folder,
-                                     run_options)
+        return self.batch.submit_job(local_btap_data_path=local_btap_data_path,
+                                     local_datapoint_input_folder=local_datapoint_input_folder,
+                                     local_datapoint_output_folder=local_datapoint_output_folder,
+                                     run_options=run_options)
 
     def save_results_to_database(self, results):
         if results['success'] == True:
@@ -656,7 +653,7 @@ class BTAPAnalysis():
         excel_path = os.path.join(self.results_folder, 'output.xlsx')
 
         # If this is an aws_batch run, copy the excel file to s3 for storage.
-        if self.engine.analysis_config[':compute_environment'] == 'aws_batch':
+        if self.engine.compute_environment == 'aws_batch':
             self.credentials = AWSCredentials()
             target_path = os.path.join(self.credentials.user_name, self.engine.analysis_config[':analysis_name'],
                                        self.engine.analysis_config[':analysis_id'], 'results', 'output.xlsx')

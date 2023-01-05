@@ -192,12 +192,8 @@ class AWSBatch:
         # Created by aws web console. (todo: automate creations and destruction)
         self.aws_batch_service_role = BATCH_SERVICE_ROLE
 
-        # Set Analysis Id.
-        if engine.analysis_config[':analysis_id'] is None:
-            engine.analysis_config[':analysis_id'] = uuid.uuid4()
-
         # Compute id is the same as analysis id but stringed.
-        self.compute_environment_id = f"{self.credentials.user_name.replace('.', '_')}-{engine.analysis_config[':analysis_id']}"
+        self.compute_environment_id = self.credentials.user_name.replace('.', '_')
 
         # Set up the job def as a suffix of the compute_environment_id"
         self.job_def_id = f"{self.compute_environment_id}_job_def"
@@ -255,10 +251,11 @@ class AWSBatch:
         s3_error_txt_path = os.path.join(s3_datapoint_output_folder, 'error.txt').replace('\\', '/')
 
         jobName = f"{run_options[':analysis_id']}-{run_options[':datapoint_id']}"
-
-        bundle_command = f"bundle exec ruby btap_cli.rb --input_path s3://{run_options[':s3_bucket']}/{s3_datapoint_input_folder} --output_path s3://{run_options[':s3_bucket']}/{s3_output_folder} "
+        input_path = f"s3://{run_options[':s3_bucket']}/{s3_datapoint_input_folder}"
+        output_path = f"s3://{run_options[':s3_bucket']}/{s3_output_folder}"
+        container_command = self.engine.container_command(input_path=input_path,output_path=output_path)
         # replace \ slashes to / slash for correct s3 convention.
-        bundle_command = bundle_command.replace('\\', '/')
+        container_command = container_command.replace('\\', '/')
         try:
 
             logging.info(
@@ -268,7 +265,7 @@ class AWSBatch:
                                    target_folder=s3_datapoint_input_folder)
             # Start timer to track simulation time.
             start = time.time()
-            self.job(jobName=jobName, debug=True, command=["/bin/bash", "-c", bundle_command])
+            self.job(jobName=jobName, debug=True, command=["/bin/bash", "-c", container_command])
             # Get btap_data from s3
             logging.info(
                 f"Getting data from S3 bucket {run_options[':s3_bucket']} at path {s3_btap_data_path}")
@@ -359,40 +356,42 @@ class AWSBatch:
         return result
 
     def build_image(self):
+        image_build_args = self.engine.datapoint_image_configuration[':image_build_args']['IMAGE_REPO_NAME']
+        image_name = image_build_args['IMAGE_REPO_NAME']
 
         self.image_tag = self.credentials.user_name
-        self.image_full_name = f'{self.credentials.account_id}.dkr.ecr.{self.credentials.region_name}.amazonaws.com/' + self.engine.analysis_config[':image_name'] + ':' + self.image_tag
+        self.image_full_name = f'{self.credentials.account_id}.dkr.ecr.{self.credentials.region_name}.amazonaws.com/' + image_name + ':' + self.image_tag
 
         # Todo create cloud build service role.
 
         repositories = self.ecr.describe_repositories()['repositories']
-        if next((item for item in repositories if item["repositoryName"] == self.engine.analysis_config[':image_name']), None) == None:
-            message = f"Creating repository {self.engine.analysis_config[':image_name']}"
+        if next((item for item in repositories if item["repositoryName"] == image_name), None) == None:
+            message = f"Creating repository {image_name}"
             logging.info(message)
-            self.ecr.create_repository(repositoryName=self.engine.analysis_config[':image_name'])
+            self.ecr.create_repository(repositoryName=image_name)
         else:
-            message = f"Repository {self.engine.analysis_config[':image_name']} already exists. Using existing."
+            message = f"Repository {image_name} already exists. Using existing."
             logging.info(message)
 
         # Check if image exists.. if not it will create an image from the latest git hub reps.
         # Get list of tags for image name on aws.
         available_tags = sum(
             [d.get('imageTags', [None]) for d in
-             self.ecr.describe_images(repositoryName=self.engine.analysis_config[':image_name'])['imageDetails']],
+             self.ecr.describe_images(repositoryName=image_name)['imageDetails']],
             [])
 
         if not self.image_tag in available_tags:
-            message = f"The tag {self.image_tag} does not exist in the AWS ECR repository for {self.engine.analysis_config[':image_name']}. Creating from latest sources."
+            message = f"The tag {self.image_tag} does not exist in the AWS ECR repository for {image_name}. Creating from latest sources."
             logging.info(message)
             print(message)
 
         if self.engine.rebuild_image:
-            message = f"User requested build from sources. image:{self.engine.analysis_config[':image_name']}:{self.image_tag}  "
+            message = f"User requested build from sources. image:{image_name}:{self.image_tag}  "
             logging.info(message)
             print(message)
 
         if self.engine.rebuild_image == True or not self.image_tag in available_tags:
-            message = f"Building image from sources.\n\ttag:{self.image_tag}\n\timage:{self.engine.analysis_config[':image_name']}\n\tos_version:{self.engine.analysis_config[':os_version']}\n\tbtap_costing_branch:{self.engine.analysis_config[':btap_costing_branch']}\n\tos_standards_branch:{self.engine.analysis_config[':os_standards_branch']}"
+            message = f"Building image with build args {image_build_args}"
             logging.info(message)
             print(message)
             # Codebuild image.
@@ -400,29 +399,41 @@ class AWSBatch:
 
             # Upload files to S3 using custom s3 class to a user folder.
             s3 = S3()
-            source_folder = os.path.join(DOCKERFILES_FOLDER, self.engine.analysis_config[':image_name'])
+            source_folder = os.path.join(DOCKERFILES_FOLDER, image_name)
             # Copies Dockerfile from btap_cli repository
             url = DOCKERFILE_URL
             r = requests.get(url, allow_redirects=True)
             with open(os.path.join(source_folder, 'Dockerfile'), 'wb') as file:
                 file.write(r.content)
 
-            s3.copy_folder_to_s3(self.bucket, source_folder, self.credentials.user_name + '/' + self.engine.analysis_config[':image_name'])
-            s3_location = 's3://' + self.bucket + '/' + self.credentials.user_name + '/' + self.engine.analysis_config[':image_name']
+            s3.copy_folder_to_s3(self.bucket, source_folder, self.credentials.user_name + '/' + image_name)
+            s3_location = 's3://' + self.bucket + '/' + self.credentials.user_name + '/' + image_name
             message = f"Copied build configuration files:\n\t from {source_folder}\n to \n\t {s3_location}"
             logging.info(message)
             print(message)
 
-            # create project if it does not exist. This set the environment variables for the build. Note: if you change add
+            # create project if it does not exist. This set the environment variables for the build. Note: if you change an
             # ENV to the build process.. you must DELETE the build project first!!!
-            if not self.engine.analysis_config[':image_name'] in codebuild.list_projects()['projects']:
+            if not image_name in codebuild.list_projects()['projects']:
                 # create build project
+                environment_vars = [
+                                    {
+                                        "name": "AWS_DEFAULT_REGION",
+                                        "value": self.credentials.region_name
+                                    },
+                                    {
+                                        "name": "AWS_ACCOUNT_ID",
+                                        "value": self.credentials.account_id
+                                    }
+                                   ] + [{"name": k, "value": v} for k, v in image_build_args.items()]
+
+
                 codebuild.create_project(
-                    name=self.engine.analysis_config[':image_name'],
+                    name=image_name,
                     description='string',
                     source={
                         'type': 'S3',
-                        'location': self.bucket + '/' + self.credentials.user_name + '/' + self.engine.analysis_config[':image_name'] + '/'
+                        'location': self.bucket + '/' + self.credentials.user_name + '/' + image_name + '/'
                     },
                     artifacts={
                         'type': 'NO_ARTIFACTS',
@@ -431,40 +442,7 @@ class AWSBatch:
                         'type': 'LINUX_CONTAINER',
                         'image': 'aws/codebuild/standard:4.0',
                         'computeType': 'BUILD_GENERAL1_2XLARGE',
-                        'environmentVariables': [
-                            {
-                                "name": "AWS_DEFAULT_REGION",
-                                "value": self.credentials.region_name
-                            },
-                            {
-                                "name": "AWS_ACCOUNT_ID",
-                                "value": self.credentials.account_id
-                            },
-                            {
-                                "name": "IMAGE_REPO_NAME",
-                                "value": self.engine.analysis_config[':image_name']
-                            },
-                            {
-                                "name": "IMAGE_TAG",
-                                "value": self.credentials.user_name
-                            },
-                            {
-                                "name": "GIT_API_TOKEN",
-                                "value": self.engine.git_api_token
-                            },
-                            {
-                                "name": "OS_STANDARDS_BRANCH",
-                                "value": self.engine.analysis_config[':os_standards_branch']
-                            },
-                            {
-                                "name": "BTAP_COSTING_BRANCH",
-                                "value": self.engine.analysis_config[':btap_costing_branch']
-                            },
-                            {
-                                "name": "OPENSTUDIO_VERSION",
-                                "value": self.engine.analysis_config[':os_version']
-                            },
-                        ],
+                        'environmentVariables': environment_vars,
                         'privilegedMode': True
                     },
                     serviceRole=self.cloudbuild_service_role,
@@ -472,42 +450,18 @@ class AWSBatch:
 
             # Start building image.
             start = time.time()
-            message = f'Building Image {self.engine.analysis_config[":image_name"]} on Amazon CloudBuild, will take ~10m'
+            message = f'Building Image {image_name} on Amazon CloudBuild, will take ~10m'
             print(message)
             logging.info(message)
-            environmentVariablesOverride = [
-                {
-                    "name": "IMAGE_REPO_NAME",
-                    "value": self.engine.analysis_config[':image_name']
-                },
-                {
-                    "name": "IMAGE_TAG",
-                    "value": self.credentials.user_name
-                },
-                {
-                    "name": "GIT_API_TOKEN",
-                    "value": self.engine.git_api_token
-                },
-                {
-                    "name": "OS_STANDARDS_BRANCH",
-                    "value": self.engine.analysis_config[':os_standards_branch']
-                },
-                {
-                    "name": "BTAP_COSTING_BRANCH",
-                    "value": self.engine.analysis_config[':btap_costing_branch']
-                },
-                {
-                    "name": "OPENSTUDIO_VERSION",
-                    "value": self.engine.analysis_config[':os_version']
-                }]
-            source_location = self.bucket + '/' + self.credentials.user_name + '/' + self.engine.analysis_config[':image_name'] + '/'
+            environmentVariablesOverride = environment_vars
+            source_location = self.bucket + '/' + self.credentials.user_name + '/' + image_name + '/'
             message = f'Code build image env overrides {environmentVariablesOverride}'
             logging.info(message)
 
             message = f"Building from sources at {source_location}"
             logging.info(message)
 
-            response = codebuild.start_build(projectName=self.engine.analysis_config[':image_name'],
+            response = codebuild.start_build(projectName=image_name,
                                              sourceTypeOverride='S3',
                                              sourceLocationOverride=source_location,
                                              environmentVariablesOverride=environmentVariablesOverride
@@ -518,7 +472,7 @@ class AWSBatch:
                 status = codebuild.batch_get_builds(ids=[build_id])['builds'][0]['buildStatus']
                 # If CE is in valid state, inform user and break from loop.
                 if status == 'SUCCEEDED':
-                    message = f'Image {self.engine.analysis_config[":image_name"]} Created on Amazon. \nImage built in {time.time() - start}'
+                    message = f'Image {image_name} Created on Amazon. \nImage built in {time.time() - start}'
                     logging.info(message)
                     print(message)
                     break
