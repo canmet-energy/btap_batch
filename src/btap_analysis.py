@@ -14,7 +14,6 @@ from functools import partial
 from concurrent.futures import ThreadPoolExecutor, as_completed
 import shutil
 import re
-
 from sklearn import preprocessing
 from .exceptions import OSMErrorException
 from docker.errors import DockerException
@@ -511,9 +510,12 @@ class BTAPAnalysis():
 
         # Submit Job to batch
         return self.batch.submit_job(local_btap_data_path=local_btap_data_path,
-                                     local_datapoint_input_folder=local_datapoint_input_folder,
-                                     local_datapoint_output_folder=local_datapoint_output_folder,
+                                     local_datapoint_input_folder_path=local_datapoint_input_folder,
+                                     local_datapoint_output_folder_path=local_datapoint_output_folder,
                                      run_options=run_options)
+
+
+
 
     def save_results_to_database(self, results):
         if results['success'] == True:
@@ -580,7 +582,7 @@ class BTAPAnalysis():
         # Keep track of total possible scenarios to tell user.
         self.number_of_possible_designs = 1
         # Interate through all the building_options contained in the analysis input yml file.
-        for key, value in self.engine.building_options.items():
+        for key, value in self.engine.options.items():
             # If the options for that building charecteristic are > 1 it is a variable to be take part in optimization.
             if isinstance(value, list) and len(value) > 1:
                 self.number_of_possible_designs *= len(value)

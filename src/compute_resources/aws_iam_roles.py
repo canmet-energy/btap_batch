@@ -1,8 +1,9 @@
 import logging
 import boto3
 import json
-import icecream as ic
-from src.compute_resources.aws_credentials import AWSCredentials
+from icecream import ic
+from src.compute_resources.aws_credentials import AWSCredentials,LocalCredentials
+
 
 
 class IAMRoles():
@@ -23,7 +24,7 @@ class IAMRoles():
 
 
     def full_role_name(self):
-        return f"{self.credentials.user_name.replace('.', '-')}-{self.role_name}"
+        return f"{LocalCredentials().get_username().replace('.', '-')}-{self.role_name}"
 
     def create_role(self):
         #delete if it already exists.
@@ -47,16 +48,16 @@ class IAMRoles():
 
     def delete(self):
         iam = boto3.client('iam')
-        for mp in self.managed_policies:
-            iam.detach_role_policy(
-                RoleName=self.full_role_name(),
-                PolicyArn=mp.get('PolicyArn')
-            )
         try:
+            for mp in self.managed_policies:
+                iam.detach_role_policy(
+                    RoleName=self.full_role_name(),
+                    PolicyArn=mp.get('PolicyArn')
+                )
             response = iam.delete_role(
                 RoleName=self.full_role_name()
             )
-        except iam.exceptions.NoSuchEntityException as e:
+        except iam.exceptions.NoSuchEntityException:
             logging.info(f'iam_role {self.full_role_name()} did not exist. So not deleting.')
         logging.info(f'iam_role {self.full_role_name()} deleted.')
 
@@ -203,4 +204,9 @@ class IAMBatchServiceRole(IAMRoles):
                         'PolicyName': 'AWSBatchServiceRole'},
                        {'PolicyArn': 'arn:aws:iam::aws:policy/AmazonS3FullAccess',
                         'PolicyName': 'AmazonS3FullAccess'}]
+
+
+
+
+
 

@@ -10,12 +10,47 @@ from src.constants import *
 from docker.errors import DockerException
 from icecream import ic
 from pathlib import Path
+import yaml
 
 
 # Class to manage local Docker batch run.
+class Batch():
+    def __init__(self):
+        self.image = None
+        self.engine = None
+
+    def set_engine(self, engine=None):
+        self.engine = engine
+
+    def set_image(self, image=None):
+        self.image = image
+
+    def setup(self):
+        #Ensure image has been created
+        #Set up compute, queue and job descriptions if required.
+        print("stub")
+
+    def submit_job(self,
+                   local_btap_data_path=None, #should eliminate
+                   local_datapoint_input_folder=None,
+                   local_datapoint_output_folder=None,
+                   container_input_path=None,
+                   container_output_path=None,
+                   container_command= None,
+                   image=None,
+                   run_options=None):
+        #Set up compute, queue and job descriptions if required.
+        print("stub")
+
+    def teardown(self):
+        #Set up compute, queue and job descriptions if required.
+        print("stub")
 
 
-class DockerBatch:
+
+
+
+class DockerBatch(Batch):
 
     def __native_get_container_client(self):
         return docker.from_env()
@@ -199,8 +234,14 @@ class DockerBatch:
                    local_btap_data_path=None,
                    local_datapoint_input_folder=None,
                    local_datapoint_output_folder=None,
+                   container_input_path=None,
+                   container_output_path=None,
+                   container_command= None,
+                   image=None,
                    run_options=None):
+
         local_parent_output_folder = Path(local_datapoint_output_folder).parent.absolute()
+
         job_config = self.engine.datapoint_image_configuration.get(':job_configuration')
         container_input_path = job_config.get(':container_input_path')
         container_output_path = job_config.get(':container_output_path')
@@ -215,17 +256,25 @@ class DockerBatch:
         # Start timer to track simulation time.
         start = time.time()
         try:
+            local_input_folder = local_datapoint_input_folder
+            local_output_folder = local_parent_output_folder
+            detach = False
 
-            result = self.job(
-                run_options=run_options,
-                local_input_folder=local_datapoint_input_folder,
-                local_output_folder=local_parent_output_folder,
-                detach=False,
-                container_input_path=container_input_path,
-                container_output_path = container_output_path,
-                container_command = container_command,
-                image_name = image_name
-            )
+            # Run the simulation
+            jobName = f"{run_options[':analysis_id']}-{run_options[':datapoint_id']}"
+            message = f"Submitting job {jobName}"
+            logging.info(message)
+            result = self.native_run_cli_container(detach=detach,
+                                                   local_input_folder=local_input_folder,
+                                                   local_output_folder=local_output_folder,
+                                                   container_input_folder=container_input_path,
+                                                   container_output_folder=container_output_path,
+                                                   container_command=container_command,
+                                                   run_options=run_options,
+                                                   image_name=image_name)
+
+
+
             # If file was not created...raise an error.
             if not os.path.isfile(local_btap_data_path):
                 raise FileNotFoundError(errno.ENOENT, os.strerror(errno.ENOENT), local_btap_data_path)
@@ -269,62 +318,7 @@ class DockerBatch:
             if not btap_data.get(item):
                 btap_data[item] = 0.0
 
-    def job(self,
-
-            # run_options dict is used for finding the folder after the simulation is completed to store in the database.
-            run_options=None,
-
-            # mount point to container of input file(s)
-            local_input_folder=None,
-
-            # mount point for container to copy simulation files.
-            local_output_folder=None,
-
-            # Don't detach.. hold on to current thread.
-            detach=False,
-
-            container_input_path=None,
-            container_output_path = None,
-            container_command = None,
-            image_name = None
-            ):
 
 
 
-
-        # Run the simulation
-        jobName = f"{run_options[':analysis_id']}-{run_options[':datapoint_id']}"
-        message = f"Submitting job {jobName}"
-        logging.info(message)
-        result = self.native_run_cli_container(detach=detach,
-                                               local_input_folder=local_input_folder,
-                                               local_output_folder=local_output_folder,
-                                               container_input_folder=container_input_path,
-                                               container_output_folder=container_output_path,
-                                               container_command=container_command,
-                                               run_options=run_options,
-                                               image_name=image_name)
-
-
-        return result
-
-
-import yaml
-
-dct = yaml.safe_load('''
-:datapoint_image_configuration:
-  :nocache: false
-  :dockerfile_folder: btap_cli
-  :image_build_args:
-    IMAGE_REPO_NAME: btap_cli
-    OPENSTUDIO_VERSION: 3.2.1
-    BTAP_COSTING_BRANCH: master
-    OS_STANDARDS_BRANCH: nrcan
-    GIT_API_TOKEN: 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
-''')
-
-# db = DockerBatch()
-# db.native_build_image(dockerfile=r'C:\Users\plopez\btap_batch\src\Dockerfiles\btap_private_cli',
-#                       buildargs=dct[':datapoint_image_configuration'][':image_build_args'],
-#                       nocache=True)
 

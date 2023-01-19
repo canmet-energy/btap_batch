@@ -1,47 +1,52 @@
-
 from src.compute_resources.aws_credentials import AWSCredentials
-from src.constants import MAX_AWS_VCPUS,DOCKERFILE_URL,DOCKERFILES_FOLDER
+from src.constants import MAX_AWS_VCPUS
 from src.compute_resources.docker_image_manager import DockerImageManager
-from src.compute_resources.s3 import S3
-from src.compute_resources.iam_roles import IAMCloudBuildRole
+from src.compute_resources.aws_s3 import S3
+from src.compute_resources.aws_iam_roles import IAMCloudBuildRole
+from src.compute_resources.aws_batch import AWSBatch
 import boto3
-import os
 import time
-import requests
 import logging
+from icecream import ic
 
 
 class AWSImageManager(DockerImageManager):
 
-    def __get_credentials(self):
-        credentials = AWSCredentials()
-        return credentials
+    def __aws_credentials(self):
+        return AWSCredentials()
 
-    def __init__(self):
-        self.credentials = self.__get_credentials()
+    def __init__(self, image_name=None):
+        super().__init__(image_name=image_name)
+        self.credentials = self.__aws_credentials()
         self.bucket = self.credentials.account_id
+        self.region = self.credentials.region_name
+        self.image_tag = 'latest'
 
-    def image_tag(self):
-        return self.credentials.user_name
+    def _get_image_tag(self):
+        return ''
+
+    def get_image_uri(self):
+        return f"{self.credentials.account_id}.dkr.ecr.{self.credentials.region_name}.amazonaws.com/{self.get_full_image_name()}:{self.image_tag}"
 
     def get_threads(self):
         return MAX_AWS_VCPUS
 
-    def build_image(self,
-                    dockerfile=None,
-                    build_args=None,
-                    force_rm=True,
-                    verbose=False):
-        ecr = boto3.client('ecr')
+    def _image_repo_name(self):
+        return self.get_full_image_name()
 
-        image_build_args = build_args
-        image_name = image_build_args['IMAGE_REPO_NAME']
-        image_build_args['IMAGE_TAG']=self.credentials.user_name
-        image_build_args['GIT_API_TOKEN'] = os.environ['GIT_API_TOKEN']
+    def _get_image_build_args(self):
+        build_args = super()._get_image_build_args()
+        build_args['IMAGE_REPO_NAME'] = self._image_repo_name()
+        build_args['IMAGE_TAG'] = 'latest'
+        return build_args
 
-        self.__create_image_repository(repository_name=image_name)
 
-        message = f"Building image with build args {image_build_args}"
+    def build_image(self):
+
+        ic(self._image_repo_name())
+        self._create_image_repository(repository_name=self._image_repo_name())
+
+        message = f"Building image."
         logging.info(message)
         print(message)
         # Codebuild image.
@@ -49,15 +54,11 @@ class AWSImageManager(DockerImageManager):
 
         # Upload files to S3 using custom s3 class to a user folder.
         s3 = S3()
-        source_folder = os.path.join(DOCKERFILES_FOLDER, image_name)
-        # Copies Dockerfile from btap_cli repository
-        url = DOCKERFILE_URL
-        r = requests.get(url, allow_redirects=True)
-        with open(os.path.join(source_folder, 'Dockerfile'), 'wb') as file:
-            file.write(r.content)
 
-        s3.copy_folder_to_s3(self.bucket, source_folder, self.credentials.user_name + '/' + image_name)
-        s3_location = 's3://' + self.bucket + '/' + self.credentials.user_name + '/' + image_name
+        source_folder = self._get_dockerfile_folder_path()
+
+        s3.copy_folder_to_s3(self.bucket, source_folder, self.get_username() + '/' + self.image_name)
+        s3_location = 's3://' + self.bucket + '/' + self.get_username() + '/' + self.image_name
         message = f"Copied build configuration files:\n\t from {source_folder}\n to \n\t {s3_location}"
         logging.info(message)
         print(message)
@@ -74,9 +75,9 @@ class AWSImageManager(DockerImageManager):
                                    "name": "AWS_ACCOUNT_ID",
                                    "value": self.credentials.account_id
                                }
-                           ] + [{"name": k, "value": v} for k, v in image_build_args.items()]
+                           ] + [{"name": k, "value": v} for k, v in self._get_image_build_args().items()]
 
-        codebuild_project_name = f"{image_name}-{self.credentials.user_name}".replace('.','-')
+        codebuild_project_name = self.get_full_image_name().replace('.', '-')
         # Delete codebuild project if it already exists.
         if codebuild_project_name in codebuild.list_projects()['projects']:
             response = codebuild.delete_project(name=codebuild_project_name)
@@ -84,13 +85,14 @@ class AWSImageManager(DockerImageManager):
         # Create IAM role permission dynamically.
         cloud_build_role = IAMCloudBuildRole()
         cloud_build_role.create_role()
+        ic(cloud_build_role.arn())
 
         codebuild.create_project(
             name=codebuild_project_name,
             description='string',
             source={
                 'type': 'S3',
-                'location': self.bucket + '/' + self.credentials.user_name + '/' + image_name + '/'
+                'location': self.bucket + '/' + self.get_username() + '/' + self.image_name + '/'
             },
             artifacts={
                 'type': 'NO_ARTIFACTS',
@@ -107,21 +109,20 @@ class AWSImageManager(DockerImageManager):
 
         # Start building image.
         start = time.time()
-        message = f'Building Image {image_name} on Amazon CloudBuild, will take ~10m'
+        message = f'Building Image {self.get_full_image_name()} on Amazon CloudBuild, will take ~10m'
         print(message)
         logging.info(message)
-        environmentVariablesOverride = environment_vars
-        source_location = self.bucket + '/' + self.credentials.user_name + '/' + image_name + '/'
-        message = f'Code build image env overrides {environmentVariablesOverride}'
+        source_location = self.bucket + '/' + self.get_username() + '/' + self.image_name + '/'
+        message = f'Code build image env overrides {environment_vars}'
         logging.info(message)
 
         message = f"Building from sources at {source_location}"
         logging.info(message)
-        print(environmentVariablesOverride)
-        response = codebuild.start_build(projectName=image_name,
+        print(environment_vars)
+        response = codebuild.start_build(projectName=self.get_full_image_name(),
                                          sourceTypeOverride='S3',
                                          sourceLocationOverride=source_location,
-                                         environmentVariablesOverride=environmentVariablesOverride
+                                         environmentVariablesOverride=environment_vars
                                          )
         build_id = response['build']['id']
         # Check state of creating CE.
@@ -129,7 +130,7 @@ class AWSImageManager(DockerImageManager):
             status = codebuild.batch_get_builds(ids=[build_id])['builds'][0]['buildStatus']
             # If CE is in valid state, inform user and break from loop.
             if status == 'SUCCEEDED':
-                message = f'Image {image_name} Created on Amazon. \nImage built in {time.time() - start}. Deleting artifacts.'
+                message = f'Image {self.image_name} Created on Amazon. \nImage built in {time.time() - start}. Deleting artifacts.'
                 response = codebuild.delete_project(name=codebuild_project_name)
                 logging.info(message)
                 print(message)
@@ -142,10 +143,10 @@ class AWSImageManager(DockerImageManager):
                 exit(1)
             # Check status every 5 secs.
             time.sleep(5)
-        #Delete cloud build role.
+        # Delete cloud build role.
         cloud_build_role.delete()
 
-    def __create_image_repository(self, repository_name=None):
+    def _create_image_repository(self, repository_name=None):
         ecr = boto3.client('ecr')
         repositories = ecr.describe_repositories()['repositories']
         if next((item for item in repositories if item["repositoryName"] == repository_name), None) == None:
@@ -156,7 +157,7 @@ class AWSImageManager(DockerImageManager):
             message = f"Repository {repository_name} already exists. Using existing."
             logging.info(message)
 
-    def get_image(self, image_name=None, image_tag=None):
+    def get_image(self, image_name=None, image_tag='latest'):
         image = None
         ecr = boto3.client('ecr')
         # Check if image exists.. if not it will create an image from the latest git hub reps.
@@ -171,5 +172,5 @@ class AWSImageManager(DockerImageManager):
             image = None
         return image
 
-
-
+    def get_batch(self,engine=None):
+        return AWSBatch(engine=engine,image_manager=self)

@@ -8,11 +8,11 @@ from .btap_parametric import BTAPParametric
 class BTAPSensitivity(BTAPParametric):
     def compute_scenarios(self):
         # Create default options scenario. Uses first value of all arrays.
-        default_options = copy.deepcopy(self.engine.building_options)
-        for key, value in self.engine.building_options.items():
+        default_options = copy.deepcopy(self.engine.options)
+        for key, value in self.engine.options.items():
             default_options[key] = value[0]
         # Create scenario
-        for key, value in self.engine.building_options.items():
+        for key, value in self.engine.options.items():
             # If more than one option. Iterate, create run_option for each one.
             if isinstance(value, list) and len(value) > 1:
                 for item in value:

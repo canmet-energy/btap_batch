@@ -24,7 +24,7 @@ class BTAPElimination(BTAPParametric):
             [':fixed_wind_solar_trans', '0.01']
         ]
 
-        building_options = copy.deepcopy(self.engine.building_options)
+        building_options = copy.deepcopy(self.engine.options)
         for key, value in building_options.items():
             if isinstance(value, list) and len(value) >= 1:
                 building_options[key] = value[0]

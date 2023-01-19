@@ -80,7 +80,7 @@
   :output_meters: []
 #########################################  BUILDING OPTIONS  ###########################################################
 # Building options
-:building_options:
+:options:
   :building_type: [
     #  "SecondarySchool",
     # "PrimarySchool",

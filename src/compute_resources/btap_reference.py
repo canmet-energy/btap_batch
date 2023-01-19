@@ -1,6 +1,7 @@
 import copy
 import logging
-from .btap_parametric import BTAPParametric
+from src.compute_resources.btap_parametric import BTAPParametric
+
 
 # Class to run reference simulations.. Based on building_type, epw_file, primary_heating_fuel_type
 
@@ -8,21 +9,20 @@ from .btap_parametric import BTAPParametric
 class BTAPReference(BTAPParametric):
     def compute_scenarios(self):
         # Create default options scenario. Uses first value of all arrays.
-        for bt in self.engine.options[':building_type']:
-            for fuel_type in self.engine.options[':primary_heating_fuel']:
-                for epw in self.engine.options[':epw_file']:
-                    for template in self.engine.options[':template']:
-                        run_option = copy.deepcopy(self.engine.options)
+        for bt in self.options[':building_type']:
+            for fuel_type in self.options[':primary_heating_fuel']:
+                for epw in self.options[':epw_file']:
+                    for template in self.options[':template']:
+                        run_option = copy.deepcopy(self.options)
                         # Set all options to nil/none.
-                        for key, value in self.engine.options.items():
+                        for key, value in self.options.items():
                             run_option[key] = None
                         run_option[':epw_file'] = epw
-                        run_option[':algorithm_type'] = self.engine.analysis_config[':algorithm'][':type']
+                        run_option[':algorithm_type'] = 'reference'
                         run_option[':template'] = template
                         run_option[':primary_heating_fuel'] = fuel_type
-                        # set osm file to pretest..if any.
                         run_option[':building_type'] = bt
                         self.scenarios.append(run_option)
-        message = f'Number of Scenarios {len(self.scenarios)}'
+        message = f'Number of reference scenarios {len(self.scenarios)}'
         logging.info(message)
         return self.scenarios

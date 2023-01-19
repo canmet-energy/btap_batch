@@ -5,10 +5,18 @@ import logging
 import re
 from src.constants import AWS_MAX_RETRIES
 from pathlib import Path
+import getpass
+import traceback
 
+
+class LocalCredentials:
+
+    def get_username(self):
+        return getpass.getuser()
 
 class AWSCredentials:
     # Initialize with required clients.
+
     def __init__(self):
         config = Config(retries={'max_attempts': AWS_MAX_RETRIES, 'mode': 'standard'})
         self.sts = boto3.client('sts', config=config)
@@ -17,6 +25,7 @@ class AWSCredentials:
             self.account_id = self.sts.get_caller_identity()["Account"]
             self.user_id = self.sts.get_caller_identity()["UserId"]
         except botocore.exceptions.ClientError as e:
+            traceback.print_exc()
             if e.response['Error']['Code'] == 'ExpiredToken':
                 logging.error(
                     f"Your Credentials are invalid. PLease update your aws credentials. If running remotely, the max session in two hours. "
@@ -33,7 +42,7 @@ class AWSCredentials:
         # get aws username from userid.
         if re.compile(".*:(.*)@.*").search(self.user_id) is None:
             # This situation occurs when running the host machine on AWS itself.
-            self.user_name = 'osdev'
+            self.user_name = 'unkown'
         else:
             # Otherwise it will use your aws user_id
             self.user_name = re.compile(".*:(.*)@.*").search(self.user_id)[1]

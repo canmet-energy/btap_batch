@@ -1,4 +1,3 @@
-
 import logging
 import time
 import botocore
@@ -6,21 +5,35 @@ import tqdm
 import itertools
 import concurrent.futures
 import datetime
-from .exceptions import *
-from .btap_analysis import BTAPAnalysis
+from src.exceptions import *
+from src.compute_resources.btap_analysis import BTAPAnalysis
+
+from src.compute_resources.btap_cli_engine import BTAPEngine
+import copy
+import os
 
 
 # Class to Manage parametric runs.
 class BTAPParametric(BTAPAnalysis):
     def __init__(self,
-                 engine=None,
-                 batch=None
+                 analysis_config=None,
+                 analyses_folder=None,
+                 analysis_input_folder=None,
+                 engine=BTAPEngine(),
+                 reference_run_data_path=None
                  ):
         # Run super initializer to set up default variables.
-        super().__init__(engine=engine,
-                         batch=batch)
+        super().__init__(analysis_config=analysis_config,
+                         analyses_folder=analyses_folder,
+                         analysis_input_folder=analysis_input_folder,
+                         engine=engine,
+                         reference_run_data_path=reference_run_data_path
+                         )
         self.scenarios = []
         self.file_number = None
+
+
+
 
     def run(self):
         # Compute all the scenarios for parametric run.
@@ -33,11 +46,14 @@ class BTAPParametric(BTAPAnalysis):
             message = f"Simulation(s) failed. Analysis can't continue. Please review failed simulations to determine " \
                       f"cause of error in Excel output or if possible the simulation datapoint files. " \
                       f"\nLast failure had these inputs:\n\t {err}"
+            print(message)
             logging.error(message)
+
         except botocore.exceptions.SSLError as err:
             message = f"Certificate Failure. This error occurs when AWS does not trust your security certificate. " \
                       f"Either because you are using a VPN or your network is otherwise spoofing IPs. Please ensure " \
                       f"that you are not on a VPN or contact your network admin. Error: {err}"
+            print(message)
             logging.error(message)
         finally:
             print("Shutdown..")
@@ -52,8 +68,7 @@ class BTAPParametric(BTAPAnalysis):
         keys = []
 
         # Iterate through each option set in yml file.
-        for key, value in self.engine.options.items():
-
+        for key, value in self.options.items():
             # Check to see if the value is a list.
             # In other words are there more than one option for that characteristic.
             if isinstance(value, list):
@@ -81,7 +96,6 @@ class BTAPParametric(BTAPAnalysis):
             for item in items:
                 # Save that characteristics to the options hash
                 run_options[item[0]] = item[1]
-            run_options[':algorithm_type'] = self.engine.analysis_config[':algorithm'][':type']
             self.scenarios.append(run_options)
             message = f'Number of Scenarios {len(self.scenarios)}'
             logging.info(message)
@@ -98,11 +112,11 @@ class BTAPParametric(BTAPAnalysis):
         # Keep track of simulation time.
         threaded_start = time.time()
         # Using all your processors minus 1.
-        print(f'Using {self.batch.get_threads()} threads.')
+        print(f'Using {self.batch.image_manager.get_threads()} threads.')
         time.sleep(0.01)
         with tqdm.tqdm(desc=f"Failed:{self.get_num_of_runs_failed()}: Progress Bar", total=len(self.scenarios),
                        colour='green') as pbar:
-            with concurrent.futures.ThreadPoolExecutor(self.batch.get_threads()) as executor:
+            with concurrent.futures.ThreadPoolExecutor(self.batch.image_manager.get_threads()) as executor:
                 futures = []
                 # go through each option scenario
                 for run_options in self.scenarios:
