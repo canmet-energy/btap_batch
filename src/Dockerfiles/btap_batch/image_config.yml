@@ -1,8 +1,5 @@
 :image_configuration:
-  :docker_build_args:
-    image_name: btap
+  :build_args:
     OPENSTUDIO_VERSION: 3.2.1
     BTAP_COSTING_BRANCH: master
     OS_STANDARDS_BRANCH: nrcan
-
-
