@@ -1,7 +1,7 @@
 from src.compute_resources.docker_image_manager import DockerImageManager
 from src.compute_resources.docker_batch import DockerBatch
 from src.compute_resources.btap_cli_engine import BTAPEngine
-from src.compute_resources.btap_parametric import BTAPParametric
+from src.compute_resources.btap_optimization import BTAPOptimization
 from src.compute_resources.btap_reference import BTAPReference
 import copy
 from icecream import ic
@@ -59,7 +59,7 @@ br.run()
 ic(br.analysis_results_folder())
 
 
-bb=BTAPParametric(analysis_config=analysis_config,
+bb=BTAPOptimization(analysis_config=analysis_config,
                   engine=engine,
                   analysis_input_folder=analysis_input_folder,
                   analyses_folder=analyses_folder,

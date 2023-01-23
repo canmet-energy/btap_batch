@@ -429,10 +429,11 @@ class BTAPAnalysis():
     def generate_output_file(self, baseline_results=None):
 
         # Process csv file to create single dataframe with all simulation results
-        PostProcessResults(baseline_results=baseline_results,
+        ppr = PostProcessResults(baseline_results=baseline_results,
                            database_folder=self.cp.analysis_database_folder(),
-                           results_folder=self.cp.analysis_results_folder()).run()
-        excel_path = self.cp.analysis_excel_output_path()
+                           results_folder=self.cp.analysis_results_folder(),
+                           compute_environment=self.compute_environment)
+        ppr.run()
 
         # If this is an aws_batch run, copy the excel file to s3 for storage.
         if self.compute_environment == 'aws_batch':

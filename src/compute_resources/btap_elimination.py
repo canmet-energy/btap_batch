@@ -1,6 +1,6 @@
 import copy
 import logging
-from .btap_parametric import BTAPParametric
+from src.compute_resources.btap_parametric import BTAPParametric
 
 # Class to manage Elimination analysis
 

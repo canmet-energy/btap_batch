@@ -14,8 +14,9 @@ import traceback
 import numpy as np
 import tqdm
 
-from .exceptions import FailedSimulationException
-from .btap_analysis import BTAPAnalysis
+from src.exceptions import FailedSimulationException
+from src.compute_resources.btap_analysis import BTAPAnalysis
+from src.compute_resources.btap_cli_engine import BTAPEngine
 # Optimization problem definition class using Pymoo
 
 
@@ -35,7 +36,7 @@ class BTAPProblem(ElementwiseProblem):
             # Number of variables that are present in the yml file.
             n_var=self.btap_optimization.number_of_variables(),
             # Number of minimize_objectives in input file.
-            n_obj=len(self.btap_optimization.engine.analysis_config[':algorithm'][':minimize_objectives']),
+            n_obj=len(self.btap_optimization.algorithm_nsga_minimize_objectives),
             # We never have constraints.
             n_constr=0,
             # set the lower bound array of variable options.. all start a zero. So an array of zeros.
@@ -77,7 +78,7 @@ class BTAPProblem(ElementwiseProblem):
         self.btap_optimization.pbar.update(1)
         # Pass back objective function results.
         objectives = []
-        for objective in self.btap_optimization.engine.analysis_config[':algorithm'][':minimize_objectives']:
+        for objective in self.btap_optimization.algorithm_nsga_minimize_objectives:
             if not (objective in results):
                 raise FailedSimulationException(
                     f"Objective value {objective} not found in results of simulation. "
@@ -90,12 +91,19 @@ class BTAPProblem(ElementwiseProblem):
 # Class to manage optimization analysis
 class BTAPOptimization(BTAPAnalysis):
     def __init__(self,
-                 engine=None,
-                 batch=None
+                 analysis_config=None,
+                 analyses_folder=None,
+                 analysis_input_folder=None,
+                 engine=BTAPEngine(),
+                 reference_run_data_path=None
                  ):
         # Run super initializer to set up default variables.
-        super().__init__(engine=engine,
-                         batch=batch)
+        super().__init__(analysis_config=analysis_config,
+                         analyses_folder=analyses_folder,
+                         analysis_input_folder=analysis_input_folder,
+                         engine=engine,
+                         reference_run_data_path=reference_run_data_path
+                         )
         self.max_number_of_simulations = None
 
     def run(self):
@@ -128,12 +136,12 @@ class BTAPOptimization(BTAPAnalysis):
             return message
 
     def run_analysis(self):
-        print(f"Running Algorithm {self.engine.analysis_config[':algorithm']}")
+        print(f"Running Algorithm {self.algorithm_type}")
         print(f"Number of Variables: {self.number_of_variables()}")
         print(f"Number of minima objectives: {self.number_of_minimize_objectives()}")
         print(f"Number of possible designs: {self.number_of_possible_designs}")
-        max_number_of_individuals = int(self.engine.analysis_config[':algorithm'][':population']) * int(
-            self.engine.analysis_config[':algorithm'][':n_generations'])
+        max_number_of_individuals = int(self.algorithm_nsga_population) * int(
+            self.algorithm_nsga_n_generations)
         if self.number_of_possible_designs < max_number_of_individuals:
             self.max_number_of_simulations = self.number_of_possible_designs
         else:
@@ -144,12 +152,12 @@ class BTAPOptimization(BTAPAnalysis):
             # Get algorithm information from yml data entered by user.
             # Type: only nsga2 is supported. See options here.
             # https://pymoo.org/algorithms/nsga2.html
-            pop_size = self.engine.analysis_config[':algorithm'][':population']
-            n_gen = self.engine.analysis_config[':algorithm'][':n_generations']
-            prob = self.engine.analysis_config[':algorithm'][':prob']
-            eta = self.engine.analysis_config[':algorithm'][':eta']
+            pop_size = self.algorithm_nsga_population
+            n_gen = self.algorithm_nsga_n_generations
+            prob = self.algorithm_nsga_prob
+            eta = self.algorithm_nsga_eta
 
-            message = f'Using {self.batch.get_threads()} threads.'
+            message = f'Using {self.batch.image_manager.get_threads()} threads.'
             logging.info(message)
             print(message)
             # Sometime the progress bar appears before the print statement above. This paused the execution slightly.
@@ -160,7 +168,7 @@ class BTAPOptimization(BTAPAnalysis):
                 # Need to make pbar available to the __evaluate method.
                 self.pbar = pbar
                 # Create thread pool object.
-                n_threads = self.batch.get_threads()
+                n_threads = self.batch.image_manager.get_threads()
                 pool = ThreadPool(n_threads)
                 runner = StarmapParallelization(pool.starmap)
                 # Create pymoo problem. Pass self for helper methods and set up a starmap multi-thread pool.
@@ -184,4 +192,4 @@ class BTAPOptimization(BTAPAnalysis):
     def number_of_minimize_objectives(self):
         # Returns the number of variables Note this is not a class variable self like the others. That is because
         # this method is used in the problem definition and we need to avoid thread variable issues.
-        return len(self.engine.analysis_config[':algorithm'][':minimize_objectives'])
+        return len(self.algorithm_nsga_minimize_objectives)

@@ -24,7 +24,8 @@ class PostProcessResults():
     def __init__(self,
                  baseline_results=BASELINE_RESULTS,
                  database_folder=None,
-                 results_folder=None
+                 results_folder=None,
+                 compute_environment=None
                  ):
 
         command = f'PostProcessResults(baseline_results=r"{baseline_results}",database_folder=r"{database_folder}", results_folder=r"{results_folder}")'
@@ -40,6 +41,7 @@ class PostProcessResults():
             self.btap_data_df = pd.read_excel(open(str(btap_data_df), 'rb'), sheet_name='btap_data')
         self.baseline_results = baseline_results
         self.results_folder = results_folder
+        self.compute_environment = compute_environment
 
     def run(self):
         self.reference_comparisons()
@@ -228,7 +230,7 @@ class PostProcessResults():
                     df_output.to_csv(output_file, index=False)
 
                     # Copy sum_hourly_res.csv to s3 for storage if run on AWS.
-                    try:
+                    if self.compute_environment == "aws_batch":
                         sum_hourly_res_path = os.path.join(self.results_folder, 'hourly.csv', 'sum_hourly_res.csv')
                         self.credentials = AWSCredentials()
                         target_path_on_aws = os.path.join(self.credentials.user_name,
@@ -237,8 +239,7 @@ class PostProcessResults():
                         message = "Uploading %s..." % target_path_on_aws
                         logging.info(message)
                         S3().upload_file(sum_hourly_res_path, self.credentials.account_id, target_path_on_aws)
-                    except:
-                        print('Run locally. No need to copy sum_hourly_res.csv to s3')
+
 
     def reference_comparisons(self):
         if self.baseline_results != None:
