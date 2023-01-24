@@ -4,31 +4,32 @@ import os
 import logging
 import yaml
 from pathlib import Path
-from src.compute_resources.aws_credentials import LocalCredentials
+from icecream import ic
 from src.compute_resources.docker_batch import DockerBatch
-DOCKERFILES_FOLDER = os.path.join(Path(os.path.dirname(os.path.realpath(__file__))).parent.absolute(), 'Dockerfiles')
+from src.compute_resources.common_paths import CommonPaths
+import time
+
 
 
 
 class DockerImageManager:
-    def __local_credentials(self):
-        return LocalCredentials()
 
     def get_username(self):
-        return self.__local_credentials().get_username().replace('.', '_')
+        return CommonPaths().get_username()
 
-    def __init__(self, image_name=None):
+    def __init__(self,
+                 image_name=None):
         self.check_docker()
         self.cli_run_command = "docker run --rm"
         self.cli_build_command = "docker build -t"
         self.image_name = image_name
         self.image_configuration = None
-        if not os.path.isfile(self._get_image_config_file_path()):
-            logging.error(f"could not find image_config input file for {self.image_name} image name at {self._get_image_config_file_path()}. Exiting")
+        if not os.path.isfile(CommonPaths().get_image_config_file_path(image_name=self.image_name)):
+            logging.error(f"could not find image_config input file for {self.image_name} image name at {CommonPaths().get_image_config_file_path(image_name=self.image_name)}. Exiting")
             exit(1)
 
         # Open the yaml in analysis dict.
-        with open(self._get_image_config_file_path(), 'r') as stream:
+        with open(CommonPaths().get_image_config_file_path(image_name=self.image_name), 'r') as stream:
             config = yaml.safe_load(stream)
         # Store analysis config and building_options.
         self.image_configuration = config.get(':image_configuration')
@@ -50,18 +51,16 @@ class DockerImageManager:
             exit(1)
 
 
-    #Common
-    def _get_dockerfile_folder_path(self):
-        return os.path.join(DOCKERFILES_FOLDER, self.image_name)
 
     #Common
     def _get_image_config_file_path(self):
-        return os.path.join(self._get_dockerfile_folder_path(), 'image_config.yml')
+        return CommonPaths().get_image_config_file_path(image_name=self.image_name)
 
     #Common
     def _get_image_build_args(self):
         build_args = self.image_configuration.get(':build_args')
         build_args['GIT_API_TOKEN'] = os.environ['GIT_API_TOKEN']
+        build_args['AWS_USERNAME'] = CommonPaths().get_username()
         return build_args
 
 
@@ -78,18 +77,20 @@ class DockerImageManager:
 
     #Common
     def get_image_build_cli(self):
+        ic("image build command")
         temp_string = ''
         for key, value in self._get_image_build_args().items():
             temp_string += f"--build-arg {key}={value} "
-        docker_build_command = f"{self.cli_build_command} -t {self.get_full_image_name()} {temp_string} {self._get_dockerfile_folder_path()}"
+        docker_build_command = f"{self.cli_build_command} -t {self.get_full_image_name()} {temp_string} {CommonPaths().get_dockerfile_folder_path(image_name=self.image_name)}"
         return docker_build_command
 
     #Common
     def build_image(self):
         container_client = docker.from_env()
+        start = time.time()
         image, json_log = container_client.images.build(
             # Path to docker file.
-            path=self._get_dockerfile_folder_path(),
+            path=CommonPaths().get_dockerfile_folder_path(image_name=self.image_name),
             # Image name
             tag=self.get_full_image_name(),
             # nocache flag to build use cache or build from scratch.
@@ -103,6 +104,8 @@ class DockerImageManager:
             if 'stream' in chunk:
                 for line in chunk['stream'].splitlines():
                     logging.debug(line)
+
+        print(time.time() - start)
         return image
 
     #Common
@@ -158,8 +161,8 @@ class DockerImageManager:
         )
         return result
 
-    def get_batch(self,engine=None):
-        return DockerBatch(engine=engine,image_manager=self)
+    def get_batch(self):
+        return DockerBatch(image_manager=self)
 
 
 

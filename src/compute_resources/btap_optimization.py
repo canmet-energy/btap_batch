@@ -13,10 +13,8 @@ import logging
 import traceback
 import numpy as np
 import tqdm
-
 from src.exceptions import FailedSimulationException
 from src.compute_resources.btap_analysis import BTAPAnalysis
-from src.compute_resources.btap_cli_engine import BTAPEngine
 # Optimization problem definition class using Pymoo
 
 
@@ -94,14 +92,12 @@ class BTAPOptimization(BTAPAnalysis):
                  analysis_config=None,
                  analyses_folder=None,
                  analysis_input_folder=None,
-                 engine=BTAPEngine(),
                  reference_run_data_path=None
                  ):
         # Run super initializer to set up default variables.
         super().__init__(analysis_config=analysis_config,
                          analyses_folder=analyses_folder,
                          analysis_input_folder=analysis_input_folder,
-                         engine=engine,
                          reference_run_data_path=reference_run_data_path
                          )
         self.max_number_of_simulations = None

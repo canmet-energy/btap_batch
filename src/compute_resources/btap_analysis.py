@@ -89,10 +89,9 @@ class BTAPAnalysis():
                  analysis_config=None,
                  analyses_folder=None,
                  analysis_input_folder=None,
-                 engine=BTAPEngine(),
                  reference_run_data_path=None):
 
-        self.engine = engine
+
         self.analysis_config = analysis_config
         self.analysis_input_folder = analysis_input_folder
         self.analyses_folder = analyses_folder
@@ -143,7 +142,7 @@ class BTAPAnalysis():
         else:
             logging.error(f"Unknown image {self.image_name}")
             exit(1)
-        self.batch = self.image_manager.get_batch(engine=self.engine)
+        self.batch = self.image_manager.get_batch()
 
         # Storage items
         self.btap_data_df = []

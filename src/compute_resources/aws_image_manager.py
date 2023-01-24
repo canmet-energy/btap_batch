@@ -4,6 +4,7 @@ from src.compute_resources.docker_image_manager import DockerImageManager
 from src.compute_resources.aws_s3 import S3
 from src.compute_resources.aws_iam_roles import IAMCloudBuildRole
 from src.compute_resources.aws_batch import AWSBatch
+from src.compute_resources.common_paths import CommonPaths
 import boto3
 import time
 import logging
@@ -55,7 +56,7 @@ class AWSImageManager(DockerImageManager):
         # Upload files to S3 using custom s3 class to a user folder.
         s3 = S3()
 
-        source_folder = self._get_dockerfile_folder_path()
+        source_folder = CommonPaths().get_dockerfile_folder_path(image_name=self.image_name)
 
         s3.copy_folder_to_s3(self.bucket, source_folder, self.get_username() + '/' + self.image_name)
         s3_location = 's3://' + self.bucket + '/' + self.get_username() + '/' + self.image_name
@@ -172,5 +173,5 @@ class AWSImageManager(DockerImageManager):
             image = None
         return image
 
-    def get_batch(self,engine=None):
-        return AWSBatch(engine=engine,image_manager=self)
+    def get_batch(self):
+        return AWSBatch(image_manager=self)

@@ -5,14 +5,13 @@ import yaml
 import os
 import json
 from icecream import ic
-from src.compute_resources.docker_job import DockerJob
+from src.compute_resources.docker_job import BTAPDockerJob
 
 
 # Class to manage local Docker batch run.
 class DockerBatch():
-    def __init__(self, image_manager=None, engine=None):
+    def __init__(self, image_manager=None):
         self.image_manager = image_manager
-        self.engine = engine
 
     def setup(self):
         # Ensure image has been created
@@ -31,12 +30,11 @@ class DockerBatch():
                    local_project_folder=None,
                    remote_project_folder=None  # stub for cloud jobs.
                    ):
-        return DockerJob(batch=self,
-                         engine=self.engine,
-                         analysis_id=analysis_id,
-                         analysis_name=analysis_name,
-                         job_id=job_id,
-                         local_project_folder=local_project_folder,
-                         remote_project_folder=remote_project_folder  # stub for cloud jobs.
-                         )
+        return BTAPDockerJob(batch=self,
+                             analysis_id=analysis_id,
+                             analysis_name=analysis_name,
+                             job_id=job_id,
+                             local_project_folder=local_project_folder,
+                             remote_project_folder=remote_project_folder  # stub for cloud jobs.
+                             )
 

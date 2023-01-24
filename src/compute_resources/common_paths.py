@@ -1,5 +1,8 @@
 import os
+from pathlib import Path
 from src.compute_resources.aws_credentials import AWSCredentials
+
+DOCKERFILES_FOLDER = os.path.join(Path(os.path.dirname(os.path.realpath(__file__))).parent.absolute(), 'Dockerfiles')
 
 
 class CommonPaths(object):
@@ -22,6 +25,19 @@ class CommonPaths(object):
         self._analysis_project_folder = analysis_project_folder
 
 
+    def get_username(self):
+        if os.environ.get('AWS_USERNAME') is None:
+            print('Please set AWS_USERNAME environment variable to your aws username.')
+            exit(1)
+        return os.environ.get('AWS_USERNAME').replace('.', '_')
+
+    #Common
+    def get_dockerfile_folder_path(self,image_name=None):
+        return os.path.join(DOCKERFILES_FOLDER, image_name)
+
+    #Common
+    def get_image_config_file_path(self,image_name=None):
+        return os.path.join(self.get_dockerfile_folder_path(image_name=image_name), 'image_config.yml')
 
     def analyses_folder(self):
         return self._analyses_folder

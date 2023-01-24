@@ -1,6 +1,6 @@
 from src.compute_resources.docker_image_manager import DockerImageManager
 from src.compute_resources.docker_batch import DockerBatch
-from src.compute_resources.docker_job import DockerJob
+from src.compute_resources.docker_job import BTAPDockerJob
 from src.compute_resources.btap_cli_engine import BTAPEngine
 from icecream import ic
 import yaml
@@ -19,11 +19,11 @@ local_project_folder = r"C:\Users\plopez\btap_batch\src\test\test_docker_batch"
 batch = DockerBatch(image_manager=image_mgr,
                  engine=engine)
 
-job = DockerJob(batch=batch,
-    engine=engine,
-    analysis_id=run_options[':analysis_id'],
-    analysis_name=run_options[':analysis_name'],
-    job_id=run_options[':datapoint_id'],
-    local_project_folder=local_project_folder)
+job = BTAPDockerJob(batch=batch,
+                    engine=engine,
+                    analysis_id=run_options[':analysis_id'],
+                    analysis_name=run_options[':analysis_name'],
+                    job_id=run_options[':datapoint_id'],
+                    local_project_folder=local_project_folder)
 
 job.submit_job(run_options=run_options)

@@ -10,8 +10,9 @@ import botocore
 import time
 import logging
 from random import random
-from src.compute_resources.docker_job import DockerJob
+from src.compute_resources.docker_job import BTAPDockerJob
 from src.compute_resources.aws_credentials import AWSCredentials
+from src.compute_resources.btap_cli_engine import BTAPEngine
 from src.constants import AWS_MAX_RETRIES
 from icecream import ic
 from src.compute_resources.common_paths import CommonPaths
@@ -19,11 +20,11 @@ from src.compute_resources.common_paths import CommonPaths
 
 
 
-class AWSJob(DockerJob):
+class BTAPAWSJob(BTAPDockerJob):
 
     def __init__(self,
                  batch=None,
-                 engine=None,
+                 engine=BTAPEngine,
                  analysis_id=None,
                  analysis_name=None,
                  job_id=None,

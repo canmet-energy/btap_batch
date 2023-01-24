@@ -6,13 +6,14 @@ import logging
 from pathlib import Path
 from icecream import ic
 from src.compute_resources.common_paths import CommonPaths
+from src.compute_resources.btap_cli_engine import BTAPEngine
 
 
-class DockerJob:
+class BTAPDockerJob:
 
     def __init__(self,
                  batch=None,
-                 engine=None,
+                 engine=BTAPEngine(),
                  analysis_id=None,
                  analysis_name=None,
                  job_id=None,

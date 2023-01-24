@@ -10,12 +10,6 @@ import traceback
 import sys
 import traceback
 
-
-class LocalCredentials:
-
-    def get_username(self):
-        return getpass.getuser()
-
 class AWSCredentials:
     # Initialize with required clients.
 

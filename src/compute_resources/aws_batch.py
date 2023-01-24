@@ -17,7 +17,7 @@ from src.compute_resources.aws_credentials import AWSCredentials
 from src.compute_resources.aws_iam_roles import IAMBatchServiceRole
 from src.compute_resources.aws_iam_roles import IAMBatchJobRole
 from src.compute_resources.aws_ec2_info import AWS_EC2Info
-from src.compute_resources.aws_job import AWSJob
+from src.compute_resources.aws_job import BTAPAWSJob
 
 # Role to give permissions to jobs to run.
 BATCH_JOB_ROLE = 'arn:aws:iam::834599497928:role/batchJobRole'
@@ -27,13 +27,12 @@ BATCH_SERVICE_ROLE = 'arn:aws:iam::834599497928:role/service-role/AWSBatchServic
 
 class AWSBatch:
 
-    def __init__(self, image_manager=None,engine=None):
+    def __init__(self, image_manager=None):
         self.compute_environment_name = f"{self.username()}_compute_environment"
         self.launch_template_name = f'{self.username()}_storage_template'
         self.job_queue_name = f'{self.username()}_job_queue'
         self.job_def_name = f'{self.username()}_job_def'
         self.image_manager = image_manager
-        self.engine = engine
 
     def __aws_credentials(self):
         return AWSCredentials()
@@ -352,11 +351,10 @@ class AWSBatch:
                    local_project_folder=None,
                    remote_project_folder=None  # stub for cloud jobs.
                    ):
-        return AWSJob(batch=self,
-                         engine=self.engine,
-                         analysis_id=analysis_id,
-                         analysis_name=analysis_name,
-                         job_id=job_id,
-                         local_project_folder=local_project_folder,
-                         remote_project_folder=remote_project_folder  # stub for cloud jobs.
-                         )
+        return BTAPAWSJob(batch=self,
+                          analysis_id=analysis_id,
+                          analysis_name=analysis_name,
+                          job_id=job_id,
+                          local_project_folder=local_project_folder,
+                          remote_project_folder=remote_project_folder  # stub for cloud jobs.
+                          )

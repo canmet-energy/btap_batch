@@ -2,7 +2,8 @@ import logging
 import boto3
 import json
 from icecream import ic
-from src.compute_resources.aws_credentials import AWSCredentials,LocalCredentials
+from src.compute_resources.aws_credentials import AWSCredentials
+from src.compute_resources.common_paths import CommonPaths
 
 
 
@@ -24,7 +25,7 @@ class IAMRoles():
 
 
     def full_role_name(self):
-        return f"{LocalCredentials().get_username().replace('.', '-')}-{self.role_name}"
+        return f"{CommonPaths().get_username().replace('.', '-')}-{self.role_name}"
 
     def create_role(self):
         #delete if it already exists.

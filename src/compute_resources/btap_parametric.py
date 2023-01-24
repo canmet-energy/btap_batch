@@ -19,14 +19,12 @@ class BTAPParametric(BTAPAnalysis):
                  analysis_config=None,
                  analyses_folder=None,
                  analysis_input_folder=None,
-                 engine=BTAPEngine(),
                  reference_run_data_path=None
                  ):
         # Run super initializer to set up default variables.
         super().__init__(analysis_config=analysis_config,
                          analyses_folder=analyses_folder,
                          analysis_input_folder=analysis_input_folder,
-                         engine=engine,
                          reference_run_data_path=reference_run_data_path
                          )
         self.scenarios = []
