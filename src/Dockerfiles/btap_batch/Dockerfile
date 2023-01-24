@@ -1,6 +1,12 @@
 FROM public.ecr.aws/amazonlinux/amazonlinux:2022
-ARG BTAP_BATCH_BRANCH='remove_anaconda'
-ARG GIT_API_TOKEN='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'
+ARG BTAP_BATCH_BRANCH
+ARG GIT_API_TOKEN
+ARG AWS_USERNAME
+
+ENV AWS_USERNAME=$AWS_USERNAME
+ENV GIT_API_TOKEN=$GIT_API_TOKEN
+
+
 RUN curl -O https://bootstrap.pypa.io/get-pip.py
 RUN yum -y install python39
 RUN python3 get-pip.py --user
@@ -16,6 +22,7 @@ CMD ["/bin/bash"]
 
 #Sample invocation commands
 # docker build -t --no-cache btap_batch .
+# Test locally.
 # docker run -it --rm -v "//var/run/docker.sock:/var/run/docker.sock" -v "//c/Users/plopez/.aws:/root/.aws"  btap_batch /bin/bash
 # PYTHONPATH=/btap_batch python3 new_run.py
 

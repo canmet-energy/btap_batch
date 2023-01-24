@@ -5,9 +5,6 @@ import logging
 import re
 from src.constants import AWS_MAX_RETRIES
 from pathlib import Path
-import getpass
-import traceback
-import sys
 import traceback
 
 class AWSCredentials:

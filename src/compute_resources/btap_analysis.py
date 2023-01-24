@@ -17,6 +17,7 @@ from src.compute_resources.docker_image_manager import DockerImageManager
 from src.compute_resources.aws_image_manager import AWSImageManager
 from src.compute_resources.btap_cli_engine import BTAPEngine
 from src.compute_resources.common_paths import CommonPaths
+from src.compute_resources.aws_compute_environment import AWSComputeEnvironment
 
 import copy
 from icecream import ic
@@ -137,7 +138,8 @@ class BTAPAnalysis():
 
         elif self.compute_environment == 'aws_batch':
             print(f"running on {self.compute_environment}")
-            self.image_manager = AWSImageManager(image_name=self.image_name)
+
+            self.image_manager = AWSImageManager(image_name=self.image_name, compute_environment=AWSComputeEnvironment())
             self.credentials = AWSCredentials()
         else:
             logging.error(f"Unknown image {self.image_name}")

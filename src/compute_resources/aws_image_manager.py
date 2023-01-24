@@ -16,11 +16,12 @@ class AWSImageManager(DockerImageManager):
     def __aws_credentials(self):
         return AWSCredentials()
 
-    def __init__(self, image_name=None):
+    def __init__(self, image_name=None, compute_environment=None):
         super().__init__(image_name=image_name)
         self.credentials = self.__aws_credentials()
         self.bucket = self.credentials.account_id
         self.region = self.credentials.region_name
+        self.compute_environment = compute_environment
         self.image_tag = 'latest'
 
     def _get_image_tag(self):
@@ -41,10 +42,8 @@ class AWSImageManager(DockerImageManager):
         build_args['IMAGE_TAG'] = 'latest'
         return build_args
 
-
-    def build_image(self):
-
-        ic(self._image_repo_name())
+    def build_image(self, build_args=None):
+        self.build_args = build_args
         self._create_image_repository(repository_name=self._image_repo_name())
 
         message = f"Building image."
@@ -86,7 +85,6 @@ class AWSImageManager(DockerImageManager):
         # Create IAM role permission dynamically.
         cloud_build_role = IAMCloudBuildRole()
         cloud_build_role.create_role()
-        ic(cloud_build_role.arn())
 
         codebuild.create_project(
             name=codebuild_project_name,
@@ -119,7 +117,6 @@ class AWSImageManager(DockerImageManager):
 
         message = f"Building from sources at {source_location}"
         logging.info(message)
-        print(environment_vars)
         response = codebuild.start_build(projectName=self.get_full_image_name(),
                                          sourceTypeOverride='S3',
                                          sourceLocationOverride=source_location,
@@ -174,4 +171,4 @@ class AWSImageManager(DockerImageManager):
         return image
 
     def get_batch(self):
-        return AWSBatch(image_manager=self)
+        return AWSBatch(image_manager=self, compute_environment=self.compute_environment)

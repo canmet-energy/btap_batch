@@ -20,7 +20,8 @@ class BTAPEngine:
             arg_string = arg_string + f" {arg}"
         return self._engine_command + arg_string
 
-    def aws_engine_command(self,input_path=None, output_path=None):
+    @staticmethod
+    def aws_engine_command( input_path=None, output_path=None):
         return f"bundle exec ruby btap_cli.rb --input_path {input_path} --output_path {output_path} "
 
 
@@ -32,8 +33,8 @@ class BTAPEngine:
     def container_output_path(self):
         return self._container_output_path
 
-    def get_file_from_output_folder_as_string(self,
-                                              local_datapoint_output_folder=None,
+    @staticmethod
+    def get_file_from_output_folder_as_string(local_datapoint_output_folder=None,
                                               bucket_name=None,
                                               s3_datapoint_output_folder=None,
                                               relative_file_path=None):
@@ -56,7 +57,8 @@ class BTAPEngine:
             relative_file_path='error.txt')
         return job_data
 
-    def aws_post_process_data_result_failure(self,
+    @staticmethod
+    def aws_post_process_data_result_failure(
                                              job_data=None,
                                              run_options=None,
                                              s3_datapoint_output_folder=None,
@@ -73,8 +75,8 @@ class BTAPEngine:
             json.dump(job_data, outfile, indent=4)
         return job_data
 
-    def aws_post_process_data_result_success(self,
-                                             job_data=None,
+    @staticmethod
+    def aws_post_process_data_result_success(job_data=None,
                                              run_options=None,
                                              s3_datapoint_output_folder=None):
         # BTAP data gathering
@@ -116,7 +118,9 @@ class BTAPEngine:
 
 
 
-    def common_code(self, job_data):
+
+    @staticmethod
+    def common_code(job_data):
         job_data['eplus_warnings'] = sum(
             1 for d in job_data['eplusout_err_table'] if d.get('error_type') == 'warning')
         job_data['eplus_severes'] = sum(

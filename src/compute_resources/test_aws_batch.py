@@ -2,7 +2,7 @@
 from src.compute_resources.aws_image_manager import AWSImageManager
 from src.compute_resources.aws_batch import AWSBatch
 from src.compute_resources.btap_cli_engine import BTAPEngine
-from src.compute_resources.job import AWSJob
+from src.compute_resources.aws_job import BTAPAWSJob
 from icecream import ic
 import yaml
 from pathlib import Path
@@ -38,7 +38,7 @@ batch = AWSBatch(image_manager=image)
 
 
 
-job = AWSJob(batch=batch,
+job = BTAPAWSJob(batch=batch,
     engine=engine,
     analysis_id=run_options[':analysis_id'],
     analysis_name=run_options[':analysis_name'],

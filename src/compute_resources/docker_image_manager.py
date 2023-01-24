@@ -18,21 +18,14 @@ class DockerImageManager:
         return CommonPaths().get_username()
 
     def __init__(self,
-                 image_name=None):
+                 image_name=None,
+                 compute_environement=None):
         self.check_docker()
         self.cli_run_command = "docker run --rm"
         self.cli_build_command = "docker build -t"
         self.image_name = image_name
-        self.image_configuration = None
-        if not os.path.isfile(CommonPaths().get_image_config_file_path(image_name=self.image_name)):
-            logging.error(f"could not find image_config input file for {self.image_name} image name at {CommonPaths().get_image_config_file_path(image_name=self.image_name)}. Exiting")
-            exit(1)
+        self.build_args = None
 
-        # Open the yaml in analysis dict.
-        with open(CommonPaths().get_image_config_file_path(image_name=self.image_name), 'r') as stream:
-            config = yaml.safe_load(stream)
-        # Store analysis config and building_options.
-        self.image_configuration = config.get(':image_configuration')
 
 
 
@@ -53,12 +46,8 @@ class DockerImageManager:
 
 
     #Common
-    def _get_image_config_file_path(self):
-        return CommonPaths().get_image_config_file_path(image_name=self.image_name)
-
-    #Common
     def _get_image_build_args(self):
-        build_args = self.image_configuration.get(':build_args')
+        build_args = self.build_args
         build_args['GIT_API_TOKEN'] = os.environ['GIT_API_TOKEN']
         build_args['AWS_USERNAME'] = CommonPaths().get_username()
         return build_args
@@ -85,7 +74,8 @@ class DockerImageManager:
         return docker_build_command
 
     #Common
-    def build_image(self):
+    def build_image(self, build_args=None):
+        self.build_args = build_args
         container_client = docker.from_env()
         start = time.time()
         image, json_log = container_client.images.build(

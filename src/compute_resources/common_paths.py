@@ -20,9 +20,16 @@ class CommonPaths(object):
                           analyses_folder=None,
                           analysis_project_folder=None):
         self._analyses_folder = analyses_folder
-        self.analysis_name = analysis_name
-        self.analysis_id = analysis_id
+        self._analysis_name = analysis_name
+        self._analysis_id = analysis_id
         self._analysis_project_folder = analysis_project_folder
+
+    def get_analysis_name(self):
+        return self._analysis_name
+
+    def get_analysis_id(self):
+        return self._analysis_id
+
 
 
     def get_username(self):
@@ -48,11 +55,11 @@ class CommonPaths(object):
 
 
     def analysis_name_folder(self):
-        return os.path.join(self.analyses_folder(), self.analysis_name)
+        return os.path.join(self.analyses_folder(), self.get_analysis_name())
 
     # Set analysis name folder.
     def analysis_id_folder(self):
-        return os.path.join(self.analysis_name_folder(), self.analysis_id)
+        return os.path.join(self.analysis_name_folder(), self.get_analysis_id())
 
     def analysis_output_folder(self):
         return os.path.join(self.analysis_id_folder(), 'output')
@@ -79,8 +86,7 @@ class CommonPaths(object):
         return os.path.join(self.analysis_results_folder(), 'database')
 
     def s3_analysis_folder(self):
-        user_name = AWSCredentials().user_name
-        return os.path.join(user_name, self.analysis_name, self.analysis_id).replace('\\', '/')
+        return os.path.join(self.get_username(), self.get_analysis_name(), self.get_analysis_id()).replace('\\', '/')
 
     def s3_input_folder(self):
         return os.path.join(self.s3_analysis_folder(), 'input').replace('\\', '/')

@@ -1,12 +1,34 @@
-from src.compute_resources.test_aws_batch import AWSBatch,AWSImageManager,BTAPEngine
-from src.compute_resources.aws_iam_roles import IAMBatchJobRole,IAMBatchServiceRole,IAMCloudBuildRole
-IAMBatchJobRole().delete()
-IAMCloudBuildRole.delete()
-IAMBatchServiceRole.delete()
+from src.compute_resources.aws_batch import AWSBatch
+from src.compute_resources.aws_compute_environment import AWSComputeEnvironment
+from src.compute_resources.aws_image_manager import AWSImageManager
+from src.compute_resources.aws_iam_roles import IAMBatchJobRole, IAMBatchServiceRole, IAMCloudBuildRole
+import time
+from icecream import ic
 
+build_args = {'OPENSTUDIO_VERSION': '3.2.1',
+              'BTAP_COSTING_BRANCH': 'master',
+              'OS_STANDARDS_BRANCH': 'nrcan'}
+
+# Tear down
+ace = AWSComputeEnvironment()
 aim_cli = AWSImageManager(image_name='btap_cli')
-aim_cli.build_image()
-aim_bb = AWSImageManager(image_name='btap_batch')
-aim_bb.build_image()
-ab = AWSBatch(image_manager=aim_cli,engine=BTAPEngine())
+ab = AWSBatch(image_manager=aim_cli, compute_environment=ace)
 ab.tear_down()
+ace.tear_down()
+IAMBatchJobRole().delete()
+IAMCloudBuildRole().delete()
+IAMBatchServiceRole().delete()
+time.sleep(5)
+
+# Create new
+IAMBatchJobRole().create_role()
+IAMCloudBuildRole().create_role()
+IAMBatchServiceRole().create_role()
+time.sleep(5)  # Give a few seconds for role to apply.
+ace = AWSComputeEnvironment()
+ace.setup()
+aim_cli = AWSImageManager(image_name='btap_cli')
+#aim_cli.build_image(build_args=build_args)
+ab_cli = AWSBatch(image_manager=aim_cli,
+                  compute_environment=ace)
+ab_cli.setup()

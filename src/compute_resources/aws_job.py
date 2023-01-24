@@ -44,16 +44,10 @@ class BTAPAWSJob(BTAPDockerJob):
 
         self.cloud_job_id = None  # Set by AWS when job is submitted.
         # update run_options
-        self.s3_bucket = self.__aws_credentials().account_id
+        self.s3_bucket = AWSCredentials().account_id
         self.cp = CommonPaths()
 
 
-
-    def __aws_credentials(self):
-        return AWSCredentials()
-
-    def job_name(self):
-        return f"{self.analysis_id}-{self.job_id}"
 
     def submit_job(self, run_options=None):
         # Timer start.
@@ -68,9 +62,11 @@ class BTAPAWSJob(BTAPDockerJob):
 
 
         # Container command
-        container_command = self.engine.aws_engine_command(input_path=self.cp.s3_container_input_path(self.job_id),
-                                                           output_path=self.cp.s3_container_output_path()).replace('\\',
-                                                                                                                   '/')
+        input_f = self.cp.s3_container_input_path(self.job_id)
+
+        output_f = self.cp.s3_container_output_path().replace('\\','/')
+
+        container_command = self.engine.aws_engine_command(input_path=input_f, output_path=output_f)
         command = ["/bin/bash", "-c", container_command]
         try:
 
@@ -84,7 +80,7 @@ class BTAPAWSJob(BTAPDockerJob):
             # See https://boto3.amazonaws.com/v1/documentation/api/latest/reference/services/batch.html#Batch.Client.submit_job
             self.cloud_job_id = self.__submit_job_wrapper(command=command)['jobId']
 
-            message = f"Submitted job_id {self.job_id} with cloud id {self.cloud_job_id}, job name {self.job_name()} to the job queue {self.batch.job_queue_name}"
+            message = f"Submitted job_id {self.job_id} with cloud id {self.cloud_job_id}, job name {self.__aws_job_name()} to the job queue {self.batch.job_queue_name}"
             logging.info(message)
 
 
@@ -97,12 +93,12 @@ class BTAPAWSJob(BTAPDockerJob):
                 describeJobsResponse = self.__get_job_status()
                 status = describeJobsResponse['jobs'][0]['status']
                 if status == 'SUCCEEDED':
-                    message = 'SUCCEEDED - Job [%s - %s] %s' % (self.job_name(), self.cloud_job_id, status)
+                    message = 'SUCCEEDED - Job [%s - %s] %s' % (self.__aws_job_name(), self.cloud_job_id, status)
                     logging.info(message)
                     result = 'SUCCEEDED'
                     break
                 elif status == 'FAILED':
-                    message = 'FAILED - Job [%s - %s] %s' % (self.job_name(), self.cloud_job_id, status)
+                    message = 'FAILED - Job [%s - %s] %s' % (self.__aws_job_name(), self.cloud_job_id, status)
                     logging.error(message)
                     result = 'FAILED'
                     break
@@ -110,7 +106,7 @@ class BTAPAWSJob(BTAPDockerJob):
                     if not running:
                         running = True
                 else:
-                    message = 'UNKNOWN - Job [%s - %s] is %-9s' % (self.job_name(), self.cloud_job_id, status)
+                    message = 'UNKNOWN - Job [%s - %s] is %-9s' % (self.__aws_job_name(), self.cloud_job_id, status)
                     # logging.info(message)
                     sys.stdout.flush()
 
@@ -150,6 +146,10 @@ class BTAPAWSJob(BTAPDockerJob):
 
             return job_data
 
+    # Private methods
+    def __aws_job_name(self):
+        return f"{self.analysis_id}-{self.job_id}"
+
     def __submit_job_wrapper(self, command=None, n=0):
         try:
             batch_client = boto3.client('batch',
@@ -159,7 +159,7 @@ class BTAPAWSJob(BTAPDockerJob):
                                                 'max_attempts': AWS_MAX_RETRIES,
                                                 'mode': 'standard'}))
             submitJobResponse = batch_client.submit_job(
-                jobName=self.job_name(),
+                jobName=self.__aws_job_name(),
                 jobQueue=self.batch.job_queue_name,
                 jobDefinition=self.batch.job_def_name,
                 containerOverrides={'command': command}
@@ -169,9 +169,9 @@ class BTAPAWSJob(BTAPDockerJob):
             # Implementing exponential backoff
             if n == 8:
                 logging.exception(
-                    f'Failed to submit job {self.job_name()} in 7 tries while using exponential backoff. Error was {sys.exc_info()[0]} ')
+                    f'Failed to submit job {self.__aws_job_name()} in 7 tries while using exponential backoff. Error was {sys.exc_info()[0]} ')
             wait_time = 2 ** n + random()
-            logging.warning(f"Implementing exponential backoff for job {self.job_name()} for {wait_time}s")
+            logging.warning(f"Implementing exponential backoff for job {self.__aws_job_name()} for {wait_time}s")
             time.sleep(wait_time)
             return self.__submit_job_wrapper(command=command, n=n + 1)
 

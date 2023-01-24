@@ -5,31 +5,17 @@ from icecream import ic
 import os
 
 
-# Helper function to run reference
-def run_references(analysis_config=None,
-                   analyses_folder=None,
-                   analysis_input_folder=None):
-    # Ensure reference run is executed in all other cases unless :run_reference is false.
-    if (analysis_config.get(':run_reference') is not False) or (
-            analysis_config.get is None):
-        # Run reference simulations first.
-
-        ref_analysis_config = copy.deepcopy(analysis_config)
-        ref_analysis_config[':algorithm_type'] = 'reference'
-        ref_analysis_config[':analysis_name'] = 'reference_runs'
-        bb = BTAPReference(
-            analysis_config=ref_analysis_config,
-            analyses_folder=analyses_folder,
-            analysis_input_folder=analysis_input_folder)
-        print(f"running reference stage")
-        bb.run()
-        return os.path.join(bb.analysis_results_folder(), 'output.xlsx')
 
 
+#Input filename
 analysis_config_file = os.path.join(os.path.dirname(os.path.realpath(__file__)), 'input.yml')
+
+
 
 analysis_config, analysis_input_folder, analyses_folder = BTAPOptimization.load_analysis_input_file(
     analysis_config_file=analysis_config_file)
+
+analysis_config[':compute_environment'] = 'local_docker'
 
 # Run reference
 ref_analysis_config = copy.deepcopy(analysis_config)
