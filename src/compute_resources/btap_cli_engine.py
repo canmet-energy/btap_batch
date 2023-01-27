@@ -6,25 +6,24 @@ import pathlib
 import boto3
 
 
+
 # Location of Docker folder that contains information to build the btap image locally and on aws.
-class BTAPEngine:
+class BTAPCLI:
 
     def __init__(self):
         self._engine_command = 'bundle exec ruby btap_cli.rb'
         self._container_input_path = '/btap_costing/utilities/btap_cli/input'
         self._container_output_path = '/btap_costing/utilities/btap_cli/output'
 
-    def engine_command(self, engine_args=[]):
+    def docker_container_command(self, engine_args=[]):
         arg_string = ''
         for arg in engine_args:
             arg_string = arg_string + f" {arg}"
         return self._engine_command + arg_string
 
     @staticmethod
-    def aws_engine_command( input_path=None, output_path=None):
+    def aws_container_command(input_path=None, output_path=None):
         return f"bundle exec ruby btap_cli.rb --input_path {input_path} --output_path {output_path} "
-
-
 
 
     def container_input_path(self):
@@ -132,6 +131,16 @@ class BTAPEngine:
             if not job_data.get(item):
                 job_data[item] = 0.0
         return job_data
+
+
+class BTAPBATCH(BTAPCLI):
+    def __init__(self):
+        self._engine_command = 'bundle exec ruby btap_cli.rb'
+        self._container_input_path = '/btap_costing/utilities/btap_cli/input'
+        self._container_output_path = '/btap_costing/utilities/btap_cli/output'
+
+
+
 
 # bte = BTAPEngine(r"C:\Users\plopez\btap_batch\examples\custom_osm\input.yml")
 # print(bte.docker_build_args())

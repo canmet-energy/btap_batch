@@ -8,7 +8,6 @@ import datetime
 from src.exceptions import *
 from src.compute_resources.btap_analysis import BTAPAnalysis
 
-from src.compute_resources.btap_cli_engine import BTAPEngine
 import copy
 import os
 

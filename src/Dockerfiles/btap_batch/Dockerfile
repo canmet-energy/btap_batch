@@ -5,6 +5,7 @@ ARG AWS_USERNAME
 
 ENV AWS_USERNAME=$AWS_USERNAME
 ENV GIT_API_TOKEN=$GIT_API_TOKEN
+ENV BTAP_BATCH_BRANCH=$BTAP_BATCH_BRANCH
 
 
 RUN curl -O https://bootstrap.pypa.io/get-pip.py
@@ -21,10 +22,13 @@ RUN yum -y install nano
 CMD ["/bin/bash"]
 
 #Sample invocation commands
-# docker build -t --no-cache btap_batch .
+# aws ecr get-login-password --region ca-central-1 | docker login --username AWS --password-stdin 834599497928.dkr.ecr.ca-central-1.amazonaws.com
+# docker build -t --no-cache --build-arg GIT_API_TOKEN=$GIT_API_TOKEN --build-arg AWS_USERNAME=$AWS_USERNAME --build-arg  BTAP_BATCH_BRANCH=$BTAP_BATCH_BRANCH .
 # Test locally.
 # docker run -it --rm -v "//var/run/docker.sock:/var/run/docker.sock" -v "//c/Users/plopez/.aws:/root/.aws"  btap_batch /bin/bash
 # PYTHONPATH=/btap_batch python3 new_run.py
+
+#docker run -it --rm -v "//var/run/docker.sock:/var/run/docker.sock" -v "//c/Users/plopez/.aws:/root/.aws"  834599497928.dkr.ecr.ca-central-1.amazonaws.com/phylroy_lopez_btap_batch  /bin/bash
 
 
 

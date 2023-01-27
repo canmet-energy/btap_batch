@@ -1,8 +1,7 @@
 
 from src.compute_resources.aws_image_manager import AWSImageManager
 from src.compute_resources.aws_batch import AWSBatch
-from src.compute_resources.btap_cli_engine import BTAPEngine
-from src.compute_resources.aws_job import BTAPAWSJob
+from src.compute_resources.aws_job import AWSBTAPJob
 from icecream import ic
 import yaml
 from pathlib import Path
@@ -31,19 +30,11 @@ local_project_folder = r"C:\Users\plopez\btap_batch\src\test\test_docker_batch"
 
 
 image = AWSImageManager(image_name='btap_cli')
-engine = engine=BTAPEngine()
 batch = AWSBatch(image_manager=image)
 #batch.tear_down()
 #batch.setup()
 
-
-
-job = BTAPAWSJob(batch=batch,
-    engine=engine,
-    analysis_id=run_options[':analysis_id'],
-    analysis_name=run_options[':analysis_name'],
-    job_id=run_options[':datapoint_id'],
-    local_project_folder=local_project_folder)
+job = AWSBTAPJob(batch=batch, job_id=run_options[':datapoint_id'])
 
 job.submit_job(run_options=run_options)
 

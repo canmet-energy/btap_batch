@@ -9,7 +9,7 @@ import logging
 from random import random
 from src.compute_resources.aws_credentials import AWSCredentials
 from src.compute_resources.aws_iam_roles import IAMBatchJobRole
-from src.compute_resources.aws_job import BTAPAWSJob
+from src.compute_resources.aws_job import AWSBTAPJob
 from src.compute_resources.common_paths import CommonPaths
 from icecream import ic
 
@@ -205,17 +205,18 @@ class AWSBatch:
             return  True
 
 
-    def create_job(self,
-                   analysis_id=None,
-                   analysis_name=None,
-                   job_id=None,
-                   local_project_folder=None,
-                   remote_project_folder=None  # stub for cloud jobs.
-                   ):
-        return BTAPAWSJob(batch=self,
-                          analysis_id=analysis_id,
-                          analysis_name=analysis_name,
-                          job_id=job_id,
-                          local_project_folder=local_project_folder,
-                          remote_project_folder=remote_project_folder  # stub for cloud jobs.
+    def create_job(self, job_id=None):
+        job=None
+        if self.image_manager.image_name == 'btap_cli':
+            job = AWSBTAPJob(batch=self, job_id=job_id)
+        elif self.image_manager.image_name == 'btap_batch':
+            job = AWSBTAPBatchJob(batch=self, job_id=job_id)
+        return job
+
+
+
+        return AWSBTAPJob(batch=self,
+                          job_id=job_id
                           )
+
+

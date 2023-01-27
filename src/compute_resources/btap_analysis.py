@@ -6,7 +6,6 @@ import uuid
 import yaml
 import pandas as pd
 import shutil
-from pathlib import Path
 from sklearn import preprocessing
 from src.exceptions import OSMErrorException
 from src.compute_resources.aws_credentials import AWSCredentials
@@ -15,16 +14,9 @@ from src.constants import NECB2011_SPACETYPE_PATH
 from src.compute_resources.btap_postprocess_analysis import PostProcessResults
 from src.compute_resources.docker_image_manager import DockerImageManager
 from src.compute_resources.aws_image_manager import AWSImageManager
-from src.compute_resources.btap_cli_engine import BTAPEngine
 from src.compute_resources.common_paths import CommonPaths
 from src.compute_resources.aws_compute_environment import AWSComputeEnvironment
-
-import copy
 from icecream import ic
-
-
-
-
 
 # Parent Analysis class from with all analysis inherit
 class BTAPAnalysis():
@@ -293,10 +285,7 @@ class BTAPAnalysis():
                 f"Copying osm file from {local_osm_dict[run_options[':building_type']]} to {self.cp.analysis_input_job_id_folder(job_id=job_id)}")
 
         # Submit Job to batch
-        job = self.batch.create_job(analysis_id=self.analysis_id,
-                                    analysis_name=self.analysis_name,
-                                    job_id=job_id,
-                                    local_project_folder=self.cp.analysis_project_folder())
+        job = self.batch.create_job(job_id=job_id)
 
         return job.submit_job(run_options=run_options)
 

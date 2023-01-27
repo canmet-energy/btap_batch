@@ -10,7 +10,7 @@ phases:
     commands:
       - echo Build started on `date`
       - echo Building the Docker image...
-      - docker build -t $IMAGE_REPO_NAME:$IMAGE_TAG --build-arg GIT_API_TOKEN=$GIT_API_TOKEN --build-arg AWS_USERNAME=$AWS_USERNAME --build-arg  BTAP_BATCH_BRANCH=$BTAP_BATCH_BRANCH .
+      - docker build -t $IMAGE_REPO_NAME:$IMAGE_TAG --build-arg GIT_API_TOKEN=$GIT_API_TOKEN --build-arg OPENSTUDIO_VERSION=$OPENSTUDIO_VERSION --build-arg BTAP_COSTING_BRANCH=$BTAP_COSTING_BRANCH --build-arg OS_STANDARDS_BRANCH=$OS_STANDARDS_BRANCH .
       - docker tag $IMAGE_REPO_NAME:$IMAGE_TAG $AWS_ACCOUNT_ID.dkr.ecr.$AWS_DEFAULT_REGION.amazonaws.com/$IMAGE_REPO_NAME:$IMAGE_TAG
   post_build:
     commands:
@@ -18,5 +18,5 @@ phases:
       - echo Pushing the Docker image...
       - docker push $AWS_ACCOUNT_ID.dkr.ecr.$AWS_DEFAULT_REGION.amazonaws.com/$IMAGE_REPO_NAME:$IMAGE_TAG
 
-#Sample invocation commands
-# docker build -t --no-cache --build-arg GIT_API_TOKEN=$GIT_API_TOKEN --build-arg AWS_USERNAME=$AWS_USERNAME --build-arg  BTAP_BATCH_BRANCH=$BTAP_BATCH_BRANCH .
+# test command locally.
+# docker build -t test_me:test_tag --build-arg GIT_API_TOKEN=<your_token> --build-arg OPENSTUDIO_VERSION=3.0.1 --build-arg BTAP_COSTING_BRANCH=nrcan_302 --build-arg OS_STANDARDS_BRANCH=nrcan .

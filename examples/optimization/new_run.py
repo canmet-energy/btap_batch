@@ -1,9 +1,8 @@
 from src.compute_resources.btap_optimization import BTAPOptimization
 from src.compute_resources.btap_reference import BTAPReference
 import copy
-from icecream import ic
 import os
-
+from icecream import ic
 
 
 
@@ -15,7 +14,7 @@ analysis_config_file = os.path.join(os.path.dirname(os.path.realpath(__file__)),
 analysis_config, analysis_input_folder, analyses_folder = BTAPOptimization.load_analysis_input_file(
     analysis_config_file=analysis_config_file)
 
-analysis_config[':compute_environment'] = 'local_docker'
+analysis_config[':compute_environment'] = 'aws_batch'
 
 # Run reference
 ref_analysis_config = copy.deepcopy(analysis_config)

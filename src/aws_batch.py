@@ -253,7 +253,7 @@ class AWSBatch:
         jobName = f"{run_options[':analysis_id']}-{run_options[':datapoint_id']}"
         input_path = f"s3://{run_options[':s3_bucket']}/{s3_datapoint_input_folder}"
         output_path = f"s3://{run_options[':s3_bucket']}/{s3_output_folder}"
-        container_command = self.engine.container_command(input_path=input_path,output_path=output_path)
+        container_command = self.engine._container_command(input_path=input_path, output_path=output_path)
         # replace \ slashes to / slash for correct s3 convention.
         container_command = container_command.replace('\\', '/')
         try:

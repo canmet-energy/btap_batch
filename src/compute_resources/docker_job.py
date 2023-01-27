@@ -2,81 +2,122 @@ import os
 import json
 import yaml
 import time
-import logging
 from pathlib import Path
-from icecream import ic
+import errno
 from src.compute_resources.common_paths import CommonPaths
-from src.compute_resources.btap_cli_engine import BTAPEngine
+from icecream import ic
 
-
-class BTAPDockerJob:
-
-    def __init__(self,
-                 batch=None,
-                 engine=BTAPEngine(),
-                 analysis_id=None,
-                 analysis_name=None,
-                 job_id=None,
-                 local_project_folder=None,
-                 remote_project_folder=None  # stub for cloud jobs.
-                 ):
-        self.analysis_id = analysis_id
-        self.analysis_name = analysis_name
-        self.job_id = job_id
-        self.remote_project_folder = remote_project_folder
-        self.local_project_folder = local_project_folder
+class DockerBTAPJob:
+    def __init__(self, batch=None, job_id=None,):
         self.batch = batch
-        self.engine = engine
-
-        #Common object for paths.
-        self.cp = CommonPaths()
-
-
-
+        self.job_id = job_id
+        self.engine_command = 'bundle exec ruby btap_cli.rb'
+        self._set_paths()
+    #public
     def submit_job(self, run_options=None):
         # Timer start.
         start = time.time()
 
-        # job data storage dict.
+        self.run_options = self._update_run_options(run_options)
+
+        # Variable to store all input and output information about job.
         job_data = {}
-        job_data.update(run_options)
-
+        job_data.update(self.run_options)
+        self._copy_files_to_run_location()
         try:
-
-            self.run_container(run_options)
-            job_data = self.engine.post_process_data_result_success(job_data=job_data,
-                                                                    local_datapoint_output_folder=self.cp.analysis_output_job_id_folder(job_id=self.job_id)
-                                                                    )
+            self._run_container()
             # Flag that is was successful.
             job_data['success'] = True
             job_data['simulation_time'] = time.time() - start
+            job_data['datapoint_output_url'] = self._job_url()
+            job_data['run_options'] = yaml.dump(self.run_options)
+            job_data.update(self._get_job_results())
             return job_data
         except Exception as error:
             print(error)
             # post process failed run.
-            job_data = self.engine.post_process_data_result_failure(job_data=job_data,
-                                                         local_datapoint_output_folder=self.cp.analysis_output_job_id_folder(job_id=self.job_id))
+            job_data['container_error'] = self._get_container_error()
             job_data['success'] = False
-            job_data['run_options'] = yaml.dump(run_options)
-            job_data['datapoint_output_url'] = 'file:///' + os.path.join(self.cp.analysis_output_job_id_folder(job_id=self.job_id))
-            # save btap_data json file.
-            local_btap_data_path = os.path.join(self.cp.analysis_output_job_id_folder(job_id=self.job_id), "btap_data.json")
-            Path(os.path.dirname(local_btap_data_path)).mkdir(parents=True, exist_ok=True)
-            with open(local_btap_data_path, 'w') as outfile:
-                json.dump(job_data, outfile, indent=4)
+            job_data['run_options'] = yaml.dump(self.run_options)
+            job_data['datapoint_output_url'] = self._job_url()
+            self._save_output_file(job_data)
             return job_data
+    #protected
+    def _job_url(self):
+        return self.cp.local_job_url(job_id=self.job_id)
+    def _set_paths(self):
+        # Common object for paths.
+        self.cp = CommonPaths()
+        self.analysis_output_folder = self.cp.analysis_output_folder()
+        self.analysis_output_job_id_folder = self.cp.analysis_output_job_id_folder(job_id=self.job_id)
+        self.analysis_input_job_id_folder = self.cp.analysis_input_job_id_folder(job_id=self.job_id)
+        self.local_json_file_path = self.cp.analysis_output_job_id_btap_json_path(job_id=self.job_id)
 
-    def run_container(self, run_options):
+    def _command_args(self):
+        args = []
+        return args
+    def _container_command(self):
+        arg_string = ''
+        for arg in self._command_args():
+            arg_string = arg_string + f" {arg}"
+        return self.engine_command + arg_string
+    def _update_run_options(self, run_options=None):
+        run_options[':job_id'] = self.job_id
+        return run_options
+    def _copy_files_to_run_location(self):
+        # No files to copy for local run.
+        return True
+    def _get_job_results(self):
+        # If file was not created...raise an error.
+        if not os.path.isfile(self.local_json_file_path):
+            raise FileNotFoundError(errno.ENOENT, os.strerror(errno.ENOENT), self.local_json_file_path)
+        # Open the btap Data file in analysis dict.
+        file = open(self.local_json_file_path, 'r')
+        result_data = json.load(file)
+        file.close()
+        result_data = self._enumerate_eplus_warnings(job_data=result_data)
+        return result_data
+    def _get_container_error(self):
+        # Get error message from error file lcoally and store it in the job_data list.
+        file_path = os.path.join(self.analysis_output_job_id_folder, 'error.txt')
+        if os.path.exists(file_path):
+            with open(file_path, 'r') as file:
+                return str(file.read())
+    def _run_container(self):
         # Run the simulation
         result = self.batch.image_manager.run_container(
-            volumes={
-                self.cp.analysis_output_folder(): {
-                    'bind': self.engine.container_output_path(),
-                    'mode': 'rw'},
-                self.cp.analysis_input_job_id_folder(job_id=self.job_id): {
-                    'bind': self.engine.container_input_path(),
-                    'mode': 'rw'},
-            },
-            engine_command=self.engine.engine_command(),
-            run_options=run_options)
+            volumes=self.__volume_mounts(),
+            engine_command=self._container_command(),
+            run_options=self.run_options)
         # engine post process successful run.
+    def _enumerate_eplus_warnings(self, job_data=None):
+        job_data['eplus_warnings'] = sum(
+            1 for d in job_data['eplusout_err_table'] if d.get('error_type') == 'warning')
+        job_data['eplus_severes'] = sum(
+            1 for d in job_data['eplusout_err_table'] if d.get('error_type') == 'severe')
+        job_data['eplus_fatals'] = sum(
+            1 for d in job_data['eplusout_err_table'] if d.get('error_type') == 'fatal')
+        # Need to zero this in costing btap_data.rb file otherwise may be NA.
+        for item in ['energy_eui_heat recovery_gj_per_m_sq', 'energy_eui_heat rejection_gj_per_m_sq']:
+            if not job_data.get(item):
+                job_data[item] = 0.0
+        return job_data
+    def _save_output_file(self, job_data):
+        # save btap_data json file.
+        Path(os.path.dirname(self.local_json_file_path)).mkdir(parents=True, exist_ok=True)
+        with open(self.local_json_file_path, 'w') as outfile:
+            json.dump(job_data, outfile, indent=4)
+    #private methods
+    def __volume_mounts(self):
+        volumes = {
+            self.analysis_output_folder: {
+                'bind': '/btap_costing/utilities/btap_cli/output',
+                'mode': 'rw'},
+            self.analysis_input_job_id_folder: {
+                'bind': '/btap_costing/utilities/btap_cli/input',
+                'mode': 'rw'},
+        }
+        return volumes
+
+
+

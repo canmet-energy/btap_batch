@@ -1,6 +1,6 @@
 from src.compute_resources.docker_image_manager import DockerImageManager
 from src.compute_resources.docker_batch import DockerBatch
-from src.compute_resources.btap_cli_engine import BTAPEngine
+
 from src.compute_resources.btap_optimization import BTAPOptimization
 from src.compute_resources.btap_reference import BTAPReference
 import copy
@@ -26,8 +26,7 @@ def run_references(analysis_config=None,
         bb = BTAPReference(
             analysis_config=ref_analysis_config,
             analyses_folder=analyses_folder,
-            analysis_input_folder=analysis_input_folder,
-            engine=engine)
+            analysis_input_folder=analysis_input_folder)
         print(f"running reference stage")
         bb.run()
         return os.path.join(bb.analysis_results_folder(), 'output.xlsx')
@@ -35,15 +34,13 @@ def run_references(analysis_config=None,
 
 image_mgr = DockerImageManager(image_name='btap_cli')
 # image_mgr.build_image()
-engine = BTAPEngine()
 
 run_options = yaml.safe_load(Path(
     r"C:\Users\plopez\btap_batch\src\test\test_docker_batch\analysis_id\input\datapoint_id\run_options.yml").read_text())
 
 local_project_folder = r"C:\Users\plopez\btap_batch\src\test\test_docker_batch"
 
-batch = DockerBatch(image_manager=image_mgr,
-                    engine=engine)
+batch = DockerBatch(image_manager=image_mgr)
 
 analysis_config_file = r"C:\Users\plopez\btap_batch\examples\custom_osm\input.yml"
 
