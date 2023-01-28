@@ -85,6 +85,7 @@ class AWSImageManager(DockerImageManager):
         # Create IAM role permission dynamically.
         cloud_build_role = IAMCloudBuildRole()
         cloud_build_role.create_role()
+        time.sleep(5)
 
         codebuild.create_project(
             name=codebuild_project_name,

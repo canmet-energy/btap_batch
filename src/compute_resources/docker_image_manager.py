@@ -16,7 +16,6 @@ class DockerImageManager:
     def __init__(self,
                  image_name=None,
                  compute_environement=None):
-        self.check_docker()
         self.cli_run_command = "docker run --rm"
         self.cli_build_command = "docker build -t"
         self.image_name = image_name
@@ -43,6 +42,7 @@ class DockerImageManager:
         return build_args
 
     def get_image(self):
+        self.check_docker()
         try:
             image = docker.from_env().images.get(name=self.get_full_image_name())
         except docker.errors.ImageNotFound as err:
@@ -63,6 +63,7 @@ class DockerImageManager:
 
     # Common
     def build_image(self, build_args=None):
+        self.check_docker()
         self.build_args = build_args
         container_client = docker.from_env()
         start = time.time()
@@ -89,6 +90,7 @@ class DockerImageManager:
     # Common
     def get_threads(self):
         # Try to access the docker daemon. If we cannot.. ask user to turn it on and then exit.
+        self.check_docker()
         try:
             docker.from_env()
         except DockerException as err:
@@ -114,6 +116,7 @@ class DockerImageManager:
                       engine_command=None,
                       run_options=None):
 
+        self.check_docker()
         run_options['docker_command'] = f"{self.run_command_cli_string(volumes=volumes)} {engine_command}"
 
         # Set volumes for docker client command.

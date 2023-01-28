@@ -209,14 +209,8 @@ class AWSBatch:
         job=None
         if self.image_manager.image_name == 'btap_cli':
             job = AWSBTAPJob(batch=self, job_id=job_id)
-        elif self.image_manager.image_name == 'btap_batch':
-            job = AWSBTAPBatchJob(batch=self, job_id=job_id)
+
         return job
 
-
-
-        return AWSBTAPJob(batch=self,
-                          job_id=job_id
-                          )
 
 
