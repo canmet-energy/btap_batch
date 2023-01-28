@@ -22,11 +22,10 @@ class AWSCredentials:
         self.batch_client = boto3.client('batch',config=self._aws_config)
         self.sts_client = boto3.client('sts', config=self._aws_config)
         self.iam_client = boto3.client('iam', config=self._aws_config)
-        self.s3_client = boto3.client('s3,', config=self._aws_config)
+        self.s3_client = boto3.client('s3', config=self._aws_config)
         self.ec2_client = boto3.client('ec2', config=self._aws_config)
         self.codebuild_client = boto3.client('codebuild', config=self._aws_config)
         self.ecr_client = boto3.client('ecr', config=self._aws_config)
-        AWSCredentials().ecr_client
         try:
             self.account_id = self.sts_client.get_caller_identity()["Account"]
             self.user_id = self.sts_client.get_caller_identity()["UserId"]
