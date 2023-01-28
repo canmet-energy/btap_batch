@@ -5,7 +5,7 @@ import re
 import os
 import atexit
 import uuid
-import json,yaml
+import json, yaml
 import time
 import datetime
 import pathlib
@@ -17,9 +17,10 @@ import pip_system_certs.wrapt_requests
 import requests
 import glob
 from .constants import AWS_MAX_RETRIES, MAX_AWS_VCPUS, MIN_AWS_VCPUS, CLOUD_BUILD_SERVICE_ROLE, BATCH_JOB_ROLE
-from .constants import BATCH_SERVICE_ROLE, CONTAINER_VCPU, CONTAINER_MEMORY,CONTAINER_STORAGE
-from .constants import AWS_BATCH_ALLOCATION_STRATEGY,AWS_BATCH_COMPUTE_INSTANCE_TYPES, AWS_BATCH_DEFAULT_IMAGE
+from .constants import BATCH_SERVICE_ROLE, CONTAINER_VCPU, CONTAINER_MEMORY, CONTAINER_STORAGE
+from .constants import AWS_BATCH_ALLOCATION_STRATEGY, AWS_BATCH_COMPUTE_INSTANCE_TYPES, AWS_BATCH_DEFAULT_IMAGE
 from .constants import DOCKERFILE_URL, DOCKERFILES_FOLDER
+
 
 # Blob Storage operations
 class S3:
@@ -105,7 +106,6 @@ class S3:
         self.s3.upload_file(file, bucket_name, target_path)
 
 
-
 # Class to authenticate to AWS and to get account information
 class AWSCredentials:
     # Initialize with required clients.
@@ -167,18 +167,22 @@ class AWSBatch:
         self.bucket = self.credentials.account_id
         self.engine = engine
 
-
         # Create the aws clients required.
         config = Config(retries={'max_attempts': AWS_MAX_RETRIES, 'mode': 'standard'})
         self.ec2 = boto3.client('ec2', config=config)
-        self.batch_client = boto3.client('batch', config=botocore.client.Config(max_pool_connections=self.get_threads(),
-                                                                                retries={
-                                                                                    'max_attempts': AWS_MAX_RETRIES,
-                                                                                    'mode': 'standard'}))
+        self.batch_client = boto3.client('batch', config=botocore.client.Config(
+            region_name='ca-central-1',
+            max_pool_connections=self.get_threads(),
+            retries={
+                'max_attempts': AWS_MAX_RETRIES,
+                'mode': 'standard'}))
         self.iam = boto3.client('iam', config=config)
-        self.s3 = boto3.client('s3', config=botocore.client.Config(max_pool_connections=self.get_threads(),
-                                                                   retries={'max_attempts': AWS_MAX_RETRIES,
-                                                                            'mode': 'standard'}))
+        self.s3 = boto3.client('s3',
+                               config=botocore.client.Config(
+                                   region_name='ca-central-1',
+                                   max_pool_connections=self.get_threads(),
+                                   retries={'max_attempts': AWS_MAX_RETRIES,
+                                            'mode': 'standard'}))
         self.cloudwatch = boto3.client('logs')
         self.ecr = boto3.client('ecr')
         self.cloudwatch = boto3.client('logs')
@@ -417,16 +421,15 @@ class AWSBatch:
             if not image_name in codebuild.list_projects()['projects']:
                 # create build project
                 environment_vars = [
-                                    {
-                                        "name": "AWS_DEFAULT_REGION",
-                                        "value": self.credentials.region_name
-                                    },
-                                    {
-                                        "name": "AWS_ACCOUNT_ID",
-                                        "value": self.credentials.account_id
-                                    }
+                                       {
+                                           "name": "AWS_DEFAULT_REGION",
+                                           "value": self.credentials.region_name
+                                       },
+                                       {
+                                           "name": "AWS_ACCOUNT_ID",
+                                           "value": self.credentials.account_id
+                                       }
                                    ] + [{"name": k, "value": v} for k, v in image_build_args.items()]
-
 
                 codebuild.create_project(
                     name=image_name,
@@ -796,6 +799,3 @@ class AWSBatch:
             logging.warning(f"Implementing exponential backoff for job {compute_environment_id} for {wait_time}s")
             time.sleep(wait_time)
             return self.__describe_compute_environments(compute_environment_id, n=n + 1)
-
-
-

@@ -14,6 +14,7 @@ from random import random
 from src.compute_resources.aws_iam_roles import IAMBatchServiceRole
 from src.compute_resources.aws_ec2_info import AWS_EC2Info
 from src.compute_resources.common_paths import CommonPaths
+from src.compute_resources.aws_credentials import AWSCredentials
 from icecream import ic
 
 # Role to give permissions to jobs to run.
@@ -47,7 +48,7 @@ class AWSComputeEnvironment:
 
     # Short method that creates a template to increase the disk size of the containers. Default 100GB.
     def __add_storage_space_launch_template(self, sizegb=CONTAINER_STORAGE):
-        self.ec2 = boto3.client('ec2', config=Config(retries={'max_attempts': AWS_MAX_RETRIES, 'mode': 'standard'}))
+        self.ec2 = AWSCredentials().ec2_client
 
         launch_template = self.ec2.describe_launch_templates()['LaunchTemplates']
         if next((item for item in launch_template if item["LaunchTemplateName"] == self.launch_template_name),
@@ -77,11 +78,7 @@ class AWSComputeEnvironment:
         return self.launch_template_name
 
     def __describe_compute_environments(self, compute_environment_name, n=0):
-        batch_client = boto3.client('batch',
-                                    config=botocore.client.Config(max_pool_connections=MAX_AWS_VCPUS,
-                                                                  retries={
-                                                                      'max_attempts': AWS_MAX_RETRIES,
-                                                                      'mode': 'standard'}))
+        batch_client = AWSCredentials().batch_client
         try:
             return batch_client.describe_compute_environments(computeEnvironments=[compute_environment_name])
         except:
@@ -95,11 +92,7 @@ class AWSComputeEnvironment:
 
     def __create_compute_environment(self, launch_template=None):
 
-        batch_client = boto3.client('batch',
-                                    config=botocore.client.Config(max_pool_connections=MAX_AWS_VCPUS,
-                                                                  retries={
-                                                                      'max_attempts': AWS_MAX_RETRIES,
-                                                                      'mode': 'standard'}))
+        batch_client = AWSCredentials().batch_client
         # Inform user starting to create CE.
         message = f'Creating Compute Environment {self._compute_environment_name}'
         print(message)
@@ -149,11 +142,7 @@ class AWSComputeEnvironment:
     def __delete_compute_environment(self):
         describe = self.__describe_compute_environments(self._compute_environment_name)
         if len(describe['computeEnvironments']) != 0:
-            batch_client = boto3.client('batch',
-                                        config=botocore.client.Config(max_pool_connections=MAX_AWS_VCPUS,
-                                                                      retries={
-                                                                          'max_attempts': AWS_MAX_RETRIES,
-                                                                          'mode': 'standard'}))
+            batch_client = AWSCredentials().batch_client
             # Inform user starting to create CE.
             message = f'Disable Compute Environment {self._compute_environment_name}'
             print(message)

@@ -46,11 +46,7 @@ class AWSBatch:
 
 
     def __describe_job_queues(self, job_queue_name, n=0):
-        batch_client = boto3.client('batch',
-                                    config=botocore.client.Config(max_pool_connections=MAX_AWS_VCPUS,
-                                                                  retries={
-                                                                      'max_attempts': AWS_MAX_RETRIES,
-                                                                      'mode': 'standard'}))
+        batch_client = AWSCredentials().batch_client
         try:
             # See https://boto3.amazonaws.com/v1/documentation/api/latest/reference/services/batch.html#Batch.Client.describe_job_queues
             return batch_client.describe_job_queues(jobQueues=[job_queue_name])
@@ -69,11 +65,7 @@ class AWSBatch:
         logging.info(message)
         print(message)
 
-        batch_client = boto3.client('batch',
-                                    config=botocore.client.Config(max_pool_connections=MAX_AWS_VCPUS,
-                                                                  retries={
-                                                                      'max_attempts': AWS_MAX_RETRIES,
-                                                                      'mode': 'standard'}))
+        batch_client = AWSCredentials().batch_client
 
         response = batch_client.create_job_queue(jobQueueName=self.job_queue_name,
                                                  priority=100,
@@ -112,11 +104,7 @@ class AWSBatch:
         message = f'Creating Job Definition {self.job_def_name}'
         logging.info(message)
         print(message)
-        batch_client = boto3.client('batch',
-                                    config=botocore.client.Config(max_pool_connections=MAX_AWS_VCPUS,
-                                                                  retries={
-                                                                      'max_attempts': AWS_MAX_RETRIES,
-                                                                      'mode': 'standard'}))
+        batch_client = AWSCredentials().batch_client
 
         response = batch_client.register_job_definition(jobDefinitionName=self.job_def_name,
                                                         type='container',
@@ -133,11 +121,7 @@ class AWSBatch:
 
 
     def __deregister_job_definition(self):
-        batch_client = boto3.client('batch',
-                                    config=botocore.client.Config(max_pool_connections=MAX_AWS_VCPUS,
-                                                                  retries={
-                                                                      'max_attempts': AWS_MAX_RETRIES,
-                                                                      'mode': 'standard'}))
+        batch_client = AWSCredentials().batch_client
 
         describe = batch_client.describe_job_definitions(jobDefinitionName=self.job_def_name)
         if len(describe['jobDefinitions']) != 0:
@@ -159,11 +143,7 @@ class AWSBatch:
         describe = self.__describe_job_queues(self.job_queue_name)
         if len(describe['jobQueues']) != 0:
 
-            batch_client = boto3.client('batch',
-                                        config=botocore.client.Config(max_pool_connections=MAX_AWS_VCPUS,
-                                                                      retries={
-                                                                          'max_attempts': AWS_MAX_RETRIES,
-                                                                          'mode': 'standard'}))
+            batch_client = AWSCredentials().batch_client
             # Disable Queue
             # Tell user
             message = f'Disable Job Queue {self.job_queue_name}'

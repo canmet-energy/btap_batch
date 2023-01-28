@@ -26,7 +26,7 @@ CMD ["/bin/bash"]
 # docker build -t --no-cache --build-arg GIT_API_TOKEN=$GIT_API_TOKEN --build-arg AWS_USERNAME=$AWS_USERNAME --build-arg  BTAP_BATCH_BRANCH=$BTAP_BATCH_BRANCH .
 # Test locally.
 # docker run -it --rm -v "//var/run/docker.sock:/var/run/docker.sock" -v "//c/Users/plopez/.aws:/root/.aws"  btap_batch /bin/bash
-# PYTHONPATH=/btap_batch python3 new_run.py
+# PYTHONPATH=/btap_batch python3 /btap_batch/examples/optimization/new_run.py
 
 #docker run -it --rm -v "//var/run/docker.sock:/var/run/docker.sock" -v "//c/Users/plopez/.aws:/root/.aws"  834599497928.dkr.ecr.ca-central-1.amazonaws.com/phylroy_lopez_btap_batch  /bin/bash
 

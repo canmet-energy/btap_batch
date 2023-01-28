@@ -3,7 +3,7 @@ import boto3
 from botocore.config import Config
 import logging
 import re
-from src.constants import AWS_MAX_RETRIES
+from src.constants import AWS_MAX_RETRIES,MAX_AWS_VCPUS
 from pathlib import Path
 import traceback
 
@@ -11,12 +11,25 @@ class AWSCredentials:
     # Initialize with required clients.
 
     def __init__(self):
-        config = Config(retries={'max_attempts': AWS_MAX_RETRIES, 'mode': 'standard'})
-        self.sts = boto3.client('sts', config=config)
-        self.iam = boto3.client('iam', config=config)
+
+
+        self._aws_config = botocore.client.Config(
+            region_name='ca-central-1',
+            max_pool_connections=MAX_AWS_VCPUS,
+            retries={'max_attempts': AWS_MAX_RETRIES,
+                     'mode': 'standard'})
+
+        self.batch_client = boto3.client('batch',config=self._aws_config)
+        self.sts_client = boto3.client('sts', config=self._aws_config)
+        self.iam_client = boto3.client('iam', config=self._aws_config)
+        self.s3_client = boto3.client('s3,', config=self._aws_config)
+        self.ec2_client = boto3.client('ec2', config=self._aws_config)
+        self.codebuild_client = boto3.client('codebuild', config=self._aws_config)
+        self.ecr_client = boto3.client('ecr', config=self._aws_config)
+        AWSCredentials().ecr_client
         try:
-            self.account_id = self.sts.get_caller_identity()["Account"]
-            self.user_id = self.sts.get_caller_identity()["UserId"]
+            self.account_id = self.sts_client.get_caller_identity()["Account"]
+            self.user_id = self.sts_client.get_caller_identity()["UserId"]
         except botocore.exceptions.ClientError as e:
             traceback.print_exc()
             if e.response['Error']['Code'] == 'ExpiredToken':
@@ -41,7 +54,7 @@ class AWSCredentials:
             self.user_name = re.compile(".*:(.*)@.*").search(self.user_id)[1]
 
         # User ARN (Not used currently)
-        self.user_arn = self.sts.get_caller_identity()["Arn"]
+        self.user_arn = self.sts_client.get_caller_identity()["Arn"]
         # AWS Region name.
         self.region_name = boto3.Session().region_name
 

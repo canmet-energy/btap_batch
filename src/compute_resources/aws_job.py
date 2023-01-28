@@ -116,12 +116,7 @@ class AWSBTAPJob(DockerBTAPJob):
 
     def __job_wrapper(self, n=0):
         try:
-            batch_client = boto3.client('batch',
-                                        config=botocore.client.Config(
-                                            max_pool_connections=self.batch.image_manager.get_threads(),
-                                            retries={
-                                                'max_attempts': AWS_MAX_RETRIES,
-                                                'mode': 'standard'}))
+            batch_client = AWSCredentials().batch_client
             submitJobResponse = batch_client.submit_job(
                 jobName=self.__aws_job_name(),
                 jobQueue=self.batch.job_queue_name,
@@ -142,12 +137,7 @@ class AWSBTAPJob(DockerBTAPJob):
             return self.__job_wrapper(n=n + 1)
     def __get_job_status(self, n=0):
         try:
-            batch_client = boto3.client('batch',
-                                        config=botocore.client.Config(
-                                            max_pool_connections=self.batch.image_manager.get_threads(),
-                                            retries={
-                                                'max_attempts': AWS_MAX_RETRIES,
-                                                'mode': 'standard'}))
+            batch_client = AWSCredentials().batch_client
             describeJobsResponse = batch_client.describe_jobs(jobs=[self.cloud_job_id])
             return describeJobsResponse
         except:
@@ -256,12 +246,7 @@ class AWSBTAPBatchJob(AWSBTAPJob):
 
     def __job_wrapper(self, n=0):
         try:
-            batch_client = boto3.client('batch',
-                                        config=botocore.client.Config(
-                                            max_pool_connections=self.batch.image_manager.get_threads(),
-                                            retries={
-                                                'max_attempts': AWS_MAX_RETRIES,
-                                                'mode': 'standard'}))
+            batch_client = AWSCredentials().batch_client
             submitJobResponse = batch_client.submit_job(
                 jobName=self.__aws_job_name(),
                 jobQueue=self.batch.job_queue_name,
@@ -282,12 +267,7 @@ class AWSBTAPBatchJob(AWSBTAPJob):
             return self.__job_wrapper(n=n + 1)
     def __get_job_status(self, n=0):
         try:
-            batch_client = boto3.client('batch',
-                                        config=botocore.client.Config(
-                                            max_pool_connections=self.batch.image_manager.get_threads(),
-                                            retries={
-                                                'max_attempts': AWS_MAX_RETRIES,
-                                                'mode': 'standard'}))
+            batch_client = AWSCredentials().batch_client
             describeJobsResponse = batch_client.describe_jobs(jobs=[self.cloud_job_id])
             return describeJobsResponse
         except:

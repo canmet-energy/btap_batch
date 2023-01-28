@@ -6,14 +6,14 @@ import logging
 from src.constants import AWS_MAX_RETRIES
 import os
 import glob
+from src.compute_resources.aws_credentials import AWSCredentials
 
 # Blob Storage operations
 class S3:
     # Constructor
     def __init__(self):
         # Create the s3 client.
-        config = Config(retries={'max_attempts': AWS_MAX_RETRIES, 'mode': 'standard'})
-        self.s3 = boto3.client('s3', config=config)
+        self.s3 = AWSCredentials().s3_client
 
     # Method to delete a bucket. Not used
     def delete_bucket(self, bucket_name):

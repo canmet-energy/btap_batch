@@ -30,7 +30,7 @@ class IAMRoles():
     def create_role(self):
         #delete if it already exists.
         self.delete()
-        iam_client = boto3.client('iam')
+        iam_client = AWSCredentials().iam_client
         iam_res = boto3.resource('iam')
         iam_client.create_role(
             Path=self.path,
@@ -48,7 +48,7 @@ class IAMRoles():
         logging.info(f'{self.full_role_name()} iam role has been created')
 
     def delete(self):
-        iam = boto3.client('iam')
+        iam = AWSCredentials().iam_client
         try:
             for mp in self.managed_policies:
                 iam.detach_role_policy(
@@ -68,7 +68,7 @@ class IAMRoles():
         return credentials
 
     def copy_iam_role(self,old_role_name='AWSBatchServiceRole', new_role_name = 'new_role'):
-        iam = boto3.client('iam')
+        iam = AWSCredentials().iam_client
         sourceRole = iam.get_role(RoleName=old_role_name).get('Role')
         list_role_policies = iam.list_role_policies(RoleName=old_role_name)['PolicyNames']
         inline_policies = []

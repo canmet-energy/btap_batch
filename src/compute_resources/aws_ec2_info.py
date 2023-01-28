@@ -1,10 +1,10 @@
 import boto3
 from src.constants import AWS_MAX_RETRIES
-
 from botocore.config import Config
+from src.compute_resources.aws_credentials import AWSCredentials
 class AWS_EC2Info():
     def __init__(self):
-        self.ec2 = boto3.client('ec2', config=Config(retries={'max_attempts': AWS_MAX_RETRIES, 'mode': 'standard'}))
+        self.ec2 = AWSCredentials().ec2_client
         # Store the subnets into a list. This was set up by NRCan.
         subnets = self.ec2.describe_subnets()['Subnets']
         self.subnet_id_list = [subnet['SubnetId'] for subnet in subnets]

@@ -50,7 +50,7 @@ class AWSImageManager(DockerImageManager):
         logging.info(message)
         print(message)
         # Codebuild image.
-        codebuild = boto3.client('codebuild')
+        codebuild = AWSCredentials().codebuild_client
 
         # Upload files to S3 using custom s3 class to a user folder.
         s3 = S3()
@@ -80,12 +80,8 @@ class AWSImageManager(DockerImageManager):
         codebuild_project_name = self.get_full_image_name().replace('.', '-')
         # Delete codebuild project if it already exists.
         if codebuild_project_name in codebuild.list_projects()['projects']:
-            response = codebuild.delete_project(name=codebuild_project_name)
+            codebuild.delete_project(name=codebuild_project_name)
 
-        # Create IAM role permission dynamically.
-        cloud_build_role = IAMCloudBuildRole()
-        cloud_build_role.create_role()
-        time.sleep(5)
 
         codebuild.create_project(
             name=codebuild_project_name,
@@ -104,7 +100,7 @@ class AWSImageManager(DockerImageManager):
                 'environmentVariables': environment_vars,
                 'privilegedMode': True
             },
-            serviceRole=cloud_build_role.arn(),
+            serviceRole=IAMCloudBuildRole().arn(),
         )
 
         # Start building image.
@@ -142,11 +138,9 @@ class AWSImageManager(DockerImageManager):
                 exit(1)
             # Check status every 5 secs.
             time.sleep(5)
-        # Delete cloud build role.
-        cloud_build_role.delete()
 
     def _create_image_repository(self, repository_name=None):
-        ecr = boto3.client('ecr')
+        ecr = AWSCredentials().ecr_client
         repositories = ecr.describe_repositories()['repositories']
         if next((item for item in repositories if item["repositoryName"] == repository_name), None) == None:
             message = f"Creating repository {repository_name}"
@@ -158,7 +152,7 @@ class AWSImageManager(DockerImageManager):
 
     def get_image(self, image_name=None, image_tag='latest'):
         image = None
-        ecr = boto3.client('ecr')
+        ecr = AWSCredentials().ecr_client
         # Check if image exists.. if not it will create an image from the latest git hub reps.
         # Get list of tags for image name on aws.
         available_tags = sum(
