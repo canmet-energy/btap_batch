@@ -11,17 +11,17 @@ class AWSCredentials:
     # Initialize with required clients.
 
     def __init__(self):
-
-
+        # standard common aws configuration.
         self._aws_config = botocore.client.Config(
             region_name='ca-central-1',
             max_pool_connections=MAX_AWS_VCPUS,
             retries={'max_attempts': AWS_MAX_RETRIES,
                      'mode': 'standard'})
-
-        self.batch_client = boto3.client('batch',config=self._aws_config)
+        # all client created in this class.
+        self.batch_client = boto3.client('batch', config=self._aws_config)
         self.sts_client = boto3.client('sts', config=self._aws_config)
         self.iam_client = boto3.client('iam', config=self._aws_config)
+        self.iam_resource = boto3.resource('iam')
         self.s3_client = boto3.client('s3', config=self._aws_config)
         self.ec2_client = boto3.client('ec2', config=self._aws_config)
         self.codebuild_client = boto3.client('codebuild', config=self._aws_config)

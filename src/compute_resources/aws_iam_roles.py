@@ -18,7 +18,7 @@ class IAMRoles():
         self.description = ''
 
     def arn(self):
-        iam_res = boto3.resource('iam')
+        iam_res = AWSCredentials().iam_resource
         role = iam_res.Role(self.full_role_name())
         role.load()
         return role.arn
@@ -31,7 +31,7 @@ class IAMRoles():
         #delete if it already exists.
         self.delete()
         iam_client = AWSCredentials().iam_client
-        iam_res = boto3.resource('iam')
+        iam_res = AWSCredentials().iam_resource
         iam_client.create_role(
             Path=self.path,
             RoleName=self.full_role_name(),
