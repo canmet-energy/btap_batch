@@ -25,7 +25,8 @@ class PostProcessResults():
                  baseline_results=BASELINE_RESULTS,
                  database_folder=None,
                  results_folder=None,
-                 compute_environment=None
+                 compute_environment=None,
+                 output_variables=None
                  ):
 
         command = f'PostProcessResults(baseline_results=r"{baseline_results}",database_folder=r"{database_folder}", results_folder=r"{results_folder}")'
@@ -42,6 +43,7 @@ class PostProcessResults():
         self.baseline_results = baseline_results
         self.results_folder = results_folder
         self.compute_environment = compute_environment
+        self.output_variables = output_variables
 
     def run(self):
         self.reference_comparisons()
@@ -149,18 +151,8 @@ class PostProcessResults():
             # Find path of the results folder
             folder_in_results_path = os.path.join(self.results_folder, folder_in_results_name)
             if folder_in_results_name == 'hourly.csv':
-                # Find path of the folder where the .yml file is
-                yml_file_folder_path = "\\".join(folder_in_results_path.split("\\")[:-4])
-                # Find path of the .yml file
-                yml_file_path = os.path.join(yml_file_folder_path, 'input.yml')
-                # Get inputs in the .yml file
-                if not os.path.isfile(yml_file_path):
-                    logging.error(f"could not find analysis input file at {yml_file_path}. Exiting")
-                # Open the yaml in analysis dict.
-                with open(yml_file_path, 'r') as stream:
-                    analysis_config = yaml.safe_load(stream)
                 # Get variables specified in the :output_variables variable
-                output_var = analysis_config[':output_variables']
+                output_var = self.output_variables
                 # Get number of variables specified in the :output_variables variable
                 output_var_length = len(output_var)
 

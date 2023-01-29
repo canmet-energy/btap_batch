@@ -1,6 +1,5 @@
 import botocore
 import boto3
-from botocore.config import Config
 import logging
 import re
 from src.constants import AWS_MAX_RETRIES,MAX_AWS_VCPUS

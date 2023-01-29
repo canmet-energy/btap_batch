@@ -422,7 +422,8 @@ class BTAPAnalysis():
         ppr = PostProcessResults(baseline_results=baseline_results,
                            database_folder=self.cp.analysis_database_folder(),
                            results_folder=self.cp.analysis_results_folder(),
-                           compute_environment=self.compute_environment)
+                           compute_environment=self.compute_environment,
+                           output_variables=self.output_variables)
         ppr.run()
 
         # If this is an aws_batch run, copy the excel file to s3 for storage.

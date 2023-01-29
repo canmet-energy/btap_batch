@@ -1,11 +1,8 @@
 import logging
-import boto3
 import json
 from icecream import ic
 from src.compute_resources.aws_credentials import AWSCredentials
 from src.compute_resources.common_paths import CommonPaths
-
-
 
 class IAMRoles():
     def __init__(self):
