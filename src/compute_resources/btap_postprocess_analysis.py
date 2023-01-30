@@ -7,7 +7,6 @@ import boto3
 import botocore
 import tqdm
 import csv
-import yaml
 from functools import partial
 from concurrent.futures import ThreadPoolExecutor, as_completed
 import shutil
@@ -291,5 +290,56 @@ class PostProcessResults():
                 self.btap_data_df['baseline_difference_npv_total_per_m_sq'] = round(
                     (df['npv_total_per_m_sq_y'] - df[
                         'npv_total_per_m_sq_x']), 1).values
+
+                # Unmet cooling hours of the reference building
+                self.btap_data_df['baseline_unmet_hours_cooling'] = df['unmet_hours_cooling_y']
+                self.btap_data_df['baseline_unmet_hours_cooling_during_occupied'] = df[
+                    'unmet_hours_cooling_during_occupied_y']
+
+                # Outdoor-air-related outputs of the reference building
+                self.btap_data_df['baseline_airloops_total_outdoor_air_mechanical_ventilation_ach_1_per_hr'] = df[
+                    'airloops_total_outdoor_air_mechanical_ventilation_ach_1_per_hr_y']
+                self.btap_data_df[
+                    'baseline_airloops_total_outdoor_air_mechanical_ventilation_flow_per_conditioned_floor_area_m3_per_s_m2'] = df['airloops_total_outdoor_air_mechanical_ventilation_flow_per_conditioned_floor_area_m3_per_s_m2_y']
+                self.btap_data_df[
+                    'baseline_airloops_total_outdoor_air_mechanical_ventilation_flow_per_exterior_area_m3_per_s_m2'] = df['airloops_total_outdoor_air_mechanical_ventilation_flow_per_exterior_area_m3_per_s_m2_y']
+                self.btap_data_df['baseline_airloops_total_outdoor_air_mechanical_ventilation_m3'] = df[
+                    'airloops_total_outdoor_air_mechanical_ventilation_m3_y']
+                self.btap_data_df['baseline_airloops_total_outdoor_air_natural_ventilation_ach_1_per_hr'] = df[
+                    'airloops_total_outdoor_air_natural_ventilation_ach_1_per_hr_y']
+                self.btap_data_df[
+                    'baseline_airloops_total_outdoor_air_natural_ventilation_flow_per_conditioned_floor_area_m3_per_s_m2'] = df['airloops_total_outdoor_air_natural_ventilation_flow_per_conditioned_floor_area_m3_per_s_m2_y']
+                self.btap_data_df[
+                    'baseline_airloops_total_outdoor_air_natural_ventilation_flow_per_exterior_area_m3_per_s_m2'] = df[
+                    'airloops_total_outdoor_air_natural_ventilation_flow_per_exterior_area_m3_per_s_m2_y']
+                self.btap_data_df['baseline_airloops_total_outdoor_air_natural_ventilation_m3'] = df[
+                    'airloops_total_outdoor_air_natural_ventilation_m3_y']
+                self.btap_data_df['baseline_zones_total_outdoor_air_infiltration_ach_1_per_hr'] = df[
+                    'zones_total_outdoor_air_infiltration_ach_1_per_hr_y']
+                self.btap_data_df[
+                    'baseline_zones_total_outdoor_air_infiltration_flow_per_conditioned_floor_area_m3_per_s_m2'] = df[
+                    'zones_total_outdoor_air_infiltration_flow_per_conditioned_floor_area_m3_per_s_m2_y']
+                self.btap_data_df['baseline_zones_total_outdoor_air_infiltration_flow_per_exterior_area_m3_per_s_m2'] = df['zones_total_outdoor_air_infiltration_flow_per_exterior_area_m3_per_s_m2_y']
+                self.btap_data_df['baseline_zones_total_outdoor_air_infiltration_m3'] = df[
+                    'zones_total_outdoor_air_infiltration_m3_y']
+                self.btap_data_df['baseline_zones_total_outdoor_air_mechanical_ventilation_ach_1_per_hr'] = df[
+                    'zones_total_outdoor_air_mechanical_ventilation_ach_1_per_hr_y']
+                self.btap_data_df[
+                    'baseline_zones_total_outdoor_air_mechanical_ventilation_flow_per_conditioned_floor_area_m3_per_s_m2'] = df['zones_total_outdoor_air_mechanical_ventilation_flow_per_conditioned_floor_area_m3_per_s_m2_y']
+                self.btap_data_df[
+                    'baseline_zones_total_outdoor_air_mechanical_ventilation_flow_per_exterior_area_m3_per_s_m2'] = df[
+                    'zones_total_outdoor_air_mechanical_ventilation_flow_per_exterior_area_m3_per_s_m2_y']
+                self.btap_data_df['baseline_zones_total_outdoor_air_mechanical_ventilation_m3'] = df[
+                    'zones_total_outdoor_air_mechanical_ventilation_m3_y']
+                self.btap_data_df['baseline_zones_total_outdoor_air_natural_ventilation_ach_1_per_hr'] = df[
+                    'zones_total_outdoor_air_natural_ventilation_ach_1_per_hr_y']
+                self.btap_data_df[
+                    'baseline_zones_total_outdoor_air_natural_ventilation_flow_per_conditioned_floor_area_m3_per_s_m2'] = df['zones_total_outdoor_air_natural_ventilation_flow_per_conditioned_floor_area_m3_per_s_m2_y']
+                self.btap_data_df[
+                    'baseline_zones_total_outdoor_air_natural_ventilation_flow_per_exterior_area_m3_per_s_m2'] = df[
+                    'zones_total_outdoor_air_natural_ventilation_flow_per_exterior_area_m3_per_s_m2_y']
+                self.btap_data_df['baseline_zones_total_outdoor_air_natural_ventilation_m3'] = df[
+                    'zones_total_outdoor_air_natural_ventilation_m3_y']
+
 
 

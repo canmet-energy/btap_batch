@@ -118,6 +118,7 @@ class DockerImageManager:
 
         self.check_docker()
         run_options['docker_command'] = f"{self.run_command_cli_string(volumes=volumes)} {engine_command}"
+        print(f"Running: {run_options['docker_command']}")
 
         # Set volumes for docker client command.
         result = docker.from_env().containers.run(
