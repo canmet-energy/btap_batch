@@ -42,10 +42,10 @@ class AWSAnalysisJob():
 
 
     def job_wrapper(self, n=0):
-        ic(self.aws_job_name())
-        ic(self.batch.job_queue_name)
-        ic(self.batch.job_def_name)
-        ic(self.container_command())
+        # ic(self.aws_job_name())
+        # ic(self.batch.job_queue_name)
+        # ic(self.batch.job_def_name)
+        # ic(self.container_command())
         batch_client = AWSCredentials().batch_client
         try:
             submitJobResponse = batch_client.submit_job(
@@ -54,6 +54,8 @@ class AWSAnalysisJob():
                 jobDefinition=self.batch.job_def_name,
                 containerOverrides={'command': self.container_command()}
             )
+            logging.info(
+                f"Submitted {self.aws_job_name()} to aws job queue {self.batch.job_queue_name}")
             return submitJobResponse
         except:
             # Implementing exponential backoff

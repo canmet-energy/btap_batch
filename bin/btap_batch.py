@@ -215,3 +215,7 @@ def analysis(analysis_project_folder, compute_environment):
 
 if __name__ == '__main__':
     btap()
+
+
+#Sample commands.
+#set PYTHONPATH=C:\Users\plopez\btap_batch &&  python ./bin/btap_batch.py run-analysis-project --compute_environment aws_batch_analysis --project_folder C:\Users\plopez\btap_batch\examples\optimization
