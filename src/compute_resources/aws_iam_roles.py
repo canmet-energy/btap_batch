@@ -10,7 +10,7 @@ class IAMRoles():
         self.credentials = self.get_credentials()
         self.path = '/service-role/'
         self.role_name = ""
-        self.max_duration = 3600
+        self.max_duration = 43200
         self.assume_role_policy = {}
         self.managed_policies = []
         self.description = ''
@@ -120,7 +120,7 @@ class IAMCloudBuildRole(IAMRoles):
         self.credentials = self.get_credentials()
         self.path = '/service-role/'
         self.role_name = "cloud_build"
-        self.max_duration = 3600
+        self.max_duration = 43200
         self.description = ''
         self.assume_role_policy = {'Version': '2012-10-17',
                                    'Statement': [
@@ -147,7 +147,7 @@ class IAMBatchJobRole(IAMRoles):
         self.credentials = self.get_credentials()
         self.path = '/service-role/'
         self.role_name = "batch_job_role"
-        self.max_duration = 3600
+        self.max_duration = 43200
         self.description = ''
         self.assume_role_policy = {
             "Version": "2012-10-17",
@@ -179,7 +179,7 @@ class IAMBatchServiceRole(IAMRoles):
         self.credentials = self.get_credentials()
         self.path = '/service-role/'
         self.role_name = "batch_service_role"
-        self.max_duration = 3600
+        self.max_duration = 43200
         self.description = ''
         self.assume_role_policy = {
             "Version": "2012-10-17",

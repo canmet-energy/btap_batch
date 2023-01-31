@@ -54,8 +54,9 @@ class AWSAnalysisJob():
                 jobDefinition=self.batch.job_def_name,
                 containerOverrides={'command': self.container_command()}
             )
-            logging.info(
-                f"Submitted {self.aws_job_name()} to aws job queue {self.batch.job_queue_name}")
+            message = f"Submitted {self.aws_job_name()} to aws job queue {self.batch.job_queue_name}"
+            logging.info(message)
+            print(message)
             return submitJobResponse
         except:
             # Implementing exponential backoff
@@ -72,16 +73,17 @@ class AWSAnalysisJob():
     def container_command(self):
         command = ["python3",
                    "/btap_batch/bin/btap_batch.py",
-                   "run_analysis-project",
-                   f"--project_folder {self.cp.s3_btap_batch_container_input_path()}",
-                   f"--compute_environment aws_batch"
+                   "run-analysis-project",
+                   "--project_folder",
+                   self.cp.s3_btap_batch_container_input_path(),
+                   "--compute_environment",
+                   "aws_batch"
                    ]
         return command
 
     def copy_files_to_run_location(self):
         message = f"Copying from {self.source} to bucket{self.s3_bucket} target {self.target}"
         logging.info(message)
-        ic(message)
         S3().delete_s3_folder(bucket=self.s3_bucket, folder=self.target)
         S3().copy_folder_to_s3(bucket_name=self.s3_bucket,
                                source_folder=self.source,

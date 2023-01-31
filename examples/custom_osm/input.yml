@@ -1,5 +1,4 @@
 ---
-# aws_batch local_docker
 :analysis_name: test_me
 :algorithm_type: parametric
 :algorithm_nsga_population: null
