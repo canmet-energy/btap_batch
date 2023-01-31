@@ -1,5 +1,5 @@
 # Dependencies based on the following pip install Dec 12, 2022
-# pip install icecream scikit-learn pymoo==0.6.0 pyyaml boto3 pandas scikit-optimize openstudio==3.2.1 tqdm numpy_financial docker openpyxl podman pypiwin32 pip_system_certs click
+# pip install icecream scikit-learn pymoo==0.6.0 pyyaml boto3 pandas scikit-optimize openstudio==3.2.1 tqdm numpy_financial docker openpyxl podman pypiwin32 pip_system_certs click cloudpathlib
 about-time==3.1.1
 alive-progress==2.4.1
 asttokens==2.2.1

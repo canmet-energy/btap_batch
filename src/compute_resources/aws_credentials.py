@@ -6,6 +6,7 @@ from src.constants import AWS_MAX_RETRIES,MAX_AWS_VCPUS
 from pathlib import Path
 import traceback
 
+
 class AWSCredentials:
     # Initialize with required clients.
 
@@ -22,6 +23,7 @@ class AWSCredentials:
         self.iam_client = boto3.client('iam', config=self._aws_config)
         self.iam_resource = boto3.resource('iam')
         self.s3_client = boto3.client('s3', config=self._aws_config)
+        self.s3_resource = boto3.resource('s3')
         self.ec2_client = boto3.client('ec2', config=self._aws_config)
         self.codebuild_client = boto3.client('codebuild', config=self._aws_config)
         self.ecr_client = boto3.client('ecr', config=self._aws_config)

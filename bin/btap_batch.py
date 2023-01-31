@@ -8,35 +8,16 @@ from src.compute_resources.btap_analysis import BTAPAnalysis
 from src.compute_resources.btap_reference import BTAPReference
 from src.compute_resources.btap_optimization import BTAPOptimization
 from src.compute_resources.btap_parametric import BTAPParametric
+from src.compute_resources.aws_s3 import S3
+from src.compute_resources.common_paths import CommonPaths
+import shutil
 
 import time
 import copy
 import os
-
-
-def get_analysis(analysis_config=None,
-                 analysis_input_folder=None,
-                 analyses_folder=None,
-                 reference_run_data_path=None):
-    analysis = None
-
-    # nsga2
-    if analysis_config[':algorithm_type'] == 'nsga2':
-        analysis = BTAPOptimization(analysis_config=analysis_config,
-                                    analysis_input_folder=analysis_input_folder,
-                                    analyses_folder=analyses_folder,
-                                    reference_run_data_path=reference_run_data_path)
-    # parametric
-    elif analysis_config[':algorithm_type'] == 'parametric':
-        analysis = BTAPParametric(analysis_config=analysis_config,
-                                  analysis_input_folder=analysis_input_folder,
-                                  analyses_folder=analyses_folder,
-                                  reference_run_data_path=reference_run_data_path)
-
-
-    return analysis
-
-
+from icecream import ic
+from pathlib import Path
+import uuid
 
 CONTEXT_SETTINGS = dict(help_option_names=['-h', '--help'])
 
@@ -123,7 +104,8 @@ def build_environment(**kwargs):
 
 
 @btap.command()
-@click.option('--compute_environment', default='local_docker', help='Environment to run analysis either local_docker or aws_batch')
+@click.option('--compute_environment', default='local_docker',
+              help='Environment to run analysis either local_docker or aws_batch')
 @click.option('--project_folder',
               help='location of folder containing input.yml file and optionally support folder such as osm_files folder. ')
 def run_analysis_project(**kwargs):
@@ -133,8 +115,45 @@ def run_analysis_project(**kwargs):
     analysis(analysis_project_folder, compute_environment)
 
 
+def get_analysis(analysis_config=None,
+                 analysis_input_folder=None,
+                 analyses_folder=None,
+                 reference_run_data_path=None):
+    analysis = None
+
+    # nsga2
+    if analysis_config[':algorithm_type'] == 'nsga2':
+        analysis = BTAPOptimization(analysis_config=analysis_config,
+                                    analysis_input_folder=analysis_input_folder,
+                                    analyses_folder=analyses_folder,
+                                    reference_run_data_path=reference_run_data_path)
+    # parametric
+    elif analysis_config[':algorithm_type'] == 'parametric':
+        analysis = BTAPParametric(analysis_config=analysis_config,
+                                  analysis_input_folder=analysis_input_folder,
+                                  analyses_folder=analyses_folder,
+                                  reference_run_data_path=reference_run_data_path)
+    return analysis
+
+
 def analysis(analysis_project_folder, compute_environment):
+    if analysis_project_folder.startswith('s3:'):
+        # download project to local temp folder.
+        local_dir = os.path.join(str(Path.home()), 'temp_analysis_folder')
+        # Check if folder exists
+        if os.path.isdir(local_dir):
+            # Remove old folder
+            try:
+                shutil.rmtree(local_dir)
+            except PermissionError:
+                message = f'Could not delete {local_dir}. Do you have a file open in that folder? Exiting'
+                print(message)
+                exit(1)
+        S3().download_s3_folder(s3_folder=analysis_project_folder, local_dir=local_dir)
+        analysis_project_folder = local_dir
+
     analysis_config_file = os.path.join(analysis_project_folder, 'input.yml')
+
     if not os.path.isfile(analysis_config_file):
         print(f"input.yml file does not exist at path {analysis_config_file}")
         exit(1)
@@ -143,25 +162,56 @@ def analysis(analysis_project_folder, compute_environment):
         exit(1)
     analysis_config, analysis_input_folder, analyses_folder = BTAPAnalysis.load_analysis_input_file(
         analysis_config_file=analysis_config_file)
-    analysis_config[':compute_environment'] = compute_environment
-    # Run reference
-    ref_analysis_config = copy.deepcopy(analysis_config)
-    ref_analysis_config[':algorithm_type'] = 'reference'
-    ref_analysis_config[':analysis_name'] = 'reference_runs'
-    br = BTAPReference(analysis_config=ref_analysis_config,
-                       analysis_input_folder=analysis_input_folder,
-                       analyses_folder=analyses_folder)
-    br.run()
-    bb = get_analysis(analysis_config=analysis_config,
-                      analysis_input_folder=analysis_input_folder,
-                      analyses_folder=analyses_folder,
-                      reference_run_data_path=br.analysis_excel_results_path())
-    bb.run()
-    print(f"Excel results file {bb.analysis_excel_results_path()}")
+
+    if compute_environment == 'local_docker' or compute_environment == 'aws_batch':
+        analysis_config[':compute_environment'] = compute_environment
+        # Run reference
+        ref_analysis_config = copy.deepcopy(analysis_config)
+        ref_analysis_config[':algorithm_type'] = 'reference'
+        ref_analysis_config[':analysis_name'] = 'reference_runs'
+        br = BTAPReference(analysis_config=ref_analysis_config,
+                           analysis_input_folder=analysis_input_folder,
+                           analyses_folder=analyses_folder)
+        br.run()
+        reference_run_data_path = br.reference_run_data_path
+
+        # BTAP analysis placeholder.
+        ba = None
+
+        # nsga2
+        if analysis_config[':algorithm_type'] == 'nsga2':
+            ba = BTAPOptimization(analysis_config=analysis_config,
+                                  analysis_input_folder=analysis_input_folder,
+                                  analyses_folder=analyses_folder,
+                                  reference_run_data_path=reference_run_data_path)
+        # parametric
+        elif analysis_config[':algorithm_type'] == 'parametric':
+            ba = BTAPParametric(analysis_config=analysis_config,
+                                analysis_input_folder=analysis_input_folder,
+                                analyses_folder=analyses_folder,
+                                reference_run_data_path=reference_run_data_path)
+        ba.run()
+        print(f"Excel results file {ba.analysis_excel_results_path()}")
+
+    if compute_environment == 'aws_batch_analysis':
+        analysis_name = analysis_config[':analysis_name']
+        analyses_folder = analysis_config[':analysis_name']
+        # Set common paths singleton.
+        cp = CommonPaths()
+        # Setting paths to current context.
+        cp.set_analysis_info(analysis_id=str(uuid.uuid4()),
+                             analysis_name=analysis_name,
+                             analyses_folder=analyses_folder,
+                             analysis_project_folder=analysis_input_folder)
+
+        compute_env = AWSComputeEnvironment()
+        image_manager = AWSImageManager(image_name='btap_batch')
+        # Gets an AWSAnalysisJob from AWSBatch
+        batch = AWSBatch(image_manager=image_manager, compute_environment=compute_env)
+        # Submit analysis job to aws.
+        job = batch.create_job(job_id=analysis_name)
+        return job.submit_job()
 
 
 if __name__ == '__main__':
     btap()
-
-
-

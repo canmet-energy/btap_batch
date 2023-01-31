@@ -81,17 +81,31 @@ class CommonPaths(object):
     def analysis_database_folder(self):
         return os.path.join(self.analysis_results_folder(), 'database')
 
-    def s3_analysis_folder(self):
-        return os.path.join(self.get_username(), self.get_analysis_name(), self.get_analysis_id()).replace('\\', '/')
+    def analysis_excel_output_path(self):
+        return os.path.join(self.analysis_results_folder(), 'output.xlsx')
+
+    def analysis_output_job_id_btap_json_path(self, job_id=None):
+        return os.path.join(self.analysis_output_job_id_folder(job_id=job_id), "btap_data.json")
+
+    def local_job_url(self, job_id=None):
+        return 'file:///' + os.path.join(self.analysis_output_job_id_folder(job_id=job_id))
+
+    # S3 paths
+
+    def s3_analysis_name_folder(self):
+        return os.path.join(self.get_username(), self.get_analysis_name()).replace('\\', '/')
+
+    def s3_analysis_id_folder(self):
+        return os.path.join(self.s3_analysis_name_folder(), self.get_analysis_id()).replace('\\', '/')
 
     def s3_input_folder(self):
-        return os.path.join(self.s3_analysis_folder()).replace('\\', '/')
+        return os.path.join(self.s3_analysis_id_folder()).replace('\\', '/')
 
     def s3_output_folder(self):
-        return os.path.join(self.s3_analysis_folder()).replace('\\', '/')
+        return os.path.join(self.s3_analysis_id_folder()).replace('\\', '/')
 
     def s3_analysis_results_folder(self):
-        return os.path.join(self.s3_analysis_folder(), 'results').replace('\\', '/')
+        return os.path.join(self.s3_analysis_id_folder(), 'results').replace('\\', '/')
 
     def s3_datapoint_input_folder(self, job_id=None):
         return os.path.join(self.s3_input_folder(), job_id).replace('\\', '/')
@@ -102,22 +116,18 @@ class CommonPaths(object):
     def s3_analysis_excel_output_path(self):
         return os.path.join(self.s3_analysis_results_folder(), 'output.xlsx').replace('\\', '/')
 
-    def analysis_excel_output_path(self):
-        return os.path.join(self.analysis_results_folder(), 'output.xlsx')
+    def s3_btap_batch_container_input_path(self):
+        bucket = AWSCredentials().account_id
+        return f"s3://{bucket}/{self.s3_analysis_name_folder()}".replace('\\', '/')
 
-    def s3_container_input_path(self, job_id=None):
+
+    def s3_btap_cli_container_input_path(self, job_id=None):
         bucket = AWSCredentials().account_id
         return f"s3://{bucket}/{self.s3_datapoint_input_folder(job_id=job_id)}".replace('\\', '/')
 
-    def s3_container_output_path(self):
+    def s3_btap_cli_container_output_path(self):
         bucket = AWSCredentials().account_id
         return f"s3://{bucket}/{self.s3_output_folder()}".replace('\\', '/')
-
-    def analysis_output_job_id_btap_json_path(self, job_id=None):
-        return os.path.join(self.analysis_output_job_id_folder(job_id=job_id), "btap_data.json")
-
-    def local_job_url(self, job_id=None):
-        return 'file:///' + os.path.join(self.analysis_output_job_id_folder(job_id=job_id))
 
     def s3_job_url(self, job_id=None):
         bucket = AWSCredentials().account_id

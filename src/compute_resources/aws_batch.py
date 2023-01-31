@@ -10,6 +10,7 @@ from random import random
 from src.compute_resources.aws_credentials import AWSCredentials
 from src.compute_resources.aws_iam_roles import IAMBatchJobRole
 from src.compute_resources.aws_job import AWSBTAPJob
+from src.compute_resources.aws_analysis_job import AWSAnalysisJob
 from src.compute_resources.common_paths import CommonPaths
 from icecream import ic
 
@@ -182,14 +183,14 @@ class AWSBatch:
             return response
         else:
             print(f"Job Queue {self.job_queue_name} already deleted.")
-            return  True
-
+            return True
 
     def create_job(self, job_id=None):
         job=None
         if self.image_manager.image_name == 'btap_cli':
             job = AWSBTAPJob(batch=self, job_id=job_id)
-
+        if self.image_manager.image_name == 'btap_batch':
+            job = AWSAnalysisJob(batch=self, job_id=job_id)
         return job
 
 
