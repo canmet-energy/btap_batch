@@ -1,6 +1,6 @@
 ---
 # aws_batch local_docker
-:analysis_name: optimization
+:analysis_name: optimization_example
 :algorithm_type: nsga2
 :algorithm_nsga_population: 5
 :algorithm_nsga_n_generations: 1

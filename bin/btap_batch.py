@@ -8,6 +8,7 @@ from src.compute_resources.btap_analysis import BTAPAnalysis
 from src.compute_resources.btap_reference import BTAPReference
 from src.compute_resources.btap_optimization import BTAPOptimization
 from src.compute_resources.btap_parametric import BTAPParametric
+from src.compute_resources.btap_elimination import BTAPElimination
 from src.compute_resources.aws_s3 import S3
 from src.compute_resources.common_paths import CommonPaths
 import shutil
@@ -115,27 +116,6 @@ def run_analysis_project(**kwargs):
     analysis(analysis_project_folder, compute_environment)
 
 
-def get_analysis(analysis_config=None,
-                 analysis_input_folder=None,
-                 analyses_folder=None,
-                 reference_run_data_path=None):
-    analysis = None
-
-    # nsga2
-    if analysis_config[':algorithm_type'] == 'nsga2':
-        analysis = BTAPOptimization(analysis_config=analysis_config,
-                                    analysis_input_folder=analysis_input_folder,
-                                    analyses_folder=analyses_folder,
-                                    reference_run_data_path=reference_run_data_path)
-    # parametric
-    elif analysis_config[':algorithm_type'] == 'parametric':
-        analysis = BTAPParametric(analysis_config=analysis_config,
-                                  analysis_input_folder=analysis_input_folder,
-                                  analyses_folder=analyses_folder,
-                                  reference_run_data_path=reference_run_data_path)
-    return analysis
-
-
 def analysis(analysis_project_folder, compute_environment):
     if analysis_project_folder.startswith('s3:'):
         # download project to local temp folder.
@@ -190,6 +170,16 @@ def analysis(analysis_project_folder, compute_environment):
                                 analysis_input_folder=analysis_input_folder,
                                 analyses_folder=analyses_folder,
                                 reference_run_data_path=reference_run_data_path)
+
+        # parametric
+        elif analysis_config[':algorithm_type'] == 'elimination':
+            ba = BTAPElimination(analysis_config=analysis_config,
+                                analysis_input_folder=analysis_input_folder,
+                                analyses_folder=analyses_folder,
+                                reference_run_data_path=reference_run_data_path)
+
+
+
         ba.run()
         print(f"Excel results file {ba.analysis_excel_results_path()}")
 

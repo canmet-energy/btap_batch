@@ -12,7 +12,6 @@ from concurrent.futures import ThreadPoolExecutor, as_completed
 import shutil
 import re
 from src.compute_resources.aws_credentials import AWSCredentials
-from src.compute_resources.common_paths import CommonPaths
 from src.compute_resources.aws_s3 import S3
 from src.constants import BASELINE_RESULTS
 
@@ -44,6 +43,9 @@ class PostProcessResults():
         self.results_folder = results_folder
         self.compute_environment = compute_environment
         self.output_variables = output_variables
+
+        #paths
+
 
     def run(self):
         self.reference_comparisons()
@@ -225,10 +227,11 @@ class PostProcessResults():
                     if self.compute_environment == "aws_batch":
                         sum_hourly_res_path = os.path.join(self.results_folder, 'hourly.csv', 'sum_hourly_res.csv')
                         self.credentials = AWSCredentials()
-                        target_path_on_aws = os.path.join(CommonPaths().get_username(),
+                        target_path_on_aws = os.path.join(self.credentials.user_name,
                                                           "\\".join(sum_hourly_res_path.split("\\")[-5:]))
                         target_path_on_aws = target_path_on_aws.replace('\\', '/')  # s3 likes forward slashes.
                         message = "Uploading %s..." % target_path_on_aws
+                        print(message)
                         logging.info(message)
                         S3().upload_file(sum_hourly_res_path, self.credentials.account_id, target_path_on_aws)
 

@@ -84,7 +84,8 @@ class BTAPAnalysis():
                  analysis_input_folder=None,
                  reference_run_data_path=None):
 
-
+        #Will always use the btap_cli image that run the ruby code.
+        self.image_name = 'btap_cli'
         self.analysis_config = analysis_config
         self.analysis_input_folder = analysis_input_folder
         self.analyses_folder = analyses_folder
@@ -105,7 +106,6 @@ class BTAPAnalysis():
         self.algorithm_lhs_type = self.analysis_config[':algorithm_lhs_type']
         self.algorithm_lhs_random_seed = self.analysis_config[':algorithm_lhs_random_seed']
         self.compute_environment = self.analysis_config[':compute_environment']
-        self.image_name = self.analysis_config[':image_name']
         self.options = self.analysis_config[':options']
 
         # Set common paths singleton.

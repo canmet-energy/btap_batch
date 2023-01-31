@@ -1,5 +1,5 @@
 ---
-:analysis_name: test_me
+:analysis_name: parametric_example
 :algorithm_type: parametric
 :algorithm_nsga_population: null
 :algorithm_nsga_n_generations: null
