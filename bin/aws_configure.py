@@ -40,6 +40,8 @@ ace = AWSComputeEnvironment()
 
 aim_btap_batch = AWSImageManager(image_name='btap_batch', compute_environment=ace)
 aim_btap_batch.build_image(build_args=build_args_btap_batch)
+AWSBatch(image_manager=aim_btap_batch,compute_environment=ace).tear_down()
+AWSBatch(image_manager=aim_btap_batch,compute_environment=ace).setup()
 
 #bb_btap_batch.create_job()
 

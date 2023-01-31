@@ -48,7 +48,7 @@ class AWSCredentials:
         # get aws username from userid.
         if re.compile(".*:(.*)@.*").search(self.user_id) is None:
             # This situation occurs when running the host machine on AWS itself.
-            self.user_name = 'unkown'
+            self.user_name = 'unknown'
         else:
             # Otherwise it will use your aws user_id
             self.user_name = re.compile(".*:(.*)@.*").search(self.user_id)[1]

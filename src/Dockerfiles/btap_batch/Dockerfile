@@ -15,7 +15,7 @@ RUN yum -y install git
 RUN echo "Cloning btap_batch"
 RUN git clone https://$GIT_API_TOKEN:x-oauth-basic@github.com/canmet-energy/btap_batch.git --depth 1 --branch ${BTAP_BATCH_BRANCH} --single-branch /btap_batch
 RUN cd /btap_batch && echo 'btap_batch revision' && git rev-parse --short HEAD
-RUN cd /btap_batch && /root/.local/bin/pip install icecream scikit-learn pymoo==0.6.0 pyyaml boto3 pandas scikit-optimize openstudio==3.2.1 tqdm numpy_financial docker openpyxl podman pip_system_certs
+RUN cd /btap_batch && /root/.local/bin/pip install icecream scikit-learn pymoo==0.6.0 pyyaml boto3 pandas scikit-optimize openstudio==3.2.1 tqdm numpy_financial docker openpyxl podman pip_system_certs click cloudpathlib
 RUN yum -y update
 RUN yum -y install docker
 RUN yum -y install nano
