@@ -113,8 +113,8 @@ class BTAPAnalysis():
         # Setting paths to current context.
         self.cp.set_analysis_info(analysis_id=self.analysis_id,
                                   analysis_name=self.analysis_name,
-                                  analyses_folder=self.analyses_folder,
-                                  analysis_project_folder=self.analysis_input_folder)
+                                  local_output_folder=self.analyses_folder,
+                                  project_input_folder=self.analysis_input_folder)
 
         # btap specific.
         self.run_reference = self.analysis_config[':run_reference']
@@ -148,8 +148,8 @@ class BTAPAnalysis():
     def create_paths_folders(self):
 
         # Create analysis folder
-        print(f'analyses_folder is:{self.cp.analyses_folder()}')
-        os.makedirs(self.cp.analyses_folder(), exist_ok=True)
+        print(f'analyses_folder is:{self.cp.output_folder()}')
+        os.makedirs(self.cp.output_folder(), exist_ok=True)
 
         # Tell user and logger id and names
         print(f'analysis_id is: {self.analysis_id}')
@@ -423,7 +423,8 @@ class BTAPAnalysis():
                            database_folder=self.cp.analysis_database_folder(),
                            results_folder=self.cp.analysis_results_folder(),
                            compute_environment=self.compute_environment,
-                           output_variables=self.output_variables)
+                           output_variables=self.output_variables,
+                           username = self.cp.get_username())
         ppr.run()
 
         # If this is an aws_batch run, copy the excel file to s3 for storage.

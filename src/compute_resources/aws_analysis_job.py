@@ -22,7 +22,7 @@ class AWSAnalysisJob():
         # Common object for paths.
         self.cp = CommonPaths()
         # Used for copy_folder_to_s3
-        self.source = self.cp.analysis_project_folder()
+        self.source = self.cp.project_input_folder()
         self.target = self.cp.s3_analysis_name_folder()
 
     def submit_job(self):

@@ -77,7 +77,7 @@ class S3:
             self.s3client.upload_file(file, bucket_name, target_path)
 
     # Method to upload a file to S3.
-    def upload_file(self, file, bucket_name, target_path):
+    def upload_file(self, file=None, bucket_name=None, target_path=None):
         logging.info(f"uploading {file} to s3 bucket {bucket_name} target {target_path}")
         self.s3client.upload_file(file, bucket_name, target_path)
 

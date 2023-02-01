@@ -1,4 +1,3 @@
-
 import logging
 import os
 import pathlib
@@ -14,7 +13,7 @@ import re
 from src.compute_resources.aws_credentials import AWSCredentials
 from src.compute_resources.aws_s3 import S3
 from src.constants import BASELINE_RESULTS
-
+from icecream import ic
 
 # This class processes the btap_batch file to add columns as needed. This is a separate class as this can be applied
 # independant of simulation runs.
@@ -25,7 +24,8 @@ class PostProcessResults():
                  database_folder=None,
                  results_folder=None,
                  compute_environment=None,
-                 output_variables=None
+                 output_variables=None,
+                 username = None
                  ):
 
         command = f'PostProcessResults(baseline_results=r"{baseline_results}",database_folder=r"{database_folder}", results_folder=r"{results_folder}")'
@@ -43,6 +43,7 @@ class PostProcessResults():
         self.results_folder = results_folder
         self.compute_environment = compute_environment
         self.output_variables = output_variables
+        self.username = username
 
         #paths
 
@@ -145,11 +146,9 @@ class PostProcessResults():
 
     # The below operation_on_hourly_output method is for performing operations on hourly output; for instance, sum of hourly data
     def operation_on_hourly_output(self):
-        # Find the directory of results
-        dir_results = self.results_folder
 
         # Go through each folder in the results folder.
-        for folder_in_results_name in os.listdir(dir_results):
+        for folder_in_results_name in os.listdir(self.results_folder):
             # Find path of the results folder
             folder_in_results_path = os.path.join(self.results_folder, folder_in_results_name)
             if folder_in_results_name == 'hourly.csv':
@@ -226,14 +225,17 @@ class PostProcessResults():
                     # Copy sum_hourly_res.csv to s3 for storage if run on AWS.
                     if self.compute_environment == "aws_batch":
                         sum_hourly_res_path = os.path.join(self.results_folder, 'hourly.csv', 'sum_hourly_res.csv')
-                        self.credentials = AWSCredentials()
-                        target_path_on_aws = os.path.join(self.credentials.user_name,
-                                                          "\\".join(sum_hourly_res_path.split("\\")[-5:]))
-                        target_path_on_aws = target_path_on_aws.replace('\\', '/')  # s3 likes forward slashes.
+                        target_path_on_aws = os.path.join(self.username,
+                                                          "\\".join(sum_hourly_res_path.split("\\")[-5:])).replace('\\', '/')
+
+                        # phylroy_lopez\
                         message = "Uploading %s..." % target_path_on_aws
                         print(message)
                         logging.info(message)
-                        S3().upload_file(sum_hourly_res_path, self.credentials.account_id, target_path_on_aws)
+                        ic(sum_hourly_res_path)
+                        ic(AWSCredentials().account_id)
+                        ic(target_path_on_aws)
+                        S3().upload_file(file=sum_hourly_res_path, bucket_name=AWSCredentials().account_id, target_path=target_path_on_aws)
 
 
     def reference_comparisons(self):
