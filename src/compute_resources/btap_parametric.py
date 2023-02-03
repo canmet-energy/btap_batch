@@ -5,12 +5,8 @@ import tqdm
 import itertools
 import concurrent.futures
 import datetime
-from src.exceptions import *
+from src.compute_resources.exceptions import FailedSimulationException
 from src.compute_resources.btap_analysis import BTAPAnalysis
-
-import copy
-import os
-
 
 # Class to Manage parametric runs.
 class BTAPParametric(BTAPAnalysis):

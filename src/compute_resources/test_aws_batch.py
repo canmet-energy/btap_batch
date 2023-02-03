@@ -2,11 +2,11 @@
 from src.compute_resources.aws_image_manager import AWSImageManager
 from src.compute_resources.aws_batch import AWSBatch
 from src.compute_resources.aws_job import AWSBTAPJob
-from icecream import ic
 import yaml
 from pathlib import Path
 import os
 import logging
+from icecream import ic
 
 path = os.path.dirname(os.path.realpath(__file__))
 logfile = os.path.join(path , "test.log")

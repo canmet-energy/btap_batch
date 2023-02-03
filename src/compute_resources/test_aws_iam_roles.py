@@ -1,6 +1,6 @@
 import unittest
 import icecream as ic
-from src.compute_resources.iam_roles import IAMCloudBuildRole,IAMBatchJobRole,IAMBatchServiceRole
+from src.compute_resources.aws_iam_roles import IAMBatchServiceRole
 
 class TestIAMRoles(unittest.TestCase):
     def test_something(self):

@@ -12,13 +12,15 @@ from src.compute_resources.btap_elimination import BTAPElimination
 from src.compute_resources.aws_s3 import S3
 from src.compute_resources.common_paths import CommonPaths
 import shutil
-
+from colorama import Fore, Back, Style
 import time
 import copy
 import os
-from icecream import ic
 from pathlib import Path
 import uuid
+import pyfiglet
+import random
+from icecream import ic
 
 CONTEXT_SETTINGS = dict(help_option_names=['-h', '--help'])
 
@@ -27,6 +29,28 @@ CONTEXT_SETTINGS = dict(help_option_names=['-h', '--help'])
 @click.version_option(version='1.0.0')
 def btap():
     pass
+
+
+@btap.command()
+def credits():
+    print(Fore.GREEN +"CanmetENERGY Building Technology Assessment Platform Team (BTAP)" + Style.RESET_ALL)
+    colors = [Fore.RED,
+              Fore.GREEN,
+              Fore.MAGENTA,
+              Fore.CYAN,
+              Fore.YELLOW,
+              Fore.BLUE
+              ]
+    for x in [
+                 'Meli Stylianou\n'
+                 "Sara Gilani\n",
+                 "Kamel Haddad\n",
+                 "Chris Kirney\n",
+                 "Mike Lubun\n",
+                 "Phylroy Lopez\n",
+                 "Ali Syed\n"
+    ]:
+        print(random.choice(colors) + pyfiglet.figlet_format(x) + Fore.RESET)
 
 
 @btap.command()
@@ -113,14 +137,13 @@ def build_environment(**kwargs):
               help='Run reference. Required for baseline comparisons')
 @click.option('--output_folder', default=r"C:\Users\plopez\btap_batch\output",
               help='Run reference. Required for baseline comparisons')
-
 def run_analysis_project(**kwargs):
     # Input folder name
     analysis_project_folder = kwargs['project_folder']
     compute_environment = kwargs['compute_environment']
     reference_run = kwargs['reference_run']
     output_folder = kwargs['output_folder']
-    analysis(analysis_project_folder, compute_environment,reference_run, output_folder)
+    analysis(analysis_project_folder, compute_environment, reference_run, output_folder)
 
 
 def analysis(project_input_folder, compute_environment, reference_run, output_folder):
@@ -153,18 +176,19 @@ def analysis(project_input_folder, compute_environment, reference_run, output_fo
     if compute_environment == 'local_docker' or compute_environment == 'aws_batch':
         analysis_config[':compute_environment'] = compute_environment
 
+        reference_run_data_path = None
         if reference_run:
-        # Run reference
+            # Run reference
             ref_analysis_config = copy.deepcopy(analysis_config)
             ref_analysis_config[':algorithm_type'] = 'reference'
-            ref_analysis_config[':analysis_name'] = 'reference_runs'
             br = BTAPReference(analysis_config=ref_analysis_config,
                                analysis_input_folder=analysis_input_folder,
-                               analyses_folder=os.path.join(output_folder, analysis_config[':analysis_name']))
+                               analyses_folder=os.path.join(output_folder))
             br.run()
-            reference_run_data_path = br.reference_run_data_path
-        else:
-            reference_run_data_path = None
+            reference_run_data_path = br.analysis_excel_results_path()
+
+        print("analysis")
+        ic(reference_run_data_path)
 
         # BTAP analysis placeholder.
         ba = None
@@ -185,11 +209,9 @@ def analysis(project_input_folder, compute_environment, reference_run, output_fo
         # parametric
         elif analysis_config[':algorithm_type'] == 'elimination':
             ba = BTAPElimination(analysis_config=analysis_config,
-                                analysis_input_folder=analysis_input_folder,
-                                analyses_folder=output_folder,
-                                reference_run_data_path=reference_run_data_path)
-
-
+                                 analysis_input_folder=analysis_input_folder,
+                                 analyses_folder=output_folder,
+                                 reference_run_data_path=reference_run_data_path)
 
         ba.run()
         print(f"Excel results file {ba.analysis_excel_results_path()}")
@@ -215,6 +237,6 @@ def analysis(project_input_folder, compute_environment, reference_run, output_fo
 if __name__ == '__main__':
     btap()
 
-
-#Sample commands.
-#set PYTHONPATH=C:\Users\plopez\btap_batch &&  python ./bin/btap_batch.py run-analysis-project --compute_environment aws_batch_analysis --project_folder C:\Users\plopez\btap_batch\examples\optimization
+# Sample commands.
+# set PYTHONPATH=C:\Users\plopez\btap_batch &&  python ./bin/btap_batch.py run-analysis-project --compute_environment aws_batch_analysis --project_folder C:\Users\plopez\btap_batch\examples\optimization
+# set PYTHONPATH=C:\Users\plopez\btap_batch &&  python ./bin/btap_batch.py run-analysis-project --compute_environment local_docker --project_folder C:\Users\plopez\btap_batch\examples\parametric --run_reference

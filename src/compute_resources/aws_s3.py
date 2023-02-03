@@ -1,10 +1,6 @@
 
 import botocore
-import boto3
-from botocore.config import Config
 import logging
-from src.constants import AWS_MAX_RETRIES
-import os
 import glob
 from src.compute_resources.aws_credentials import AWSCredentials
 from cloudpathlib import CloudPath

@@ -18,13 +18,15 @@ class CommonPaths(object):
                           analysis_name=None,
                           analysis_id=None,
                           local_output_folder=None,
-                          project_input_folder=None):
+                          project_input_folder=None,
+                          algorithm_type=None):
         self.local_output_folder = local_output_folder
         self._analysis_name = analysis_name
         self._analysis_id = analysis_id
         self.project_input_folder = project_input_folder
+        self.algorithm_type = algorithm_type
 
-    def get_analysis_name(self):
+    def get_project_name(self):
         return self._analysis_name
 
     def get_analysis_id(self):
@@ -48,37 +50,47 @@ class CommonPaths(object):
     def output_folder(self):
         return self.local_output_folder
 
+
+
+
+
+
     # /input
     def project_input_folder(self):
         return self.project_input_folder
 
+# Output
     # /output/analysis_name
-    def analysis_name_folder(self):
-        return os.path.join(self.output_folder(), self.get_analysis_name())
+    def project_output_folder(self):
+        return os.path.join(self.output_folder(), self.get_project_name())
 
     # /output/analysis_name/analysis_id
-    def analysis_id_folder(self):
-        return os.path.join(self.analysis_name_folder(), self.get_analysis_id())
+    def algorithm_folder(self):
+        return os.path.join(self.project_output_folder(), self.algorithm_type)
 
     # /output/analysis_name/analysis_id
     def analysis_output_folder(self):
-        return os.path.join(self.analysis_id_folder())
+        return self.algorithm_folder()
+
+    # /output/analysis_name/analysis_id
+    def algorithm_run_folder(self):
+        return os.path.join(self.algorithm_folder(), 'runs')
 
     # /output/analysis_name/analysis_id/job_id
     def analysis_output_job_id_folder(self, job_id=None):
-        return os.path.join(self.analysis_output_folder(), job_id)
+        return os.path.join(self.analysis_output_folder(),'runs', job_id)
 
     # /output/analysis_name/analysis_id
     def analysis_input_folder(self):
-        return os.path.join(self.analysis_id_folder())
+        return os.path.join(self.algorithm_folder())
 
     # /output/analysis_name/analysis_id/job_id
     def analysis_input_job_id_folder(self, job_id=None):
-        return os.path.join(self.analysis_input_folder(), job_id)
+        return os.path.join(self.analysis_input_folder(),'runs', job_id)
 
     # /output/analysis_name/analysis_id/results
     def analysis_results_folder(self):
-        return os.path.join(self.analysis_id_folder(), 'results')
+        return os.path.join(self.algorithm_folder(), 'results')
 
     # /output/analysis_name/analysis_id/results/output.xlsx
     def analysis_excel_results_path(self):
@@ -113,28 +125,29 @@ class CommonPaths(object):
 
     # /phylroy_lopez/analysis_name
     def s3_analysis_name_folder(self,url=False):
-        return os.path.join(self.get_username(), self.get_analysis_name()).replace('\\', '/')
+        return os.path.join(self.get_username(), self.get_project_name()).replace('\\', '/')
 
 
     # /phylroy_lopez/analysis_name/analysis_id
-    def s3_analysis_id_folder(self):
-        return os.path.join(self.s3_analysis_name_folder(), self.get_analysis_id()).replace('\\', '/')
+    def s3_algorithm_folder(self):
+        return os.path.join(self.s3_analysis_name_folder(), self.algorithm_type).replace('\\', '/')
+
 
     # /phylroy_lopez/analysis_name/analysis_id
     def s3_input_folder(self):
-        return os.path.join(self.s3_analysis_id_folder()).replace('\\', '/')
+        return os.path.join(self.s3_algorithm_folder()).replace('\\', '/')
     def s3_output_folder(self):
-        return os.path.join(self.s3_analysis_id_folder()).replace('\\', '/')
+        return os.path.join(self.s3_algorithm_folder()).replace('\\', '/')
 
     # /phylroy_lopez/analysis_name/analysis_id/results
     def s3_analysis_results_folder(self):
-        return os.path.join(self.s3_analysis_id_folder(), 'results').replace('\\', '/')
+        return os.path.join(self.s3_algorithm_folder(), 'results').replace('\\', '/')
 
     # /phylroy_lopez/analysis_name/analysis_id/job_id
     def s3_datapoint_input_folder(self, job_id=None):
-        return os.path.join(self.s3_input_folder(), job_id).replace('\\', '/')
+        return os.path.join(self.s3_input_folder(), 'run', job_id).replace('\\', '/')
     def s3_datapoint_output_folder(self, job_id=None):
-        return os.path.join(self.s3_output_folder(), job_id).replace('\\', '/')
+        return os.path.join(self.s3_output_folder(),'run', job_id).replace('\\', '/')
 
     # /phylroy_lopez/analysis_name/analysis_id/results/output.xlsx
     def s3_analysis_excel_output_path(self):
@@ -154,16 +167,9 @@ class CommonPaths(object):
     #s3://bucket//phylroy_lopez/analysis_name/analysis_id (container will add job_id folder)
     def s3_btap_cli_container_output_path(self):
         bucket = AWSCredentials().account_id
-        return f"s3://{bucket}/{self.s3_output_folder()}".replace('\\', '/')
+        return f"s3://{bucket}/{self.s3_output_folder()}/run".replace('\\', '/')
 
     def s3_job_url(self, job_id=None):
         bucket = AWSCredentials().account_id
         return f"https://s3.console.aws.amazon.com/s3/buckets/{bucket}?region=ca-central-1&prefix={self.s3_datapoint_output_folder(job_id=job_id)}/"
 
-
-# cp = CommonPaths()
-# cp.set_analysis_info(analysis_name='analysis_name',
-#                      analysis_id='analysis_id',
-#                      analyses_folder='analysis_folder',
-#                      analysis_project_folder='analysis_project_folder')
-# print(cp.s3_job_url(job_id="asdfasdf"))

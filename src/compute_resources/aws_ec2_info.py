@@ -1,6 +1,3 @@
-import boto3
-from src.constants import AWS_MAX_RETRIES
-from botocore.config import Config
 from src.compute_resources.aws_credentials import AWSCredentials
 class AWS_EC2Info():
     def __init__(self):

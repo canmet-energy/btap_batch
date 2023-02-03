@@ -12,7 +12,7 @@ import shutil
 import re
 from src.compute_resources.aws_credentials import AWSCredentials
 from src.compute_resources.aws_s3 import S3
-from src.constants import BASELINE_RESULTS
+from src.compute_resources.constants import BASELINE_RESULTS
 from icecream import ic
 
 # This class processes the btap_batch file to add columns as needed. This is a separate class as this can be applied
@@ -27,8 +27,10 @@ class PostProcessResults():
                  output_variables=None,
                  username = None
                  ):
+        print("PostProcessResults")
+        ic(baseline_results)
 
-        command = f'PostProcessResults(baseline_results=r"{baseline_results}",database_folder=r"{database_folder}", results_folder=r"{results_folder}")'
+        command = f'PostProcessResults(baseline_results=r"{baseline_results}",database_folder=r"{database_folder}", results_folder=r"{results_folder}, compute_environment ="{compute_environment}", output_variables="{output_variables}", username="{username}")'
         print(command)
 
         filepaths = [os.path.join(database_folder, f) for f in os.listdir(database_folder) if f.endswith('.csv')]
@@ -59,7 +61,7 @@ class PostProcessResults():
     # This is all done serially...if this is too slow, we should implement a parallel method using threads.. While probably
     # Not an issue for local analyses, it may be needed for large run. Here is an example of somebody with an example of parallel
     # downloads from S3 using threads.  https://emasquil.github.io/posts/multithreading-boto3/
-    def get_files(self, file_paths=None):
+    def get_files(self, file_paths=['run_dir/run/in.osm', 'run_dir/run/eplustbl.htm', 'hourly.csv']):
         for file_path in file_paths:
             pathlib.Path(os.path.dirname(self.results_folder)).mkdir(parents=True, exist_ok=True)
             filename = os.path.basename(file_path)
@@ -123,13 +125,13 @@ class PostProcessResults():
                 else:
                     raise
             # Copy output files ('run_dir/run/in.osm', 'run_dir/run/eplustbl.htm', 'hourly.csv') to s3 for storage.
-            self.credentials = AWSCredentials()
-            target_path_on_aws = os.path.join("/".join(s3_file_path.split("/")[:3]), 'results', file_path,
+
+            target_path_on_aws = os.path.join("/".join(s3_file_path.split("/")[:3]), 'results', os.path.basename(file_path),
                                               row[':datapoint_id'] + extension)
             target_path_on_aws = target_path_on_aws.replace('\\', '/')  # s3 likes forward slashes.
             message = "Uploading %s..." % target_path_on_aws
             logging.info(message)
-            S3().upload_file(target_on_local, self.credentials.account_id, target_path_on_aws)
+            S3().upload_file(target_on_local, AWSCredentials().account_id, target_path_on_aws)
 
     def save_excel_output(self):
         # Create excel object
@@ -346,6 +348,14 @@ class PostProcessResults():
                     'zones_total_outdoor_air_natural_ventilation_flow_per_exterior_area_m3_per_s_m2_y']
                 self.btap_data_df['baseline_zones_total_outdoor_air_natural_ventilation_m3'] = df[
                     'zones_total_outdoor_air_natural_ventilation_m3_y']
+
+
+# PostProcessResults(baseline_results=None,
+#                    database_folder=r"C:\Users\plopez\btap_batch\output\parametric_example\parametric\results\database",
+#                    results_folder=r"C:\Users\plopez\btap_batch\output\parametric_example\parametric\results",
+#                    compute_environment="aws_batch",
+#                    output_variables=[],
+#                    username="phylroy_lopez")
 
 
 

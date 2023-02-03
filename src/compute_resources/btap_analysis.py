@@ -7,10 +7,10 @@ import yaml
 import pandas as pd
 import shutil
 from sklearn import preprocessing
-from src.exceptions import OSMErrorException
+from src.compute_resources.exceptions import OSMErrorException
 from src.compute_resources.aws_credentials import AWSCredentials
 from src.compute_resources.aws_s3 import S3
-from src.constants import NECB2011_SPACETYPE_PATH
+from src.compute_resources.constants import NECB2011_SPACETYPE_PATH
 from src.compute_resources.btap_postprocess_analysis import PostProcessResults
 from src.compute_resources.docker_image_manager import DockerImageManager
 from src.compute_resources.aws_image_manager import AWSImageManager
@@ -90,6 +90,8 @@ class BTAPAnalysis():
         self.analysis_input_folder = analysis_input_folder
         self.analyses_folder = analyses_folder
         self.reference_run_data_path = reference_run_data_path
+        print("BTAPAnalysis")
+        ic(self.reference_run_data_path)
 
 
         # Get analysis information for runs.
@@ -114,7 +116,8 @@ class BTAPAnalysis():
         self.cp.set_analysis_info(analysis_id=self.analysis_id,
                                   analysis_name=self.analysis_name,
                                   local_output_folder=self.analyses_folder,
-                                  project_input_folder=self.analysis_input_folder)
+                                  project_input_folder=self.analysis_input_folder,
+                                  algorithm_type=self.algorithm_type)
 
         # btap specific.
         self.run_reference = self.analysis_config[':run_reference']
@@ -162,14 +165,14 @@ class BTAPAnalysis():
         logging.info(f'analysis_id_folder:{self.analysis_id_folder()}')
 
         # Tell log we are deleting previous runs.
-        message = f'Deleting previous runs from: {self.analysis_name_folder()}'
+        message = f'Deleting previous runs from: {self.cp.algorithm_folder()}'
         logging.info(message)
         print(message)
         # Check if folder exists
-        if os.path.isdir(self.analysis_name_folder()):
+        if os.path.isdir(self.cp.algorithm_folder()):
             # Remove old folder
             try:
-                shutil.rmtree(self.analysis_name_folder())
+                shutil.rmtree(self.cp.algorithm_folder())
             except PermissionError:
                 message = f'Could not delete {self.analysis_name_folder()}. Do you have a file open in that folder? Exiting'
                 print(message)
@@ -197,11 +200,11 @@ class BTAPAnalysis():
         return self.cp.analysis_input_folder()
 
     def analysis_name_folder(self):
-        return self.cp.analysis_name_folder()
+        return self.cp.project_output_folder()
 
     # Set analysis name folder.
     def analysis_id_folder(self):
-        return self.cp.analysis_id_folder()
+        return self.cp.algorithm_folder()
 
     def analysis_output_folder(self):
         return self.cp.analysis_output_folder()
@@ -335,6 +338,8 @@ class BTAPAnalysis():
         return df
 
     def shutdown_analysis(self):
+        print("shutdown_analysis")
+        ic(self.reference_run_data_path)
         self.generate_output_file(baseline_results=self.reference_run_data_path)
 
     # This method creates a encoder and decoder of the simulation options to integers.  The ML and AI routines use float,
@@ -418,6 +423,8 @@ class BTAPAnalysis():
 
     def generate_output_file(self, baseline_results=None):
 
+        print("generate_output_file")
+        ic(baseline_results)
         # Process csv file to create single dataframe with all simulation results
         ppr = PostProcessResults(baseline_results=baseline_results,
                            database_folder=self.cp.analysis_database_folder(),

@@ -1,9 +1,9 @@
-from src.constants import MAX_AWS_VCPUS
-from src.constants import AWS_BATCH_ALLOCATION_STRATEGY
-from src.constants import AWS_BATCH_COMPUTE_INSTANCE_TYPES
-from src.constants import MIN_AWS_VCPUS
-from src.constants import AWS_BATCH_DEFAULT_IMAGE
-from src.constants import CONTAINER_STORAGE
+from src.compute_resources.constants import MAX_AWS_VCPUS
+from src.compute_resources.constants import AWS_BATCH_ALLOCATION_STRATEGY
+from src.compute_resources.constants import AWS_BATCH_COMPUTE_INSTANCE_TYPES
+from src.compute_resources.constants import MIN_AWS_VCPUS
+from src.compute_resources.constants import AWS_BATCH_DEFAULT_IMAGE
+from src.compute_resources.constants import CONTAINER_STORAGE
 import time
 import logging
 from random import random

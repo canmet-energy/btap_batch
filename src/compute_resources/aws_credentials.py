@@ -2,7 +2,7 @@ import botocore
 import boto3
 import logging
 import re
-from src.constants import AWS_MAX_RETRIES,MAX_AWS_VCPUS
+from src.compute_resources.constants import AWS_MAX_RETRIES,MAX_AWS_VCPUS
 from pathlib import Path
 import traceback
 

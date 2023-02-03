@@ -13,7 +13,7 @@ import logging
 import traceback
 import numpy as np
 import tqdm
-from src.exceptions import FailedSimulationException
+from src.compute_resources.exceptions import FailedSimulationException
 from src.compute_resources.btap_analysis import BTAPAnalysis
 # Optimization problem definition class using Pymoo
 

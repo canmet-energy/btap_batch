@@ -2,10 +2,10 @@ import docker
 from docker.errors import DockerException
 import os
 import logging
-from icecream import ic
 from src.compute_resources.docker_batch import DockerBatch
 from src.compute_resources.common_paths import CommonPaths
 import time
+from icecream import ic
 
 
 class DockerImageManager:

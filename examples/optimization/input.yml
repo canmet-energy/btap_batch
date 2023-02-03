@@ -19,9 +19,7 @@
 :algorithm_lhs_n_samples: null
 :algorithm_lhs_type: null
 :algorithm_lhs_random_seed: null
-:compute_environment: local_docker
 :enable_costing: false
-:image_name: btap_cli
 :run_annual_simulation: true
 :run_reference: true
 

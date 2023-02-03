@@ -1,5 +1,5 @@
 ---
-:analysis_name: test_me
+:analysis_name: custom_osm_example
 :algorithm_type: parametric
 :algorithm_nsga_population: null
 :algorithm_nsga_n_generations: null
@@ -9,9 +9,7 @@
 :algorithm_lhs_n_samples: null
 :algorithm_lhs_type: null
 :algorithm_lhs_random_seed: null
-:compute_environment: local_docker
 :enable_costing: false
-:image_name: btap_cli
 :run_annual_simulation: true
 :run_reference: true
 

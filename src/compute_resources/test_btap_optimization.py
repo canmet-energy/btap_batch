@@ -44,12 +44,11 @@ batch = DockerBatch(image_manager=image_mgr)
 
 analysis_config_file = r"C:\Users\plopez\btap_batch\examples\custom_osm\input.yml"
 
-analysis_config, analysis_input_folder, analyses_folder = BTAPParametric.load_analysis_input_file(analysis_config_file=analysis_config_file)
+analysis_config, analysis_input_folder, analyses_folder = BTAPReference.load_analysis_input_file(analysis_config_file=analysis_config_file)
 ref_analysis_config = copy.deepcopy(analysis_config)
 ref_analysis_config[':algorithm_type'] = 'reference'
 ref_analysis_config[':analysis_name'] = 'reference_runs'
 br = BTAPReference(analysis_config=ref_analysis_config,
-                   engine=engine,
                    analysis_input_folder=analysis_input_folder,
                    analyses_folder=analyses_folder)
 br.run()
@@ -57,7 +56,6 @@ ic(br.analysis_results_folder())
 
 
 bb=BTAPOptimization(analysis_config=analysis_config,
-                  engine=engine,
                   analysis_input_folder=analysis_input_folder,
                   analyses_folder=analyses_folder,
                   reference_run_data_path=br.analysis_excel_results_path())

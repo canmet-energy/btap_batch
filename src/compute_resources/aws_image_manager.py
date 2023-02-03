@@ -1,11 +1,10 @@
 from src.compute_resources.aws_credentials import AWSCredentials
-from src.constants import MAX_AWS_VCPUS
+from src.compute_resources.constants import MAX_AWS_VCPUS
 from src.compute_resources.docker_image_manager import DockerImageManager
 from src.compute_resources.aws_s3 import S3
 from src.compute_resources.aws_iam_roles import IAMCloudBuildRole
 from src.compute_resources.aws_batch import AWSBatch
 from src.compute_resources.common_paths import CommonPaths
-import boto3
 import time
 import logging
 from icecream import ic

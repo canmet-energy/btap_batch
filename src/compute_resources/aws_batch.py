@@ -1,9 +1,5 @@
-from src.constants import MAX_AWS_VCPUS
-from src.constants import AWS_MAX_RETRIES
-from src.constants import CONTAINER_MEMORY
-from src.constants import CONTAINER_VCPU
-import boto3
-import botocore
+from src.compute_resources.constants import CONTAINER_MEMORY
+from src.compute_resources.constants import CONTAINER_VCPU
 import time
 import logging
 from random import random

@@ -1,11 +1,9 @@
 from src.compute_resources.docker_image_manager import DockerImageManager
 from src.compute_resources.docker_batch import DockerBatch
 from src.compute_resources.docker_job import DockerBTAPJob
-
-from icecream import ic
 import yaml
 from pathlib import Path
-import os
+from icecream import ic
 
 image_mgr = DockerImageManager(image_name='btap_cli')
 # image_mgr.build_image()
