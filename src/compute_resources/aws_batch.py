@@ -1,5 +1,6 @@
 from src.compute_resources.constants import CONTAINER_MEMORY
 from src.compute_resources.constants import CONTAINER_VCPU
+from src.compute_resources.constants import CONTAINER_STORAGE
 import time
 import logging
 from random import random
@@ -18,7 +19,14 @@ BATCH_SERVICE_ROLE = 'arn:aws:iam::834599497928:role/service-role/AWSBatchServic
 
 class AWSBatch:
 
-    def __init__(self, image_manager=None, compute_environment=None):
+    def __init__(self,
+                 image_manager=None,
+                 compute_environment=None,
+                 container_vcpu=CONTAINER_VCPU,
+                 container_memory=CONTAINER_MEMORY,
+                 container_storage=CONTAINER_STORAGE,
+
+                 ):
         self.image_manager = image_manager
         self.compute_environment_name = compute_environment.get_compute_environment_name()
         self.launch_template_name = f'{self._username()}_storage_template'
