@@ -1,4 +1,6 @@
 import click
+import logging
+import time
 from src.compute_resources.aws_batch import AWSBatch
 from src.compute_resources.aws_compute_environment import AWSComputeEnvironment
 from src.compute_resources.aws_image_manager import AWSImageManager
@@ -9,10 +11,12 @@ from src.compute_resources.btap_reference import BTAPReference
 from src.compute_resources.btap_optimization import BTAPOptimization
 from src.compute_resources.btap_parametric import BTAPParametric
 from src.compute_resources.btap_elimination import BTAPElimination
+from src.compute_resources.btap_lhs import BTAPSamplingLHS
+from src.compute_resources.btap_sensitivity import BTAPSensitivity
 from src.compute_resources.aws_s3 import S3
 from src.compute_resources.common_paths import CommonPaths
 import shutil
-from colorama import Fore, Back, Style
+from colorama import Fore, Style
 import time
 import copy
 import os
@@ -21,7 +25,10 @@ import uuid
 import pyfiglet
 import random
 from icecream import ic
+from src.compute_resources.aws_dynamodb import AWSDynamodb
 
+PROJECT_FOLDER = os.path.join(Path(os.path.dirname(os.path.realpath(__file__))).parent.absolute())
+OUTPUT_FOLDER = os.path.join(PROJECT_FOLDER, "output")
 CONTEXT_SETTINGS = dict(help_option_names=['-h', '--help'])
 
 
@@ -55,7 +62,7 @@ def credits():
 
 @btap.command()
 @click.option('--compute_environment', default='local_docker', help='configure local_docker, aws_batch or all')
-@click.option('--btap_batch_branch', default='remove_anaconda', help='branch to use for btap_batch. Default = master')
+@click.option('--btap_batch_branch',   default='remove_anaconda', help='branch to use for btap_batch. Default = master')
 @click.option('--os_standards_branch', default='nrcan', help='branch to use for openstudio-standards branch')
 @click.option('--btap_costing_branch', default='master', help='branch to use for btap_costing branch')
 @click.option('--openstudio_version', default='3.2.1', help='version of openstudio to use.. Do not change.')
@@ -116,6 +123,9 @@ def build_environment(**kwargs):
         # create aws_btap_batch batch framework.
         batch_batch = AWSBatch(image_manager=image_batch, compute_environment=ace)
         batch_batch.setup()
+        # Create AWS database for results
+        AWSDynamodb().create_results_table()
+
 
     if compute_environment == 'all' or compute_environment == 'local_docker':
         # Build btap_cli image
@@ -137,6 +147,7 @@ def build_environment(**kwargs):
               help='Run reference. Required for baseline comparisons')
 @click.option('--output_folder', default=r"C:\Users\plopez\btap_batch\output",
               help='Run reference. Required for baseline comparisons')
+
 def run_analysis_project(**kwargs):
     # Input folder name
     analysis_project_folder = kwargs['project_folder']
@@ -185,6 +196,9 @@ def analysis(project_input_folder, compute_environment, reference_run, output_fo
                                analysis_input_folder=analysis_input_folder,
                                analyses_folder=os.path.join(output_folder))
             br.run()
+
+
+
             reference_run_data_path = br.analysis_excel_results_path()
 
         print("analysis")
@@ -213,6 +227,18 @@ def analysis(project_input_folder, compute_environment, reference_run, output_fo
                                  analyses_folder=output_folder,
                                  reference_run_data_path=reference_run_data_path)
 
+        elif analysis_config[':algorithm_type'] == 'sampling-lhs':
+            ba = BTAPSamplingLHS(analysis_config=analysis_config,
+                                 analysis_input_folder=analysis_input_folder,
+                                 analyses_folder=output_folder,
+                                 reference_run_data_path=reference_run_data_path)
+
+        elif analysis_config[':algorithm_type'] == 'sensitivity':
+            ba = BTAPSensitivity(analysis_config=analysis_config,
+                                 analysis_input_folder=analysis_input_folder,
+                                 analyses_folder=output_folder,
+                                 reference_run_data_path=reference_run_data_path)
+
         ba.run()
         print(f"Excel results file {ba.analysis_excel_results_path()}")
 
@@ -232,6 +258,41 @@ def analysis(project_input_folder, compute_environment, reference_run, output_fo
         # Submit analysis job to aws.
         job = batch.create_job(job_id=analysis_name)
         return job.submit_job()
+
+
+@btap.command()
+def result_data_reset(**kwargs):
+    AWSDynamodb().delete_results_table()
+    AWSDynamodb().create_results_table()
+
+@btap.command()
+@click.option('--type', default="csv", help='format type to dump entire results information. Choices are pickle or csv')
+@click.option('--folder_path', default=OUTPUT_FOLDER, help='folder path to save database file dump. Defaults to projects output folder. ')
+def result_data_dump(**kwargs):
+    type = kwargs['type']
+    folder_path = kwargs['folder_path']
+    AWSDynamodb().dump_results_table(folder_path=folder_path, type=type)
+
+
+@btap.command()
+@click.option('--compute_environment', default='local_docker',
+              help='Environment to run analysis either local_docker or aws_batch')
+def parallel_test_examples(**kwargs):
+    start = time.time()
+    examples_folder = os.path.join(PROJECT_FOLDER,'examples')
+    example_folders = ['custom_osm',
+                      'elimination',
+                      'optimization',
+                      'parametric',
+                      'sample-lhs',
+                      'sensitivity']
+
+    for folder in example_folders:
+        project_input_folder = os.path.join(examples_folder,folder)
+        print(project_input_folder)
+        analysis(project_input_folder, kwargs['compute_environment'], True, OUTPUT_FOLDER)
+    end = time.time()
+    print(f"Time elapsed: {end-start}")
 
 
 if __name__ == '__main__':

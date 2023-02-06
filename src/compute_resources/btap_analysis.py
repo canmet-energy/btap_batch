@@ -16,6 +16,7 @@ from src.compute_resources.docker_image_manager import DockerImageManager
 from src.compute_resources.aws_image_manager import AWSImageManager
 from src.compute_resources.common_paths import CommonPaths
 from src.compute_resources.aws_compute_environment import AWSComputeEnvironment
+from src.compute_resources.aws_dynamodb import AWSDynamodb
 from icecream import ic
 
 # Parent Analysis class from with all analysis inherit
@@ -90,8 +91,6 @@ class BTAPAnalysis():
         self.analysis_input_folder = analysis_input_folder
         self.analyses_folder = analyses_folder
         self.reference_run_data_path = reference_run_data_path
-        print("BTAPAnalysis")
-        ic(self.reference_run_data_path)
 
 
         # Get analysis information for runs.
@@ -120,7 +119,6 @@ class BTAPAnalysis():
                                   algorithm_type=self.algorithm_type)
 
         # btap specific.
-        self.run_reference = self.analysis_config[':run_reference']
         self.output_variables = self.analysis_config[':output_variables']
         self.output_meters = self.analysis_config[':output_meters']
         self.run_annual_simulation = self.analysis_config[':run_annual_simulation']
@@ -338,8 +336,6 @@ class BTAPAnalysis():
         return df
 
     def shutdown_analysis(self):
-        print("shutdown_analysis")
-        ic(self.reference_run_data_path)
         self.generate_output_file(baseline_results=self.reference_run_data_path)
 
     # This method creates a encoder and decoder of the simulation options to integers.  The ML and AI routines use float,
@@ -422,9 +418,6 @@ class BTAPAnalysis():
         return run_options
 
     def generate_output_file(self, baseline_results=None):
-
-        print("generate_output_file")
-        ic(baseline_results)
         # Process csv file to create single dataframe with all simulation results
         ppr = PostProcessResults(baseline_results=baseline_results,
                            database_folder=self.cp.analysis_database_folder(),
@@ -432,7 +425,8 @@ class BTAPAnalysis():
                            compute_environment=self.compute_environment,
                            output_variables=self.output_variables,
                            username = self.cp.get_username())
-        ppr.run()
+        # Store post process run into analysis object. Will need it later.
+        self.btap_data_df = ppr.run()
 
         # If this is an aws_batch run, copy the excel file to s3 for storage.
         if self.compute_environment == 'aws_batch':
@@ -442,4 +436,6 @@ class BTAPAnalysis():
             S3().upload_file(self.cp.analysis_excel_output_path(),
                              self.credentials.account_id,
                              self.cp.s3_analysis_excel_output_path())
+
+
         return

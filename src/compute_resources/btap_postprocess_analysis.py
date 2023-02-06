@@ -11,6 +11,7 @@ from concurrent.futures import ThreadPoolExecutor, as_completed
 import shutil
 import re
 from src.compute_resources.aws_credentials import AWSCredentials
+from src.compute_resources.aws_dynamodb import AWSDynamodb
 from src.compute_resources.aws_s3 import S3
 from src.compute_resources.constants import BASELINE_RESULTS
 from icecream import ic
@@ -25,10 +26,8 @@ class PostProcessResults():
                  results_folder=None,
                  compute_environment=None,
                  output_variables=None,
-                 username = None
+                 username=None
                  ):
-        print("PostProcessResults")
-        ic(baseline_results)
 
         command = f'PostProcessResults(baseline_results=r"{baseline_results}",database_folder=r"{database_folder}", results_folder=r"{results_folder}, compute_environment ="{compute_environment}", output_variables="{output_variables}", username="{username}")'
         print(command)
@@ -54,6 +53,8 @@ class PostProcessResults():
         self.reference_comparisons()
         self.get_files(file_paths=['run_dir/run/in.osm', 'run_dir/run/eplustbl.htm', 'hourly.csv'])
         self.save_excel_output()
+        if self.compute_environment == 'aws_batch':
+            self.save_dynamodb()
         self.operation_on_hourly_output()
         return self.btap_data_df
 
@@ -145,6 +146,11 @@ class PostProcessResults():
             else:
                 message = 'No simulations completed.'
                 logging.error(message)
+
+    def save_dynamodb(self):
+        AWSDynamodb().save_results(dataframe=self.btap_data_df)
+
+
 
     # The below operation_on_hourly_output method is for performing operations on hourly output; for instance, sum of hourly data
     def operation_on_hourly_output(self):
@@ -358,4 +364,8 @@ class PostProcessResults():
 #                    username="phylroy_lopez")
 
 
-
+# PostProcessResults(baseline_results=None,
+#                    database_folder=r"C:\Users\plopez\btap_batch\output\parametric_example\parametric\results\database",
+#                    results_folder=r"C:\Users\plopez\btap_batch\output\parametric_example\parametric\results",
+#                    compute_environment ="aws_batch",
+#                    output_variables=[], username="phylroy_lopez").run()
