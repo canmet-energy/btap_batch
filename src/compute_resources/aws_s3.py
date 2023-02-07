@@ -4,6 +4,7 @@ import logging
 import glob
 from src.compute_resources.aws_credentials import AWSCredentials
 from cloudpathlib import CloudPath
+import pathlib
 
 # Blob Storage operations
 class S3:
@@ -11,6 +12,7 @@ class S3:
     def __init__(self):
         # Create the s3 client.
         self.s3client = AWSCredentials().s3_client
+
 
     # Method to delete a bucket. Not used
     def delete_bucket(self, bucket_name):
@@ -63,14 +65,16 @@ class S3:
     def copy_folder_to_s3(self, bucket_name, source_folder, target_folder):
         # Get files in folder.
         files = glob.glob(source_folder + '/**/*', recursive=True)
+
         # Go through all files recursively.
         for file in files:
-            target_path = file.replace(source_folder, target_folder)
-            # s3 likes forward slashes.
-            target_path = target_path.replace('\\', '/')
-            message = "Uploading %s..." % target_path
-            logging.info(message)
-            self.s3client.upload_file(file, bucket_name, target_path)
+            if not pathlib.Path(file).is_dir():
+                target_path = file.replace(source_folder, target_folder)
+                # s3 likes forward slashes.
+                target_path = target_path.replace('\\', '/')
+                message = "Uploading %s..." % target_path
+                logging.info(message)
+                self.s3client.upload_file(file, bucket_name, target_path)
 
     # Method to upload a file to S3.
     def upload_file(self, file=None, bucket_name=None, target_path=None):
