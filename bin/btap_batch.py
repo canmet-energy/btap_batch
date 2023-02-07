@@ -284,7 +284,7 @@ def parallel_test_examples(**kwargs):
                       'elimination',
                       'optimization',
                       'parametric',
-                      #'sample-lhs',
+                      'sample-lhs',
                       'sensitivity']
 
     for folder in example_folders:
@@ -293,6 +293,7 @@ def parallel_test_examples(**kwargs):
         analysis(project_input_folder, kwargs['compute_environment'], True, OUTPUT_FOLDER)
     end = time.time()
     print(f"Time elapsed: {end-start}")
+    print("You will need to review aws batch for progress of analyses.")
 
 
 if __name__ == '__main__':

@@ -47,7 +47,6 @@ class AWSDynamodb():
         table = AWSCredentials().dynamodb_resource.Table(self.table_name)
         with table.batch_writer() as batch:
             for index, row in dataframe.iterrows():
-                ic(json.loads(row.to_json()))
                 batch.put_item(json.loads(row.to_json(), parse_float=Decimal))
 
     def dump_results_table(self, folder_path=None, type=None):
