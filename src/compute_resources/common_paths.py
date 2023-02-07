@@ -56,7 +56,7 @@ class CommonPaths(object):
 
 
     # /input
-    def project_input_folder(self):
+    def get_project_input_folder(self):
         return self.project_input_folder
 
 # Output

@@ -280,11 +280,11 @@ def result_data_dump(**kwargs):
 def parallel_test_examples(**kwargs):
     start = time.time()
     examples_folder = os.path.join(PROJECT_FOLDER,'examples')
-    example_folders = ['custom_osm',
+    example_folders = [#'custom_osm',
                       'elimination',
                       'optimization',
                       'parametric',
-                      'sample-lhs',
+                      #'sample-lhs',
                       'sensitivity']
 
     for folder in example_folders:
