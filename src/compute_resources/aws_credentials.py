@@ -28,6 +28,7 @@ class AWSCredentials:
         self.codebuild_client = boto3.client('codebuild', config=self._aws_config)
         self.ecr_client = boto3.client('ecr', config=self._aws_config)
         self.dynamodb_resource = boto3.resource('dynamodb', config=self._aws_config)
+        self.dynamodb_client = boto3.client('dynamodb', config=self._aws_config)
         try:
             self.account_id = self.sts_client.get_caller_identity()["Account"]
             self.user_id = self.sts_client.get_caller_identity()["UserId"]

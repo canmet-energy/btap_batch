@@ -1,4 +1,3 @@
-import boto3
 import botocore
 import logging
 import os
@@ -8,6 +7,7 @@ import json
 import pandas
 from icecream import ic
 from src.compute_resources.aws_credentials import AWSCredentials
+
 class AWSDynamodb():
     def __init__(self):
         self.table_name = f"{CommonPaths().get_username()}_results"
@@ -15,33 +15,35 @@ class AWSDynamodb():
 
 
     def create_results_table(self):
-        try:
-            table = AWSCredentials().dynamodb_resource.create_table(
-                TableName=self.table_name,
-                KeySchema=[
-                    {'AttributeName': ':datapoint_id', 'KeyType': 'HASH'},  # Partition key
-                    {'AttributeName': ':analysis_name', 'KeyType': 'RANGE'}  # Sort key
-                ],
-                AttributeDefinitions=[
-                    {'AttributeName': ':datapoint_id', 'AttributeType': 'S'},
-                    {'AttributeName': ':analysis_name', 'AttributeType': 'S'}
-                ],
-                BillingMode="PAY_PER_REQUEST"
-            )
-            table.wait_until_exists()
-        except botocore.exceptions.ClientError as err:
-            logging.error(
-                "Couldn't create table %s. Here's why: %s: %s", self.table_name,
-                err.response['Error']['Code'], err.response['Error']['Message'])
-            raise
-        else:
-            return self.table
+        if not self.table_name in AWSCredentials().dynamodb_client.list_tables()['TableNames']:
+            try:
+                table = AWSCredentials().dynamodb_resource.create_table(
+                    TableName=self.table_name,
+                    KeySchema=[
+                        {'AttributeName': ':datapoint_id', 'KeyType': 'HASH'},  # Partition key
+                        {'AttributeName': ':analysis_name', 'KeyType': 'RANGE'}  # Sort key
+                    ],
+                    AttributeDefinitions=[
+                        {'AttributeName': ':datapoint_id', 'AttributeType': 'S'},
+                        {'AttributeName': ':analysis_name', 'AttributeType': 'S'}
+                    ],
+                    BillingMode="PAY_PER_REQUEST"
+                )
+                table.wait_until_exists()
+            except botocore.exceptions.ClientError as err:
+                logging.error(
+                    "Couldn't create table %s. Here's why: %s: %s", self.table_name,
+                    err.response['Error']['Code'], err.response['Error']['Message'])
+                raise
+            else:
+                return self.table
 
     def delete_results_table(self):
-        table = AWSCredentials().dynamodb_resource.Table(self.table_name)
-        table.delete()
-        print(f"Deleting {table.name}...")
-        table.wait_until_not_exists()
+        if self.table_name in AWSCredentials().dynamodb_client.list_tables()['TableNames']:
+            table = AWSCredentials().dynamodb_resource.Table(self.table_name)
+            table.delete()
+            print(f"Deleting {table.name}...")
+            table.wait_until_not_exists()
 
     def save_results(self, dataframe):
         table = AWSCredentials().dynamodb_resource.Table(self.table_name)

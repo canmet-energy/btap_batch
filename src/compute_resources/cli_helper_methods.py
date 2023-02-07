@@ -75,17 +75,21 @@ def build_and_configure_docker_and_aws(btap_batch_branch=None,
         # create aws_btap_batch batch framework.
         batch_batch = AWSBatch(image_manager=image_batch, compute_environment=ace)
         batch_batch.setup()
-        # Create AWS database for results
+
+        # Create AWS database for results if it does not already exist.
         AWSDynamodb().create_results_table()
+
+
     if compute_environment == 'all' or compute_environment == 'local_docker':
-        # Build btap_cli image
-        image_batch = DockerImageManager(image_name='btap_batch')
-        print('Building btap_batch image')
-        image_batch.build_image(build_args=build_args_btap_batch)
         # Build btap_batch image
         image_cli = DockerImageManager(image_name='btap_cli')
         print('Building btap_cli image')
         image_cli.build_image(build_args=build_args_btap_cli)
+
+        # # Build batch image
+        # image_batch = DockerImageManager(image_name='btap_batch')
+        # print('Building btap_batch image')
+        # image_batch.build_image(build_args=build_args_btap_batch)
 
 def analysis(project_input_folder=None,
              compute_environment=None,
