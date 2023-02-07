@@ -171,7 +171,7 @@ class IAMBatchJobRole(IAMRoles):
                 'PolicyArn': 'arn:aws:iam::aws:policy/AWSBatchFullAccess',
                 'PolicyName': 'AWSBatchFullAccess'},
             {
-                'PolicyArn': 'arn:aws:iam::aws:policy/AWSBatchFullAccess',
+                'PolicyArn': 'arn:aws:iam::aws:policy/AmazonDynamoDBFullAccess',
                 'PolicyName': 'AmazonDynamoDBFullAccess'},
 
 
