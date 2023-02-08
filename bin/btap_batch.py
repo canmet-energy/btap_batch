@@ -1,12 +1,16 @@
+
+from pathlib import Path
+import sys
 import click
 from colorama import Fore, Style
 import time
 import os
-from pathlib import Path
 import pyfiglet
 import random
-from src.compute_resources.aws_dynamodb import AWSDynamodb
-from src.compute_resources.cli_helper_methods import analysis, build_and_configure_docker_and_aws
+# Avoid having to add PYTHONPATH to env.
+sys.path.append(Path(os.path.dirname(os.path.realpath(__file__))).parent.absolute())
+from src.btap.aws_dynamodb import AWSResultsTable
+from src.btap.cli_helper_methods import analysis, build_and_configure_docker_and_aws
 
 PROJECT_FOLDER = os.path.join(Path(os.path.dirname(os.path.realpath(__file__))).parent.absolute())
 OUTPUT_FOLDER = os.path.join(PROJECT_FOLDER, "output")
@@ -17,7 +21,6 @@ CONTEXT_SETTINGS = dict(help_option_names=['-h', '--help'])
 @click.version_option(version='1.0.0')
 def btap():
     pass
-
 
 @btap.command()
 def credits():
@@ -41,8 +44,8 @@ def credits():
         print(random.choice(colors) + pyfiglet.figlet_format(x) + Fore.RESET)
 
 
-@btap.command()
-@click.option('--compute_environment', default='local_docker', help='configure local_docker, aws_batch or all')
+@btap.command(help='This command will build the supporting permissions, databases, on aws and local docker. This optionally will alllow you to choose experimental development branches to use.')
+@click.option('--compute_environment', default='local_docker', help='local_docker, aws_batch or all')
 @click.option('--btap_batch_branch', default='remove_anaconda', help='branch to use for btap_batch. Default = master')
 @click.option('--os_standards_branch', default='nrcan', help='branch to use for openstudio-standards branch')
 @click.option('--btap_costing_branch', default='master', help='branch to use for btap_costing branch')
@@ -60,7 +63,7 @@ def build_environment(**kwargs):
                                        os_standards_branch=os_standards_branch)
 
 
-@btap.command()
+@btap.command(help="This command will invoke an analysis, a set of simulations based on the input.yml contained in your project_folder. These simulations can be run locally or on Amazon.")
 @click.option('--compute_environment', default='local_docker',
               help='Environment to run analysis either local_docker or aws_batch')
 @click.option('--project_folder',
@@ -79,35 +82,35 @@ def run_analysis_project(**kwargs):
     analysis(analysis_project_folder, compute_environment, reference_run, output_folder)
 
 
-@btap.command()
+@btap.command(help="This command will erase all data contained in the AWS (DynamoDB) database.")
 def result_data_reset(**kwargs):
-    AWSDynamodb().delete_results_table()
-    AWSDynamodb().create_results_table()
+    AWSResultsTable().delete_table()
+    AWSResultsTable().create_table()
 
 
-@btap.command()
+@btap.command(help="This command will dump all data contained in the AWS (DynamoDB) database to a local file.")
 @click.option('--type', default="csv", help='format type to dump entire results information. Choices are pickle or csv')
 @click.option('--folder_path', default=OUTPUT_FOLDER,
               help='folder path to save database file dump. Defaults to projects output folder. ')
 def result_data_dump(**kwargs):
     type = kwargs['type']
     folder_path = kwargs['folder_path']
-    AWSDynamodb().dump_results_table(folder_path=folder_path, type=type)
+    AWSResultsTable().dump_table(folder_path=folder_path, type=type)
 
 
-@btap.command()
-@click.option('--compute_environment', default='local_docker',
-              help='Environment to run analysis either local_docker or aws_batch')
+@btap.command(help="This will run all the analysis projects in the examples file. Locally or on AWS.")
+@click.option('--compute_environment', default='local_docker',  help='Environment to run analysis either local_docker or aws_batch')
 def parallel_test_examples(**kwargs):
     start = time.time()
     examples_folder = os.path.join(PROJECT_FOLDER, 'examples')
     example_folders = [
-        'custom_osm'
-        # 'elimination',
-        # 'optimization',
-        # 'parametric',
-        # 'sample-lhs',
-        # 'sensitivity'
+        'custom_osm',
+        'elimination',
+        'optimization',
+        'parametric',
+        'sample-lhs',
+        'sensitivity',
+        'reference_only'
     ]
 
     for folder in example_folders:
@@ -123,5 +126,5 @@ if __name__ == '__main__':
     btap()
 
 # Sample commands.
-# set PYTHONPATH=C:\Users\plopez\btap_batch &&  python ./bin/btap_batch.py run-analysis-project --compute_environment aws_batch_analysis --project_folder C:\Users\plopez\btap_batch\examples\optimization
-# set PYTHONPATH=C:\Users\plopez\btap_batch &&  python ./bin/btap_batch.py run-analysis-project --compute_environment local_docker --project_folder C:\Users\plopez\btap_batch\examples\parametric --run_reference
+# python ./bin/btap_batch.py run-analysis-project --compute_environment aws_batch_analysis --project_folder C:\Users\plopez\btap_batch\examples\optimization
+# python ./bin/btap_batch.py run-analysis-project --compute_environment local_docker --project_folder C:\Users\plopez\btap_batch\examples\parametric --run_reference

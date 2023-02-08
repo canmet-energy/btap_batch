@@ -69,58 +69,15 @@ file. You will still need a github token set up on your system to run the analys
 Standards repository that contains the code for most North American building standards including Canada's NECB, as well 
 as an array of energy conservation measures. 
  
-## Requirements
-* Windows 10 Professional version 1909 or greater (As a  workaround. if you are using 1709, make sure your git repository is cloned into C:/users/your-user-name/btap_batch) Performance however will not be optimal and will not use all available ram. 
-* [Docker](https://docs.docker.com/docker-for-windows/install/) running on your computer.
-* A python **miniconda** environment [3.8](https://docs.conda.io/en/latest/miniconda.html). use Windows installers.
-* A git [client](https://git-scm.com/downloads)
-* A high speed internet connection.
-* A github account and [git-token](https://docs.github.com/en/github/authenticating-to-github/creating-a-personal-access-token)
-* Add the github token as a user windows/linux environment variable as GIT_API_TOKEN
-* If you would like to use costing and have an RSMeans account contact chris.kirney@nrcan-rncan.gc.ca for permissions to access canmet-energy repositories (For use of the btap_private_cli costing image.)
-* For AWS runs: [AWS CLI on Windows, install the AWS CLI version 2 on Windows](https://docs.aws.amazon.com/cli/latest/userguide/install-cliv2-windows.html).
-* If you are an NRCan employee: [NRCan btap_dev AWS account credentials set up on your computer](https://docs.aws.amazon.com/cli/latest/userguide/cli-configure-files.html) for Amazon HPC runs(Optional). 
-* At least 8GB+ ram with 4 or more cores (8+ threads). Preferably a powerful multi-core computer to run simulations fast locally. (24 core/48 thread with 32GB+)
-* [OpenStudio 3.2.1](https://github.com/NREL/OpenStudio/releases/tag/v3.2.1) (optional) Required to use the OpenStudio App and the SketchUp plugin.
-* [OpenStudio App 1.2.1](https://github.com/openstudiocoalition/OpenStudioApplication/releases/tag/v1.2.1) (optional) To view BTAP models and to create custom geometry models (must have OpenStudio v3.2.1 installed first).
-* [SketchUp 2021](https://help.sketchup.com/en/downloading-older-versions) (optional) To view BTAP models and create custom geometry models in SketchUp.
-* [OpenStudio SketchUp Plugin 1.2.1](https://github.com/openstudiocoalition/openstudio-sketchup-plugin/releases/tag/v1.2.1) (optional) To modify OpenStudio models in SketchUp.
 
-## Test Requirements are Met
-### Miniconda
-Open Windows Start->Anaconda3-Anaconda Prompt(Miniconda)
-### Git
-Execute the following command. This should produce a version number for git if it is installed correctly.
-```
-git --version
-```
-### Docker
-Ensure Docker for Windows Desktop is running (Windows Start->Docker Desktop) You should have a docker icon then running in your system tray. You will need to ensure that this is running for any btap analysis. This command will test if it is working properly.
-```
-docker run hello-world
-```
-If you get a permission denied error to you will need to [add your windows user account to the docker-group](https://docs.microsoft.com/en-us/visualstudio/containers/troubleshooting-docker-errors?view=vs-2019#docker-users-group). You will require admin priviliges to do this. 
-
-## Configuration
-1. Open a miniconda prompt (Start->Anaconda3(64-bit)->Anaconda Prompt) Not Powershell!
-
-2. Clone this repository to your computer and change into the project folder using windows powershell.
+## Quick Install
 ```
 git clone https://github.com/canmet-energy/btap_batch
 cd btap_batch
+python -m venv venv
+venv\Scripts\activate.bat
+pip install -r requirements.txt
 ```
-3. Set up your conda/python environment 'btap_batch'. This will download all required packages to your system.  
-For those familiar with Ruby, this is similar to a Gemfile vendor/bundle environment. You can do this by running 
-the .bat file below
-```
-conda env create --prefix ./env --file environment.yml
-```
-4. Activate your conda environment. It should give you the command after step 3.. Should look like this.  
-```
-conda activate <path_to_your_environment>
-```
-
-
 
 ## QuickStart Command Line 
 ### Parametric Analysis Local Machine
