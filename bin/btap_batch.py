@@ -8,7 +8,8 @@ import os
 import pyfiglet
 import random
 # Avoid having to add PYTHONPATH to env.
-sys.path.append(Path(os.path.dirname(os.path.realpath(__file__))).parent.absolute())
+PROJECT_ROOT = str(Path(os.path.dirname(os.path.realpath(__file__))).parent.absolute())
+sys.path.append(PROJECT_ROOT)
 from src.btap.aws_dynamodb import AWSResultsTable
 from src.btap.cli_helper_methods import analysis, build_and_configure_docker_and_aws
 
