@@ -97,7 +97,7 @@ pip install -r requirements.txt
 
 You need to configure the docker images locally and on AWS to run any analysis. These depend on the branches that you use to create your environment. 
 
-The btap_batch cli command for this is called 'build-environment'. You can invoke the help for this command using the -h switch. This lets to you know the option swithched to change which branches you wish to use.  
+The btap_batch cli command for this is called 'build-environment'. You can invoke the help for this command using the -h switch. This lets to you know the option switches to change which branches you wish to use for your analyses. 
 ```
 python ./bin/btap_batch.py build-environment -h
 
