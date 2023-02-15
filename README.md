@@ -154,7 +154,7 @@ output files from OS/Energyplus.
 *Note*:  Navigate to '.aws' folder in your user folder using windows powershell. Run the command: ```$ aws configure```. Set the default region name to ca-central-1, and output format to json. Then, open the generated credentials file in '.aws' folder in your user folder. Use your updated AWS credentials in the credentials file. Replace the first line that looks something like this [834599497928_PowerUser] to [default] and save the file.
 
 ```
-python ./bin/btap_batch.py run-analysis-project --compute_environment local_docker --project_folder C:\Users\plopez\btap_batch\examples\parametric --run_reference
+python ./bin/btap_batch.py run-analysis-project --compute_environment aws_batch --project_folder C:\Users\plopez\btap_batch\examples\parametric --run_reference
 ```
 
 The output of the runs is not stored all locally, but on the S3 Bucket,  the ':analysis_name' you chose and the analysis_id 
