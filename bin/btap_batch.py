@@ -47,7 +47,7 @@ def credits():
 
 @btap.command(help='This command will build the supporting permissions, databases, on aws and local docker. This optionally will alllow you to choose experimental development branches to use.')
 @click.option('--compute_environment', default='local_docker', help='local_docker, aws_batch or all')
-@click.option('--btap_batch_branch', default='remove_anaconda', help='branch to use for btap_batch. Default = master')
+@click.option('--btap_batch_branch', default='main', help='branch to use for btap_batch. Default = master')
 @click.option('--os_standards_branch', default='nrcan', help='branch to use for openstudio-standards branch')
 @click.option('--btap_costing_branch', default='master', help='branch to use for btap_costing branch')
 @click.option('--openstudio_version', default='3.2.1', help='version of openstudio to use.. Do not change.')
