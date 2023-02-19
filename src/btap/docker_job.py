@@ -23,23 +23,26 @@ class DockerBTAPJob:
         # Variable to store all input and output information about job.
         job_data = {}
         job_data.update(self.run_options)
+        # Save pristine run_options.
+        job_data['run_options'] = yaml.dump(self.run_options)
+        job_data['datapoint_output_url'] = self._job_url()
         self._copy_files_to_run_location()
         try:
             self._run_container()
+            # Update job_data with possible modifications to run_options.
+            job_data.update(self.run_options)
             # Flag that is was successful.
-            job_data['success'] = True
+            job_data['status'] = "SUCCEEDED"
             job_data['simulation_time'] = time.time() - start
-            job_data['datapoint_output_url'] = self._job_url()
-            job_data['run_options'] = yaml.dump(self.run_options)
             job_data.update(self._get_job_results())
             return job_data
         except Exception as error:
             print(error)
-            # post process failed run.
+            # Update job_data with possible modifications to run_options.
+            job_data.update(self.run_options)
+            # Flag that is was failure and save container error.
             job_data['container_error'] = self._get_container_error()
-            job_data['success'] = False
-            job_data['run_options'] = yaml.dump(self.run_options)
-            job_data['datapoint_output_url'] = self._job_url()
+            job_data['status'] = 'FAILED'
             self._save_output_file(job_data)
             return job_data
     #protected

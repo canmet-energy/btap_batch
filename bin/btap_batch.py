@@ -66,7 +66,7 @@ def build_environment(**kwargs):
 
 @btap.command(help="This command will invoke an analysis, a set of simulations based on the input.yml contained in your project_folder. These simulations can be run locally or on Amazon.")
 @click.option('--compute_environment', default='local_docker',
-              help='Environment to run analysis either local_docker or aws_batch')
+              help='Environment to run analysis either local_docker, aws_batch, aws_batch_analysis')
 @click.option('--project_folder',
               help='location of folder containing input.yml file and optionally support folder such as osm_files folder. ')
 @click.option('--reference_run', is_flag=True,
@@ -128,4 +128,4 @@ if __name__ == '__main__':
 
 # Sample commands.
 # python ./bin/btap_batch.py run-analysis-project --compute_environment aws_batch_analysis --project_folder C:\Users\plopez\btap_batch\examples\optimization
-# python ./bin/btap_batch.py run-analysis-project --compute_environment local_docker --project_folder C:\Users\plopez\btap_batch\examples\parametric --run_reference
+# python ./bin/btap_batch.py run-analysis-project --compute_environment local_docker --project_folder C:\Users\plopez\btap_batch\examples\parametric --reference_run

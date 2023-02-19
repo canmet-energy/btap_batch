@@ -120,10 +120,11 @@ class BTAPParametric(BTAPAnalysis):
                 # Bring simulation thread back to main thread
                 for future in concurrent.futures.as_completed(futures):
                     # Save results to database.
-                    self.save_results_to_database(future.result())
+                    job_data = future.result()
+                    self.save_results_to_database(job_data)
 
                     # Track failures.
-                    if not future.result()['success']:
+                    if not job_data['status'] != 'SUCCESS':
                         failed_datapoints += 1
 
                     # Update user.

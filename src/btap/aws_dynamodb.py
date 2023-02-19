@@ -54,6 +54,14 @@ class AWSResultsTable():
             for index, row in dataframe.iterrows():
                 batch.put_item(json.loads(row.to_json(), parse_float=Decimal))
 
+    def save_dict_result(self,run_options):
+        table = AWSCredentials().dynamodb_resource.Table(self.table_name)
+        with table.batch_writer() as batch:
+            batch.put_item(run_options)
+
+
+
+
     def dump_table(self, folder_path=None, type=None):
 
         filepath = os.path.join(folder_path, f"database.{type}")
@@ -68,27 +76,6 @@ class AWSResultsTable():
             df.to_csv(filepath)
         if type == 'pickle':
             df.to_pickle(filepath)
-
         print(f"Dumped results to {filepath}")
+        print(df)
 
-
-class AWSStatusTable(AWSResultsTable):
-    def __init__(self):
-        self.table = None
-        self.table_name = f"{CommonPaths().get_username()}_status"
-        self.key_schema = [
-            {'AttributeName': ':analysis_name', 'KeyType': 'HASH'},  # Partition key
-        ]
-        self.attribute_defs = [
-            {'AttributeName': ':analysis_name', 'AttributeType': 'S'}
-        ]
-        self.billing_mode = "PAY_PER_REQUEST"
-
-    def add_analysis(self, analysis_id=None, total_jobs=None):
-        print("stub")
-
-    def increment_success(self, analysis_id=None):
-        print("stub")
-
-    def increment_failure(self, analysis_id=None):
-        print("stub")
