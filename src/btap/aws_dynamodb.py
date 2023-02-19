@@ -57,7 +57,7 @@ class AWSResultsTable():
     def save_dict_result(self,run_options):
         table = AWSCredentials().dynamodb_resource.Table(self.table_name)
         with table.batch_writer() as batch:
-            batch.put_item(run_options)
+            batch.put_item(json.loads(json.dumps(run_options), parse_float=Decimal))
 
 
 
@@ -77,5 +77,5 @@ class AWSResultsTable():
         if type == 'pickle':
             df.to_pickle(filepath)
         print(f"Dumped results to {filepath}")
-        print(df)
+        print(df[[':datapoint_id',':analysis_name','status']])
 

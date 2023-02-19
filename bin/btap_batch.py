@@ -127,5 +127,6 @@ if __name__ == '__main__':
     btap()
 
 # Sample commands.
+# python ./bin/btap_batch.py build_environment --compute_environment aws_batch --btap_batch_branch monitoring
 # python ./bin/btap_batch.py run-analysis-project --compute_environment aws_batch_analysis --project_folder C:\Users\plopez\btap_batch\examples\optimization
 # python ./bin/btap_batch.py run-analysis-project --compute_environment local_docker --project_folder C:\Users\plopez\btap_batch\examples\parametric --reference_run
