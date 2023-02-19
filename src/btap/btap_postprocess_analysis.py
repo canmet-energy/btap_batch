@@ -235,13 +235,9 @@ class PostProcessResults():
                         target_path_on_aws = os.path.join(self.username,
                                                           "\\".join(sum_hourly_res_path.split("\\")[-5:])).replace('\\', '/')
 
-                        # phylroy_lopez\
                         message = "Uploading %s..." % target_path_on_aws
                         print(message)
                         logging.info(message)
-                        ic(sum_hourly_res_path)
-                        ic(AWSCredentials().account_id)
-                        ic(target_path_on_aws)
                         S3().upload_file(file=sum_hourly_res_path, bucket_name=AWSCredentials().account_id, target_path=target_path_on_aws)
 
 

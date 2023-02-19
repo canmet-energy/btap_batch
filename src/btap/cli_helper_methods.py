@@ -138,8 +138,7 @@ def analysis(project_input_folder=None,
 
             reference_run_data_path = br.analysis_excel_results_path()
 
-        print("analysis")
-        ic(reference_run_data_path)
+        #ic(reference_run_data_path)
 
         # BTAP analysis placeholder.
         ba = None

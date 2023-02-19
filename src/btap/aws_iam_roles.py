@@ -73,9 +73,9 @@ class IAMRoles():
             inline_policies.append(iam.get_role_policy(RoleName=old_role_name, PolicyName=list_role_policy))
 
         managed_policies = iam.list_attached_role_policies(RoleName=old_role_name)['AttachedPolicies']
-        ic(sourceRole)
-        ic(managed_policies)
-        ic(inline_policies)
+        #ic(sourceRole)
+        #ic(managed_policies)
+        #ic(inline_policies)
 
         exit(1)
 
@@ -100,7 +100,7 @@ class IAMRoles():
             )
 
         for inline_policy in inline_policies:
-            ic(inline_policy)
+            #ic(inline_policy)
             response = iam.put_role_policy(
                 RoleName=new_role_name,
                 PolicyName=inline_policy.get('PolicyName'),
@@ -108,7 +108,7 @@ class IAMRoles():
             )
 
         for managed_policy in managed_policies:
-            ic(managed_policy)
+            #ic(managed_policy)
             iam.attach_role_policy(
                 RoleName=new_role_name,
                 PolicyArn=managed_policy.get('PolicyArn')
