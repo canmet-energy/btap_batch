@@ -287,29 +287,29 @@ class BTAPAnalysis():
 
         # Submit Job to batch
         job = self.batch.create_job(job_id=job_id)
+        job_data = job.submit_job(run_options=run_options)
+        return job_data
 
-        return job.submit_job(run_options=run_options)
-
-    def save_results_to_database(self, results):
-        if results['success'] == True:
+    def save_results_to_database(self, job_data):
+        if job_data['status'] == 'SUCCEEDED':
             # If container completed with success don't save container output.
-            results['container_output'] = None
-            if results['eplus_fatals'] > 0:
+            job_data['container_output'] = None
+            if job_data['eplus_fatals'] > 0:
                 # If we had fatal errors..the run was not successful after all.
-                results['success'] = False
+                job_data['status'] = 'FAILED'
         # This method organizes the data structure of the dataframe to fit into a report table.
-        df = self.sort_results(results)
-
-        # Save datapoint row information to disc in case of catastrophic failure or when C.K. likes to hit Ctrl-C
-
+        df = self.sort_results(job_data)
+        # Save job_data
+        # to csv file.
         pathlib.Path(self.cp.analysis_database_folder()).mkdir(parents=True, exist_ok=True)
-        df.to_csv(os.path.join(self.cp.analysis_database_folder(), f"{results[':datapoint_id']}.csv"))
+        df.to_csv(os.path.join(self.cp.analysis_database_folder(), f"{job_data[':datapoint_id']}.csv"))
+
 
         # Save failures to a folder as well.
 
-        if results['success'] == False:
-            df.to_csv(os.path.join(self.cp.analysis_failures_folder(), f"{results[':datapoint_id']}.csv"))
-        return results
+        if job_data['status'] != 'SUCCEEDED':
+            df.to_csv(os.path.join(self.cp.analysis_failures_folder(), f"{job_data[':datapoint_id']}.csv"))
+        return job_data
 
     def sort_results(self, results):
         # Set up dict for top/high level data from btap_data.json output
