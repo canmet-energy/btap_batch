@@ -1,3 +1,4 @@
+import pip_system_certs.wrapt_requests
 from src.btap.aws_batch import AWSBatch
 from src.btap.aws_compute_environment import AWSComputeEnvironment
 from src.btap.aws_image_manager import AWSImageManager

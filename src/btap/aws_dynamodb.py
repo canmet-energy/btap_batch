@@ -77,5 +77,22 @@ class AWSResultsTable():
         if type == 'pickle':
             df.to_pickle(filepath)
         print(f"Dumped results to {filepath}")
-        print(df[[':datapoint_id',':analysis_name','status']])
+
+
+    def analyses_status(self):
+        table = AWSCredentials().dynamodb_resource.Table(self.table_name)
+        response = table.scan()
+        data = response['Items']
+        while 'LastEvaluatedKey' in response:
+            response = table.scan(ExclusiveStartKey=response['LastEvaluatedKey'])
+            data.extend(response['Items'])
+        df = pandas.json_normalize(data)
+        states = ['SUBMITTED','PENDING','RUNNABLE','STARTING','FAILED','SUCCEEDED']
+        print(df['status'].value_counts())
+        pandas.set_option('display.max_colwidth', None)
+        print(df.loc[df['status'] == 'FAILED'][['status',':analysis_name',':datapoint_id','datapoint_output_url']])
+
+
+
+
 
