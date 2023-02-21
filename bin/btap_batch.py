@@ -14,6 +14,7 @@ from src.btap.aws_dynamodb import AWSResultsTable
 from src.btap.cli_helper_methods import analysis, build_and_configure_docker_and_aws
 
 PROJECT_FOLDER = os.path.join(Path(os.path.dirname(os.path.realpath(__file__))).parent.absolute())
+EXAMPLE_FOLDER = os.path.join(PROJECT_FOLDER,'examples')
 OUTPUT_FOLDER = os.path.join(PROJECT_FOLDER, "output")
 CONTEXT_SETTINGS = dict(help_option_names=['-h', '--help'])
 
@@ -67,7 +68,7 @@ def build_environment(**kwargs):
 @btap.command(help="This command will invoke an analysis, a set of simulations based on the input.yml contained in your project_folder. These simulations can be run locally or on Amazon.")
 @click.option('--compute_environment', default='local_docker',
               help='Environment to run analysis either local_docker, aws_batch, aws_batch_analysis')
-@click.option('--project_folder',
+@click.option('--project_folder', default=os.path.join(EXAMPLE_FOLDER,'optimization'),
               help='location of folder containing input.yml file and optionally support folder such as osm_files folder. ')
 @click.option('--reference_run', is_flag=True,
               help='Run reference. Required for baseline comparisons')
@@ -99,8 +100,13 @@ def result_data_dump(**kwargs):
     AWSResultsTable().dump_table(folder_path=folder_path, type=type)
 
 
+@btap.command(help="This command will show the state of each analysis that has been run.")
+def analyses_status(**kwargs):
+    AWSResultsTable().analyses_status()
+
+
 @btap.command(help="This will run all the analysis projects in the examples file. Locally or on AWS.")
-@click.option('--compute_environment', default='local_docker',  help='Environment to run analysis either local_docker or aws_batch')
+@click.option('--compute_environment', default='local_docker',  help='Environment to run analysis either local_docker, aws_batch or aws_batch_analysis')
 def parallel_test_examples(**kwargs):
     start = time.time()
     examples_folder = os.path.join(PROJECT_FOLDER, 'examples')

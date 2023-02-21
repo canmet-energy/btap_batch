@@ -411,8 +411,6 @@ class BTAPAnalysis():
         logging.info(message)
         # Add the constants to the run options dict.
         run_options.update(self.constants)
-        # Add the analysis setting to the run options dict.
-        run_options.update(self.analysis_config)
         # Returns the dict.. Note this is not a class variable self like the others. That is because this method is used in the
         # problem definition and we need to avoid thread variable issues.
         return run_options

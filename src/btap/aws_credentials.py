@@ -44,7 +44,8 @@ class AWSCredentials:
                 exit(1)
         except botocore.exceptions.SSLError:
             logging.error(
-                "SSL validation failed.. This is usually because you are behind a VPN. Please do not use a VPN while using Amazon Web Services..")
+                "SSL validation failed.. This is usually because you are behind a VPN. If no VPN is being used, but you "
+                "are in a enterprise environment. It may be due to your network blocking proper security certificates. See the README.md troubleshooting section.  ")
             exit(1)
 
         # get aws username from userid.

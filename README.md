@@ -308,4 +308,12 @@ settings and under "General" tab, deselect the "Use the WSL2 based engine" This 
  80% of your computers total processor capacity. The processor capacity if the number of cpu cores you have x2. 
  Similarly devote 50-80% of your Memory, keep 2GB of swap and whatever disk image size you can spare from your disk storage.. I would recommend at least 200GB. 
  Apply and restart. You may have to reboot your computer and launch Docker Desktop as soon as you log in to windows. 
-```
+
+**Problem**: Certificate issues
+
+**Solution**: To fix certificate issues when using AWS from a computer at work do the following: Put the attached 
+certificate somewhere on your systemLook for your AWS 'config' file (the path should be something 
+'\\s0-ott-nas1\CETC-CTEC\BET\windows_certs\nrcan_azure_amazon.cer') Edit the 'config' file with a text editor. Add "ca_bundle = <path to your certificate>" to the end of the 'config' file (e.g. on my computer I added "ca_bundle = C:\Users\ckirney\py_cert\nrcan+azure+amazon.cer") and save the changes. 
+
+
+

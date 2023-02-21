@@ -2,8 +2,6 @@ import unittest
 import os
 from pathlib import Path
 import sys
-from icecream import ic
-
 from src.btap.cli_helper_methods import analysis,build_and_configure_docker_and_aws
 
 PROJECT_ROOT = str(Path(os.path.dirname(os.path.realpath(__file__))).parent.absolute())
