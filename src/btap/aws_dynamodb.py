@@ -79,7 +79,8 @@ class AWSResultsTable():
         print(f"Dumped results to {filepath}")
 
 
-    def analyses_status(self):
+
+    def aws_db_analyses_dashboard(self):
         table = AWSCredentials().dynamodb_resource.Table(self.table_name)
         response = table.scan()
         data = response['Items']
@@ -87,10 +88,41 @@ class AWSResultsTable():
             response = table.scan(ExclusiveStartKey=response['LastEvaluatedKey'])
             data.extend(response['Items'])
         df = pandas.json_normalize(data)
-        states = ['SUBMITTED','PENDING','RUNNABLE','STARTING','FAILED','SUCCEEDED']
-        print(df['status'].value_counts())
-        pandas.set_option('display.max_colwidth', None)
-        print(df.loc[df['status'] == 'FAILED'][['status',':analysis_name',':datapoint_id','datapoint_output_url']])
+        df = df[['status', ':analysis_name', ':datapoint_id', 'container_error','datapoint_output_url']]
+        status_list = list()
+        #Get Analysis names
+        analysis_names = sorted(df[':analysis_name'].unique())
+        for analysis_name in analysis_names:
+            temp = df.loc[df[':analysis_name'] == analysis_name]
+            row = dict()
+            row[':analysis_name'] = analysis_name
+            for status in [
+                           'SUBMITTED',
+                           'PENDING',
+                           'RUNNABLE',
+                           'STARTING',
+                           'FAILED',
+                           'SUCCEEDED'
+            ]:
+                row[status] = len(temp[temp.status == status])
+            status_list.append(row)
+        result = pandas.DataFrame(status_list)
+        return result
+
+    def aws_db_list_failures(self, analysis_name=None):
+        table = AWSCredentials().dynamodb_resource.Table(self.table_name)
+        response = table.scan()
+        data = response['Items']
+        while 'LastEvaluatedKey' in response:
+            response = table.scan(ExclusiveStartKey=response['LastEvaluatedKey'])
+            data.extend(response['Items'])
+        df = pandas.json_normalize(data)
+        df = df[['status', ':analysis_name', ':datapoint_id', 'container_error','datapoint_output_url']]
+        if analysis_name is not None:
+            df = df.loc[df[':analysis_name'] == analysis_name]
+        failed_runs = df.loc[df['status'] == 'FAILED'][['status', ':analysis_name', ':datapoint_id', 'container_error','datapoint_output_url']]
+        return failed_runs
+
 
 
 

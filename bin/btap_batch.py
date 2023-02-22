@@ -7,6 +7,7 @@ import time
 import os
 import pyfiglet
 import random
+import pandas
 # Avoid having to add PYTHONPATH to env.
 PROJECT_ROOT = str(Path(os.path.dirname(os.path.realpath(__file__))).parent.absolute())
 sys.path.append(PROJECT_ROOT)
@@ -44,7 +45,6 @@ def credits():
         "Ali Syed\n"
     ]:
         print(random.choice(colors) + pyfiglet.figlet_format(x) + Fore.RESET)
-
 
 @btap.command(help='This command will build the supporting permissions, databases, on aws and local docker. This optionally will alllow you to choose experimental development branches to use.')
 @click.option('--compute_environment', default='local_docker', help='local_docker, aws_batch or all')
@@ -101,8 +101,17 @@ def result_data_dump(**kwargs):
 
 
 @btap.command(help="This command will show the state of each analysis that has been run.")
-def analyses_status(**kwargs):
-    AWSResultsTable().analyses_status()
+def aws_db_analyses_status(**kwargs):
+    pandas.set_option('display.max_colwidth', None)
+    pandas.set_option('display.max_columns', None)
+    print(AWSResultsTable().aws_db_analyses_dashboard())
+
+@btap.command(help="Table to identifiy fails runs for analyses")
+@click.option('--analysis_name', default=None, help='Filter by analysis name given. Default shows all.')
+def aws_db_failures(**kwargs):
+    pandas.set_option('display.max_colwidth', None)
+    pandas.set_option('display.max_columns', None)
+    print(AWSResultsTable().aws_db_list_failures(analysis_name=kwargs['analysis_name']))
 
 
 @btap.command(help="This will run all the analysis projects in the examples file. Locally or on AWS.")
