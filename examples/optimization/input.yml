@@ -19,7 +19,7 @@
 :algorithm_lhs_n_samples: null
 :algorithm_lhs_type: null
 :algorithm_lhs_random_seed: null
-:enable_costing: false
+:enable_costing: true
 :run_annual_simulation: true
 :run_reference: true
 

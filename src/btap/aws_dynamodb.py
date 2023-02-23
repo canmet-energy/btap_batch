@@ -5,7 +5,7 @@ from decimal import Decimal
 from src.btap.common_paths import CommonPaths
 import json
 import pandas
-from icecream import ic
+import plotly.express as px
 from src.btap.aws_credentials import AWSCredentials
 
 
@@ -54,13 +54,10 @@ class AWSResultsTable():
             for index, row in dataframe.iterrows():
                 batch.put_item(json.loads(row.to_json(), parse_float=Decimal))
 
-    def save_dict_result(self,run_options):
+    def save_dict_result(self, run_options):
         table = AWSCredentials().dynamodb_resource.Table(self.table_name)
         with table.batch_writer() as batch:
             batch.put_item(json.loads(json.dumps(run_options), parse_float=Decimal))
-
-
-
 
     def dump_table(self, folder_path=None, type=None):
 
@@ -78,9 +75,7 @@ class AWSResultsTable():
             df.to_pickle(filepath)
         print(f"Dumped results to {filepath}")
 
-
-
-    def aws_db_analyses_dashboard(self):
+    def aws_db_analyses_status(self):
         table = AWSCredentials().dynamodb_resource.Table(self.table_name)
         response = table.scan()
         data = response['Items']
@@ -88,28 +83,28 @@ class AWSResultsTable():
             response = table.scan(ExclusiveStartKey=response['LastEvaluatedKey'])
             data.extend(response['Items'])
         df = pandas.json_normalize(data)
-        df = df[['status', ':analysis_name', ':datapoint_id', 'container_error','datapoint_output_url']]
+        df = df[['status', ':analysis_name', ':datapoint_id', 'container_error', 'datapoint_output_url']]
         status_list = list()
-        #Get Analysis names
+        # Get Analysis names
         analysis_names = sorted(df[':analysis_name'].unique())
         for analysis_name in analysis_names:
             temp = df.loc[df[':analysis_name'] == analysis_name]
             row = dict()
             row[':analysis_name'] = analysis_name
             for status in [
-                           'SUBMITTED',
-                           'PENDING',
-                           'RUNNABLE',
-                           'STARTING',
-                           'FAILED',
-                           'SUCCEEDED'
+                'SUBMITTED',
+                'PENDING',
+                'RUNNABLE',
+                'STARTING',
+                'FAILED',
+                'SUCCEEDED'
             ]:
                 row[status] = len(temp[temp.status == status])
             status_list.append(row)
         result = pandas.DataFrame(status_list)
         return result
 
-    def aws_db_list_failures(self, analysis_name=None):
+    def aws_db_failures(self, analysis_name=None):
         table = AWSCredentials().dynamodb_resource.Table(self.table_name)
         response = table.scan()
         data = response['Items']
@@ -117,14 +112,35 @@ class AWSResultsTable():
             response = table.scan(ExclusiveStartKey=response['LastEvaluatedKey'])
             data.extend(response['Items'])
         df = pandas.json_normalize(data)
-        df = df[['status', ':analysis_name', ':datapoint_id', 'container_error','datapoint_output_url']]
+        df = df[['status', ':analysis_name', ':datapoint_id', 'container_error', 'datapoint_output_url']]
         if analysis_name is not None:
             df = df.loc[df[':analysis_name'] == analysis_name]
-        failed_runs = df.loc[df['status'] == 'FAILED'][['status', ':analysis_name', ':datapoint_id', 'container_error','datapoint_output_url']]
+        failed_runs = df.loc[df['status'] == 'FAILED'][
+            ['status', ':analysis_name', ':datapoint_id', 'container_error', 'datapoint_output_url']]
         return failed_runs
 
+    def aws_db_analyses_chart_scatter(self,
+                                      analysis_name=None,
+                                      x=None,
+                                      y=None,
+                                      color=None,
+                                      size=None,
+                                      hover_data=[':datapoint_id']):
+        table = AWSCredentials().dynamodb_resource.Table(self.table_name)
+        response = table.scan()
+        data = response['Items']
+        while 'LastEvaluatedKey' in response:
+            response = table.scan(ExclusiveStartKey=response['LastEvaluatedKey'])
+            data.extend(response['Items'])
 
-
-
-
-
+        df = pandas.json_normalize(data)
+        if analysis_name is not None:
+            df = df.loc[df[':analysis_name'] == analysis_name]
+        fig = px.scatter(data_frame=df,
+                         x=x,
+                         y=y,
+                         color=color,
+                         size=size,
+                         hover_data=hover_data
+                         )
+        fig.show()
