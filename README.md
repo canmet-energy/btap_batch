@@ -311,9 +311,14 @@ settings and under "General" tab, deselect the "Use the WSL2 based engine" This 
 
 **Problem**: Certificate issues
 
-**Solution**: To fix certificate issues when using AWS from a computer at work do the following: Put the attached 
-certificate somewhere on your systemLook for your AWS 'config' file (the path should be something 
-'\\s0-ott-nas1\CETC-CTEC\BET\windows_certs\nrcan_azure_amazon.cer') Edit the 'config' file with a text editor. Add "ca_bundle = <path to your certificate>" to the end of the 'config' file (e.g. on my computer I added "ca_bundle = C:\Users\ckirney\py_cert\nrcan+azure+amazon.cer") and save the changes. 
-
+**Solution**: To fix certificate issues when using AWS from a computer at work do the following: 
+* Put an proper certificate somewhere on your system. 
+* Look for your AWS 'config' file (the path should be something 'C:\Users\ckirney\.aws\c') 
+* Edit the 'config' file with a text editor. 
+* Add "ca_bundle = <path to your certificate>" to the end of the 'config' file (e.g. on my computer I added "ca_bundle = C:\Users\ckirney\py_cert\nrcan+azure+amazon.cer") and save the changes.
+* if you are on the NRCan network you can point to this file in your config folder.
+```
+ \\s0-ott-nas1\CETC-CTEC\BET\windows_certs\nrcan_azure_amazon.cer . 
+```
 
 

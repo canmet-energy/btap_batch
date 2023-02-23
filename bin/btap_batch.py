@@ -46,13 +46,47 @@ def credits():
     ]:
         print(random.choice(colors) + pyfiglet.figlet_format(x) + Fore.RESET)
 
-@btap.command(help='This command will build the supporting permissions, databases, on aws and local docker. This optionally will alllow you to choose experimental development branches to use.')
-@click.option('--compute_environment', default='local_docker', help='local_docker, aws_batch or all')
-@click.option('--btap_batch_branch', default='main', help='branch to use for btap_batch. Default = master')
-@click.option('--os_standards_branch', default='nrcan', help='branch to use for openstudio-standards branch')
-@click.option('--btap_costing_branch', default='master', help='branch to use for btap_costing branch')
-@click.option('--openstudio_version', default='3.2.1', help='version of openstudio to use.. Do not change.')
+@btap.command()
+@click.option('--compute_environment', default='local_docker', help='local_docker for local computer, aws_batch to configure aws, or all. Default=local_docker.')
+@click.option('--btap_batch_branch', default='main', help='btap_batch branch. Default = main.')
+@click.option('--os_standards_branch', default='nrcan', help='openstudio-standards branch. Default=nrcan.')
+@click.option('--btap_costing_branch', default='master', help='btap_costing branch.Default=master.')
+@click.option('--openstudio_version', default='3.2.1', help='OpenStudio version. Default=3.2.1')
 def build_environment(**kwargs):
+    """
+    This command will build the supporting permissions, databases, on aws and local docker. This optionally will allow
+    you to choose experimental development branches to use.
+    For 'local_docker' as compute_environment, it will simply build the btap_cli image on your local computer. This
+    image is responsible for running openstudio/Energyplus.
+
+    For 'aws_batch' this will configure the correct IAM roles required to run BTAP on AWS. This includes
+    CloudBuildRole, BatchJobRole, and BatchServiceRole. These roles will appear with a suffix of your AWS_USERNAME that
+    you have provided in your system variables.
+
+    It will also create an aws compute resource, an aws job description, a btap job queue and an analysis job queue..
+    These are also suffixed with your provided AWS_USERNAME.
+
+    Similarly to local_docker, it will create btap_cli image, but on the Amazon Container Registery. It will also build
+    the btap_batch image to run the analysis completely remotely.
+
+    It will also create a dynamodb table to store results and status of running submitted analysis jobs and btap_cli
+    jobs.
+
+    The reason for all components of aws to have your username as a suffix ensures that your setting will not effect
+    others on a federated account, which is the type of account the government of canada uses.
+
+    Subsequent executions of this command will tear down and rebuild the configuration based on the latest branches
+    that you have selected or chosen to default.
+
+    The branch switches are for developer use only. Use at your peril.
+
+    Examples:
+
+        python ./bin/btap_batch.py build-environment --compute_environment local_docker
+
+        python ./bin/btap_batch.py build-environment --compute_environment aws_batch
+
+    """
     compute_environment = kwargs['compute_environment']
     btap_batch_branch = kwargs['btap_batch_branch']
     os_standards_branch = kwargs['os_standards_branch']
@@ -65,16 +99,29 @@ def build_environment(**kwargs):
                                        os_standards_branch=os_standards_branch)
 
 
-@btap.command(help="This command will invoke an analysis, a set of simulations based on the input.yml contained in your project_folder. These simulations can be run locally or on Amazon.")
+@btap.command()
 @click.option('--compute_environment', default='local_docker',
-              help='Environment to run analysis either local_docker, aws_batch, aws_batch_analysis')
+              help='Environment to run analysis. Either local_docker, which runs on your computer, or aws_batch_analysis which runs completely on AWS. The default is local_docker')
 @click.option('--project_folder', default=os.path.join(EXAMPLE_FOLDER,'optimization'),
-              help='location of folder containing input.yml file and optionally support folder such as osm_files folder. ')
+              help='location of folder containing input.yml file and optionally support folders such as osm_files folder for custom models. Default is the optimization example folder.')
 @click.option('--reference_run', is_flag=True,
               help='Run reference. Required for baseline comparisons')
 @click.option('--output_folder', default=OUTPUT_FOLDER,
               help='Path to output results. Defaulted to this projects output folder ./btap_batch/output')
 def run_analysis_project(**kwargs):
+    """
+    This command will invoke an analysis, a set of simulations based on the input.yml contained in your project_folder.
+    Please see the 'examples' folder for examples of how to run different types of analyses. Note: The build_environment
+    command must have been invoked at least once.
+
+    Examples.
+
+        python ./bin/btap_batch.py run-analysis-project --compute_environment local_docker  --project_folder examples\optimization --reference_run
+
+        python ./bin/btap_batch.py run-analysis-project --compute_environment aws_batch_analysis --project_folder examples\parametric --reference_run
+    """
+
+
     # Input folder name
     analysis_project_folder = kwargs['project_folder']
     compute_environment = kwargs['compute_environment']
@@ -84,39 +131,105 @@ def run_analysis_project(**kwargs):
     analysis(analysis_project_folder, compute_environment, reference_run, output_folder)
 
 
-@btap.command(help="This command will erase all data contained in the AWS (DynamoDB) database.")
-def result_data_reset(**kwargs):
+@btap.command()
+def aws_db_reset(**kwargs):
+    """
+    This command will clear all data contained in the AWS DynamoDB database.
+
+    Example:
+
+       python ./bin/btap_batch.py aws_db_reset
+
+    """
     AWSResultsTable().delete_table()
     AWSResultsTable().create_table()
 
 
-@btap.command(help="This command will dump all data contained in the AWS (DynamoDB) database to a local file.")
+@btap.command()
 @click.option('--type', default="csv", help='format type to dump entire results information. Choices are pickle or csv')
 @click.option('--folder_path', default=OUTPUT_FOLDER,
               help='folder path to save database file dump. Defaults to projects output folder. ')
-def result_data_dump(**kwargs):
+def aws_db_dump(**kwargs):
+    """
+    This command will dump all data contained in the AWS (DynamoDB) database to a local file.
+
+        Example:
+
+        python ./bin/btap_batch.py aws_db_dump --folder_path C:/output_folder/
+    """
     type = kwargs['type']
     folder_path = kwargs['folder_path']
     AWSResultsTable().dump_table(folder_path=folder_path, type=type)
 
 
-@btap.command(help="This command will show the state of each analysis that has been run.")
+@btap.command()
 def aws_db_analyses_status(**kwargs):
+    """
+    This command will show the state of each analysis that has been, and that is currently running.
+
+        Example:
+
+        python ./bin/btap_batch.py aws_db_analyses_status
+    """
     pandas.set_option('display.max_colwidth', None)
     pandas.set_option('display.max_columns', None)
-    print(AWSResultsTable().aws_db_analyses_dashboard())
+    print(AWSResultsTable().aws_db_analyses_status())
 
-@btap.command(help="Table to identifiy fails runs for analyses")
+@btap.command()
 @click.option('--analysis_name', default=None, help='Filter by analysis name given. Default shows all.')
 def aws_db_failures(**kwargs):
+    """
+    This will print a dataframe of all the failed runs, if any. You may filter this by the --analysis_name switch. It will provide
+    The analysis name, datapoint_id,container_error if available, and the url to the failed run on s3.
+
+    Example:
+        python ./bin/btap_batch.py aws_db_failures
+    """
     pandas.set_option('display.max_colwidth', None)
     pandas.set_option('display.max_columns', None)
-    print(AWSResultsTable().aws_db_list_failures(analysis_name=kwargs['analysis_name']))
+    print(AWSResultsTable().aws_db_failures(analysis_name=kwargs['analysis_name']))
+
+@btap.command()
+@click.option('--analysis_name', default=None, help='Filter by analysis name given. Default shows all.')
+@click.option('--x', default='energy_eui_total_gj_per_m_sq', help='X-data for chart. Default is energy_eui_total_gj_per_m_sq ')
+@click.option('--y', default='cost_equipment_total_cost_per_m_sq', help='Y-data for chart. Default is cost_equipment_total_cost_per_m_sq')
+@click.option('--color', default=':scenario', help='color of points. Default is :scenario')
+@click.option('--size', default=None, help='Filter by analysis name given. Default is none')
+def aws_db_chart(**kwargs):
+    """
+    This command will generate a plotly scatter chart based on the initial data collected during an analysis run on aws. This can be used
+    to monitor the progress of an analysis while it is still being completed.
+
+    Example:
+
+    python ./bin/btap_batch.py aws-db-chart --analysis_name optimization_example --x energy_eui_total_gj_per_m_sq --y cost_equipment_total_cost_per_m_sq
+
+    """
+    x = kwargs['x']
+    y = kwargs['y']
+    color = kwargs['color']
+    size = kwargs['size']
+    analysis_name = kwargs['analysis_name']
+    pandas.set_option('display.max_colwidth', None)
+    pandas.set_option('display.max_columns', None)
+    AWSResultsTable().aws_db_analyses_chart_scatter(x=x, y=y, color=color,size=size,analysis_name=analysis_name)
 
 
 @btap.command(help="This will run all the analysis projects in the examples file. Locally or on AWS.")
-@click.option('--compute_environment', default='local_docker',  help='Environment to run analysis either local_docker, aws_batch or aws_batch_analysis')
+@click.option('--compute_environment', default='local_docker',  help='Environment to run analysis either local_docker, or aws_batch_analysis')
 def parallel_test_examples(**kwargs):
+    """
+    This command will self test btap_batch by performing example analyses locally or on aws. This test is simply to see if it will run.
+
+    Example:
+
+    # To run test locally....
+    python ./bin/btap_batch.py parallel_test_examples --compute_environment local_docker
+
+    # To run test on aws.
+    python ./bin/btap_batch.py parallel_test_examples --compute_environment aws_batch_analysis
+
+    """
     start = time.time()
     examples_folder = os.path.join(PROJECT_FOLDER, 'examples')
     example_folders = [
@@ -140,8 +253,3 @@ def parallel_test_examples(**kwargs):
 
 if __name__ == '__main__':
     btap()
-
-# Sample commands.
-# python ./bin/btap_batch.py build-environment --compute_environment aws_batch --btap_batch_branch monitoring
-# python ./bin/btap_batch.py run-analysis-project --compute_environment aws_batch_analysis --project_folder C:\Users\plopez\btap_batch\examples\optimization
-# python ./bin/btap_batch.py run-analysis-project --compute_environment local_docker --project_folder C:\Users\plopez\btap_batch\examples\parametric --reference_run
