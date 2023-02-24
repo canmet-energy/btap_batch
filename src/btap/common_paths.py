@@ -25,6 +25,8 @@ class CommonPaths(object):
         self._analysis_id = analysis_id
         self.project_input_folder = project_input_folder
         self.algorithm_type = algorithm_type
+        # Make output folder if it does not exist
+        #Path(local_output_folder).mkdir(parents=True, exist_ok=True)
 
     def get_project_name(self):
         return self._analysis_name

@@ -12,13 +12,13 @@ from src.btap.btap_analysis import BTAPAnalysis
 class BTAPParametric(BTAPAnalysis):
     def __init__(self,
                  analysis_config=None,
-                 analyses_folder=None,
+                 output_folder=None,
                  analysis_input_folder=None,
                  reference_run_data_path=None
                  ):
         # Run super initializer to set up default variables.
         super().__init__(analysis_config=analysis_config,
-                         analyses_folder=analyses_folder,
+                         output_folder=output_folder,
                          analysis_input_folder=analysis_input_folder,
                          reference_run_data_path=reference_run_data_path
                          )
@@ -49,7 +49,6 @@ class BTAPParametric(BTAPAnalysis):
             print(message)
             logging.error(message)
         finally:
-            print("Shutdown..")
             self.shutdown_analysis()
 
     # This method will compute all the possible scenarios from the input file for a parametric run.

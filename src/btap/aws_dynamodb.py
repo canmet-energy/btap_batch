@@ -5,6 +5,7 @@ from decimal import Decimal
 from src.btap.common_paths import CommonPaths
 import json
 import pandas
+import pathlib
 import plotly.express as px
 from src.btap.aws_credentials import AWSCredentials
 
@@ -60,8 +61,8 @@ class AWSResultsTable():
             batch.put_item(json.loads(json.dumps(run_options), parse_float=Decimal))
 
     def dump_table(self, folder_path=None, type=None):
-
-        filepath = os.path.join(folder_path, f"database.{type}")
+        filepath = pathlib.Path(os.path.join(folder_path, f"database.{type}"))
+        filepath.parent.mkdir(parents=True, exist_ok=True)
         table = AWSCredentials().dynamodb_resource.Table(self.table_name)
         response = table.scan()
         data = response['Items']
@@ -69,6 +70,8 @@ class AWSResultsTable():
             response = table.scan(ExclusiveStartKey=response['LastEvaluatedKey'])
             data.extend(response['Items'])
         df = pandas.json_normalize(data)
+        if df.empty:
+            print('DataFrame is empty! Outputting empty file.')
         if type == 'csv':
             df.to_csv(filepath)
         if type == 'pickle':
@@ -83,7 +86,10 @@ class AWSResultsTable():
             response = table.scan(ExclusiveStartKey=response['LastEvaluatedKey'])
             data.extend(response['Items'])
         df = pandas.json_normalize(data)
-        df = df[['status', ':analysis_name', ':datapoint_id', 'container_error', 'datapoint_output_url']]
+        if df.empty:
+            print('No results yet! No status to display.')
+            exit(0)
+        df = df[['status', ':analysis_name']]
         status_list = list()
         # Get Analysis names
         analysis_names = sorted(df[':analysis_name'].unique())
@@ -96,6 +102,7 @@ class AWSResultsTable():
                 'PENDING',
                 'RUNNABLE',
                 'STARTING',
+                'RUNNING',
                 'FAILED',
                 'SUCCEEDED'
             ]:
@@ -112,12 +119,17 @@ class AWSResultsTable():
             response = table.scan(ExclusiveStartKey=response['LastEvaluatedKey'])
             data.extend(response['Items'])
         df = pandas.json_normalize(data)
-        df = df[['status', ':analysis_name', ':datapoint_id', 'container_error', 'datapoint_output_url']]
         if analysis_name is not None:
             df = df.loc[df[':analysis_name'] == analysis_name]
-        failed_runs = df.loc[df['status'] == 'FAILED'][
-            ['status', ':analysis_name', ':datapoint_id', 'container_error', 'datapoint_output_url']]
-        return failed_runs
+        if df.empty:
+            print('No results yet! No status to display.')
+            exit(0)
+        failed_runs = df.loc[df['status'] == 'FAILED']
+        if failed_runs.empty:
+            print('No failures yet!')
+            exit(0)
+
+        return failed_runs[['status', ':analysis_name', ':datapoint_id', 'datapoint_output_url']]
 
     def aws_db_analyses_chart_scatter(self,
                                       analysis_name=None,

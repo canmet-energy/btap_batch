@@ -5,6 +5,7 @@ import logging
 from src.btap.docker_batch import DockerBatch
 from src.btap.common_paths import CommonPaths
 import time
+import subprocess
 from icecream import ic
 
 
@@ -23,7 +24,8 @@ class DockerImageManager:
 
     def check_docker(self):
         # Making sure that used installed docker.
-        if os.system("docker -v") != 0:
+        if subprocess.run(["docker", "-v"], capture_output=True, shell=True).returncode != 0:
+
             logging.exception("Docker is not installed on this system")
 
         # Try to access the docker daemon. If we cannot.. ask user to turn it on and then exit.
@@ -118,7 +120,7 @@ class DockerImageManager:
 
         self.check_docker()
         run_options['docker_command'] = f"{self.run_command_cli_string(volumes=volumes)} {engine_command}"
-        print(f"Running: {run_options['docker_command']}")
+        logging.info(f"Running: {run_options['docker_command']}")
 
         # Set volumes for docker client command.
         result = docker.from_env().containers.run(

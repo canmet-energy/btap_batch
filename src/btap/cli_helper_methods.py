@@ -132,7 +132,7 @@ def analysis(project_input_folder=None,
             ref_analysis_config[':algorithm_type'] = 'reference'
             br = BTAPReference(analysis_config=ref_analysis_config,
                                analysis_input_folder=analysis_input_folder,
-                               analyses_folder=os.path.join(output_folder))
+                               output_folder=os.path.join(output_folder))
             br.run()
 
 
@@ -148,38 +148,38 @@ def analysis(project_input_folder=None,
         if analysis_config[':algorithm_type'] == 'nsga2':
             ba = BTAPOptimization(analysis_config=analysis_config,
                                   analysis_input_folder=analysis_input_folder,
-                                  analyses_folder=output_folder,
+                                  output_folder=output_folder,
                                   reference_run_data_path=reference_run_data_path)
         # parametric
         elif analysis_config[':algorithm_type'] == 'parametric':
             ba = BTAPParametric(analysis_config=analysis_config,
                                 analysis_input_folder=analysis_input_folder,
-                                analyses_folder=output_folder,
+                                output_folder=output_folder,
                                 reference_run_data_path=reference_run_data_path)
 
         # parametric
         elif analysis_config[':algorithm_type'] == 'elimination':
             ba = BTAPElimination(analysis_config=analysis_config,
                                  analysis_input_folder=analysis_input_folder,
-                                 analyses_folder=output_folder,
+                                 output_folder=output_folder,
                                  reference_run_data_path=reference_run_data_path)
 
         elif analysis_config[':algorithm_type'] == 'sampling-lhs':
             ba = BTAPSamplingLHS(analysis_config=analysis_config,
                                  analysis_input_folder=analysis_input_folder,
-                                 analyses_folder=output_folder,
+                                 output_folder=output_folder,
                                  reference_run_data_path=reference_run_data_path)
 
         elif analysis_config[':algorithm_type'] == 'sensitivity':
             ba = BTAPSensitivity(analysis_config=analysis_config,
                                  analysis_input_folder=analysis_input_folder,
-                                 analyses_folder=output_folder,
+                                 output_folder=output_folder,
                                  reference_run_data_path=reference_run_data_path)
 
         elif analysis_config[':algorithm_type'] == 'reference':
             ba = BTAPReference(analysis_config=analysis_config,
-                                 analysis_input_folder=analysis_input_folder,
-                                 analyses_folder=output_folder)
+                               analysis_input_folder=analysis_input_folder,
+                               output_folder=output_folder)
 
         else:
             print(f"Error:Analysis type {analysis_config[':algorithm_type']} not supported. Exiting.")

@@ -2,7 +2,6 @@
 
 BTAP also can also perform optimization analysis for any given minimization criterion based on simulation output. 
 
-
 ## Background
 BTAP allows you to quickly generate archetypical buildings based on Canadian codes and data and apply common energy conservation measures to explore possible technology packages. BTAP calulates energy, NECB Tier performance,  operational carbon and relative capital costs for all scenarios where possible. 
 

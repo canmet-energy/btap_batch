@@ -81,7 +81,7 @@ class BTAPAnalysis():
     # Constructor will
     def __init__(self,
                  analysis_config=None,
-                 analyses_folder=None,
+                 output_folder=None,
                  analysis_input_folder=None,
                  reference_run_data_path=None):
 
@@ -89,7 +89,7 @@ class BTAPAnalysis():
         self.image_name = 'btap_cli'
         self.analysis_config = analysis_config
         self.analysis_input_folder = analysis_input_folder
-        self.analyses_folder = analyses_folder
+        self.output_folder = output_folder
         self.reference_run_data_path = reference_run_data_path
 
 
@@ -114,7 +114,7 @@ class BTAPAnalysis():
         # Setting paths to current context.
         self.cp.set_analysis_info(analysis_id=self.analysis_id,
                                   analysis_name=self.analysis_name,
-                                  local_output_folder=self.analyses_folder,
+                                  local_output_folder=self.output_folder,
                                   project_input_folder=self.analysis_input_folder,
                                   algorithm_type=self.algorithm_type)
 

@@ -20,6 +20,19 @@ OUTPUT_FOLDER = os.path.join(PROJECT_FOLDER, "output")
 CONTEXT_SETTINGS = dict(help_option_names=['-h', '--help'])
 
 
+def check_environment_vars_are_defined(compute_environment=None):
+    failed = False
+    if os.environ.get('AWS_USERNAME') is None and ( compute_environment == 'aws_batch' or compute_environment == 'aws_batch_analysis'):
+        print('Please set AWS_USERNAME environment variable to your aws username. See https://github.com/canmet-energy/btap_batch/blob/main/README.md#requirements to ensure all requirements are met before running. ')
+        failed=True
+    if os.environ.get('GIT_API_TOKEN') is None:
+        print('Please set GIT_API_TOKEN environment variable to your aws username. See https://github.com/canmet-energy/btap_batch/blob/main/README.md#requirements')
+        failed = True
+    if failed:
+        exit(1)
+
+
+
 @click.group(context_settings=CONTEXT_SETTINGS)
 @click.version_option(version='1.0.0')
 def btap():
@@ -92,6 +105,7 @@ def build_environment(**kwargs):
     os_standards_branch = kwargs['os_standards_branch']
     btap_costing_branch = kwargs['btap_costing_branch']
     openstudio_version = kwargs['openstudio_version']
+    check_environment_vars_are_defined(compute_environment=compute_environment)
     build_and_configure_docker_and_aws(btap_batch_branch=btap_batch_branch,
                                        btap_costing_branch=btap_costing_branch,
                                        compute_environment=compute_environment,
@@ -128,6 +142,7 @@ def run_analysis_project(**kwargs):
     reference_run = kwargs['reference_run']
     output_folder = kwargs['output_folder']
     # Function to run analysis.
+    check_environment_vars_are_defined(compute_environment=compute_environment)
     analysis(analysis_project_folder, compute_environment, reference_run, output_folder)
 
 
@@ -159,6 +174,8 @@ def aws_db_dump(**kwargs):
     """
     type = kwargs['type']
     folder_path = kwargs['folder_path']
+    check_environment_vars_are_defined(compute_environment='aws_batch')
+
     AWSResultsTable().dump_table(folder_path=folder_path, type=type)
 
 
@@ -173,6 +190,7 @@ def aws_db_analyses_status(**kwargs):
     """
     pandas.set_option('display.max_colwidth', None)
     pandas.set_option('display.max_columns', None)
+    check_environment_vars_are_defined(compute_environment='aws_batch')
     print(AWSResultsTable().aws_db_analyses_status())
 
 @btap.command()
@@ -187,33 +205,39 @@ def aws_db_failures(**kwargs):
     """
     pandas.set_option('display.max_colwidth', None)
     pandas.set_option('display.max_columns', None)
+    check_environment_vars_are_defined(compute_environment='aws_batch')
     print(AWSResultsTable().aws_db_failures(analysis_name=kwargs['analysis_name']))
-
-@btap.command()
-@click.option('--analysis_name', default=None, help='Filter by analysis name given. Default shows all.')
-@click.option('--x', default='energy_eui_total_gj_per_m_sq', help='X-data for chart. Default is energy_eui_total_gj_per_m_sq ')
-@click.option('--y', default='cost_equipment_total_cost_per_m_sq', help='Y-data for chart. Default is cost_equipment_total_cost_per_m_sq')
-@click.option('--color', default=':scenario', help='color of points. Default is :scenario')
-@click.option('--size', default=None, help='Filter by analysis name given. Default is none')
-def aws_db_chart(**kwargs):
-    """
-    This command will generate a plotly scatter chart based on the initial data collected during an analysis run on aws. This can be used
-    to monitor the progress of an analysis while it is still being completed.
-
-    Example:
-
-    python ./bin/btap_batch.py aws-db-chart --analysis_name optimization_example --x energy_eui_total_gj_per_m_sq --y cost_equipment_total_cost_per_m_sq
-
-    """
-    x = kwargs['x']
-    y = kwargs['y']
-    color = kwargs['color']
-    size = kwargs['size']
-    analysis_name = kwargs['analysis_name']
-    pandas.set_option('display.max_colwidth', None)
-    pandas.set_option('display.max_columns', None)
-    AWSResultsTable().aws_db_analyses_chart_scatter(x=x, y=y, color=color,size=size,analysis_name=analysis_name)
-
+#
+# @btap.command()
+# @click.option('--analysis_name', default=None, help='Filter by analysis name given. Default shows all.')
+# @click.option('--x_data', default='energy_eui_total_gj_per_m_sq', help='X-data for chart. Default is energy_eui_total_gj_per_m_sq ')
+# @click.option('--y_data', default='cost_equipment_total_cost_per_m_sq', help='Y-data for chart. Default is cost_equipment_total_cost_per_m_sq')
+# @click.option('--color', default=':scenario', help='color of points. Default is :scenario')
+# @click.option('--size', default=None, help='Filter by analysis name given. Default is none')
+# def aws_db_chart(**kwargs):
+#     """
+#     This command will generate a plotly scatter chart based on the initial data collected during an analysis run on aws. This can be used
+#     to monitor the progress of an analysis while it is still being completed.
+#
+#     Example:
+#
+#     python ./bin/btap_batch.py aws-db-chart --analysis_name optimization_example --x energy_eui_total_gj_per_m_sq --y cost_equipment_total_cost_per_m_sq
+#
+#     """
+#     x = kwargs['x_data']
+#     y = kwargs['y_data']
+#     color = kwargs['color']
+#     size = kwargs['size']
+#     analysis_name = kwargs['analysis_name']
+#     pandas.set_option('display.max_colwidth', None)
+#     pandas.set_option('display.max_columns', None)
+#     check_environment_vars_are_defined(compute_environment='aws_batch')
+#     AWSResultsTable().aws_db_analyses_chart_scatter(x=x,
+#                                                     y=y,
+#                                                     color=color,
+#                                                     size=size,
+#                                                     analysis_name=analysis_name)
+#
 
 @btap.command(help="This will run all the analysis projects in the examples file. Locally or on AWS.")
 @click.option('--compute_environment', default='local_docker',  help='Environment to run analysis either local_docker, or aws_batch_analysis')
@@ -230,6 +254,7 @@ def parallel_test_examples(**kwargs):
     python ./bin/btap_batch.py parallel_test_examples --compute_environment aws_batch_analysis
 
     """
+    check_environment_vars_are_defined(compute_environment=kwargs['compute_environment'])
     start = time.time()
     examples_folder = os.path.join(PROJECT_FOLDER, 'examples')
     example_folders = [
@@ -245,10 +270,9 @@ def parallel_test_examples(**kwargs):
     for folder in example_folders:
         project_input_folder = os.path.join(examples_folder, folder)
         print(project_input_folder)
-        analysis(project_input_folder, kwargs['compute_environment'], True, OUTPUT_FOLDER)
+        analysis(project_input_folder=project_input_folder, compute_environment=kwargs['compute_environment'], reference_run=True, output_folder=OUTPUT_FOLDER)
     end = time.time()
     print(f"Time elapsed: {end - start}")
-    print("You will need to review aws batch for progress of analyses.")
 
 
 if __name__ == '__main__':
