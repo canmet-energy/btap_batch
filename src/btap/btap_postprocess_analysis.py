@@ -202,7 +202,7 @@ class PostProcessResults():
                                 operation_case = output_var[count_operation_var]['operation']
                                 operation_unit = output_var[count_operation_var]['unit']
                                 if operation_var not in df_output['Name']:
-                                    value_sum = df_output.copy()
+                                    value_sum = pd.DataFrame(columns=df_columns)
                                     df_operation_var = df.loc[df['Name'] == operation_var]
                                     if operation_case == 'sum':
                                         if operation_unit == 'GJ':
