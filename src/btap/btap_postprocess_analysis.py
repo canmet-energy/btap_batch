@@ -192,36 +192,36 @@ class PostProcessResults():
 
                             # Create an empty dataframe with the 'df_columns' column headers
                             if datapoint_number == 0.0:
-                                df_output = []
                                 df_output = pd.DataFrame(columns=df_columns)
 
                             # Go through each variable of output_var; Do below items for only the ones that their value for 'operation' in the .yml file is not '*'
                             for count_operation_var in range(0, output_var_length):
-                                operation_var_index = 0
                                 operation_var = output_var[count_operation_var]['variable']
                                 operation_case = output_var[count_operation_var]['operation']
                                 operation_unit = output_var[count_operation_var]['unit']
                                 if operation_var not in df_output['Name']:
-                                    value_sum = pd.DataFrame(columns=df_columns)
+                                    list_data = []
                                     df_operation_var = df.loc[df['Name'] == operation_var]
                                     if operation_case == 'sum':
                                         if operation_unit == 'GJ':
-                                            value_sum.loc[operation_var_index, 4:] = df_operation_var.iloc[:, 4:].sum(axis=0) / 10 ** 9
-                                            value_sum.loc[operation_var_index, ['Units']] = 'GJ'
+                                            list_data.append(df_operation_var.iloc[:, 4:].sum(axis=0) / 10 ** 9)
                                         elif operation_unit == 'kWh':
-                                            value_sum.loc[operation_var_index, 4:] = 277.778 * df_operation_var.iloc[:, 4:].sum(axis=0) / 10 ** 9
-                                            value_sum.loc[operation_var_index, ['Units']] = 'kWh'
+                                            list_data.append(277.778 * df_operation_var.iloc[:, 4:].sum(axis=0) / 10 ** 9)
                                         elif operation_unit != '*':
                                             message = f"Unknown unit for the sum operation on hourly outputs. Allowed units are GJ and kWh."
                                             logging.error(message)
-                                        value_sum.loc[operation_var_index, ['datapoint_id']] = df_operation_var['datapoint_id'].iloc[0]
-                                        value_sum.loc[operation_var_index, ['Name']] = df_operation_var['Name'].iloc[0]
-                                        value_sum.loc[operation_var_index, ['KeyValue']] = ""
+
+                                        value_sum = pd.DataFrame(list_data, columns=df_columns)
+                                        value_sum['datapoint_id'] = df_operation_var['datapoint_id'].iloc[0]
+                                        value_sum['Name'] = df_operation_var['Name'].iloc[0]
+                                        value_sum['KeyValue'] = ""
+                                        value_sum['Units'] = operation_unit
+
                                         df_output = pd.concat([value_sum, df_output])
                                     elif operation_case != '*':
                                         message = f"Unknown operation type on hourly outputs. Allowed operation type is sum."
                                         logging.error(message)
-                                    operation_var_index += 1.0
+
                             # Go to the next datapoint
                             datapoint_number += 1.0
                 if len(df_output) > 0.0:
