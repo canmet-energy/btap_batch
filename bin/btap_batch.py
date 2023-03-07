@@ -1,18 +1,14 @@
 
 from pathlib import Path
-import sys
 import click
-from colorama import Fore, Style
-import time
 import os
-import pyfiglet
-import random
-import pandas
+import sys
+
 # Avoid having to add PYTHONPATH to env.
 PROJECT_ROOT = str(Path(os.path.dirname(os.path.realpath(__file__))).parent.absolute())
 sys.path.append(PROJECT_ROOT)
-from src.btap.aws_dynamodb import AWSResultsTable
-from src.btap.cli_helper_methods import analysis, build_and_configure_docker_and_aws
+
+
 
 PROJECT_FOLDER = os.path.join(Path(os.path.dirname(os.path.realpath(__file__))).parent.absolute())
 EXAMPLE_FOLDER = os.path.join(PROJECT_FOLDER,'examples')
@@ -40,6 +36,9 @@ def btap():
 
 @btap.command()
 def credits():
+    from colorama import Fore, Style
+    import pyfiglet
+    import random
     print(Fore.GREEN + "CanmetENERGY Building Technology Assessment Platform Team (BTAP)" + Style.RESET_ALL)
     colors = [Fore.RED,
               Fore.GREEN,
@@ -66,6 +65,7 @@ def credits():
 @click.option('--btap_costing_branch', default='master', help='btap_costing branch.Default=master.')
 @click.option('--openstudio_version', default='3.2.1', help='OpenStudio version. Default=3.2.1')
 def build_environment(**kwargs):
+    from src.btap.cli_helper_methods import build_and_configure_docker_and_aws
     """
     This command will build the supporting permissions, databases, on aws and local docker. This optionally will allow
     you to choose experimental development branches to use.
@@ -123,6 +123,7 @@ def build_environment(**kwargs):
 @click.option('--output_folder', default=OUTPUT_FOLDER,
               help='Path to output results. Defaulted to this projects output folder ./btap_batch/output')
 def run_analysis_project(**kwargs):
+    from src.btap.cli_helper_methods import analysis
     """
     This command will invoke an analysis, a set of simulations based on the input.yml contained in your project_folder.
     Please see the 'examples' folder for examples of how to run different types of analyses. Note: The build_environment
@@ -148,6 +149,7 @@ def run_analysis_project(**kwargs):
 
 @btap.command()
 def aws_db_reset(**kwargs):
+    from src.btap.aws_dynamodb import AWSResultsTable
     """
     This command will clear all data contained in the AWS DynamoDB database.
 
@@ -165,6 +167,7 @@ def aws_db_reset(**kwargs):
 @click.option('--folder_path', default=OUTPUT_FOLDER,
               help='folder path to save database file dump. Defaults to projects output folder. ')
 def aws_db_dump(**kwargs):
+    from src.btap.aws_dynamodb import AWSResultsTable
     """
     This command will dump all data contained in the AWS (DynamoDB) database to a local file.
 
@@ -176,11 +179,15 @@ def aws_db_dump(**kwargs):
     folder_path = kwargs['folder_path']
     check_environment_vars_are_defined(compute_environment='aws_batch')
 
-    AWSResultsTable().dump_table(folder_path=folder_path, type=type)
+    df = AWSResultsTable().dump_table(folder_path=folder_path, type=type)
+
+
 
 
 @btap.command()
 def aws_db_analyses_status(**kwargs):
+    import pandas
+    from src.btap.aws_dynamodb import AWSResultsTable
     """
     This command will show the state of each analysis that has been, and that is currently running.
 
@@ -196,6 +203,8 @@ def aws_db_analyses_status(**kwargs):
 @btap.command()
 @click.option('--analysis_name', default=None, help='Filter by analysis name given. Default shows all.')
 def aws_db_failures(**kwargs):
+    from src.btap.aws_dynamodb import AWSResultsTable
+    import pandas
     """
     This will print a dataframe of all the failed runs, if any. You may filter this by the --analysis_name switch. It will provide
     The analysis name, datapoint_id,container_error if available, and the url to the failed run on s3.
@@ -242,6 +251,8 @@ def aws_db_failures(**kwargs):
 @btap.command(help="This will run all the analysis projects in the examples file. Locally or on AWS.")
 @click.option('--compute_environment', default='local_docker',  help='Environment to run analysis either local_docker, or aws_batch_analysis')
 def parallel_test_examples(**kwargs):
+    import time
+    from src.btap.cli_helper_methods import analysis
     """
     This command will self test btap_batch by performing example analyses locally or on aws. This test is simply to see if it will run.
 

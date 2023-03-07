@@ -124,7 +124,7 @@ venv\Scripts\activate.bat
 
 You can run the analysis using the run-analysis-project. You can inspect the switches available for this comm
 ```
-python ./bin/btap_batch.py run-analysis-project --compute_environment local_docker --project_folder C:\Users\plopez\btap_batch\examples\parametric --run_reference
+python ./bin/btap_batch.py run-analysis-project --compute_environment local_docker --project_folder C:\Users\plopez\btap_batch\examples\parametric --reference_run
 ```
 3. Simulation should start to run. A folder will be created in output folder with the variable name you set 
 ':analysis_name' in the yml file. In that folder you will see two folders, 'parametric' and 'reference'. 'reference' 
@@ -180,7 +180,7 @@ from a local parametric run. However most of the time the above variables would 
 To run the example simple point the --project_folder switch to the analysis input folder.
 
 ```
-python ./bin/btap_batch.py run-analysis-project --compute_environment <choose local_docker or aws_batch> --project_folder .\examples\optimization --run_reference
+python ./bin/btap_batch.py run-analysis-project --compute_environment <choose local_docker or aws_batch> --project_folder .\examples\optimization --reference_run
 ```
 
 ## Elimination Analysis

@@ -77,6 +77,7 @@ class AWSResultsTable():
         if type == 'pickle':
             df.to_pickle(filepath)
         print(f"Dumped results to {filepath}")
+        return df
 
     def aws_db_analyses_status(self):
         table = AWSCredentials().dynamodb_resource.Table(self.table_name)
