@@ -4,7 +4,6 @@ from icecream import ic
 from src.btap.aws_credentials import AWSCredentials
 from src.btap.common_paths import CommonPaths
 
-
 class IAMRoles():
     def __init__(self):
         self.credentials = self.get_credentials()
@@ -63,63 +62,11 @@ class IAMRoles():
         credentials = AWSCredentials()
         return credentials
 
-    def copy_iam_role(self, old_role_name='AWSBatchServiceRole', new_role_name='new_role'):
-        iam = AWSCredentials().iam_client
-        sourceRole = iam.get_role(RoleName=old_role_name).get('Role')
-        list_role_policies = iam.list_role_policies(RoleName=old_role_name)['PolicyNames']
-        inline_policies = []
-
-        for list_role_policy in list_role_policies:
-            inline_policies.append(iam.get_role_policy(RoleName=old_role_name, PolicyName=list_role_policy))
-
-        managed_policies = iam.list_attached_role_policies(RoleName=old_role_name)['AttachedPolicies']
-        #ic(sourceRole)
-        #ic(managed_policies)
-        #ic(inline_policies)
-
-        exit(1)
-
-        if sourceRole.get('PermissionsBoundary') is None:
-            iam.create_role(
-                Path=sourceRole.get('Path'),
-                RoleName=new_role_name,
-                AssumeRolePolicyDocument=(json.dumps(sourceRole['AssumeRolePolicyDocument'])),
-                Description=sourceRole.get('Description', ''),
-                MaxSessionDuration=sourceRole.get('MaxSessionDuration'),
-                Tags=sourceRole.get('Tags', [])
-            )
-        else:
-            iam.create_role(
-                Path=sourceRole.get('Path'),
-                RoleName=new_role_name,
-                AssumeRolePolicyDocument=(json.dumps(sourceRole['AssumeRolePolicyDocument'])),
-                Description=sourceRole.get('Description', ''),
-                MaxSessionDuration=sourceRole.get('MaxSessionDuration'),
-                PermissionsBoundary=sourceRole.get('PermissionsBoundary').get('PermissionsBoundaryArn'),
-                Tags=sourceRole.get('Tags', [])
-            )
-
-        for inline_policy in inline_policies:
-            #ic(inline_policy)
-            response = iam.put_role_policy(
-                RoleName=new_role_name,
-                PolicyName=inline_policy.get('PolicyName'),
-                PolicyDocument=(json.dumps(inline_policy['PolicyDocument']))
-            )
-
-        for managed_policy in managed_policies:
-            #ic(managed_policy)
-            iam.attach_role_policy(
-                RoleName=new_role_name,
-                PolicyArn=managed_policy.get('PolicyArn')
-            )
-
-
-class IAMCloudBuildRole(IAMRoles):
+class IAMCodeBuildRole(IAMRoles):
     def __init__(self):
         self.credentials = self.get_credentials()
         self.path = '/service-role/'
-        self.role_name = "cloud_build"
+        self.role_name = "code_build"
         self.max_duration = 43200
         self.description = ''
         self.assume_role_policy = {'Version': '2012-10-17',
@@ -140,7 +87,6 @@ class IAMCloudBuildRole(IAMRoles):
                                   'PolicyName': 'CloudWatchFullAccess'},
                                  {'PolicyArn': 'arn:aws:iam::aws:policy/AmazonS3FullAccess',
                                   'PolicyName': 'AmazonS3FullAccess'}]
-
 
 class IAMBatchJobRole(IAMRoles):
     def __init__(self):

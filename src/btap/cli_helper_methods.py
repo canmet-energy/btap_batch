@@ -3,7 +3,7 @@ from src.btap.aws_batch import AWSBatch
 from src.btap.aws_compute_environment import AWSComputeEnvironment
 from src.btap.aws_image_manager import AWSImageManager
 from src.btap.docker_image_manager import DockerImageManager
-from src.btap.aws_iam_roles import IAMBatchJobRole, IAMBatchServiceRole, IAMCloudBuildRole
+from src.btap.aws_iam_roles import IAMBatchJobRole, IAMBatchServiceRole, IAMCodeBuildRole
 from src.btap.btap_analysis import BTAPAnalysis
 from src.btap.btap_reference import BTAPReference
 from src.btap.btap_optimization import BTAPOptimization
@@ -52,12 +52,12 @@ def build_and_configure_docker_and_aws(btap_batch_branch=None,
 
         # Delete user role permissions.
         IAMBatchJobRole().delete()
-        IAMCloudBuildRole().delete()
+        IAMCodeBuildRole().delete()
         IAMBatchServiceRole().delete()
 
         # # Create new
         IAMBatchJobRole().create_role()
-        IAMCloudBuildRole().create_role()
+        IAMCodeBuildRole().create_role()
         IAMBatchServiceRole().create_role()
         time.sleep(30)  # Give a few seconds for role to apply.
         ace = AWSComputeEnvironment()
