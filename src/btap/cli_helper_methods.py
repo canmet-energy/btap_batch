@@ -202,7 +202,7 @@ def analysis(project_input_folder=None,
         batch = AWSBatch(image_manager=AWSImageManager(image_name='btap_batch'),
                          compute_environment=AWSComputeEnvironment())
         # Submit analysis job to aws.
-        job = batch.create_job(job_id=analysis_name)
+        job = batch.create_job(job_id=analysis_name, reference_run=reference_run)
         return job.submit_job()
 
 

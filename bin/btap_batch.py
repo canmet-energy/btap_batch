@@ -60,7 +60,7 @@ def credits():
 
 @btap.command()
 @click.option('--compute_environment', default='local_docker', help='local_docker for local computer, aws_batch to configure aws, or all. Default=local_docker.')
-@click.option('--btap_batch_branch', default='main', help='btap_batch branch. Default = main.')
+@click.option('--btap_batch_branch', default='dev', help='btap_batch branch. Default = dev.')
 @click.option('--os_standards_branch', default='nrcan', help='openstudio-standards branch. Default=nrcan.')
 @click.option('--btap_costing_branch', default='master', help='btap_costing branch.Default=master.')
 @click.option('--openstudio_version', default='3.2.1', help='OpenStudio version. Default=3.2.1')

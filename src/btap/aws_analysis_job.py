@@ -9,7 +9,7 @@ from icecream import ic
 
 
 class AWSAnalysisJob():
-    def __init__(self, batch=None, job_id=None):
+    def __init__(self, batch=None, job_id=None, reference_run=False):
 
         self.cloud_job_id = None  # Set by AWS when job is submitted.
         self.job_id = job_id
@@ -17,6 +17,7 @@ class AWSAnalysisJob():
         self.s3_bucket = AWSCredentials().account_id
         self.set_paths()
         self.batch = batch
+        self.reference_run = reference_run
 
     def set_paths(self):
         # Common object for paths.
@@ -37,9 +38,6 @@ class AWSAnalysisJob():
         self.cloud_job_id = submitJobResponse['jobId']
         message = f"Submitted Analysis {self.job_id} , job name {self.aws_job_name()} to the job queue {self.batch.job_queue_name}"
         logging.info(message)
-
-
-
 
     def job_wrapper(self, n=0):
         # ic(self.aws_job_name())
@@ -68,8 +66,6 @@ class AWSAnalysisJob():
             time.sleep(wait_time)
             return self.job_wrapper(n=n + 1)
 
-
-
     def container_command(self):
         command = ["python3",
                    "/btap_batch/bin/btap_batch.py",
@@ -79,6 +75,9 @@ class AWSAnalysisJob():
                    "--compute_environment",
                    "aws_batch"
                    ]
+        #Add reference run if requested.
+        if self.reference_run:
+            command.append("--reference_run")
         return command
 
     def copy_files_to_run_location(self):
@@ -88,8 +87,6 @@ class AWSAnalysisJob():
         S3().copy_folder_to_s3(bucket_name=self.s3_bucket,
                                source_folder=self.source,
                                target_folder=self.target)
-
-
 
     # Private methods.
     def aws_job_name(self):
