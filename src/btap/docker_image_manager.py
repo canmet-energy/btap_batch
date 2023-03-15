@@ -1,5 +1,5 @@
 import docker
-from docker.errors import DockerException
+from docker.errors import DockerException, BuildError
 import os
 import logging
 from src.btap.docker_batch import DockerBatch
@@ -69,22 +69,27 @@ class DockerImageManager:
         self.build_args = build_args
         container_client = docker.from_env()
         start = time.time()
-        image, json_log = container_client.images.build(
-            # Path to docker file.
-            path=CommonPaths().get_dockerfile_folder_path(image_name=self.image_name),
-            # Image name
-            tag=self.get_full_image_name(),
-            # nocache flag to build use cache or build from scratch.
-            nocache=True,
-            # ENV variables used in Dockerfile.
-            buildargs=self._get_image_build_args(),
-            # remove temp containers.
-            forcerm=True
-        )
-        for chunk in json_log:
-            if 'stream' in chunk:
-                for line in chunk['stream'].splitlines():
-                    logging.debug(line)
+        try:
+            image, json_log = container_client.images.build(
+                # Path to docker file.
+                path=CommonPaths().get_dockerfile_folder_path(image_name=self.image_name),
+                # Image name
+                tag=self.get_full_image_name(),
+                # nocache flag to build use cache or build from scratch.
+                nocache=True,
+                # ENV variables used in Dockerfile.
+                buildargs=self._get_image_build_args(),
+                # remove temp containers.
+                forcerm=True
+            )
+        except BuildError as e:
+            print(f"Something went wrong with image build {self.get_full_image_name()}! The container error is: ")
+            for line in e.build_log:
+                if 'stream' in line:
+                    print(line['stream'].strip())
+                    logging.error(line['stream'].strip())
+            print("Cannot continue. Exiting")
+            exit(1)
 
         print(time.time() - start)
         return image
