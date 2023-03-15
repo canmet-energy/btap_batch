@@ -18,7 +18,7 @@ class DockerImageManager:
                  image_name=None,
                  compute_environement=None):
         self.cli_run_command = "docker run --rm"
-        self.cli_build_command = "docker build -t"
+        self.cli_build_command = "docker build"
         self.image_name = image_name
         self.build_args = None
 
@@ -88,6 +88,9 @@ class DockerImageManager:
                 if 'stream' in line:
                     print(line['stream'].strip())
                     logging.error(line['stream'].strip())
+            print(f"Building ENV used were {self._get_image_build_args()}")
+            print(f"You can debug the build with the following docker command:")
+            print(self.get_image_build_cli())
             print("Cannot continue. Exiting")
             exit(1)
 
