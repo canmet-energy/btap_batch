@@ -15,7 +15,12 @@ class AWSImageManager(DockerImageManager):
     def __aws_credentials(self):
         return AWSCredentials()
 
-    def __init__(self, image_name=None, compute_environment=None):
+    def __init__(self,
+                 image_name=None,
+                 compute_environment=None
+
+
+                 ):
         super().__init__(image_name=image_name)
         self.credentials = self.__aws_credentials()
         self.bucket = self.credentials.account_id
@@ -166,4 +171,6 @@ class AWSImageManager(DockerImageManager):
         return image
 
     def get_batch(self):
-        return AWSBatch(image_manager=self, compute_environment=self.compute_environment)
+        return AWSBatch(image_manager=self,
+                        compute_environment=self.compute_environment
+                        )

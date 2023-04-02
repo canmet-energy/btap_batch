@@ -1,4 +1,6 @@
 import pip_system_certs.wrapt_requests
+from src.btap.constants import WORKER_CONTAINER_MEMORY, WORKER_CONTAINER_STORAGE, WORKER_CONTAINER_VCPU
+from src.btap.constants import MANAGER_CONTAINER_VCPU, MANAGER_CONTAINER_MEMORY, MANAGER_CONTAINER_STORAGE
 from src.btap.aws_batch import AWSBatch
 from src.btap.aws_compute_environment import AWSComputeEnvironment
 from src.btap.aws_image_manager import AWSImageManager
@@ -21,6 +23,7 @@ from pathlib import Path
 import uuid
 from icecream import ic
 from src.btap.aws_dynamodb import AWSResultsTable
+
 
 def build_and_configure_docker_and_aws(btap_batch_branch=None,
                                        btap_costing_branch=None,
@@ -71,15 +74,20 @@ def build_and_configure_docker_and_aws(btap_batch_branch=None,
         image_batch.build_image(build_args=build_args_btap_batch)
 
         # create aws_btap_cli batch framework.
-        batch_cli = AWSBatch(image_manager=image_cli, compute_environment=ace)
-        batch_cli.setup()
+        batch_cli = AWSBatch(image_manager=image_cli,
+                             compute_environment=ace
+                             )
+        batch_cli.setup(container_vcpu=WORKER_CONTAINER_VCPU,
+                        container_memory=WORKER_CONTAINER_MEMORY)
         # create aws_btap_batch batch framework.
-        batch_batch = AWSBatch(image_manager=image_batch, compute_environment=ace)
-        batch_batch.setup()
+        batch_batch = AWSBatch(image_manager=image_batch,
+                               compute_environment=ace
+                               )
+        batch_batch.setup(container_vcpu=MANAGER_CONTAINER_VCPU,
+                          container_memory=MANAGER_CONTAINER_MEMORY)
 
         # Create AWS database for results if it does not already exist.
         AWSResultsTable().create_table()
-
 
     if compute_environment == 'all' or compute_environment == 'local_docker':
         # Build btap_batch image
@@ -91,6 +99,7 @@ def build_and_configure_docker_and_aws(btap_batch_branch=None,
         # image_batch = DockerImageManager(image_name='btap_batch')
         # print('Building btap_batch image')
         # image_batch.build_image(build_args=build_args_btap_batch)
+
 
 def analysis(project_input_folder=None,
              compute_environment=None,
@@ -110,7 +119,7 @@ def analysis(project_input_folder=None,
                 exit(1)
         S3().download_s3_folder(s3_folder=project_input_folder, local_dir=local_dir)
         project_input_folder = local_dir
-    #path of analysis input.yml
+    # path of analysis input.yml
     analysis_config_file = os.path.join(project_input_folder, 'input.yml')
 
     if not os.path.isfile(analysis_config_file):
@@ -135,11 +144,9 @@ def analysis(project_input_folder=None,
                                output_folder=os.path.join(output_folder))
             br.run()
 
-
-
             reference_run_data_path = br.analysis_excel_results_path()
 
-        #ic(reference_run_data_path)
+        # ic(reference_run_data_path)
 
         # BTAP analysis placeholder.
         ba = None
@@ -200,10 +207,8 @@ def analysis(project_input_folder=None,
                              project_input_folder=analysis_input_folder)
         # Gets an AWSAnalysisJob from AWSBatch
         batch = AWSBatch(image_manager=AWSImageManager(image_name='btap_batch'),
-                         compute_environment=AWSComputeEnvironment())
+                         compute_environment=AWSComputeEnvironment()
+                         )
         # Submit analysis job to aws.
         job = batch.create_job(job_id=analysis_name, reference_run=reference_run)
         return job.submit_job()
-
-
-

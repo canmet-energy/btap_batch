@@ -8,11 +8,20 @@ MAX_AWS_VCPUS = 500
 # Minimum number of CPU should be set to zero.
 MIN_AWS_VCPUS = 0
 # Container allocated VCPU for AWS Batch
-CONTAINER_VCPU = 1
+WORKER_CONTAINER_VCPU = 1
 # Container allocated Memory (MB) for AWS Batch
-CONTAINER_MEMORY = 2000
+WORKER_CONTAINER_MEMORY = 2000
 # Container Storage (GB)
-CONTAINER_STORAGE = 100
+WORKER_CONTAINER_STORAGE = 100
+# Container allocated VCPU for AWS Batch
+MANAGER_CONTAINER_VCPU = 16
+# Container allocated Memory (MB) for AWS Batch
+MANAGER_CONTAINER_MEMORY = 32000
+# Container Storage (GB)
+MANAGER_CONTAINER_STORAGE = 500
+
+
+
 # AWS Batch Allocation Strategy. https://docs.aws.amazon.com/batch/latest/userguide/allocation-strategies.html
 AWS_BATCH_ALLOCATION_STRATEGY = 'BEST_FIT_PROGRESSIVE'
 # AWS Compute instances types..setting to optimal to let AWS figure it out for me.

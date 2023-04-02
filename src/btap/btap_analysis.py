@@ -137,6 +137,7 @@ class BTAPAnalysis():
         else:
             logging.error(f"Unknown image {self.image_name}")
             exit(1)
+        # Get instance of aws batch that has already been created in the build process.
         self.batch = self.image_manager.get_batch()
 
         # Storage items
