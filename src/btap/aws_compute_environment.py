@@ -3,7 +3,7 @@ from src.btap.constants import AWS_BATCH_ALLOCATION_STRATEGY
 from src.btap.constants import AWS_BATCH_COMPUTE_INSTANCE_TYPES
 from src.btap.constants import MIN_AWS_VCPUS
 from src.btap.constants import AWS_BATCH_DEFAULT_IMAGE
-from src.btap.constants import CONTAINER_STORAGE
+from src.btap.constants import WORKER_CONTAINER_STORAGE
 import time
 import logging
 from random import random
@@ -43,7 +43,7 @@ class AWSComputeEnvironment:
 
 
     # Short method that creates a template to increase the disk size of the containers. Default 100GB.
-    def __add_storage_space_launch_template(self, sizegb=CONTAINER_STORAGE):
+    def __add_storage_space_launch_template(self, sizegb=WORKER_CONTAINER_STORAGE):
         self.ec2 = AWSCredentials().ec2_client
 
         launch_template = self.ec2.describe_launch_templates()['LaunchTemplates']
@@ -113,7 +113,6 @@ class AWSComputeEnvironment:
                 'securityGroupIds': AWS_EC2Info().securityGroupIds,
                 'instanceRole': 'ecsInstanceRole',
                 'launchTemplate': {
-
                     'launchTemplateName': launch_template}
             }
         )
