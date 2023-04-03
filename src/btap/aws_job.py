@@ -8,6 +8,7 @@ import logging
 from random import random
 from src.btap.docker_job import DockerBTAPJob
 from src.btap.aws_credentials import AWSCredentials
+from src.btap.aws_dynamodb import AWSResultsTable
 from src.btap.common_paths import CommonPaths
 from icecream import ic
 
@@ -81,56 +82,64 @@ class AWSBTAPJob(DockerBTAPJob):
         # See https://boto3.amazonaws.com/v1/documentation/api/latest/reference/services/batch.html#Batch.Client.submit_job
         submitJobResponse = self.__job_wrapper()
         self.cloud_job_id = submitJobResponse['jobId']
-        message = f"Submitted job_id {self.job_id} , job name {self.__aws_job_name()} to the job queue {self.batch.job_queue_name}"
+        self.run_options['cloud_job_id'] = self.cloud_job_id
+        self.run_options['cloud_job_name'] = self.aws_job_name()
+        message = f"Submitted job_id {self.job_id} , job name {self.aws_job_name()} to the job queue {self.batch.job_queue_name}"
         logging.info(message)
         # Set initial state of status variables
-        running = False
-        result = 'FAILED'
         while True:
             # Don't hammer AWS.. make queries every minute for the run status
             time.sleep(60 + random())
             describeJobsResponse = self.__get_job_status()
             status = describeJobsResponse['jobs'][0]['status']
             if status == 'SUCCEEDED':
-                message = 'SUCCEEDED - Job [%s - %s] %s' % (self.__aws_job_name(), self.cloud_job_id, status)
+                message = f"{status} - Job [{self.aws_job_name()} - {self.job_id} - {self.cloud_job_id}]"
+                self.run_options['status'] = status
                 logging.info(message)
-                result = 'SUCCEEDED'
                 break
             elif status == 'FAILED':
-                message = 'FAILED - Job [%s - %s] %s' % (self.__aws_job_name(), self.cloud_job_id, status)
+                message = f"{status} - Job [{self.aws_job_name()} - {self.job_id} - {self.cloud_job_id}]"
+                self.run_options['status'] = status
                 logging.error(message)
-                result = 'FAILED'
                 break
-            elif status == 'RUNNING':
-                if not running:
-                    running = True
+            elif status == 'RUNNING' \
+                    or status == 'SUBMITTED' \
+                    or status == 'PENDING' \
+                    or status == 'RUNNABLE' \
+                    or status == 'STARTING':
+                message = f"{status} - Job [{self.aws_job_name()} - {self.job_id} - {self.cloud_job_id}]"
+                self.run_options['status'] = status
+                AWSResultsTable().save_dict_result(self.run_options)
+                logging.info(message)
+
             else:
-                message = 'UNKNOWN - Job [%s - %s] is %-9s' % (self.__aws_job_name(), self.cloud_job_id, status)
+                message = 'UNKNOWN - Job [%s - %s] is %-9s' % (self.aws_job_name(), self.cloud_job_id, status)
+                self.run_options['status'] = status
+                AWSResultsTable().save_dict_result(self.run_options)
                 logging.info(message)
                 sys.stdout.flush()
     # Private methods.
-    def __aws_job_name(self):
+    def aws_job_name(self):
         return f"{self.job_id}"
 
     def __job_wrapper(self, n=0):
         try:
             batch_client = AWSCredentials().batch_client
             submitJobResponse = batch_client.submit_job(
-                jobName=self.__aws_job_name(),
+                jobName=self.aws_job_name(),
                 jobQueue=self.batch.job_queue_name,
                 jobDefinition=self.batch.job_def_name,
                 containerOverrides={'command': self._container_command()}
             )
-            ic(self.job_id)
 
             return submitJobResponse
         except:
             # Implementing exponential backoff
             if n == 8:
                 logging.exception(
-                    f'Failed to submit job {self.__aws_job_name()} in 7 tries while using exponential backoff. Error was {sys.exc_info()[0]} ')
+                    f'Failed to submit job {self.aws_job_name()} in 7 tries while using exponential backoff. Error was {sys.exc_info()[0]} ')
             wait_time = 2 ** n + random()
-            logging.warning(f"JobWrapper:Implementing exponential backoff for job {self.__aws_job_name()} for {wait_time}s")
+            logging.warning(f"JobWrapper:Implementing exponential backoff for job {self.aws_job_name()} for {wait_time}s")
             time.sleep(wait_time)
             return self.__job_wrapper(n=n + 1)
     def __get_job_status(self, n=0):

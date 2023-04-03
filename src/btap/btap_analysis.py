@@ -81,7 +81,7 @@ class BTAPAnalysis():
     # Constructor will
     def __init__(self,
                  analysis_config=None,
-                 analyses_folder=None,
+                 output_folder=None,
                  analysis_input_folder=None,
                  reference_run_data_path=None):
 
@@ -89,7 +89,7 @@ class BTAPAnalysis():
         self.image_name = 'btap_cli'
         self.analysis_config = analysis_config
         self.analysis_input_folder = analysis_input_folder
-        self.analyses_folder = analyses_folder
+        self.output_folder = output_folder
         self.reference_run_data_path = reference_run_data_path
 
 
@@ -114,7 +114,7 @@ class BTAPAnalysis():
         # Setting paths to current context.
         self.cp.set_analysis_info(analysis_id=self.analysis_id,
                                   analysis_name=self.analysis_name,
-                                  local_output_folder=self.analyses_folder,
+                                  local_output_folder=self.output_folder,
                                   project_input_folder=self.analysis_input_folder,
                                   algorithm_type=self.algorithm_type)
 
@@ -122,7 +122,6 @@ class BTAPAnalysis():
         self.output_variables = self.analysis_config[':output_variables']
         self.output_meters = self.analysis_config[':output_meters']
         self.run_annual_simulation = self.analysis_config[':run_annual_simulation']
-        self.enable_costing = self.analysis_config[':enable_costing']
 
         if self.compute_environment == 'local_docker':
             print(f"running on {self.compute_environment}")
@@ -137,6 +136,7 @@ class BTAPAnalysis():
         else:
             logging.error(f"Unknown image {self.image_name}")
             exit(1)
+        # Get instance of aws batch that has already been created in the build process.
         self.batch = self.image_manager.get_batch()
 
         # Storage items
@@ -263,7 +263,6 @@ class BTAPAnalysis():
         run_options[':algorithm_type'] = self.algorithm_type
         # BTAP specific.
         run_options[':run_annual_simulation'] = self.run_annual_simulation
-        run_options[':enable_costing'] = self.enable_costing
         run_options[':output_variables'] = self.output_variables
         run_options[':output_meters'] = self.output_meters
 
@@ -287,29 +286,29 @@ class BTAPAnalysis():
 
         # Submit Job to batch
         job = self.batch.create_job(job_id=job_id)
+        job_data = job.submit_job(run_options=run_options)
+        return job_data
 
-        return job.submit_job(run_options=run_options)
-
-    def save_results_to_database(self, results):
-        if results['success'] == True:
+    def save_results_to_database(self, job_data):
+        if job_data['status'] == 'SUCCEEDED':
             # If container completed with success don't save container output.
-            results['container_output'] = None
-            if results['eplus_fatals'] > 0:
+            job_data['container_output'] = None
+            if job_data['eplus_fatals'] > 0:
                 # If we had fatal errors..the run was not successful after all.
-                results['success'] = False
+                job_data['status'] = 'FAILED'
         # This method organizes the data structure of the dataframe to fit into a report table.
-        df = self.sort_results(results)
-
-        # Save datapoint row information to disc in case of catastrophic failure or when C.K. likes to hit Ctrl-C
-
+        df = self.sort_results(job_data)
+        # Save job_data
+        # to csv file.
         pathlib.Path(self.cp.analysis_database_folder()).mkdir(parents=True, exist_ok=True)
-        df.to_csv(os.path.join(self.cp.analysis_database_folder(), f"{results[':datapoint_id']}.csv"))
+        df.to_csv(os.path.join(self.cp.analysis_database_folder(), f"{job_data[':datapoint_id']}.csv"))
+
 
         # Save failures to a folder as well.
 
-        if results['success'] == False:
-            df.to_csv(os.path.join(self.cp.analysis_failures_folder(), f"{results[':datapoint_id']}.csv"))
-        return results
+        if job_data['status'] != 'SUCCEEDED':
+            df.to_csv(os.path.join(self.cp.analysis_failures_folder(), f"{job_data[':datapoint_id']}.csv"))
+        return job_data
 
     def sort_results(self, results):
         # Set up dict for top/high level data from btap_data.json output
@@ -411,8 +410,6 @@ class BTAPAnalysis():
         logging.info(message)
         # Add the constants to the run options dict.
         run_options.update(self.constants)
-        # Add the analysis setting to the run options dict.
-        run_options.update(self.analysis_config)
         # Returns the dict.. Note this is not a class variable self like the others. That is because this method is used in the
         # problem definition and we need to avoid thread variable issues.
         return run_options

@@ -1,6 +1,6 @@
-from src.btap.constants import CONTAINER_MEMORY
-from src.btap.constants import CONTAINER_VCPU
-from src.btap.constants import CONTAINER_STORAGE
+from src.btap.constants import WORKER_CONTAINER_MEMORY
+from src.btap.constants import WORKER_CONTAINER_VCPU
+from src.btap.constants import WORKER_CONTAINER_STORAGE
 import time
 import logging
 from random import random
@@ -21,11 +21,7 @@ class AWSBatch:
 
     def __init__(self,
                  image_manager=None,
-                 compute_environment=None,
-                 container_vcpu=CONTAINER_VCPU,
-                 container_memory=CONTAINER_MEMORY,
-                 container_storage=CONTAINER_STORAGE,
-
+                 compute_environment=None
                  ):
         self.image_manager = image_manager
         self.compute_environment_name = compute_environment.get_compute_environment_name()
@@ -34,9 +30,10 @@ class AWSBatch:
         self.job_def_name = f'{self._username()}_{image_manager.image_name}_job_def'
 
 
-    def setup(self):
+    def setup(self, container_vcpu = None, container_memory = None):
         self.__create_job_queue()
-        self.__register_job_definition()
+        self.__register_job_definition(unitVCpus=container_vcpu,
+                                       unitMemory=container_memory)
 
     def tear_down(self):
         self.__deregister_job_definition()
@@ -101,8 +98,8 @@ class AWSBatch:
         return response
 
     def __register_job_definition(self,
-                                  unitVCpus=CONTAINER_VCPU,
-                                  unitMemory=CONTAINER_MEMORY):
+                                  unitVCpus=None,
+                                  unitMemory=None):
 
         # Store the aws service role arn for AWSBatchServiceRole. This role is created by default when AWSBatch
         # compute environment is created for the first time via the web console automatically.
@@ -189,12 +186,12 @@ class AWSBatch:
             print(f"Job Queue {self.job_queue_name} already deleted.")
             return True
 
-    def create_job(self, job_id=None):
+    def create_job(self, job_id=None, reference_run=False):
         job=None
         if self.image_manager.image_name == 'btap_cli':
             job = AWSBTAPJob(batch=self, job_id=job_id)
         if self.image_manager.image_name == 'btap_batch':
-            job = AWSAnalysisJob(batch=self, job_id=job_id)
+            job = AWSAnalysisJob(batch=self, job_id=job_id, reference_run=reference_run)
         return job
 
 

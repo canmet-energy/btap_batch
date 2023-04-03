@@ -2,7 +2,6 @@
 
 BTAP also can also perform optimization analysis for any given minimization criterion based on simulation output. 
 
-
 ## Background
 BTAP allows you to quickly generate archetypical buildings based on Canadian codes and data and apply common energy conservation measures to explore possible technology packages. BTAP calulates energy, NECB Tier performance,  operational carbon and relative capital costs for all scenarios where possible. 
 
@@ -103,13 +102,13 @@ python ./bin/btap_batch.py build-environment -h
 
 ```
 
-However to use the most recent stable versions openstudio-standards, btap_costing, and btap_batch, simply run this command to configure your system to run locally.
+However to use the most recent stable versions openstudio-standards, btap_costing, and btap_batch, simply run this command to configure your system to run locally. Note: if you do not have an RSMeans licence you MUST disable costing.
 ```
-python ./bin/btap_batch.py build-environment --compute_environment local_docker
+python ./bin/btap_batch.py build-environment --compute_environment local_docker --disable_costing
 ```
 and/or to configure Amazon Web Services..
 ```
-python ./bin/btap_batch.py build-environment --compute_environment aws_batch
+python ./bin/btap_batch.py build-environment --compute_environment aws_batch --disable_costing
 ```
 Please note that if you wish to update your environment to the latest branches of development, you will have to run these commands again. This will rebuild your environment.
 
@@ -125,7 +124,7 @@ venv\Scripts\activate.bat
 
 You can run the analysis using the run-analysis-project. You can inspect the switches available for this comm
 ```
-python ./bin/btap_batch.py run-analysis-project --compute_environment local_docker --project_folder C:\Users\plopez\btap_batch\examples\parametric --run_reference
+python ./bin/btap_batch.py run-analysis-project --compute_environment local_docker --project_folder C:\Users\plopez\btap_batch\examples\parametric --reference_run
 ```
 3. Simulation should start to run. A folder will be created in output folder with the variable name you set 
 ':analysis_name' in the yml file. In that folder you will see two folders, 'parametric' and 'reference'. 'reference' 
@@ -181,7 +180,7 @@ from a local parametric run. However most of the time the above variables would 
 To run the example simple point the --project_folder switch to the analysis input folder.
 
 ```
-python ./bin/btap_batch.py run-analysis-project --compute_environment <choose local_docker or aws_batch> --project_folder .\examples\optimization --run_reference
+python ./bin/btap_batch.py run-analysis-project --compute_environment <choose local_docker or aws_batch> --project_folder .\examples\optimization --reference_run
 ```
 
 ## Elimination Analysis
@@ -308,4 +307,17 @@ settings and under "General" tab, deselect the "Use the WSL2 based engine" This 
  80% of your computers total processor capacity. The processor capacity if the number of cpu cores you have x2. 
  Similarly devote 50-80% of your Memory, keep 2GB of swap and whatever disk image size you can spare from your disk storage.. I would recommend at least 200GB. 
  Apply and restart. You may have to reboot your computer and launch Docker Desktop as soon as you log in to windows. 
+
+**Problem**: Certificate issues
+
+**Solution**: To fix certificate issues when using AWS from a computer at work do the following: 
+* Put an proper certificate somewhere on your system. 
+* Look for your AWS 'config' file (the path should be something 'C:\Users\ckirney\.aws\c') 
+* Edit the 'config' file with a text editor. 
+* Add "ca_bundle = <path to your certificate>" to the end of the 'config' file (e.g. on my computer I added "ca_bundle = C:\Users\ckirney\py_cert\nrcan+azure+amazon.cer") and save the changes.
+* if you are on the NRCan network you can point to this file in your config folder.
 ```
+ \\s0-ott-nas1\CETC-CTEC\BET\windows_certs\nrcan_azure_amazon.cer . 
+```
+
+

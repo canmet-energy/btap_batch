@@ -29,8 +29,7 @@ class PostProcessResults():
                  username=None
                  ):
 
-        command = f'PostProcessResults(baseline_results=r"{baseline_results}",database_folder=r"{database_folder}", results_folder=r"{results_folder}, compute_environment ="{compute_environment}", output_variables="{output_variables}", username="{username}")'
-        print(command)
+        logging.info(f'PostProcessResults(baseline_results=r"{baseline_results}",database_folder=r"{database_folder}", results_folder=r"{results_folder}, compute_environment ="{compute_environment}", output_variables="{output_variables}", username="{username}")')
 
         filepaths = [os.path.join(database_folder, f) for f in os.listdir(database_folder) if f.endswith('.csv')]
         btap_data_df = pd.concat(map(pd.read_csv, filepaths))
@@ -193,7 +192,6 @@ class PostProcessResults():
 
                             # Create an empty dataframe with the 'df_columns' column headers
                             if datapoint_number == 0.0:
-                                df_output = []
                                 df_output = pd.DataFrame(columns=df_columns)
 
                             # Go through each variable of output_var; Do below items for only the ones that their value for 'operation' in the .yml file is not '*'
@@ -202,28 +200,30 @@ class PostProcessResults():
                                 operation_case = output_var[count_operation_var]['operation']
                                 operation_unit = output_var[count_operation_var]['unit']
                                 if operation_var not in df_output['Name']:
-                                    value_sum = None
+                                    list_data = []
                                     df_operation_var = df.loc[df['Name'] == operation_var]
                                     if operation_case == 'sum':
                                         if operation_unit == 'GJ':
-                                            value_sum = df_operation_var.iloc[:, 4:].sum(axis=0) / 10 ** 9
-                                            value_sum['Units'] = 'GJ'
+                                            list_data.append(df_operation_var.iloc[:, 4:].sum(axis=0) / 10 ** 9)
                                         elif operation_unit == 'kWh':
-                                            value_sum = 277.778 * df_operation_var.iloc[:, 4:].sum(axis=0) / 10 ** 9
-                                            value_sum['Units'] = 'kWh'
+                                            list_data.append(277.778 * df_operation_var.iloc[:, 4:].sum(axis=0) / 10 ** 9)
                                         elif operation_unit != '*':
                                             message = f"Unknown unit for the sum operation on hourly outputs. Allowed units are GJ and kWh."
                                             logging.error(message)
+
+                                        value_sum = pd.DataFrame(list_data, columns=df_columns)
                                         value_sum['datapoint_id'] = df_operation_var['datapoint_id'].iloc[0]
                                         value_sum['Name'] = df_operation_var['Name'].iloc[0]
                                         value_sum['KeyValue'] = ""
-                                        df_output = df_output.append(value_sum, True)
+                                        value_sum['Units'] = operation_unit
+
+                                        df_output = pd.concat([value_sum, df_output])
                                     elif operation_case != '*':
                                         message = f"Unknown operation type on hourly outputs. Allowed operation type is sum."
                                         logging.error(message)
+
                             # Go to the next datapoint
                             datapoint_number += 1.0
-
                 if len(df_output) > 0.0:
 
                     # Save the df_output as the output_file
@@ -235,13 +235,9 @@ class PostProcessResults():
                         target_path_on_aws = os.path.join(self.username,
                                                           "\\".join(sum_hourly_res_path.split("\\")[-5:])).replace('\\', '/')
 
-                        # phylroy_lopez\
                         message = "Uploading %s..." % target_path_on_aws
                         print(message)
                         logging.info(message)
-                        ic(sum_hourly_res_path)
-                        ic(AWSCredentials().account_id)
-                        ic(target_path_on_aws)
                         S3().upload_file(file=sum_hourly_res_path, bucket_name=AWSCredentials().account_id, target_path=target_path_on_aws)
 
 

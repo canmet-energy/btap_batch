@@ -51,7 +51,11 @@ class S3:
     # Method to download folder. Single threaded.
     def download_s3_folder(self, s3_folder, local_dir=None):
         if CloudPath(s3_folder).exists():
-            CloudPath(s3_folder).download_to(local_dir)
+            try:
+                CloudPath(s3_folder).download_to(local_dir)
+            except botocore.exceptions.ClientError as e:
+                error_code = e.response['Error']['Code']
+                print(f"Error occured when trying to download folder {s3_folder} to {local_dir} with {error_code}")
         else:
             print(f"Folder {s3_folder} does not exist. Cannot continue.")
             exit(1)

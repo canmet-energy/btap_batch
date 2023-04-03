@@ -2,7 +2,7 @@ from src.btap.aws_credentials import AWSCredentials
 from src.btap.constants import MAX_AWS_VCPUS
 from src.btap.docker_image_manager import DockerImageManager
 from src.btap.aws_s3 import S3
-from src.btap.aws_iam_roles import IAMCloudBuildRole
+from src.btap.aws_iam_roles import IAMCodeBuildRole
 from src.btap.aws_batch import AWSBatch
 from src.btap.common_paths import CommonPaths
 import time
@@ -15,7 +15,12 @@ class AWSImageManager(DockerImageManager):
     def __aws_credentials(self):
         return AWSCredentials()
 
-    def __init__(self, image_name=None, compute_environment=None):
+    def __init__(self,
+                 image_name=None,
+                 compute_environment=None
+
+
+                 ):
         super().__init__(image_name=image_name)
         self.credentials = self.__aws_credentials()
         self.bucket = self.credentials.account_id
@@ -99,12 +104,13 @@ class AWSImageManager(DockerImageManager):
                 'environmentVariables': environment_vars,
                 'privilegedMode': True
             },
-            serviceRole=IAMCloudBuildRole().arn(),
+            serviceRole=IAMCodeBuildRole().arn(),
         )
 
         # Start building image.
         start = time.time()
-        message = f'Building Image {self.get_full_image_name()} on Amazon CloudBuild, will take ~10m'
+        url = f"https://{self.credentials.region_name}.console.aws.amazon.com/codesuite/codebuild"
+        message = f'Building Image {self.get_full_image_name()} on {url}, will take ~10m'
         print(message)
         logging.info(message)
         source_location = self.bucket + '/' + self.get_username() + '/' + self.image_name + '/'
@@ -165,4 +171,6 @@ class AWSImageManager(DockerImageManager):
         return image
 
     def get_batch(self):
-        return AWSBatch(image_manager=self, compute_environment=self.compute_environment)
+        return AWSBatch(image_manager=self,
+                        compute_environment=self.compute_environment
+                        )

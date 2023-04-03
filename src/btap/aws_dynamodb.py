@@ -5,7 +5,8 @@ from decimal import Decimal
 from src.btap.common_paths import CommonPaths
 import json
 import pandas
-from icecream import ic
+import pathlib
+import plotly.express as px
 from src.btap.aws_credentials import AWSCredentials
 
 
@@ -54,9 +55,15 @@ class AWSResultsTable():
             for index, row in dataframe.iterrows():
                 batch.put_item(json.loads(row.to_json(), parse_float=Decimal))
 
-    def dump_table(self, folder_path=None, type=None):
+    def save_dict_result(self, run_options):
+        table = AWSCredentials().dynamodb_resource.Table(self.table_name)
+        with table.batch_writer() as batch:
+            batch.put_item(json.loads(json.dumps(run_options), parse_float=Decimal))
 
-        filepath = os.path.join(folder_path, f"database.{type}")
+    def dump_table(self, folder_path=None, type=None, analysis_name=None):
+        filepath = pathlib.Path(os.path.join(folder_path, f"database.{type}"))
+        failed_filepath = pathlib.Path(os.path.join(folder_path, f"database_failed.{type}"))
+        filepath.parent.mkdir(parents=True, exist_ok=True)
         table = AWSCredentials().dynamodb_resource.Table(self.table_name)
         response = table.scan()
         data = response['Items']
@@ -64,31 +71,101 @@ class AWSResultsTable():
             response = table.scan(ExclusiveStartKey=response['LastEvaluatedKey'])
             data.extend(response['Items'])
         df = pandas.json_normalize(data)
+        if analysis_name is not None:
+            df = df.loc[df[':analysis_name'] == analysis_name]
+
+        unique_failures = df.loc[df['status'] == 'FAILED'] #[[':datapoint_id', 'container_error', 'run_options', 'datapoint_output_url']]
+        if df.empty:
+            print('DataFrame is empty! Outputting empty file.')
         if type == 'csv':
             df.to_csv(filepath)
+            unique_failures.to_csv(failed_filepath)
         if type == 'pickle':
             df.to_pickle(filepath)
-
+            unique_failures.to_pickle(failed_filepath)
         print(f"Dumped results to {filepath}")
 
+        # Dump failures as well.
 
-class AWSStatusTable(AWSResultsTable):
-    def __init__(self):
-        self.table = None
-        self.table_name = f"{CommonPaths().get_username()}_status"
-        self.key_schema = [
-            {'AttributeName': ':analysis_name', 'KeyType': 'HASH'},  # Partition key
-        ]
-        self.attribute_defs = [
-            {'AttributeName': ':analysis_name', 'AttributeType': 'S'}
-        ]
-        self.billing_mode = "PAY_PER_REQUEST"
 
-    def add_analysis(self, analysis_id=None, total_jobs=None):
-        print("stub")
+        return df
 
-    def increment_success(self, analysis_id=None):
-        print("stub")
+    def aws_db_analyses_status(self):
+        table = AWSCredentials().dynamodb_resource.Table(self.table_name)
+        response = table.scan()
+        data = response['Items']
+        while 'LastEvaluatedKey' in response:
+            response = table.scan(ExclusiveStartKey=response['LastEvaluatedKey'])
+            data.extend(response['Items'])
+        df = pandas.json_normalize(data)
+        if df.empty:
+            print('No results yet! No status to display.')
+            exit(0)
+        df = df[['status', ':analysis_name']]
+        status_list = list()
+        # Get Analysis names
+        analysis_names = sorted(df[':analysis_name'].unique())
+        for analysis_name in analysis_names:
+            temp = df.loc[df[':analysis_name'] == analysis_name]
+            row = dict()
+            row[':analysis_name'] = analysis_name
+            for status in [
+                'SUBMITTED',
+                'PENDING',
+                'RUNNABLE',
+                'STARTING',
+                'RUNNING',
+                'FAILED',
+                'SUCCEEDED'
+            ]:
+                row[status] = len(temp[temp.status == status])
+            status_list.append(row)
+        result = pandas.DataFrame(status_list)
+        return result
 
-    def increment_failure(self, analysis_id=None):
-        print("stub")
+    def aws_db_failures(self, analysis_name=None):
+        table = AWSCredentials().dynamodb_resource.Table(self.table_name)
+        response = table.scan()
+        data = response['Items']
+        while 'LastEvaluatedKey' in response:
+            response = table.scan(ExclusiveStartKey=response['LastEvaluatedKey'])
+            data.extend(response['Items'])
+        df = pandas.json_normalize(data)
+        if analysis_name is not None:
+            df = df.loc[df[':analysis_name'] == analysis_name]
+        if df.empty:
+            print('No results yet! No status to display.')
+            exit(0)
+
+        failed_runs = df.loc[df['status'] == 'FAILED']
+        unique_failures = failed_runs.drop_duplicates('container_error')
+        if failed_runs.empty:
+            print('No failures yet!')
+            exit(0)
+        return unique_failures[[':datapoint_id', 'container_error', 'run_options', 'datapoint_output_url']]
+
+    def aws_db_analyses_chart_scatter(self,
+                                      analysis_name=None,
+                                      x=None,
+                                      y=None,
+                                      color=None,
+                                      size=None,
+                                      hover_data=[':datapoint_id']):
+        table = AWSCredentials().dynamodb_resource.Table(self.table_name)
+        response = table.scan()
+        data = response['Items']
+        while 'LastEvaluatedKey' in response:
+            response = table.scan(ExclusiveStartKey=response['LastEvaluatedKey'])
+            data.extend(response['Items'])
+
+        df = pandas.json_normalize(data)
+        if analysis_name is not None:
+            df = df.loc[df[':analysis_name'] == analysis_name]
+        fig = px.scatter(data_frame=df,
+                         x=x,
+                         y=y,
+                         color=color,
+                         size=size,
+                         hover_data=hover_data
+                         )
+        fig.show()

@@ -1,8 +1,11 @@
+import pip_system_certs.wrapt_requests
+from src.btap.constants import WORKER_CONTAINER_MEMORY, WORKER_CONTAINER_STORAGE, WORKER_CONTAINER_VCPU
+from src.btap.constants import MANAGER_CONTAINER_VCPU, MANAGER_CONTAINER_MEMORY, MANAGER_CONTAINER_STORAGE
 from src.btap.aws_batch import AWSBatch
 from src.btap.aws_compute_environment import AWSComputeEnvironment
 from src.btap.aws_image_manager import AWSImageManager
 from src.btap.docker_image_manager import DockerImageManager
-from src.btap.aws_iam_roles import IAMBatchJobRole, IAMBatchServiceRole, IAMCloudBuildRole
+from src.btap.aws_iam_roles import IAMBatchJobRole, IAMBatchServiceRole, IAMCodeBuildRole
 from src.btap.btap_analysis import BTAPAnalysis
 from src.btap.btap_reference import BTAPReference
 from src.btap.btap_optimization import BTAPOptimization
@@ -20,6 +23,7 @@ from pathlib import Path
 import uuid
 from icecream import ic
 from src.btap.aws_dynamodb import AWSResultsTable
+
 
 def build_and_configure_docker_and_aws(btap_batch_branch=None,
                                        btap_costing_branch=None,
@@ -51,12 +55,12 @@ def build_and_configure_docker_and_aws(btap_batch_branch=None,
 
         # Delete user role permissions.
         IAMBatchJobRole().delete()
-        IAMCloudBuildRole().delete()
+        IAMCodeBuildRole().delete()
         IAMBatchServiceRole().delete()
 
         # # Create new
         IAMBatchJobRole().create_role()
-        IAMCloudBuildRole().create_role()
+        IAMCodeBuildRole().create_role()
         IAMBatchServiceRole().create_role()
         time.sleep(30)  # Give a few seconds for role to apply.
         ace = AWSComputeEnvironment()
@@ -70,15 +74,20 @@ def build_and_configure_docker_and_aws(btap_batch_branch=None,
         image_batch.build_image(build_args=build_args_btap_batch)
 
         # create aws_btap_cli batch framework.
-        batch_cli = AWSBatch(image_manager=image_cli, compute_environment=ace)
-        batch_cli.setup()
+        batch_cli = AWSBatch(image_manager=image_cli,
+                             compute_environment=ace
+                             )
+        batch_cli.setup(container_vcpu=WORKER_CONTAINER_VCPU,
+                        container_memory=WORKER_CONTAINER_MEMORY)
         # create aws_btap_batch batch framework.
-        batch_batch = AWSBatch(image_manager=image_batch, compute_environment=ace)
-        batch_batch.setup()
+        batch_batch = AWSBatch(image_manager=image_batch,
+                               compute_environment=ace
+                               )
+        batch_batch.setup(container_vcpu=MANAGER_CONTAINER_VCPU,
+                          container_memory=MANAGER_CONTAINER_MEMORY)
 
         # Create AWS database for results if it does not already exist.
         AWSResultsTable().create_table()
-
 
     if compute_environment == 'all' or compute_environment == 'local_docker':
         # Build btap_batch image
@@ -90,6 +99,7 @@ def build_and_configure_docker_and_aws(btap_batch_branch=None,
         # image_batch = DockerImageManager(image_name='btap_batch')
         # print('Building btap_batch image')
         # image_batch.build_image(build_args=build_args_btap_batch)
+
 
 def analysis(project_input_folder=None,
              compute_environment=None,
@@ -109,7 +119,7 @@ def analysis(project_input_folder=None,
                 exit(1)
         S3().download_s3_folder(s3_folder=project_input_folder, local_dir=local_dir)
         project_input_folder = local_dir
-    #path of analysis input.yml
+    # path of analysis input.yml
     analysis_config_file = os.path.join(project_input_folder, 'input.yml')
 
     if not os.path.isfile(analysis_config_file):
@@ -131,15 +141,12 @@ def analysis(project_input_folder=None,
             ref_analysis_config[':algorithm_type'] = 'reference'
             br = BTAPReference(analysis_config=ref_analysis_config,
                                analysis_input_folder=analysis_input_folder,
-                               analyses_folder=os.path.join(output_folder))
+                               output_folder=os.path.join(output_folder))
             br.run()
-
-
 
             reference_run_data_path = br.analysis_excel_results_path()
 
-        print("analysis")
-        ic(reference_run_data_path)
+        # ic(reference_run_data_path)
 
         # BTAP analysis placeholder.
         ba = None
@@ -148,38 +155,38 @@ def analysis(project_input_folder=None,
         if analysis_config[':algorithm_type'] == 'nsga2':
             ba = BTAPOptimization(analysis_config=analysis_config,
                                   analysis_input_folder=analysis_input_folder,
-                                  analyses_folder=output_folder,
+                                  output_folder=output_folder,
                                   reference_run_data_path=reference_run_data_path)
         # parametric
         elif analysis_config[':algorithm_type'] == 'parametric':
             ba = BTAPParametric(analysis_config=analysis_config,
                                 analysis_input_folder=analysis_input_folder,
-                                analyses_folder=output_folder,
+                                output_folder=output_folder,
                                 reference_run_data_path=reference_run_data_path)
 
         # parametric
         elif analysis_config[':algorithm_type'] == 'elimination':
             ba = BTAPElimination(analysis_config=analysis_config,
                                  analysis_input_folder=analysis_input_folder,
-                                 analyses_folder=output_folder,
+                                 output_folder=output_folder,
                                  reference_run_data_path=reference_run_data_path)
 
         elif analysis_config[':algorithm_type'] == 'sampling-lhs':
             ba = BTAPSamplingLHS(analysis_config=analysis_config,
                                  analysis_input_folder=analysis_input_folder,
-                                 analyses_folder=output_folder,
+                                 output_folder=output_folder,
                                  reference_run_data_path=reference_run_data_path)
 
         elif analysis_config[':algorithm_type'] == 'sensitivity':
             ba = BTAPSensitivity(analysis_config=analysis_config,
                                  analysis_input_folder=analysis_input_folder,
-                                 analyses_folder=output_folder,
+                                 output_folder=output_folder,
                                  reference_run_data_path=reference_run_data_path)
 
         elif analysis_config[':algorithm_type'] == 'reference':
             ba = BTAPReference(analysis_config=analysis_config,
-                                 analysis_input_folder=analysis_input_folder,
-                                 analyses_folder=output_folder)
+                               analysis_input_folder=analysis_input_folder,
+                               output_folder=output_folder)
 
         else:
             print(f"Error:Analysis type {analysis_config[':algorithm_type']} not supported. Exiting.")
@@ -200,10 +207,8 @@ def analysis(project_input_folder=None,
                              project_input_folder=analysis_input_folder)
         # Gets an AWSAnalysisJob from AWSBatch
         batch = AWSBatch(image_manager=AWSImageManager(image_name='btap_batch'),
-                         compute_environment=AWSComputeEnvironment())
+                         compute_environment=AWSComputeEnvironment()
+                         )
         # Submit analysis job to aws.
-        job = batch.create_job(job_id=analysis_name)
+        job = batch.create_job(job_id=analysis_name, reference_run=reference_run)
         return job.submit_job()
-
-
-
