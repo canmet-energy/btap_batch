@@ -122,7 +122,6 @@ class BTAPAnalysis():
         self.output_variables = self.analysis_config[':output_variables']
         self.output_meters = self.analysis_config[':output_meters']
         self.run_annual_simulation = self.analysis_config[':run_annual_simulation']
-        self.enable_costing = self.analysis_config[':enable_costing']
 
         if self.compute_environment == 'local_docker':
             print(f"running on {self.compute_environment}")
@@ -264,7 +263,6 @@ class BTAPAnalysis():
         run_options[':algorithm_type'] = self.algorithm_type
         # BTAP specific.
         run_options[':run_annual_simulation'] = self.run_annual_simulation
-        run_options[':enable_costing'] = self.enable_costing
         run_options[':output_variables'] = self.output_variables
         run_options[':output_meters'] = self.output_meters
 

@@ -63,7 +63,8 @@ def credits():
 @click.option('--btap_batch_branch', default='dev', help='btap_batch branch. Default = dev.')
 @click.option('--os_standards_branch', default='nrcan', help='openstudio-standards branch. Default=nrcan.')
 @click.option('--btap_costing_branch', default='master', help='btap_costing branch.Default=master.')
-@click.option('--openstudio_version', default='3.2.1', help='OpenStudio version. Default=3.2.1')
+@click.option('--openstudio_version', default='3.5.1', help='OpenStudio version. Default=3.5.1')
+@click.option('--disable_costing', is_flag=True, help='Disable costing. Choose this if you do not have an RSMeans licence and access to the BTAPCosting repo.')
 def build_environment(**kwargs):
     from src.btap.cli_helper_methods import build_and_configure_docker_and_aws
     """
@@ -95,9 +96,9 @@ def build_environment(**kwargs):
 
     Examples:
 
-        python ./bin/btap_batch.py build-environment --compute_environment local_docker
+        python ./bin/btap_batch.py build-environment --compute_environment local_docker --disable_costing
 
-        python ./bin/btap_batch.py build-environment --compute_environment aws_batch
+        python ./bin/btap_batch.py build-environment --compute_environment aws_batch --disable_costing
 
     """
     compute_environment = kwargs['compute_environment']
@@ -105,6 +106,13 @@ def build_environment(**kwargs):
     os_standards_branch = kwargs['os_standards_branch']
     btap_costing_branch = kwargs['btap_costing_branch']
     openstudio_version = kwargs['openstudio_version']
+    disable_costing = kwargs['disable_costing']
+
+    if disable_costing:
+        #Setting the costing branch to an empty string will force the docker file to not use costing.
+        btap_costing_branch = ''
+
+
     check_environment_vars_are_defined(compute_environment=compute_environment)
     build_and_configure_docker_and_aws(btap_batch_branch=btap_batch_branch,
                                        btap_costing_branch=btap_costing_branch,

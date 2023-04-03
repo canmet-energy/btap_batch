@@ -102,13 +102,13 @@ python ./bin/btap_batch.py build-environment -h
 
 ```
 
-However to use the most recent stable versions openstudio-standards, btap_costing, and btap_batch, simply run this command to configure your system to run locally.
+However to use the most recent stable versions openstudio-standards, btap_costing, and btap_batch, simply run this command to configure your system to run locally. Note: if you do not have an RSMeans licence you MUST disable costing.
 ```
-python ./bin/btap_batch.py build-environment --compute_environment local_docker
+python ./bin/btap_batch.py build-environment --compute_environment local_docker --disable_costing
 ```
 and/or to configure Amazon Web Services..
 ```
-python ./bin/btap_batch.py build-environment --compute_environment aws_batch
+python ./bin/btap_batch.py build-environment --compute_environment aws_batch --disable_costing
 ```
 Please note that if you wish to update your environment to the latest branches of development, you will have to run these commands again. This will rebuild your environment.
 
