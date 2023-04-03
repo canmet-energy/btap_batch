@@ -60,7 +60,7 @@ class AWSResultsTable():
         with table.batch_writer() as batch:
             batch.put_item(json.loads(json.dumps(run_options), parse_float=Decimal))
 
-    def dump_table(self, folder_path=None, type=None):
+    def dump_table(self, folder_path=None, type=None, analysis_name=None):
         filepath = pathlib.Path(os.path.join(folder_path, f"database.{type}"))
         failed_filepath = pathlib.Path(os.path.join(folder_path, f"database_failed.{type}"))
         filepath.parent.mkdir(parents=True, exist_ok=True)
@@ -71,7 +71,10 @@ class AWSResultsTable():
             response = table.scan(ExclusiveStartKey=response['LastEvaluatedKey'])
             data.extend(response['Items'])
         df = pandas.json_normalize(data)
-        unique_failures = df.loc[df['status'] == 'FAILED'].drop_duplicates('container_error')[[':datapoint_id', 'container_error', 'run_options', 'datapoint_output_url']]
+        if analysis_name is not None:
+            df = df.loc[df[':analysis_name'] == analysis_name]
+
+        unique_failures = df.loc[df['status'] == 'FAILED'] #[[':datapoint_id', 'container_error', 'run_options', 'datapoint_output_url']]
         if df.empty:
             print('DataFrame is empty! Outputting empty file.')
         if type == 'csv':

@@ -166,6 +166,7 @@ def aws_db_reset(**kwargs):
 @click.option('--type', default="csv", help='format type to dump entire results information. Choices are pickle or csv')
 @click.option('--folder_path', default=OUTPUT_FOLDER,
               help='folder path to save database file dump. Defaults to projects output folder. ')
+@click.option('--analysis_name', default=None, help='Filter by analysis name given. Default shows all.')
 def aws_db_dump(**kwargs):
     from src.btap.aws_dynamodb import AWSResultsTable
     """
@@ -177,9 +178,10 @@ def aws_db_dump(**kwargs):
     """
     type = kwargs['type']
     folder_path = kwargs['folder_path']
+    analysis_name = kwargs['analysis_name']
     check_environment_vars_are_defined(compute_environment='aws_batch')
 
-    df = AWSResultsTable().dump_table(folder_path=folder_path, type=type)
+    AWSResultsTable().dump_table(folder_path=folder_path, type=type, analysis_name=analysis_name)
 
 
 
