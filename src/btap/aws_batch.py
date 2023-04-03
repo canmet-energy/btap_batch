@@ -30,10 +30,10 @@ class AWSBatch:
         self.job_def_name = f'{self._username()}_{image_manager.image_name}_job_def'
 
 
-    def setup(self, unitVCpus = None, unitMemory = None):
+    def setup(self, container_vcpu = None, container_memory = None):
         self.__create_job_queue()
-        self.__register_job_definition(unitVCpus=unitVCpus,
-                                       unitMemory=unitMemory)
+        self.__register_job_definition(unitVCpus=container_vcpu,
+                                       unitMemory=container_memory)
 
     def tear_down(self):
         self.__deregister_job_definition()

@@ -62,6 +62,7 @@ class AWSResultsTable():
 
     def dump_table(self, folder_path=None, type=None):
         filepath = pathlib.Path(os.path.join(folder_path, f"database.{type}"))
+        failed_filepath = pathlib.Path(os.path.join(folder_path, f"database_failed.{type}"))
         filepath.parent.mkdir(parents=True, exist_ok=True)
         table = AWSCredentials().dynamodb_resource.Table(self.table_name)
         response = table.scan()
@@ -70,13 +71,20 @@ class AWSResultsTable():
             response = table.scan(ExclusiveStartKey=response['LastEvaluatedKey'])
             data.extend(response['Items'])
         df = pandas.json_normalize(data)
+        unique_failures = df.loc[df['status'] == 'FAILED'].drop_duplicates('container_error')[[':datapoint_id', 'container_error', 'run_options', 'datapoint_output_url']]
         if df.empty:
             print('DataFrame is empty! Outputting empty file.')
         if type == 'csv':
             df.to_csv(filepath)
+            unique_failures.to_csv(failed_filepath)
         if type == 'pickle':
             df.to_pickle(filepath)
+            unique_failures.to_pickle(failed_filepath)
         print(f"Dumped results to {filepath}")
+
+        # Dump failures as well.
+
+
         return df
 
     def aws_db_analyses_status(self):
@@ -125,12 +133,13 @@ class AWSResultsTable():
         if df.empty:
             print('No results yet! No status to display.')
             exit(0)
+
         failed_runs = df.loc[df['status'] == 'FAILED']
+        unique_failures = failed_runs.drop_duplicates('container_error')
         if failed_runs.empty:
             print('No failures yet!')
             exit(0)
-
-        return failed_runs[['status', ':analysis_name', ':datapoint_id', 'datapoint_output_url']]
+        return unique_failures[[':datapoint_id', 'container_error', 'run_options', 'datapoint_output_url']]
 
     def aws_db_analyses_chart_scatter(self,
                                       analysis_name=None,
