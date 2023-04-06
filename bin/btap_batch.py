@@ -132,6 +132,7 @@ def build_environment(**kwargs):
               help='Path to output results. Defaulted to this projects output folder ./btap_batch/output')
 def run_analysis_project(**kwargs):
     from src.btap.cli_helper_methods import analysis
+    from src.btap.cli_helper_methods import generate_yml
     """
     This command will invoke an analysis, a set of simulations based on the input.yml contained in your project_folder.
     Please see the 'examples' folder for examples of how to run different types of analyses. Note: The build_environment
@@ -153,7 +154,7 @@ def run_analysis_project(**kwargs):
     output_folder = kwargs['output_folder']
     # Function to run analysis.
     check_environment_vars_are_defined(compute_environment=compute_environment)    ##### create yml files in analysis_project_folder  #Sara creates folder for each yml file under 'examples' folder
-    # generate_yml(analysis_project_folder)
+    generate_yml(analysis_project_folder)
     ##### for each yml file in analysis_project_folder, Do 'analysis' #Sara
     analysis(analysis_project_folder, compute_environment, reference_run, output_folder) #Sara: Add argument for yml file and do 'analysis' in a loop for each yml files
 

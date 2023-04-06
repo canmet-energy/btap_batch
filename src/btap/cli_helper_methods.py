@@ -241,30 +241,88 @@ def generate_yml(project_input_folder=None): #Sara
     analysis_config, analysis_input_folder, analyses_folder = BTAPAnalysis.load_analysis_input_file(
         analysis_config_file=analysis_config_file)
 
+    # locations
+    locations_dict = {
+        'Vancouver': 'CAN_BC_Vancouver.Intl.AP.718920_CWEC2016.epw',
+        # 'Montreal': 'CAN_QC_Montreal-Trudeau.Intl.AP.716270_CWEC2016.epw',
+        'Yellowknife': 'CAN_NT_Yellowknife.AP.719360_CWEC2016.epw'
+    }
+
     # case 1: (set :ecm_system_name as 'NECB_Default') & (set :primary_heating_fuel as 'NaturalGas')   #Sara
     import yaml
-    analysis_config[':options'][':ecm_system_name'].remove('HS08_CCASHP_VRF')
-    analysis_config[':options'][':ecm_system_name'].remove('HS09_CCASHP_Baseboard')
-    analysis_config[':options'][':ecm_system_name'].remove('HS11_ASHP_PTHP')
-    analysis_config[':options'][':ecm_system_name'].remove('HS12_ASHP_Baseboard')
-    analysis_config[':options'][':ecm_system_name'].remove('HS13_ASHP_VRF')
-    analysis_config[':options'][':primary_heating_fuel'].remove('Electricity')
-    for building_name in ['MediumOffice']: #:analysis_name  ['MediumOffice', 'LargeOffice']
-        ###### (:erv_package = keep all options) & ... & (:chiller_type = keep all options)
-        analysis_config[':options'][':building_type'] = [building_name]
-        yml_file_name = analysis_config[':options'][':building_type'][0] + '_' + analysis_config[':options'][':ecm_system_name'][0] + '_' + analysis_config[':options'][':primary_heating_fuel'][0]
-        print('yml_file_name is', yml_file_name)
-        file = open(yml_file_name+".yaml", "w")
-        yaml.dump(analysis_config, file)
-        file.close()
-        print("YAML file saved.")
-        ###### save .yml file
-    # for building_name in ['SmallOffice', 'PrimarySchool', 'SecondarySchool', 'LowriseApartment', 'MidriseApartment', 'HighriseApartment']:
-    #     ###### (:erv_package = keep all options) & ... & (:chiller_type = 'NECB_Default')
-    #     analysis_config[':options'][':building_type'] = [building_name]
-    #     # analysis_config[':options'][':chiller_type'].remove('VSD')
 
-        ###### save .yml file
+    for location_name in locations_dict.keys():
+        print('location_name is', location_name)
+        print(locations_dict[location_name])
+        for building_name in [
+            'MediumOffice',
+            # 'LargeOffice'
+        ]:
+            # Make a copy of anaylsis_config and use it as template to create all other .yml files
+            template_yml = copy.deepcopy(analysis_config)
+            # :building_type
+            template_yml[':options'][':building_type'] = [building_name]
+            # :epw_file
+            template_yml[':options'][':epw_file'] = locations_dict[location_name]
+            # :ecm_system_name
+            template_yml[':options'][':ecm_system_name'].remove('HS08_CCASHP_VRF')
+            template_yml[':options'][':ecm_system_name'].remove('HS09_CCASHP_Baseboard')
+            template_yml[':options'][':ecm_system_name'].remove('HS11_ASHP_PTHP')
+            template_yml[':options'][':ecm_system_name'].remove('HS13_ASHP_VRF')
+            # print('template_yml is ', template_yml)
+            # raise #sara
+            # :primary_heating_fuel
+            template_yml[':options'][':primary_heating_fuel'].remove('Electricity')
+            # Save .yml file
+            # yml file name
+            yml_file_name = template_yml[':analysis_name'].replace('_example', '') + '_' + \
+                            template_yml[':options'][':building_type'][0] + '_' + \
+                            location_name + '_' + \
+                            template_yml[':options'][':primary_heating_fuel'][0] + '_' + \
+                            template_yml[':options'][':ecm_system_name'][0]
+            # :analysis_name
+            template_yml[':analysis_name'] = yml_file_name
+            print('yml_file_name is', yml_file_name)
+            file = open(yml_file_name+".yaml", "w")
+            yaml.dump(template_yml, file)
+            file.close()
+
+        for building_name in [
+            'SmallOffice',
+            # 'PrimarySchool',
+            # 'SecondarySchool',
+            # 'LowriseApartment',
+            # 'MidriseApartment',
+            # 'HighriseApartment'
+        ]:
+            # Make a copy of anaylsis_config and use it as template to create all other .yml files
+            template_yml = copy.deepcopy(analysis_config)
+            # :building_type
+            template_yml[':options'][':building_type'] = [building_name]
+            # :epw_file
+            template_yml[':options'][':epw_file'] = locations_dict[location_name]
+            # :ecm_system_name
+            template_yml[':options'][':ecm_system_name'].remove('HS08_CCASHP_VRF')
+            template_yml[':options'][':ecm_system_name'].remove('HS09_CCASHP_Baseboard')
+            template_yml[':options'][':ecm_system_name'].remove('HS11_ASHP_PTHP')
+            template_yml[':options'][':ecm_system_name'].remove('HS13_ASHP_VRF')
+            # :primary_heating_fuel
+            template_yml[':options'][':primary_heating_fuel'].remove('Electricity')
+            # :chiller_type
+            template_yml[':options'][':chiller_type'].remove('VSD')
+            # save .yml file
+            # yml file name
+            yml_file_name = template_yml[':analysis_name'].replace('_example', '') + '_' + \
+                            template_yml[':options'][':building_type'][0] + '_' + \
+                            location_name + '_' + \
+                            template_yml[':options'][':primary_heating_fuel'][0] + '_' + \
+                            template_yml[':options'][':ecm_system_name'][0]
+            # :analysis_name
+            template_yml[':analysis_name'] = yml_file_name
+            print('yml_file_name is', yml_file_name)
+            file = open(yml_file_name+".yaml", "w")
+            yaml.dump(template_yml, file)
+            file.close()
 
     # case 2: :ecm_system_name='NECB_Default' & primary_heating_fuel='Electricity'
 
