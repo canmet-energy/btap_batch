@@ -212,3 +212,91 @@ def analysis(project_input_folder=None,
         # Submit analysis job to aws.
         job = batch.create_job(job_id=analysis_name, reference_run=reference_run)
         return job.submit_job()
+
+
+def generate_yml(project_input_folder=None): #Sara
+    if project_input_folder.startswith('s3:'):
+        # download project to local temp folder.
+        local_dir = os.path.join(str(Path.home()), 'temp_analysis_folder')
+        # Check if folder exists
+        if os.path.isdir(local_dir):
+            # Remove old folder
+            try:
+                shutil.rmtree(local_dir)
+            except PermissionError:
+                message = f'Could not delete {local_dir}. Do you have a file open in that folder? Exiting'
+                print(message)
+                exit(1)
+        S3().download_s3_folder(s3_folder=project_input_folder, local_dir=local_dir)
+        project_input_folder = local_dir
+    # path of analysis input.yml
+    analysis_config_file = os.path.join(project_input_folder, 'input.yml')
+
+    if not os.path.isfile(analysis_config_file):
+        print(f"input.yml file does not exist at path {analysis_config_file}")
+        exit(1)
+    if not os.path.isdir(project_input_folder):
+        print(f"Folder does not exist at path {analysis_config_file}")
+        exit(1)
+    analysis_config, analysis_input_folder, analyses_folder = BTAPAnalysis.load_analysis_input_file(
+        analysis_config_file=analysis_config_file)
+
+    # case 1: (set :ecm_system_name as 'NECB_Default') & (set :primary_heating_fuel as 'NaturalGas')   #Sara
+    import yaml
+    analysis_config[':options'][':ecm_system_name'].remove('HS08_CCASHP_VRF')
+    analysis_config[':options'][':ecm_system_name'].remove('HS09_CCASHP_Baseboard')
+    analysis_config[':options'][':ecm_system_name'].remove('HS11_ASHP_PTHP')
+    analysis_config[':options'][':ecm_system_name'].remove('HS12_ASHP_Baseboard')
+    analysis_config[':options'][':ecm_system_name'].remove('HS13_ASHP_VRF')
+    analysis_config[':options'][':primary_heating_fuel'].remove('Electricity')
+    for building_name in ['MediumOffice']: #:analysis_name  ['MediumOffice', 'LargeOffice']
+        ###### (:erv_package = keep all options) & ... & (:chiller_type = keep all options)
+        analysis_config[':options'][':building_type'] = [building_name]
+        yml_file_name = analysis_config[':options'][':building_type'][0] + '_' + analysis_config[':options'][':ecm_system_name'][0] + '_' + analysis_config[':options'][':primary_heating_fuel'][0]
+        print('yml_file_name is', yml_file_name)
+        file = open(yml_file_name+".yaml", "w")
+        yaml.dump(analysis_config, file)
+        file.close()
+        print("YAML file saved.")
+        ###### save .yml file
+    # for building_name in ['SmallOffice', 'PrimarySchool', 'SecondarySchool', 'LowriseApartment', 'MidriseApartment', 'HighriseApartment']:
+    #     ###### (:erv_package = keep all options) & ... & (:chiller_type = 'NECB_Default')
+    #     analysis_config[':options'][':building_type'] = [building_name]
+    #     # analysis_config[':options'][':chiller_type'].remove('VSD')
+
+        ###### save .yml file
+
+    # case 2: :ecm_system_name='NECB_Default' & primary_heating_fuel='Electricity'
+
+    # case 3: (:ecm_system_name='HS09_CCASHP_Baseboard') & primary_heating_fuel='NaturalGas'
+    # for building_type = x,y,z
+        ###### (:erv_package = keep all options) & ... & (:chiller_type = 'NECB_Default')
+        ###### save .yml file
+
+    # case 4: :ecm_system_name='HS09_CCASHP_Baseboard' & primary_heating_fuel='Electricity'
+    # case 5: :ecm_system_name='HS08_CCASHP_VRF' & primary_heating_fuel='NaturalGas'
+    # case 6: :ecm_system_name='HS08_CCASHP_VRF' & primary_heating_fuel='Electricity'
+    # case 7: :ecm_system_name='HS11_ASHP_PTHP' & primary_heating_fuel='NaturalGas'
+    # case 8: :ecm_system_name='HS11_ASHP_PTHP' & primary_heating_fuel='Electricity'
+    # case 9: :ecm_system_name='HS12_ASHP_Baseboard' & primary_heating_fuel='NaturalGas'
+    # case 10: :ecm_system_name='HS12_ASHP_Baseboard' & primary_heating_fuel='Electricity'
+    # case 11: :ecm_system_name='HS13_ASHP_VRF' & primary_heating_fuel='NaturalGas'
+    # case 12: :ecm_system_name='HS13_ASHP_VRF' & primary_heating_fuel='Electricity'
+
+    # print('options are', analysis_config[':options'])  #Sara
+    # # print('options type is', type(analysis_config[':options']))  #Sara
+    # # print('building_type is', analysis_config[':options'][':building_type'])  #Sara
+    # # print('analysis_config is', analysis_config.keys)  #Sara
+    # for key in analysis_config[':options'].keys(): #Sara
+    #     print(key)
+    #     print(analysis_config[':options'][key])
+    # # print('analysis_config type is', type(analysis_config))  #Sara
+    # if analysis_config[':options'][':building_type'] == ['FullServiceRestaurant']:
+    #     print('building_type is FSR')
+    #     print(analysis_config[':options'][':dcv_type'])
+    #     analysis_config[':options'][':dcv_type'].remove('No_DCV')
+    #     print(analysis_config[':options'][':dcv_type'])
+    #
+    # if (analysis_config[':options'][':ecm_system_name'] == ['NECB_Default']) and (analysis_config[':options'][':primary_heating_fuel'] == ['NaturalGas']): #ecm_system_name
+    #     pass
+    raise #Sara

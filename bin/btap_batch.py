@@ -147,12 +147,15 @@ def run_analysis_project(**kwargs):
 
     # Input folder name
     analysis_project_folder = kwargs['project_folder']
+    print("analysis_project_folder is ", analysis_project_folder) #Sara
     compute_environment = kwargs['compute_environment']
     reference_run = kwargs['reference_run']
     output_folder = kwargs['output_folder']
     # Function to run analysis.
-    check_environment_vars_are_defined(compute_environment=compute_environment)
-    analysis(analysis_project_folder, compute_environment, reference_run, output_folder)
+    check_environment_vars_are_defined(compute_environment=compute_environment)    ##### create yml files in analysis_project_folder  #Sara creates folder for each yml file under 'examples' folder
+    # generate_yml(analysis_project_folder)
+    ##### for each yml file in analysis_project_folder, Do 'analysis' #Sara
+    analysis(analysis_project_folder, compute_environment, reference_run, output_folder) #Sara: Add argument for yml file and do 'analysis' in a loop for each yml files
 
 
 @btap.command()
