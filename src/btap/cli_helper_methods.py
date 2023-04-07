@@ -245,7 +245,7 @@ def generate_yml(project_input_folder=None): #Sara
     locations_dict = {
         'Vancouver': 'CAN_BC_Vancouver.Intl.AP.718920_CWEC2016.epw',
         # 'Montreal': 'CAN_QC_Montreal-Trudeau.Intl.AP.716270_CWEC2016.epw',
-        'Yellowknife': 'CAN_NT_Yellowknife.AP.719360_CWEC2016.epw'
+        # 'Yellowknife': 'CAN_NT_Yellowknife.AP.719360_CWEC2016.epw'
     }
 
     # case 1: (set :ecm_system_name as 'NECB_Default') & (set :primary_heating_fuel as 'NaturalGas')   #Sara
@@ -263,7 +263,7 @@ def generate_yml(project_input_folder=None): #Sara
             # :building_type
             template_yml[':options'][':building_type'] = [building_name]
             # :epw_file
-            template_yml[':options'][':epw_file'] = locations_dict[location_name]
+            template_yml[':options'][':epw_file'] = [locations_dict[location_name]]
             # :ecm_system_name
             template_yml[':options'][':ecm_system_name'].remove('HS08_CCASHP_VRF')
             template_yml[':options'][':ecm_system_name'].remove('HS09_CCASHP_Baseboard')
@@ -288,7 +288,7 @@ def generate_yml(project_input_folder=None): #Sara
             file.close()
 
         for building_name in [
-            'SmallOffice',
+            # 'SmallOffice',
             # 'PrimarySchool',
             # 'SecondarySchool',
             # 'LowriseApartment',
@@ -300,7 +300,7 @@ def generate_yml(project_input_folder=None): #Sara
             # :building_type
             template_yml[':options'][':building_type'] = [building_name]
             # :epw_file
-            template_yml[':options'][':epw_file'] = locations_dict[location_name]
+            template_yml[':options'][':epw_file'] = [locations_dict[location_name]]
             # :ecm_system_name
             template_yml[':options'][':ecm_system_name'].remove('HS08_CCASHP_VRF')
             template_yml[':options'][':ecm_system_name'].remove('HS09_CCASHP_Baseboard')
