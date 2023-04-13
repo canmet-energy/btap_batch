@@ -250,7 +250,7 @@ def generate_yml(project_input_folder=None): #Sara
     locations_dict = {
         'Vancouver': 'CAN_BC_Vancouver.Intl.AP.718920_CWEC2016.epw',
         'Montreal': 'CAN_QC_Montreal-Trudeau.Intl.AP.716270_CWEC2016.epw',
-        'Yellowknife': 'CAN_NT_Yellowknife.AP.719360_CWEC2016.epw'
+        'Edmonton': 'CAN_AB_Edmonton.Intl.AP.711230_CWEC2016.epw'
     }
 
     # ================================================================================================
@@ -409,7 +409,7 @@ def generate_yml(project_input_folder=None): #Sara
             yaml.dump(template_yml, file)
             file.close()
     # ================================================================================================
-    # case 3: (:ecm_system_name='HS09_CCASHP_Baseboard') & primary_heating_fuel='NaturalGas'
+    # case 3: (:ecm_system_name='HS09_CCASHP_Baseboard') & primary_heating_fuel='NaturalGasHPGasBackup'
     for location_name in locations_dict.keys():
         print('location_name is', location_name)
         print(locations_dict[location_name])
@@ -432,7 +432,7 @@ def generate_yml(project_input_folder=None): #Sara
             # :ecm_system_name
             template_yml[':options'][':ecm_system_name'] = [i for i in template_yml[':options'][':ecm_system_name'] if i in ['HS09_CCASHP_Baseboard']] # this removes all inputs except for 'HS09_CCASHP_Baseboard'
             # :primary_heating_fuel
-            template_yml[':options'][':primary_heating_fuel'] = [i for i in template_yml[':options'][':primary_heating_fuel'] if i in ['NaturalGas']]
+            template_yml[':options'][':primary_heating_fuel'] = [i for i in template_yml[':options'][':primary_heating_fuel'] if i in ['NaturalGasHPGasBackup']]
             # :adv_dx_units
             template_yml[':options'][':adv_dx_units'] = [i for i in template_yml[':options'][':adv_dx_units'] if i in ['NECB_Default']]
             # :chiller_type
@@ -454,7 +454,7 @@ def generate_yml(project_input_folder=None): #Sara
             yaml.dump(template_yml, file)
             file.close()
     # ================================================================================================
-    # case 4: :ecm_system_name='HS09_CCASHP_Baseboard' & primary_heating_fuel='Electricity'
+    # case 4: :ecm_system_name='HS09_CCASHP_Baseboard' & primary_heating_fuel='ElectricityHPElecBackup'
     for location_name in locations_dict.keys():
         print('location_name is', location_name)
         print(locations_dict[location_name])
@@ -477,7 +477,7 @@ def generate_yml(project_input_folder=None): #Sara
             # :ecm_system_name
             template_yml[':options'][':ecm_system_name'] = [i for i in template_yml[':options'][':ecm_system_name'] if i in ['HS09_CCASHP_Baseboard']] # this removes all inputs except for 'HS09_CCASHP_Baseboard'
             # :primary_heating_fuel
-            template_yml[':options'][':primary_heating_fuel'] = [i for i in template_yml[':options'][':primary_heating_fuel'] if i in ['Electricity']]
+            template_yml[':options'][':primary_heating_fuel'] = [i for i in template_yml[':options'][':primary_heating_fuel'] if i in ['ElectricityHPElecBackup']]
             # :boiler_eff
             template_yml[':options'][':boiler_eff'] = [i for i in template_yml[':options'][':boiler_eff'] if i in ['NECB_Default']]
             # :furnace_eff
@@ -505,7 +505,7 @@ def generate_yml(project_input_folder=None): #Sara
             yaml.dump(template_yml, file)
             file.close()
     # ================================================================================================
-    # case 5: :ecm_system_name='HS08_CCASHP_VRF' & primary_heating_fuel='NaturalGas'
+    # case 5: :ecm_system_name='HS08_CCASHP_VRF' & primary_heating_fuel='NaturalGasHPGasBackup'
     for location_name in locations_dict.keys():
         print('location_name is', location_name)
         print(locations_dict[location_name])
@@ -528,7 +528,7 @@ def generate_yml(project_input_folder=None): #Sara
             # :ecm_system_name
             template_yml[':options'][':ecm_system_name'] = [i for i in template_yml[':options'][':ecm_system_name'] if i in ['HS08_CCASHP_VRF']] # this removes all inputs except for 'HS08_CCASHP_VRF'
             # :primary_heating_fuel
-            template_yml[':options'][':primary_heating_fuel'] = [i for i in template_yml[':options'][':primary_heating_fuel'] if i in ['NaturalGas']]
+            template_yml[':options'][':primary_heating_fuel'] = [i for i in template_yml[':options'][':primary_heating_fuel'] if i in ['NaturalGasHPGasBackup']]
             # :adv_dx_units
             template_yml[':options'][':adv_dx_units'] = [i for i in template_yml[':options'][':adv_dx_units'] if i in ['NECB_Default']]
             # :chiller_type
@@ -553,7 +553,7 @@ def generate_yml(project_input_folder=None): #Sara
             file.close()
 
     # ================================================================================================
-    # case 6: :ecm_system_name='HS08_CCASHP_VRF' & primary_heating_fuel='Electricity'
+    # case 6: :ecm_system_name='HS08_CCASHP_VRF' & primary_heating_fuel='ElectricityHPElecBackup'
     for location_name in locations_dict.keys():
         print('location_name is', location_name)
         print(locations_dict[location_name])
@@ -576,7 +576,7 @@ def generate_yml(project_input_folder=None): #Sara
             # :ecm_system_name
             template_yml[':options'][':ecm_system_name'] = [i for i in template_yml[':options'][':ecm_system_name'] if i in ['HS08_CCASHP_VRF']] # this removes all inputs except for 'HS08_CCASHP_VRF'
             # :primary_heating_fuel
-            template_yml[':options'][':primary_heating_fuel'] = [i for i in template_yml[':options'][':primary_heating_fuel'] if i in ['Electricity']]
+            template_yml[':options'][':primary_heating_fuel'] = [i for i in template_yml[':options'][':primary_heating_fuel'] if i in ['ElectricityHPElecBackup']]
             # :boiler_eff
             template_yml[':options'][':boiler_eff'] = [i for i in template_yml[':options'][':boiler_eff'] if i in ['NECB_Default']]
             # :furnace_eff
@@ -607,7 +607,7 @@ def generate_yml(project_input_folder=None): #Sara
             file.close()
 
     # ================================================================================================
-    # case 7: :ecm_system_name='HS11_ASHP_PTHP' & primary_heating_fuel='NaturalGas'
+    # case 7: :ecm_system_name='HS11_ASHP_PTHP' & primary_heating_fuel='NaturalGasHPGasBackup'
     for location_name in locations_dict.keys():
         print('location_name is', location_name)
         print(locations_dict[location_name])
@@ -630,7 +630,7 @@ def generate_yml(project_input_folder=None): #Sara
             # :ecm_system_name
             template_yml[':options'][':ecm_system_name'] = [i for i in template_yml[':options'][':ecm_system_name'] if i in ['HS11_ASHP_PTHP']] # this removes all inputs except for 'HS11_ASHP_PTHP'
             # :primary_heating_fuel
-            template_yml[':options'][':primary_heating_fuel'] = [i for i in template_yml[':options'][':primary_heating_fuel'] if i in ['NaturalGas']]
+            template_yml[':options'][':primary_heating_fuel'] = [i for i in template_yml[':options'][':primary_heating_fuel'] if i in ['NaturalGasHPGasBackup']]
             # :boiler_eff
             template_yml[':options'][':boiler_eff'] = [i for i in template_yml[':options'][':boiler_eff'] if i in ['NECB_Default']]
             # :adv_dx_units
@@ -657,7 +657,7 @@ def generate_yml(project_input_folder=None): #Sara
             file.close()
 
     # ================================================================================================
-    # case 8: :ecm_system_name='HS11_ASHP_PTHP' & primary_heating_fuel='Electricity'
+    # case 8: :ecm_system_name='HS11_ASHP_PTHP' & primary_heating_fuel='ElectricityHPElecBackup'
     for location_name in locations_dict.keys():
         print('location_name is', location_name)
         print(locations_dict[location_name])
@@ -680,7 +680,7 @@ def generate_yml(project_input_folder=None): #Sara
             # :ecm_system_name
             template_yml[':options'][':ecm_system_name'] = [i for i in template_yml[':options'][':ecm_system_name'] if i in ['HS11_ASHP_PTHP']] # this removes all inputs except for 'HS11_ASHP_PTHP'
             # :primary_heating_fuel
-            template_yml[':options'][':primary_heating_fuel'] = [i for i in template_yml[':options'][':primary_heating_fuel'] if i in ['Electricity']]
+            template_yml[':options'][':primary_heating_fuel'] = [i for i in template_yml[':options'][':primary_heating_fuel'] if i in ['ElectricityHPElecBackup']]
             # :boiler_eff
             template_yml[':options'][':boiler_eff'] = [i for i in template_yml[':options'][':boiler_eff'] if i in ['NECB_Default']]
             # :furnace_eff
@@ -711,7 +711,7 @@ def generate_yml(project_input_folder=None): #Sara
             file.close()
 
     # ================================================================================================
-    # case 9: :ecm_system_name='HS13_ASHP_VRF' & primary_heating_fuel='NaturalGas'
+    # case 9: :ecm_system_name='HS13_ASHP_VRF' & primary_heating_fuel='NaturalGasHPGasBackup'
     for location_name in locations_dict.keys():
         print('location_name is', location_name)
         print(locations_dict[location_name])
@@ -734,7 +734,7 @@ def generate_yml(project_input_folder=None): #Sara
             # :ecm_system_name
             template_yml[':options'][':ecm_system_name'] = [i for i in template_yml[':options'][':ecm_system_name'] if i in ['HS13_ASHP_VRF']] # this removes all inputs except for 'HS13_ASHP_VRF'
             # :primary_heating_fuel
-            template_yml[':options'][':primary_heating_fuel'] = [i for i in template_yml[':options'][':primary_heating_fuel'] if i in ['NaturalGas']]
+            template_yml[':options'][':primary_heating_fuel'] = [i for i in template_yml[':options'][':primary_heating_fuel'] if i in ['NaturalGasHPGasBackup']]
             # :adv_dx_units
             template_yml[':options'][':adv_dx_units'] = [i for i in template_yml[':options'][':adv_dx_units'] if i in ['NECB_Default']]
             # :chiller_type
@@ -759,7 +759,7 @@ def generate_yml(project_input_folder=None): #Sara
             file.close()
 
     # ================================================================================================
-    # case 10: :ecm_system_name='HS13_ASHP_VRF' & primary_heating_fuel='Electricity'
+    # case 10: :ecm_system_name='HS13_ASHP_VRF' & primary_heating_fuel='ElectricityHPElecBackup'
     for location_name in locations_dict.keys():
         print('location_name is', location_name)
         print(locations_dict[location_name])
@@ -782,7 +782,7 @@ def generate_yml(project_input_folder=None): #Sara
             # :ecm_system_name
             template_yml[':options'][':ecm_system_name'] = [i for i in template_yml[':options'][':ecm_system_name'] if i in ['HS13_ASHP_VRF']] # this removes all inputs except for 'HS13_ASHP_VRF'
             # :primary_heating_fuel
-            template_yml[':options'][':primary_heating_fuel'] = [i for i in template_yml[':options'][':primary_heating_fuel'] if i in ['Electricity']]
+            template_yml[':options'][':primary_heating_fuel'] = [i for i in template_yml[':options'][':primary_heating_fuel'] if i in ['ElectricityHPElecBackup']]
             # :boiler_eff
             template_yml[':options'][':boiler_eff'] = [i for i in template_yml[':options'][':boiler_eff'] if i in ['NECB_Default']]
             # :furnace_eff
