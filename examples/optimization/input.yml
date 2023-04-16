@@ -3,7 +3,7 @@
 :analysis_name: optimization_example
 :algorithm_type: nsga2
 :algorithm_nsga_population: 5
-:algorithm_nsga_n_generations: 1
+:algorithm_nsga_n_generations: 2
 :algorithm_nsga_prob: 0.85
 :algorithm_nsga_eta: 3.0
 :algorithm_nsga_minimize_objectives: [
