@@ -1,11 +1,7 @@
 from pymoo.optimize import minimize
 from pymoo.core.problem import ElementwiseProblem
-from pymoo.core.problem import StarmapParallelization
-from pymoo.operators.crossover.sbx import SBX
-from pymoo.operators.sampling.rnd import IntegerRandomSampling
-from pymoo.operators.mutation.pm import PolynomialMutation
-from pymoo.algorithms.soo.nonconvex.ga import GA
-from pymoo.operators.repair.rounding import RoundingRepair
+from pymoo.core.problem import starmap_parallelized_eval
+from pymoo.factory import get_algorithm, get_crossover, get_mutation, get_sampling
 from multiprocessing.pool import ThreadPool
 import botocore
 import time
@@ -164,25 +160,27 @@ class BTAPOptimization(BTAPAnalysis):
                 # Need to make pbar available to the __evaluate method.
                 self.pbar = pbar
                 # Create thread pool object.
-                n_threads = self.batch.image_manager.get_threads()
-                pool = ThreadPool(n_threads)
-                runner = StarmapParallelization(pool.starmap)
-                # Create pymoo problem. Pass self for helper methods and set up a starmap multi-thread pool.
-                problem = BTAPProblem(btap_optimization=self, elementwise_runner=runner)
-                # configure the algorithm.
-
-                method = GA(pop_size=pop_size,
-                            sampling=IntegerRandomSampling(),
-                            crossover=SBX(prob=prob, eta=eta, vtype=float, repair=RoundingRepair()),
-                            mutation=PolynomialMutation(prob=prob, eta=eta, vtype=float, repair=RoundingRepair()),
-                            eliminate_duplicates=True,
-                            )
-                # set to optimize minimize the problem n_gen os the max number of generations before giving up.
-                self.res = minimize(problem, method, termination=('n_gen', n_gen), seed=1)
-                # Scatter().add(res.F).show()
-                # Let the user know the runtime.
-                print('Execution Time:', self.res.exec_time)
-                pool.close()
+                with ThreadPool(self.batch.image_manager.get_threads()) as pool:
+                    # Create pymoo problem. Pass self for helper methods and set up a starmap multithread pool.
+                    problem = BTAPProblem(btap_optimization=self, runner=pool.starmap,
+                                          func_eval=starmap_parallelized_eval)
+                    # configure the algorithm.
+                    method = get_algorithm("nsga2",
+                                           pop_size=pop_size,
+                                           sampling=get_sampling("int_random"),
+                                           crossover=get_crossover("int_sbx", prob=prob, eta=eta),
+                                           mutation=get_mutation("int_pm", eta=eta),
+                                           eliminate_duplicates=True,
+                                           )
+                    # set to optimize minimize the problem n_gen os the max number of generations before giving up.
+                    self.res = minimize(problem,
+                                        method,
+                                        termination=('n_gen', n_gen),
+                                        seed=1
+                                        )
+                    # Scatter().add(res.F).show()
+                    # Let the user know the runtime.
+                    print('Execution Time:', self.res.exec_time)
 
     # convenience interface to get number of minimized objectives.
     def number_of_minimize_objectives(self):
