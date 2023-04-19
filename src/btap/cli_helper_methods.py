@@ -214,7 +214,7 @@ def analysis(project_input_folder=None,
         return job.submit_job()
 
 
-def generate_yml(project_input_folder=None): #Sara
+def generate_yml(project_input_folder=None):
     import yaml
     if project_input_folder.startswith('s3:'):
         # download project to local temp folder.
@@ -243,7 +243,7 @@ def generate_yml(project_input_folder=None): #Sara
         analysis_config_file=analysis_config_file)
 
     # solution sets folder
-    print('project_input_folder is', project_input_folder)
+    # print('project_input_folder is', project_input_folder)
     os.mkdir(os.path.join(Path(project_input_folder).parent, 'solution_sets_folder'))
 
     # weather locations
@@ -256,8 +256,8 @@ def generate_yml(project_input_folder=None): #Sara
     # ================================================================================================
     # case 1: (set :ecm_system_name as 'NECB_Default') & (set :primary_heating_fuel as 'NaturalGas')
     for location_name in locations_dict.keys():
-        print('location_name is', location_name)
-        print(locations_dict[location_name])
+        # print('location_name is', location_name)
+        # print(locations_dict[location_name])
         for building_name in [
             'MediumOffice',
             'LargeOffice'
@@ -278,7 +278,7 @@ def generate_yml(project_input_folder=None): #Sara
                             location_name + '_' + \
                             template_yml[':options'][':primary_heating_fuel'][0] + '_' + \
                             template_yml[':options'][':ecm_system_name'][0]
-            print('yml_file_name is', yml_file_name)
+            # print('yml_file_name is', yml_file_name)
             # :analysis_name
             template_yml[':analysis_name'] = yml_file_name
             # yml file path
@@ -327,8 +327,8 @@ def generate_yml(project_input_folder=None): #Sara
     #================================================================================================
     # case 2: (set :ecm_system_name as 'NECB_Default') & (set :primary_heating_fuel as 'Electricity')
     for location_name in locations_dict.keys():
-        print('location_name is', location_name)
-        print(locations_dict[location_name])
+        # print('location_name is', location_name)
+        # print(locations_dict[location_name])
         for building_name in [
             'MediumOffice',
             'LargeOffice'
@@ -355,7 +355,7 @@ def generate_yml(project_input_folder=None): #Sara
                             location_name + '_' + \
                             template_yml[':options'][':primary_heating_fuel'][0] + '_' + \
                             template_yml[':options'][':ecm_system_name'][0]
-            print('yml_file_name is', yml_file_name)
+            # print('yml_file_name is', yml_file_name)
             # :analysis_name
             template_yml[':analysis_name'] = yml_file_name
             # yml file path
@@ -398,7 +398,7 @@ def generate_yml(project_input_folder=None): #Sara
                             location_name + '_' + \
                             template_yml[':options'][':primary_heating_fuel'][0] + '_' + \
                             template_yml[':options'][':ecm_system_name'][0]
-            print('yml_file_name is', yml_file_name)
+            # print('yml_file_name is', yml_file_name)
             # :analysis_name
             template_yml[':analysis_name'] = yml_file_name
             # yml file path
@@ -411,8 +411,8 @@ def generate_yml(project_input_folder=None): #Sara
     # ================================================================================================
     # case 3: (:ecm_system_name='HS09_CCASHP_Baseboard') & primary_heating_fuel='NaturalGasHPGasBackup'
     for location_name in locations_dict.keys():
-        print('location_name is', location_name)
-        print(locations_dict[location_name])
+        # print('location_name is', location_name)
+        # print(locations_dict[location_name])
         for building_name in [
             'MediumOffice',
             'LargeOffice',
@@ -443,7 +443,7 @@ def generate_yml(project_input_folder=None): #Sara
                             location_name + '_' + \
                             template_yml[':options'][':primary_heating_fuel'][0] + '_' + \
                             template_yml[':options'][':ecm_system_name'][0]
-            print('yml_file_name is', yml_file_name)
+            # print('yml_file_name is', yml_file_name)
             # :analysis_name
             template_yml[':analysis_name'] = yml_file_name
             # yml file path
@@ -456,8 +456,8 @@ def generate_yml(project_input_folder=None): #Sara
     # ================================================================================================
     # case 4: :ecm_system_name='HS09_CCASHP_Baseboard' & primary_heating_fuel='ElectricityHPElecBackup'
     for location_name in locations_dict.keys():
-        print('location_name is', location_name)
-        print(locations_dict[location_name])
+        # print('location_name is', location_name)
+        # print(locations_dict[location_name])
         for building_name in [
             'MediumOffice',
             'LargeOffice',
@@ -494,7 +494,7 @@ def generate_yml(project_input_folder=None): #Sara
                             location_name + '_' + \
                             template_yml[':options'][':primary_heating_fuel'][0] + '_' + \
                             template_yml[':options'][':ecm_system_name'][0]
-            print('yml_file_name is', yml_file_name)
+            # print('yml_file_name is', yml_file_name)
             # :analysis_name
             template_yml[':analysis_name'] = yml_file_name
             # yml file path
@@ -507,8 +507,8 @@ def generate_yml(project_input_folder=None): #Sara
     # ================================================================================================
     # case 5: :ecm_system_name='HS08_CCASHP_VRF' & primary_heating_fuel='NaturalGasHPGasBackup'
     for location_name in locations_dict.keys():
-        print('location_name is', location_name)
-        print(locations_dict[location_name])
+        # print('location_name is', location_name)
+        # print(locations_dict[location_name])
         for building_name in [
             'MediumOffice',
             'LargeOffice',
@@ -541,7 +541,7 @@ def generate_yml(project_input_folder=None): #Sara
                             location_name + '_' + \
                             template_yml[':options'][':primary_heating_fuel'][0] + '_' + \
                             template_yml[':options'][':ecm_system_name'][0]
-            print('yml_file_name is', yml_file_name)
+            # print('yml_file_name is', yml_file_name)
             # :analysis_name
             template_yml[':analysis_name'] = yml_file_name
             # yml file path
@@ -555,8 +555,8 @@ def generate_yml(project_input_folder=None): #Sara
     # ================================================================================================
     # case 6: :ecm_system_name='HS08_CCASHP_VRF' & primary_heating_fuel='ElectricityHPElecBackup'
     for location_name in locations_dict.keys():
-        print('location_name is', location_name)
-        print(locations_dict[location_name])
+        # print('location_name is', location_name)
+        # print(locations_dict[location_name])
         for building_name in [
             'MediumOffice',
             'LargeOffice',
@@ -595,7 +595,7 @@ def generate_yml(project_input_folder=None): #Sara
                             location_name + '_' + \
                             template_yml[':options'][':primary_heating_fuel'][0] + '_' + \
                             template_yml[':options'][':ecm_system_name'][0]
-            print('yml_file_name is', yml_file_name)
+            # print('yml_file_name is', yml_file_name)
             # :analysis_name
             template_yml[':analysis_name'] = yml_file_name
             # yml file path
@@ -609,8 +609,8 @@ def generate_yml(project_input_folder=None): #Sara
     # ================================================================================================
     # case 7: :ecm_system_name='HS11_ASHP_PTHP' & primary_heating_fuel='NaturalGasHPGasBackup'
     for location_name in locations_dict.keys():
-        print('location_name is', location_name)
-        print(locations_dict[location_name])
+        # print('location_name is', location_name)
+        # print(locations_dict[location_name])
         for building_name in [
             'MediumOffice',
             'LargeOffice',
@@ -645,7 +645,7 @@ def generate_yml(project_input_folder=None): #Sara
                             location_name + '_' + \
                             template_yml[':options'][':primary_heating_fuel'][0] + '_' + \
                             template_yml[':options'][':ecm_system_name'][0]
-            print('yml_file_name is', yml_file_name)
+            # print('yml_file_name is', yml_file_name)
             # :analysis_name
             template_yml[':analysis_name'] = yml_file_name
             # yml file path
@@ -659,8 +659,8 @@ def generate_yml(project_input_folder=None): #Sara
     # ================================================================================================
     # case 8: :ecm_system_name='HS11_ASHP_PTHP' & primary_heating_fuel='ElectricityHPElecBackup'
     for location_name in locations_dict.keys():
-        print('location_name is', location_name)
-        print(locations_dict[location_name])
+        # print('location_name is', location_name)
+        # print(locations_dict[location_name])
         for building_name in [
             'MediumOffice',
             'LargeOffice',
@@ -699,7 +699,7 @@ def generate_yml(project_input_folder=None): #Sara
                             location_name + '_' + \
                             template_yml[':options'][':primary_heating_fuel'][0] + '_' + \
                             template_yml[':options'][':ecm_system_name'][0]
-            print('yml_file_name is', yml_file_name)
+            # print('yml_file_name is', yml_file_name)
             # :analysis_name
             template_yml[':analysis_name'] = yml_file_name
             # yml file path
@@ -713,8 +713,8 @@ def generate_yml(project_input_folder=None): #Sara
     # ================================================================================================
     # case 9: :ecm_system_name='HS13_ASHP_VRF' & primary_heating_fuel='NaturalGasHPGasBackup'
     for location_name in locations_dict.keys():
-        print('location_name is', location_name)
-        print(locations_dict[location_name])
+        # print('location_name is', location_name)
+        # print(locations_dict[location_name])
         for building_name in [
             'MediumOffice',
             'LargeOffice',
@@ -747,7 +747,7 @@ def generate_yml(project_input_folder=None): #Sara
                             location_name + '_' + \
                             template_yml[':options'][':primary_heating_fuel'][0] + '_' + \
                             template_yml[':options'][':ecm_system_name'][0]
-            print('yml_file_name is', yml_file_name)
+            # print('yml_file_name is', yml_file_name)
             # :analysis_name
             template_yml[':analysis_name'] = yml_file_name
             # yml file path
@@ -761,8 +761,8 @@ def generate_yml(project_input_folder=None): #Sara
     # ================================================================================================
     # case 10: :ecm_system_name='HS13_ASHP_VRF' & primary_heating_fuel='ElectricityHPElecBackup'
     for location_name in locations_dict.keys():
-        print('location_name is', location_name)
-        print(locations_dict[location_name])
+        # print('location_name is', location_name)
+        # print(locations_dict[location_name])
         for building_name in [
             'MediumOffice',
             'LargeOffice',
@@ -801,7 +801,7 @@ def generate_yml(project_input_folder=None): #Sara
                             location_name + '_' + \
                             template_yml[':options'][':primary_heating_fuel'][0] + '_' + \
                             template_yml[':options'][':ecm_system_name'][0]
-            print('yml_file_name is', yml_file_name)
+            # print('yml_file_name is', yml_file_name)
             # :analysis_name
             template_yml[':analysis_name'] = yml_file_name
             # yml file path
@@ -813,5 +813,3 @@ def generate_yml(project_input_folder=None): #Sara
             file.close()
 
     # ================================================================================================
-
-    raise #Sara
