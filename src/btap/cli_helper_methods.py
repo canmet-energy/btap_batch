@@ -224,7 +224,7 @@ def generate_yml(
 ):
     import yaml
 
-    analysis_config_file = r'C:\Users\Chris\batch_test\btap_batch\resources\solutionsets_optimization_template_input.yml'
+    analysis_config_file = os.path.join(Path(os.path.dirname(os.path.realpath(__file__))).parent.parent, 'resources', 'solutionsets_optimization_template_input.yml')
 
     analysis_config, analysis_input_folder, analyses_folder = BTAPAnalysis.load_analysis_input_file(
         analysis_config_file=analysis_config_file)
