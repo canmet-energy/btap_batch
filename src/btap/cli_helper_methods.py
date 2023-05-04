@@ -1,6 +1,11 @@
 import pip_system_certs.wrapt_requests
-from src.btap.constants import WORKER_CONTAINER_MEMORY, WORKER_CONTAINER_STORAGE, WORKER_CONTAINER_VCPU
-from src.btap.constants import MANAGER_CONTAINER_VCPU, MANAGER_CONTAINER_MEMORY, MANAGER_CONTAINER_STORAGE
+from src.btap.constants import WORKER_CONTAINER_MEMORY, WORKER_CONTAINER_VCPU
+from src.btap.constants import MANAGER_CONTAINER_VCPU, MANAGER_CONTAINER_MEMORY
+from src.btap.constants import MAX_AWS_VCPUS
+from src.btap.constants import AWS_BATCH_ALLOCATION_STRATEGY
+from src.btap.constants import AWS_BATCH_COMPUTE_INSTANCE_TYPES
+from src.btap.constants import AWS_BATCH_DEFAULT_IMAGE
+
 from src.btap.aws_batch import AWSBatch
 from src.btap.aws_compute_environment import AWSComputeEnvironment
 from src.btap.aws_image_manager import AWSImageManager
@@ -29,7 +34,18 @@ def build_and_configure_docker_and_aws(btap_batch_branch=None,
                                        btap_costing_branch=None,
                                        compute_environment=None,
                                        openstudio_version=None,
-                                       os_standards_branch=None):
+                                       os_standards_branch=None,
+                                       ce_type='EC2',
+                                       ce_batch_allocationStrategy=AWS_BATCH_ALLOCATION_STRATEGY,
+                                       ce_minvCpus=0,
+                                       ce_maxvCpus=MAX_AWS_VCPUS,
+                                       ce_instanceTypes=AWS_BATCH_COMPUTE_INSTANCE_TYPES,
+                                       ce_imageId=AWS_BATCH_DEFAULT_IMAGE,
+                                       worker_container_cpu=WORKER_CONTAINER_VCPU,
+                                       worker_container_mem=WORKER_CONTAINER_MEMORY,
+                                       manager_container_cpu=MANAGER_CONTAINER_VCPU,
+                                       manage_container_mem=MANAGER_CONTAINER_MEMORY
+                                       ):
     # build args for aws and btap_cli container.
     build_args_btap_cli = {'OPENSTUDIO_VERSION': openstudio_version,
                            'BTAP_COSTING_BRANCH': btap_costing_branch,
@@ -64,7 +80,12 @@ def build_and_configure_docker_and_aws(btap_batch_branch=None,
         IAMBatchServiceRole().create_role()
         time.sleep(30)  # Give a few seconds for role to apply.
         ace = AWSComputeEnvironment()
-        ace.setup()
+        ace.setup(ce_type=ce_type,
+                  ce_batch_allocationStrategy=ce_batch_allocationStrategy,
+                  ce_minvCpus=ce_minvCpus,
+                  ce_maxvCpus=ce_maxvCpus,
+                  ce_instanceTypes=ce_instanceTypes,
+                  ce_imageId=ce_imageId)
         image_cli = AWSImageManager(image_name='btap_cli')
         print('Building AWS btap_cli image')
         image_cli.build_image(build_args=build_args_btap_cli)
@@ -77,14 +98,14 @@ def build_and_configure_docker_and_aws(btap_batch_branch=None,
         batch_cli = AWSBatch(image_manager=image_cli,
                              compute_environment=ace
                              )
-        batch_cli.setup(container_vcpu=WORKER_CONTAINER_VCPU,
-                        container_memory=WORKER_CONTAINER_MEMORY)
+        batch_cli.setup(container_vcpu=worker_container_cpu,
+                        container_memory=worker_container_mem)
         # create aws_btap_batch batch framework.
         batch_batch = AWSBatch(image_manager=image_batch,
                                compute_environment=ace
                                )
-        batch_batch.setup(container_vcpu=MANAGER_CONTAINER_VCPU,
-                          container_memory=MANAGER_CONTAINER_MEMORY)
+        batch_batch.setup(container_vcpu=manager_container_cpu,
+                          container_memory=manage_container_mem)
 
         # Create AWS database for results if it does not already exist.
         AWSResultsTable().create_table()

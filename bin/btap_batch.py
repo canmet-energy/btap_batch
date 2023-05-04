@@ -1,38 +1,40 @@
-
 from pathlib import Path
 import click
 import os
 import sys
+#from icecream import ic
+
 
 # Avoid having to add PYTHONPATH to env.
 PROJECT_ROOT = str(Path(os.path.dirname(os.path.realpath(__file__))).parent.absolute())
 sys.path.append(PROJECT_ROOT)
 
-
-
 PROJECT_FOLDER = os.path.join(Path(os.path.dirname(os.path.realpath(__file__))).parent.absolute())
-EXAMPLE_FOLDER = os.path.join(PROJECT_FOLDER,'examples')
+EXAMPLE_FOLDER = os.path.join(PROJECT_FOLDER, 'examples')
 OUTPUT_FOLDER = os.path.join(PROJECT_FOLDER, "output")
 CONTEXT_SETTINGS = dict(help_option_names=['-h', '--help'])
 
 
 def check_environment_vars_are_defined(compute_environment=None):
     failed = False
-    if os.environ.get('AWS_USERNAME') is None and ( compute_environment == 'aws_batch' or compute_environment == 'aws_batch_analysis'):
-        print('Please set AWS_USERNAME environment variable to your aws username. See https://github.com/canmet-energy/btap_batch/blob/main/README.md#requirements to ensure all requirements are met before running. ')
-        failed=True
+    if os.environ.get('AWS_USERNAME') is None and (
+            compute_environment == 'aws_batch' or compute_environment == 'aws_batch_analysis'):
+        print(
+            'Please set AWS_USERNAME environment variable to your aws username. See https://github.com/canmet-energy/btap_batch/blob/main/README.md#requirements to ensure all requirements are met before running. ')
+        failed = True
     if os.environ.get('GIT_API_TOKEN') is None:
-        print('Please set GIT_API_TOKEN environment variable to your aws username. See https://github.com/canmet-energy/btap_batch/blob/main/README.md#requirements')
+        print(
+            'Please set GIT_API_TOKEN environment variable to your aws username. See https://github.com/canmet-energy/btap_batch/blob/main/README.md#requirements')
         failed = True
     if failed:
         exit(1)
-
 
 
 @click.group(context_settings=CONTEXT_SETTINGS)
 @click.version_option(version='1.0.0')
 def btap():
     pass
+
 
 @btap.command()
 def credits():
@@ -58,13 +60,26 @@ def credits():
     ]:
         print(random.choice(colors) + pyfiglet.figlet_format(x) + Fore.RESET)
 
+
 @btap.command()
-@click.option('--compute_environment', default='local_docker', help='local_docker for local computer, aws_batch to configure aws, or all. Default=local_docker.')
+@click.option('--compute_environment', default='local_docker',
+              help='local_docker for local computer, aws_batch to configure aws, or all. Default=local_docker.')
 @click.option('--btap_batch_branch', default='dev', help='btap_batch branch. Default = dev.')
 @click.option('--os_standards_branch', default='nrcan', help='openstudio-standards branch. Default=nrcan.')
 @click.option('--btap_costing_branch', default='master', help='btap_costing branch.Default=master.')
 @click.option('--openstudio_version', default='3.5.1', help='OpenStudio version. Default=3.5.1')
-@click.option('--disable_costing', is_flag=True, help='Disable costing. Choose this if you do not have an RSMeans licence and access to the BTAPCosting repo.')
+@click.option('--disable_costing', is_flag=True,
+              help='Disable costing. Choose this if you do not have an RSMeans licence and access to the BTAPCosting repo.')
+@click.option('--aws_max_vcpus', default=500, help='Expert Only: Sets maximum number of vcpus to use. Default is 500')
+@click.option('--aws_instance_types', multiple=True, default=['optimal'],
+              help='Expert Only: Set the EC2 instances type to use. Default to "optimal" to allow AWS ML to decide. To add more than one instance type use multiple switches')
+@click.option('--aws_worker_vcpus', default=1, help='Expert Only: Number of CPUs to run simulation. Default is 1')
+@click.option('--aws_worker_mem', default=2000,
+              help='Expert Only: Amount of ram to run a simulation in MB. Default is 2000')
+@click.option('--aws_manager_vcpus', default=16,
+              help='Expert Only: Sets maximum number of vcpus to use to manage analysis. Default is 16')
+@click.option('--aws_manager_mem', default=32000,
+              help='Expert Only: Amount of ram to run to manage analysis in MB. Default is 32000')
 def build_environment(**kwargs):
     from src.btap.cli_helper_methods import build_and_configure_docker_and_aws
     """
@@ -95,10 +110,15 @@ def build_environment(**kwargs):
     The branch switches are for developer use only. Use at your peril.
 
     Examples:
-
+        # without costing
         python ./bin/btap_batch.py build-environment --compute_environment local_docker --disable_costing
 
-        python ./bin/btap_batch.py build-environment --compute_environment aws_batch --disable_costing
+        python ./bin/btap_batch.py build-environment --compute_environment aws_batch 
+        
+        # most powerful (and expensive!) aws configuration with costing implicitly enabled.
+        
+        python ./bin/btap_batch.py build-environment --compute_environment aws_batch  --aws_instance_types c6g.16xlarge --aws_max_vcpus 1000 
+        
 
     """
     compute_environment = kwargs['compute_environment']
@@ -108,23 +128,39 @@ def build_environment(**kwargs):
     openstudio_version = kwargs['openstudio_version']
     disable_costing = kwargs['disable_costing']
 
-    if disable_costing:
-        #Setting the costing branch to an empty string will force the docker file to not use costing.
-        btap_costing_branch = ''
+    ce_maxvCpus = kwargs['aws_max_vcpus']
+    ce_instanceTypes = list(kwargs['aws_instance_types'])  # convert tuple to list.
+    worker_container_cpu = kwargs['aws_worker_vcpus']
+    worker_container_mem = kwargs['aws_worker_mem']
+    manager_container_cpu = kwargs['aws_manager_vcpus']
+    manage_container_mem = kwargs['aws_manager_mem']
 
+
+    if disable_costing:
+        # Setting the costing branch to an empty string will force the docker file to not use costing.
+        btap_costing_branch = ''
 
     check_environment_vars_are_defined(compute_environment=compute_environment)
     build_and_configure_docker_and_aws(btap_batch_branch=btap_batch_branch,
                                        btap_costing_branch=btap_costing_branch,
                                        compute_environment=compute_environment,
                                        openstudio_version=openstudio_version,
-                                       os_standards_branch=os_standards_branch)
+                                       os_standards_branch=os_standards_branch,
+                                       ce_maxvCpus=ce_maxvCpus,
+                                       ce_instanceTypes=ce_instanceTypes,
+                                       worker_container_cpu=worker_container_cpu,
+                                       worker_container_mem=worker_container_mem,
+                                       manager_container_cpu=manager_container_cpu,
+                                       manage_container_mem=manage_container_mem
+                                       )
+    print(
+        "Build Complete. Please wait at least 5 minutes before running on AWS. This is to give time the amazon changes to propogate on their servers. Local docker runs can start immediately.")
 
 
 @btap.command()
 @click.option('--compute_environment', default='local_docker',
               help='Environment to run analysis. Either local_docker, which runs on your computer, or aws_batch_analysis which runs completely on AWS. The default is local_docker')
-@click.option('--project_folder', default=os.path.join(EXAMPLE_FOLDER,'optimization'),
+@click.option('--project_folder', default=os.path.join(EXAMPLE_FOLDER, 'optimization'),
               help='location of folder containing input.yml file and optionally support folders such as osm_files folder for custom models. Default is the optimization example folder.')
 @click.option('--reference_run', is_flag=True,
               help='Run reference. Required for baseline comparisons')
@@ -143,7 +179,6 @@ def run_analysis_project(**kwargs):
 
         python ./bin/btap_batch.py run-analysis-project --compute_environment aws_batch_analysis --project_folder examples\parametric --reference_run
     """
-
 
     # Input folder name
     analysis_project_folder = kwargs['project_folder']
@@ -192,8 +227,6 @@ def aws_db_dump(**kwargs):
     AWSResultsTable().dump_table(folder_path=folder_path, type=type, analysis_name=analysis_name)
 
 
-
-
 @btap.command()
 def aws_db_analyses_status(**kwargs):
     import pandas
@@ -209,6 +242,7 @@ def aws_db_analyses_status(**kwargs):
     pandas.set_option('display.max_columns', None)
     check_environment_vars_are_defined(compute_environment='aws_batch')
     print(AWSResultsTable().aws_db_analyses_status())
+
 
 @btap.command()
 @click.option('--analysis_name', default=None, help='Filter by analysis name given. Default shows all.')
@@ -226,6 +260,8 @@ def aws_db_failures(**kwargs):
     pandas.set_option('display.max_columns', None)
     check_environment_vars_are_defined(compute_environment='aws_batch')
     print(AWSResultsTable().aws_db_failures(analysis_name=kwargs['analysis_name']))
+
+
 #
 # @btap.command()
 # @click.option('--analysis_name', default=None, help='Filter by analysis name given. Default shows all.')
@@ -259,7 +295,8 @@ def aws_db_failures(**kwargs):
 #
 
 @btap.command(help="This will run all the analysis projects in the examples file. Locally or on AWS.")
-@click.option('--compute_environment', default='local_docker',  help='Environment to run analysis either local_docker, or aws_batch_analysis')
+@click.option('--compute_environment', default='local_docker',
+              help='Environment to run analysis either local_docker, or aws_batch_analysis')
 def parallel_test_examples(**kwargs):
     import time
     from src.btap.cli_helper_methods import analysis
@@ -291,7 +328,8 @@ def parallel_test_examples(**kwargs):
     for folder in example_folders:
         project_input_folder = os.path.join(examples_folder, folder)
         print(project_input_folder)
-        analysis(project_input_folder=project_input_folder, compute_environment=kwargs['compute_environment'], reference_run=True, output_folder=OUTPUT_FOLDER)
+        analysis(project_input_folder=project_input_folder, compute_environment=kwargs['compute_environment'],
+                 reference_run=True, output_folder=OUTPUT_FOLDER)
     end = time.time()
     print(f"Time elapsed: {end - start}")
 

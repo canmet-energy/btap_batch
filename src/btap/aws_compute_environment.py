@@ -1,7 +1,6 @@
 from src.btap.constants import MAX_AWS_VCPUS
 from src.btap.constants import AWS_BATCH_ALLOCATION_STRATEGY
 from src.btap.constants import AWS_BATCH_COMPUTE_INSTANCE_TYPES
-from src.btap.constants import MIN_AWS_VCPUS
 from src.btap.constants import AWS_BATCH_DEFAULT_IMAGE
 from src.btap.constants import WORKER_CONTAINER_STORAGE
 import time
@@ -25,13 +24,9 @@ class AWSComputeEnvironment:
         self._compute_environment_name = f"{username}_compute_environment"
         self.launch_template_name = f'{username}_storage_template'
 
+
     def get_compute_environment_name(self):
         return self._compute_environment_name
-
-    def setup(self):
-        # This method creates batch infrastructure for user.
-        launch_template = self.__add_storage_space_launch_template()
-        self.__create_compute_environment(launch_template=launch_template)
 
     def tear_down(self):
         # This method creates batch infrastructure for user.
@@ -86,7 +81,17 @@ class AWSComputeEnvironment:
             time.sleep(wait_time)
             return self.__describe_compute_environments(compute_environment_name, n=n + 1)
 
-    def __create_compute_environment(self, launch_template=None):
+    def setup(self,
+              ce_type = 'EC2',
+              ce_batch_allocationStrategy = AWS_BATCH_ALLOCATION_STRATEGY,
+              ce_minvCpus = 0,
+              ce_maxvCpus = MAX_AWS_VCPUS,
+              ce_instanceTypes = AWS_BATCH_COMPUTE_INSTANCE_TYPES,
+              ce_imageId = AWS_BATCH_DEFAULT_IMAGE
+              ):
+
+        # Create launch template to add storage to containers.
+        launch_template = self.__add_storage_space_launch_template()
 
         batch_client = AWSCredentials().batch_client
         # Inform user starting to create CE.
@@ -102,13 +107,13 @@ class AWSComputeEnvironment:
             type='MANAGED',  # Allow AWS to manage instances.
             serviceRole=IAMBatchServiceRole().arn(),
             computeResources={
-                'type': 'EC2',
-                'allocationStrategy': AWS_BATCH_ALLOCATION_STRATEGY,
-                'minvCpus': MIN_AWS_VCPUS,
-                'maxvCpus': MAX_AWS_VCPUS,
+                'type': ce_type,
+                'allocationStrategy': ce_batch_allocationStrategy,
+                'minvCpus': ce_minvCpus,
+                'maxvCpus': ce_maxvCpus,
                 # 'desiredvCpus': DESIRED_AWS_VCPUS,
-                'instanceTypes': AWS_BATCH_COMPUTE_INSTANCE_TYPES,
-                'imageId': AWS_BATCH_DEFAULT_IMAGE,
+                'instanceTypes': ce_instanceTypes,
+                'imageId': ce_imageId,
                 'subnets': AWS_EC2Info().subnet_id_list,
                 'securityGroupIds': AWS_EC2Info().securityGroupIds,
                 'instanceRole': 'ecsInstanceRole',

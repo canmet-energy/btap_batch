@@ -1,14 +1,15 @@
 ---
-:analysis_name: sampling-lhs_example
+:analysis_name: large_analysis_2023-04-15
 :algorithm_type: sampling-lhs
 :algorithm_nsga_population: null
 :algorithm_nsga_n_generations: null
 :algorithm_nsga_prob: null
 :algorithm_nsga_eta: null
 :algorithm_nsga_minimize_objectives: null
-:algorithm_lhs_n_samples: 10
+:algorithm_lhs_n_samples: 2000
 :algorithm_lhs_type: classic
 :algorithm_lhs_random_seed: 1
+:enable_costing: true
 :run_annual_simulation: true
 ###########################################     Hourly Data     #######################################################
 # Note: the 'operation' and 'unit' keys in :output_variables are for performing operations on hourly output.
@@ -29,44 +30,51 @@
 # Building options
 :options:
   :building_type: [
-    #  "SecondarySchool",
-    # "PrimarySchool",
-    # "SmallOffice",
-    # "MediumOffice",
-    # "LargeOffice",
-    # "SmallHotel",
-    # "LargeHotel",
-    # "Warehouse",
-    # "RetailStandalone",
-    # "RetailStripmall",
-    # "QuickServiceRestaurant",
-      "FullServiceRestaurant",
-    # "MidriseApartment",
-    # "HighriseApartment",
-    # "LowriseApartment",
-    #"Hospital",
-    #"Outpatient"
+     "SecondarySchool",
+     "PrimarySchool",
+     "SmallOffice",
+     "MediumOffice",
+     "LargeOffice",
+     #"SmallHotel",
+     #"LargeHotel",
+     #"Warehouse",
+     #"RetailStandalone",
+     #"RetailStripmall",
+     #"QuickServiceRestaurant",
+     #"FullServiceRestaurant",
+     "MidriseApartment",
+     "HighriseApartment",
+     "LowriseApartment",
+     #"Hospital",
+     #"Outpatient"
   ]
   # The standard template to use for baseline assumptions.
   :template: [
     #  "BTAPPRE1980",
     #  "BTAP1980TO2010",
-    #  "NECB2011",
-    #  "NECB2015",
-      "NECB2017"
+      #"NECB2011",
+      #"NECB2015",
+      #"NECB2017",
+      "NECB2020"
   ]
   :epw_file: [
-      'CAN_QC_Montreal-Trudeau.Intl.AP.716270_CWEC2016.epw',
+    'CAN_QC_Montreal-Trudeau.Intl.AP.716270_CWEC2016.epw',
     #'CAN_NS_Halifax.Dockyard.713280_CWEC2016.epw',
     #'CAN_AB_Edmonton.Intl.AP.711230_CWEC2016.epw',
-    #'CAN_BC_Vancouver.Intl.AP.718920_CWEC2016.epw',
+    'CAN_BC_Vancouver.Intl.AP.718920_CWEC2016.epw',
     #'CAN_AB_Calgary.Intl.AP.718770_CWEC2016.epw',
     #'CAN_ON_Toronto.Pearson.Intl.AP.716240_CWEC2016.epw',
-    #'CAN_YT_Whitehorse.Intl.AP.719640_CWEC2016.epw'
+    #'CAN_YT_Whitehorse.Intl.AP.719640_CWEC2016.epw',
+    'CAN_NT_Yellowknife.AP.719360_CWEC2016.epw'
   ]
   :primary_heating_fuel: [
-      #"Electricity",
+      "Electricity",
       "NaturalGas",
+      "NaturalGasHPElecBackupMixed",
+      "NaturalGasHPGasBackup",
+      "ElectricityHPGasBackupMixed",
+      "ElectricityHPElecBackup"
+
     # "FuelOilNo2"
   ]
   :dcv_type: [
@@ -80,12 +88,12 @@
       'LED'
   ]
   :lights_scale: [ 'NECB_Default',
-    # '0.5',
-    # '0.01'
+     '0.5',
+     '0.01'
   ]
   # Is this different from the LED option?
   :daylighting_type: [ 'NECB_Default',
-                       #'add_daylighting_controls'
+                       'add_daylighting_controls'
   ]
   :ecm_system_name: [
       'NECB_Default',
@@ -219,15 +227,15 @@
                '0.4',
                '0.5',
                '0.6',
-               '0.7',
-               '0.8',
-               '0.9'
+               #'0.7',
+               #'0.8',
+               #'0.9'
   ]
 
   :srr_set: [ 'NECB_Default',
-              #'0.03',
-              #'0.05',
-              #'0.08',
+              '0.03',
+              '0.05',
+              '0.08',
               #'0.10',
   ]
   :rotation_degrees: [ #'NECB_Default',
@@ -245,8 +253,8 @@
   :pv_ground_azimuth_angle: [ 'NECB_Default' ]
   :pv_ground_module_description: [ 'NECB_Default' ]
   :adv_dx_units: [ 'NECB_Default',
-                   #'Carrier WeatherExpert',
-                   #'Lennox Model L Ultra High Efficiency'
+                   'Carrier WeatherExpert',
+                   'Lennox Model L Ultra High Efficiency'
   ]
   :nv_type: [ 'NECB_Default',   # Two options: (1) nil/none/false/'NECB_Default', (2) 'add_nv'
               'add_nv'
@@ -259,7 +267,7 @@
   :oa_scale: [ 'NECB_Default' ]
   :infiltration_scale: [ 'NECB_Default' ]
   :chiller_type: [ 'NECB_Default',
-                   #'VSD'
+                   'VSD'
   ]
   :airloop_economizer_type: [  # (1) nil/'NECB_Default' (2) 'DifferentialEnthalpy (3) 'DifferentialDryBulb'
     'NECB_Default',
@@ -268,12 +276,12 @@
   ]
   :shw_scale: [ # Options: (1) 'NECB_Default'/nil/'none'/false (i.e. do nothing), (2) a float number larger than 0.0
       'NECB_Default',
-      #'0.5'
+      '0.5'
   ]
   :baseline_system_zones_map_option: [ # Options: (1) 'NECB_Default'/'none'/nil (i.e. 'one_sys_per_bldg'), (2) 'one_sys_per_dwelling_unit', (3) 'one_sys_per_bldg'
    'NECB_Default',
-#   'one_sys_per_bldg', # Note: this option is the default  (i.e. 'NECB_Default')
-   'one_sys_per_dwelling_unit'
+   'one_sys_per_bldg', # Note: this option is the default  (i.e. 'NECB_Default')
+   #'one_sys_per_dwelling_unit'
  ]
   :npv_start_year: [ # Options: (1) 'NECB_Default'/nil/'none' (i.e. set it as 2022), (2) an integer number larger than 2005 (first year of neb_end_use_prices.csv)
     'NECB_Default',

@@ -2,19 +2,19 @@
 # aws_batch local_docker
 :analysis_name: optimization_example
 :algorithm_type: nsga2
-:algorithm_nsga_population: 5
-:algorithm_nsga_n_generations: 2
+:algorithm_nsga_population: 36
+:algorithm_nsga_n_generations: 20
 :algorithm_nsga_prob: 0.85
 :algorithm_nsga_eta: 3.0
 :algorithm_nsga_minimize_objectives: [
-    'heating_peak_w_per_m_sq', # Peak heating load in watts.
+  #  'heating_peak_w_per_m_sq', # Peak heating load in watts.
   #'cooling_peak_w_per_m_sq', # Peak cooling load in watts.
   #'bc_step_code_tedi_kwh_per_m_sq', # TEDI, based on bc step codes.
   #'bc_step_code_meui_kwh_per_m_sq', # MEUI, based on bc step codes.
-    'cost_utility_ghg_total_kg_per_m_sq', #Total ghg from all utilities.
+  #  'cost_utility_ghg_total_kg_per_m_sq', #Total ghg from all utilities.
   #'cost_utility_neb_total_cost_per_m_sq', # Total Utility costs based on national energy board rates.
     'energy_eui_total_gj_per_m_sq', # Total energy consumed by building
-  #'cost_equipment_total_cost_per_m_sq' # This is only available in btap_private_cli
+    'cost_equipment_total_cost_per_m_sq' # This is only available in btap_private_cli
 ]
 :algorithm_lhs_n_samples: null
 :algorithm_lhs_type: null
