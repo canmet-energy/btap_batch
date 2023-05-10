@@ -60,8 +60,8 @@ def credits():
 
 @btap.command()
 @click.option('--compute_environment', default='local_docker', help='local_docker for local computer, aws_batch to configure aws, or all. Default=local_docker.')
-@click.option('--btap_batch_branch', default='dev', help='btap_batch branch. Default = dev.')
-@click.option('--os_standards_branch', default='nrcan', help='openstudio-standards branch. Default=nrcan.')
+@click.option('--btap_batch_branch', default='dev', help='dunsky branch. Default = dev.')
+@click.option('--os_standards_branch', default='dunsky', help='openstudio-standards branch. Default=dunsky.')
 @click.option('--btap_costing_branch', default='master', help='btap_costing branch.Default=master.')
 @click.option('--openstudio_version', default='3.5.1', help='OpenStudio version. Default=3.5.1')
 @click.option('--disable_costing', is_flag=True, help='Disable costing. Choose this if you do not have an RSMeans licence and access to the BTAPCosting repo.')
