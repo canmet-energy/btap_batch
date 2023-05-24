@@ -93,7 +93,8 @@
       'HS08_CCASHP_VRF',
       'HS11_ASHP_PTHP',
       'HS12_ASHP_Baseboard',
-      'HS13_ASHP_VRF'
+      'HS13_ASHP_VRF',
+      'HS14_CGSHP_FanCoils'
   ]
 
   :erv_package: [ #'NECB_Default',
