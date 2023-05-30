@@ -60,7 +60,7 @@ def credits():
 
 
 @btap.command()
-@click.option('--compute_environment', default='local_docker',
+@click.option('--compute_environment', '-c', default='local_docker',
               help='local_docker for local computer, aws_batch to configure aws, or all. Default=local_docker.')
 @click.option('--btap_batch_branch', default='dev', help='btap_batch branch. Default = dev.')
 @click.option('--os_standards_branch', default='nrcan', help='openstudio-standards branch. Default=nrcan.')
@@ -124,9 +124,9 @@ def build_environment(**kwargs):
 
 
 @btap.command()
-@click.option('--compute_environment', default='local_docker',
+@click.option('--compute_environment', '-c', default='local_docker',
               help='Environment to run analysis. Either local_docker, which runs on your computer, or aws_batch_analysis which runs completely on AWS. The default is local_docker')
-@click.option('--project_folder', default=os.path.join(EXAMPLE_FOLDER, 'optimization'),
+@click.option('--project_folder', '-p', default=os.path.join(EXAMPLE_FOLDER, 'optimization'),
               help='location of folder containing input.yml file and optionally support folders such as osm_files folder for custom models. Default is the optimization example folder.')
 @click.option('--reference_run', is_flag=True,
               help='Run reference. Required for baseline comparisons')
@@ -311,39 +311,41 @@ def parallel_test_examples(**kwargs):
                   'CAN_BC_Vancouver.Intl.AP.718920_CWEC2016.epw'],
               multiple=True,
               help='Environment to run analysis either local_docker, aws_batch or aws_batch_analysis')
-@click.option('--hvac_fuel_types_list', '-b',
+@click.option('--hvac_fuel_types_list', '-h',
               multiple=True,
-              help='NECB prototype building to use. Must be only Offices, Apartment/Condos and Schools types',
+              help='This is the FuelSet combination to use. ',
               default=['NECB_Default-NaturalGas']
               )
 @click.option('--population', '-p', default=35, help='Population to use in NSGAII optimization')
 @click.option('--generations', '-g', default=2, help='Generations to use in NSGAII optimization')
-@click.option('--analysis_path', '-a', default=OUTPUT_FOLDER, help='location to output results')
+@click.option('--working_folder', '-w', default=os.path.join(PROJECT_FOLDER, 'solution_sets'), help='location to output results')
 def optimized_solution_sets(**kwargs):
     from src.btap.solution_sets import generate_solution_sets
     import time
     import shutil
     """
-    This command will self test btap_batch by performing example analyses locally or on aws. This test is simply to see if it will run.
+    This will run an NECB 2020 optimization solution set run on a given building type and location. This will examine 
+    all possible fueltypes and use the correct reference fuel accordingly. The optimization will be based on the total EUI
+    and the Net Present value."
 
     Example:
 
-    # To run test locally....
-    python ./bin/btap_batch.py optimized_solution_sets -c local_docker 
+    # To run locally.... This will create a solutions set folder with all the project yaml files, with the  the simulation and results with the given building type, locations, and FuelType 
+    python ./bin/btap_batch.py optimized-solution-sets -c local_docker -b SmallOffice -e CAN_QC_Montreal-Trudeau.Intl.AP.716270_CWEC2016.epw -h NECB_Default-NaturalGas -h NECB_Default-Electricity
 
-    # To run test on aws.
-    python ./bin/btap_batch.py optimized_solution_sets -c aws_batch_analysis 
+    # To run test on aws. This will run 
+    python ./bin/btap_batch.py optimized-solution-sets -c aws_batch_analysis 
 
     """
     check_environment_vars_are_defined(compute_environment=kwargs['compute_environment'])
     start = time.time()
     # Check if analyses folder exists
-    if os.path.isdir(kwargs['analysis_path']):
+    if os.path.isdir(kwargs['working_folder']):
         # Remove old folder
         try:
-            shutil.rmtree(kwargs['analysis_path'])
+            shutil.rmtree(kwargs['working_folder'])
         except PermissionError:
-            message = f'Could not delete {kwargs["analysis_path"]}. Do you have a file open in that folder? Exiting'
+            message = f'Could not delete {kwargs["working_folder"]}. Do you have a file open in that folder? Exiting'
             print(message)
             exit(1)
 
@@ -384,21 +386,17 @@ def optimized_solution_sets(**kwargs):
         building_types_list=kwargs['building_types'],  # a list of the building_types to look at.
         epw_files=kwargs['epw_files'],  # an list of the epw files.
         hvac_fuel_types_list=[x.split('-') for x in kwargs['hvac_fuel_types_list']],
-        yaml_project_generation_folder=os.path.join(kwargs['analysis_path'], 'input'),
+        working_folder=os.path.join(kwargs['working_folder']),
         pop=kwargs['population'],
         generations=kwargs['generations'],
-        simulation_results_folder=os.path.join(kwargs['analysis_path'],
-                                                'output'),
         run_analyses=True
     )
 
 
 @btap.command(
-    help="This will preform the post-processing on the results to use in Tableau or other analyses. Authored by Sara Galani")
-@click.option('--solution_sets_raw_results_folder', '-r', default=None,
-              help='Location of raw simulation output from btap. Not required for AWS runs.')
-@click.option('--post_processed_output_folder', '-p', default=OUTPUT_FOLDER,
-              help='location to output postprocessed files.')
+    help="This will perform the post-processing on the results to use in Tableau or other analyses.")
+@click.option('--solution_sets_projects_results_folder', '-r', default=os.path.join(PROJECT_FOLDER, 'solution_sets','projects_results'),
+              help='Folder containing btap project results. Not required for AWS runs.')
 @click.option('--aws_database', '-a', is_flag=True, help='Gather all results from AWS database.')
 def post_process_solution_sets(**kwargs):
     """
@@ -406,30 +404,20 @@ def post_process_solution_sets(**kwargs):
 
     Example:
 
-    # To run test locally....
+    # To postprocess a local simulation....
     python ./bin/btap_batch.py post_process_solution_sets -a
 
-    # To run test on aws.
+    # To postprocess an aws simulation. Warning. This will pull all simulation that are present in your Dynamo
     python ./bin/btap_batch.py post_process_solution_sets
 
     """
     from src.btap.solution_sets import post_process_analyses
-    import time
-    import shutil
-    # Check if analyses folder exists
-    if os.path.isdir(kwargs['post_processed_output_folder']):
-        # Remove old folder
-        try:
-            shutil.rmtree(kwargs['post_processed_output_folder'])
-        except PermissionError:
-            message = f'Could not delete {kwargs["post_processed_output_folder"]}. Do you have a file open in that folder? Exiting'
-            print(message)
-            exit(1)
 
-    post_process_analyses(solution_sets_raw_results_folder=None,
+
+
+    post_process_analyses(solution_sets_raw_results_folder=kwargs["solution_sets_projects_results_folder"],
                           # Only required if runs were done with local_docker. Must contain nsga results.
-                          post_processed_output_folder="c:/test",  # Location to output postproprocesing.
-                          aws_database=True,  # use aws database will download all results nsga or not,
+                          aws_database=kwargs["aws_database"],  # use aws database will download all results nsga or not,
                           )
 
 

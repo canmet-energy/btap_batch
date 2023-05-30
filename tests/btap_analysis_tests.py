@@ -9,13 +9,13 @@ sys.path.append(PROJECT_ROOT)
 PROJECT_FOLDER = os.path.join(Path(os.path.dirname(os.path.realpath(__file__))).parent.absolute())
 EXAMPLE_FOLDER = os.path.join(PROJECT_FOLDER,'examples')
 OUTPUT_FOLDER = os.path.join(PROJECT_FOLDER, "output")
-COMPUTE_ENVIRONMENT='local_docker'
+COMPUTE_ENVIRONMENT='aws_batch_analysis'
 
 class TestBuildConfigureDocker(unittest.TestCase):
     build_and_configure_docker_and_aws(btap_batch_branch='main',
                                        btap_costing_branch='master',
                                        compute_environment=COMPUTE_ENVIRONMENT,
-                                       openstudio_version='3.2.1',
+                                       openstudio_version='3.5.1',
                                        os_standards_branch='nrcan')
 
 class TestAnalyses(unittest.TestCase):

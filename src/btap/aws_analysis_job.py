@@ -5,6 +5,7 @@ import logging
 from random import random
 from src.btap.aws_credentials import AWSCredentials
 from src.btap.common_paths import CommonPaths
+import re
 from icecream import ic
 
 
@@ -45,6 +46,9 @@ class AWSAnalysisJob():
         # ic(self.batch.job_def_name)
         # ic(self.container_command())
         batch_client = AWSCredentials().batch_client
+        if len(self.aws_job_name()) > 128 or not re.match('^[\w-]+$', self.aws_job_name()):
+            print(f"aws_job_name:{self.aws_job_name()} is either longer than 128 char or does not only contain alphanumeric, _ and - charecters.")
+            exit(1)
         try:
             submitJobResponse = batch_client.submit_job(
                 jobName=self.aws_job_name(),

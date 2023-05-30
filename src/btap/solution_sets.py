@@ -3,6 +3,7 @@ import os
 import sys
 import pandas as pd
 import copy
+import re
 
 PROJECT_ROOT = str(Path(os.path.dirname(os.path.realpath(__file__))).parent.parent)
 
@@ -64,7 +65,7 @@ def generate_yml(
                         # yml file name
                         yml_file_name = template_yml[':analysis_name'].replace('_example', '') + '_' + \
                                         template_yml[':options'][':building_type'][0] + '_' + \
-                                        location_name + '_' + \
+                                        re.search(r"(CAN_(\w*))", location_name).group(2) +'_'+\
                                         template_yml[':options'][':primary_heating_fuel'][0] + '_' + \
                                         template_yml[':options'][':ecm_system_name'][0]
                         # :analysis_name
@@ -100,7 +101,7 @@ def generate_yml(
                         # yml file name
                         yml_file_name = template_yml[':analysis_name'].replace('_example', '') + '_' + \
                                         template_yml[':options'][':building_type'][0] + '_' + \
-                                        location_name + '_' + \
+                                        re.search(r"(CAN_(\w*))", location_name).group(2) +'_'+\
                                         template_yml[':options'][':primary_heating_fuel'][0] + '_' + \
                                         template_yml[':options'][':ecm_system_name'][0]
                         # :analysis_name
@@ -147,7 +148,7 @@ def generate_yml(
                         # yml file name
                         yml_file_name = template_yml[':analysis_name'].replace('_example', '') + '_' + \
                                         template_yml[':options'][':building_type'][0] + '_' + \
-                                        location_name + '_' + \
+                                        re.search(r"(CAN_(\w*))", location_name).group(2) +'_'+\
                                         template_yml[':options'][':primary_heating_fuel'][0] + '_' + \
                                         template_yml[':options'][':ecm_system_name'][0]
                         # :analysis_name
@@ -189,7 +190,7 @@ def generate_yml(
                         # yml file name
                         yml_file_name = template_yml[':analysis_name'].replace('_example', '') + '_' + \
                                         template_yml[':options'][':building_type'][0] + '_' + \
-                                        location_name + '_' + \
+                                        re.search(r"(CAN_(\w*))", location_name).group(2) +'_'+\
                                         template_yml[':options'][':primary_heating_fuel'][0] + '_' + \
                                         template_yml[':options'][':ecm_system_name'][0]
                         # :analysis_name
@@ -239,7 +240,7 @@ def generate_yml(
                         # yml file name
                         yml_file_name = template_yml[':analysis_name'].replace('_example', '') + '_' + \
                                         template_yml[':options'][':building_type'][0] + '_' + \
-                                        location_name + '_' + \
+                                        re.search(r"(CAN_(\w*))", location_name).group(2) +'_'+\
                                         template_yml[':options'][':primary_heating_fuel'][0] + '_' + \
                                         template_yml[':options'][':ecm_system_name'][0]
                         # :analysis_name
@@ -293,7 +294,7 @@ def generate_yml(
                         # yml file name
                         yml_file_name = template_yml[':analysis_name'].replace('_example', '') + '_' + \
                                         template_yml[':options'][':building_type'][0] + '_' + \
-                                        location_name + '_' + \
+                                        re.search(r"(CAN_(\w*))", location_name).group(2) +'_'+\
                                         template_yml[':options'][':primary_heating_fuel'][0] + '_' + \
                                         template_yml[':options'][':ecm_system_name'][0]
                         # :analysis_name
@@ -345,7 +346,7 @@ def generate_yml(
                         # yml file name
                         yml_file_name = template_yml[':analysis_name'].replace('_example', '') + '_' + \
                                         template_yml[':options'][':building_type'][0] + '_' + \
-                                        location_name + '_' + \
+                                        re.search(r"(CAN_(\w*))", location_name).group(2) +'_'+\
                                         template_yml[':options'][':primary_heating_fuel'][0] + '_' + \
                                         template_yml[':options'][':ecm_system_name'][0]
                         # :analysis_name
@@ -403,7 +404,7 @@ def generate_yml(
                         # yml file name
                         yml_file_name = template_yml[':analysis_name'].replace('_example', '') + '_' + \
                                         template_yml[':options'][':building_type'][0] + '_' + \
-                                        location_name + '_' + \
+                                        re.search(r"(CAN_(\w*))", location_name).group(2) +'_'+\
                                         template_yml[':options'][':primary_heating_fuel'][0] + '_' + \
                                         template_yml[':options'][':ecm_system_name'][0]
                         # :analysis_name
@@ -457,7 +458,7 @@ def generate_yml(
                         # yml file name
                         yml_file_name = template_yml[':analysis_name'].replace('_example', '') + '_' + \
                                         template_yml[':options'][':building_type'][0] + '_' + \
-                                        location_name + '_' + \
+                                        re.search(r"(CAN_(\w*))", location_name).group(2) +'_'+\
                                         template_yml[':options'][':primary_heating_fuel'][0] + '_' + \
                                         template_yml[':options'][':ecm_system_name'][0]
                         # :analysis_name
@@ -515,7 +516,7 @@ def generate_yml(
                         # yml file name
                         yml_file_name = template_yml[':analysis_name'].replace('_example', '') + '_' + \
                                         template_yml[':options'][':building_type'][0] + '_' + \
-                                        location_name + '_' + \
+                                        re.search(r"(CAN_(\w*))", location_name).group(2) +'_'+\
                                         template_yml[':options'][':primary_heating_fuel'][0] + '_' + \
                                         template_yml[':options'][':ecm_system_name'][0]
                         # :analysis_name
@@ -567,7 +568,7 @@ def generate_yml(
                         # yml file name
                         yml_file_name = template_yml[':analysis_name'].replace('_example', '') + '_' + \
                                         template_yml[':options'][':building_type'][0] + '_' + \
-                                        location_name + '_' + \
+                                        re.search(r"(CAN_(\w*))", location_name).group(2) +'_'+\
                                         template_yml[':options'][':primary_heating_fuel'][0] + '_' + \
                                         template_yml[':options'][':ecm_system_name'][0]
                         # :analysis_name
@@ -625,7 +626,7 @@ def generate_yml(
                         # yml file name
                         yml_file_name = template_yml[':analysis_name'].replace('_example', '') + '_' + \
                                         template_yml[':options'][':building_type'][0] + '_' + \
-                                        location_name + '_' + \
+                                        re.search(r"(CAN_(\w*))", location_name).group(2) +'_'+\
                                         template_yml[':options'][':primary_heating_fuel'][0] + '_' + \
                                         template_yml[':options'][':ecm_system_name'][0]
                         # :analysis_name
@@ -651,12 +652,14 @@ def generate_solution_sets(
     building_types_list=["SmallOffice"],
     epw_files=['CAN_BC_Vancouver.Intl.AP.718920_CWEC2016.epw'],
     hvac_fuel_types_list=[['NECB_Default','NaturalGas']],
-    yaml_project_generation_folder= "C:/test/yaml",
+    working_folder= "C:/solution_sets",
     pop=35,
     generations=2,
-    simulation_results_folder="C:/test/runs",
-    run_analyses = True
-):
+    run_analyses = True ):
+
+    yaml_project_generation_folder = os.path.join(working_folder, 'projects_inputs')
+    simulation_results_folder = os.path.join(working_folder, 'projects_results')
+
 
     # Call the function that creates all the analyses project folders and input.yml file associated with each folder
     generate_yml(
@@ -685,37 +688,37 @@ def generate_solution_sets(
 
 
 def post_process_analyses(solution_sets_raw_results_folder = "",
-                          post_processed_output_folder = None,
                           aws_database = True):
 
+    post_processed_output_folder = solution_sets_raw_results_folder
     # Need error checking on paths.
     if aws_database == False and solution_sets_raw_results_folder == "":
         print("solution sets local folder does not exists")
         exit(1)
 
-    solution_set_output_folder = os.path.join(post_processed_output_folder, 'analyses')
+    solution_set_output_folder = os.path.join(solution_sets_raw_results_folder)
     from src.btap.aws_dynamodb import AWSResultsTable
     ##### Postprocess output files START
 
-    output_folder_names_list = []
+    analysis_names = []
 
     # Get list of :analysis_name performed.
     # If using AWS database
     if aws_database == True:
         from src.btap.aws_dynamodb import AWSResultsTable
         results_df = AWSResultsTable().dump_table(folder_path=post_processed_output_folder, type='csv', analysis_name=None, save_output=True)
-        output_folder_names_list = (sorted(results_df[':analysis_name'].unique()))
+        analysis_names = (sorted(results_df[':analysis_name'].unique()))
 
     # If using local_docker
     else:
         for output_folder_name in os.listdir(Path(solution_sets_raw_results_folder)):
-            output_folder_names_list.append(output_folder_name)
+            analysis_names.append(output_folder_name)
 
 
-    for output_folder_name in output_folder_names_list:
+    for output_folder_name in analysis_names:
         # print('output_folder_name is', output_folder_name)
         df_prop = []
-        file_name_prop = os.path.join(Path(solution_set_output_folder), output_folder_name, 'nsga2', 'results',
+        output_xlsx_path = os.path.join(Path(solution_set_output_folder), output_folder_name, 'nsga2', 'results',
                                       'output.xlsx')
 
         if aws_database == True:
@@ -726,8 +729,8 @@ def post_process_analyses(solution_sets_raw_results_folder = "",
 
         else:
 
-            # print('file_name_prop is', file_name_prop)
-            df_prop = pd.read_excel(file_name_prop)
+
+            df_prop = pd.read_excel(output_xlsx_path)
 
         # print('df_prop_unmet_hours_cooling is', df_prop['unmet_hours_cooling'])
         # ==================================================================================================================
@@ -824,11 +827,11 @@ def post_process_analyses(solution_sets_raw_results_folder = "",
         ### In other words, each package has a duplicate in the 'output_postprocess.xlsx', however it is not marked as
         ### 'True' for 'IsOptimalPackage'.
         # df_merged = pd.concat([df_prop, packages],axis=1)
-        df_merged = pd.concat(map(pd.read_excel, [file_name_prop.replace('.xlsx', '_processed.xlsx'),
-                                                  file_name_prop.replace('.xlsx', '_packages.xlsx')]),
+        df_merged = pd.concat(map(pd.read_excel, [output_xlsx_path.replace('.xlsx', '_processed.xlsx'),
+                                                  output_xlsx_path.replace('.xlsx', '_packages.xlsx')]),
                               ignore_index=True)
 
-        df_merged.to_excel(file_name_prop.replace('.xlsx', '_postprocess.xlsx'), index=False)
+        df_merged.to_excel(output_xlsx_path.replace('.xlsx', '_postprocess.xlsx'), index=False)
 
         # Delete .xlsx files that were created for postprocessing
         os.remove(os.path.join(Path(solution_set_output_folder), output_folder_name, 'nsga2', 'results',
@@ -842,12 +845,12 @@ def post_process_analyses(solution_sets_raw_results_folder = "",
     if os.path.isfile(os.path.join(Path(solution_set_output_folder), 'output_processed_all_cases.xlsx')) == True:
         os.remove(os.path.join(Path(solution_set_output_folder), 'output_processed_all_cases.xlsx'))
     # Make a list of all output folders' names
-    output_folder_names_list = []
+    analysis_names = []
     for output_folder_name in os.listdir(Path(solution_set_output_folder)):
-        output_folder_names_list.append(output_folder_name)
-    # print('output_folder_names_list is', output_folder_names_list)
+        analysis_names.append(output_folder_name)
+    # print('analysis_names is', analysis_names)
     file_number = 0.0
-    for output_folder_name in output_folder_names_list:
+    for output_folder_name in analysis_names:
         # print('output_folder_name is', output_folder_name)
         ### Read output_processed.xlsx file of proposed buildings of 'output_folder_name' folder
         df = []
