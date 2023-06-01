@@ -384,7 +384,7 @@ def optimized_solution_sets(**kwargs):
     generate_solution_sets(
         compute_environment=kwargs['compute_environment'],  # local_docker, aws_batch, aws_batch_analysis...
         building_types_list=kwargs['building_types'],  # a list of the building_types to look at.
-        epw_files=kwargs['epw_files'],  # an list of the epw files.
+        epw_files=kwargs['epw_files'],  # a list of the epw files.
         hvac_fuel_types_list=[x.split('-') for x in kwargs['hvac_fuel_types_list']],
         working_folder=os.path.join(kwargs['working_folder']),
         pop=kwargs['population'],
@@ -405,10 +405,10 @@ def post_process_solution_sets(**kwargs):
     Example:
 
     # To postprocess a local simulation....
-    python ./bin/btap_batch.py post_process_solution_sets -a
+    python ./bin/btap_batch.py post-process-solution-sets
 
     # To postprocess an aws simulation. Warning. This will pull all simulation that are present in your Dynamo
-    python ./bin/btap_batch.py post_process_solution_sets
+    python ./bin/btap_batch.py post-process-solution-sets -a
 
     """
     from src.btap.solution_sets import post_process_analyses

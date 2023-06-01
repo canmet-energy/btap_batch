@@ -680,14 +680,15 @@ def generate_yml(
 
 ##### The below method creates all .yml files and run them
 def generate_solution_sets(
-    compute_environment='local_docker',
-    building_types_list=["SmallOffice"],
-    epw_files=['CAN_BC_Vancouver.Intl.AP.718920_CWEC2016.epw'],
-    hvac_fuel_types_list=[['NECB_Default','NaturalGas']],
-    working_folder= "C:/solution_sets",
-    pop=35,
-    generations=2,
-    run_analyses = True ):
+    compute_environment=None,
+    building_types_list=None,
+    epw_files=None,
+    hvac_fuel_types_list=None,
+    working_folder=None,
+    pop=None,
+    generations=None,
+    run_analyses=None
+):
 
     yaml_project_generation_folder = os.path.join(working_folder, 'projects_inputs')
     simulation_results_folder = os.path.join(working_folder, 'projects_results')
@@ -746,9 +747,7 @@ def post_process_analyses(solution_sets_raw_results_folder = "",
         for output_folder_name in os.listdir(Path(solution_sets_raw_results_folder)):
             analysis_names.append(output_folder_name)
 
-
     for output_folder_name in analysis_names:
-        # print('output_folder_name is', output_folder_name)
         df_prop = []
         output_xlsx_path = os.path.join(Path(solution_set_output_folder), output_folder_name, 'nsga2', 'results',
                                       'output.xlsx')
@@ -758,6 +757,7 @@ def post_process_analyses(solution_sets_raw_results_folder = "",
         ### Read output results file of proposed buildings of the folder
 
             df_prop = results_df.loc[results_df[':analysis_name'] == output_folder_name]
+            df_prop = df_prop.iloc[1:] # This removes first row from df_prop as the first row is the reference building when running on aws
 
         else:
 
@@ -768,8 +768,13 @@ def post_process_analyses(solution_sets_raw_results_folder = "",
         # ==================================================================================================================
         ### Find which datapoints meet NECB's requirement for cooling unmet hours
         from decimal import Decimal
-        unmet_hours_cooling_threshold = df_prop['baseline_unmet_hours_cooling'] + df_prop[
-            'baseline_unmet_hours_cooling'] * Decimal(0.10)
+        if aws_database == True:
+            unmet_hours_cooling_threshold = df_prop['baseline_unmet_hours_cooling'] + df_prop[
+                'baseline_unmet_hours_cooling'] * Decimal(0.10)
+        else:
+            unmet_hours_cooling_threshold = df_prop['baseline_unmet_hours_cooling'] + df_prop[
+                'baseline_unmet_hours_cooling'] * 0.10
+
         unmet_hours_cooling_threshold = unmet_hours_cooling_threshold.values
         # print('unmet_hours_cooling_threshold is', unmet_hours_cooling_threshold[0])
         df_prop['MetCoolingUnmetRequirement'] = False
@@ -797,8 +802,7 @@ def post_process_analyses(solution_sets_raw_results_folder = "",
         # df_prop = df_prop.loc[(df_prop['MetCoolingUnmetRequirement'] == True)]
         # Define bins
         bins = [float(i) for i in list(range(0, 101, 1))]
-        df_prop['baseline_energy_percent_better'] = df_prop.astype({'baseline_energy_percent_better': 'float64'}).dtypes
-        print(df_prop.dtypes['baseline_energy_percent_better'])
+
         # print('bins are', bins)
         df_prop['bin_baseline_energy_percent_better'] = pd.cut(df_prop['baseline_energy_percent_better'], bins)
         # print(df_prop['bin_baseline_energy_percent_better'])
@@ -878,20 +882,32 @@ def post_process_analyses(solution_sets_raw_results_folder = "",
         os.remove(os.path.join(Path(solution_set_output_folder), 'output_processed_all_cases.xlsx'))
     # Make a list of all output folders' names
     analysis_names = []
-    for output_folder_name in os.listdir(Path(solution_set_output_folder)):
-        analysis_names.append(output_folder_name)
+
+    # If using AWS database
+    if aws_database == True:
+        from src.btap.aws_dynamodb import AWSResultsTable
+        results_df = AWSResultsTable().dump_table(folder_path=post_processed_output_folder, type='csv', analysis_name=None, save_output=True)
+        analysis_names = (sorted(results_df[':analysis_name'].unique()))
+
+    # If using local_docker
+    else:
+        for output_folder_name in os.listdir(Path(solution_set_output_folder)):
+            analysis_names.append(output_folder_name)
+
     # print('analysis_names is', analysis_names)
-    file_number = 0.0
+
+    file_number = 1.0
     for output_folder_name in analysis_names:
         # print('output_folder_name is', output_folder_name)
         ### Read output_processed.xlsx file of proposed buildings of 'output_folder_name' folder
         df = []
         file_name = os.path.join(Path(solution_set_output_folder), output_folder_name, 'nsga2', 'results',
                                  'output_postprocess.xlsx')
+
         df = pd.read_excel(file_name)
 
         # Create an empty dataframe
-        if file_number == 0.0:
+        if file_number == 1.0:
             # Get column headers of the df
             df_columns = df.columns
             # Create an empty dataframe
