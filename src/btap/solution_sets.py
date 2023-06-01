@@ -896,7 +896,7 @@ def post_process_analyses(solution_sets_raw_results_folder = "",
 
     # print('analysis_names is', analysis_names)
 
-    file_number = 1.0
+    file_number = 0.0
     for output_folder_name in analysis_names:
         # print('output_folder_name is', output_folder_name)
         ### Read output_processed.xlsx file of proposed buildings of 'output_folder_name' folder
@@ -907,7 +907,7 @@ def post_process_analyses(solution_sets_raw_results_folder = "",
         df = pd.read_excel(file_name)
 
         # Create an empty dataframe
-        if file_number == 1.0:
+        if file_number == 0.0:
             # Get column headers of the df
             df_columns = df.columns
             # Create an empty dataframe
