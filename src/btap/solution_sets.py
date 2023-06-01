@@ -53,7 +53,6 @@ def generate_yml(
                         # Optimization parameters
                         template_yml[':algorithm_nsga_population'] = pop
                         template_yml[':algorithm_nsga_n_generations'] = generations
-
                         # :building_type
                         template_yml[':options'][':building_type'] = [building_name]
                         # :epw_file
@@ -88,6 +87,9 @@ def generate_yml(
                     ]:
                         # Make a copy of anaylsis_config and use it as template to create all other .yml files
                         template_yml = copy.deepcopy(analysis_config)
+                        # Optimization parameters
+                        template_yml[':algorithm_nsga_population'] = pop
+                        template_yml[':algorithm_nsga_n_generations'] = generations
                         # :building_type
                         template_yml[':options'][':building_type'] = [building_name]
                         # :epw_file
@@ -131,6 +133,9 @@ def generate_yml(
                     ]:
                         # Make a copy of anaylsis_config and use it as template to create all other .yml files
                         template_yml = copy.deepcopy(analysis_config)
+                        # Optimization parameters
+                        template_yml[':algorithm_nsga_population'] = pop
+                        template_yml[':algorithm_nsga_n_generations'] = generations
                         # :building_type
                         template_yml[':options'][':building_type'] = [building_name]
                         # :epw_file
@@ -171,6 +176,9 @@ def generate_yml(
                     ]:
                         # Make a copy of anaylsis_config and use it as template to create all other .yml files
                         template_yml = copy.deepcopy(analysis_config)
+                        # Optimization parameters
+                        template_yml[':algorithm_nsga_population'] = pop
+                        template_yml[':algorithm_nsga_n_generations'] = generations
                         # :building_type
                         template_yml[':options'][':building_type'] = [building_name]
                         # :epw_file
@@ -225,6 +233,9 @@ def generate_yml(
                     ]:
                         # Make a copy of anaylsis_config and use it as template to create all other .yml files
                         template_yml = copy.deepcopy(analysis_config)
+                        # Optimization parameters
+                        template_yml[':algorithm_nsga_population'] = pop
+                        template_yml[':algorithm_nsga_n_generations'] = generations
                         # :building_type
                         template_yml[':options'][':building_type'] = [building_name]
                         # :epw_file
@@ -273,6 +284,9 @@ def generate_yml(
                     ]:
                         # Make a copy of anaylsis_config and use it as template to create all other .yml files
                         template_yml = copy.deepcopy(analysis_config)
+                        # Optimization parameters
+                        template_yml[':algorithm_nsga_population'] = pop
+                        template_yml[':algorithm_nsga_n_generations'] = generations
                         # :building_type
                         template_yml[':options'][':building_type'] = [building_name]
                         # :epw_file
@@ -329,6 +343,9 @@ def generate_yml(
                     ]:
                         # Make a copy of anaylsis_config and use it as template to create all other .yml files
                         template_yml = copy.deepcopy(analysis_config)
+                        # Optimization parameters
+                        template_yml[':algorithm_nsga_population'] = pop
+                        template_yml[':algorithm_nsga_n_generations'] = generations
                         # :building_type
                         template_yml[':options'][':building_type'] = [building_name]
                         # :epw_file
@@ -381,6 +398,9 @@ def generate_yml(
                     ]:
                         # Make a copy of anaylsis_config and use it as template to create all other .yml files
                         template_yml = copy.deepcopy(analysis_config)
+                        # Optimization parameters
+                        template_yml[':algorithm_nsga_population'] = pop
+                        template_yml[':algorithm_nsga_n_generations'] = generations
                         # :building_type
                         template_yml[':options'][':building_type'] = [building_name]
                         # :epw_file
@@ -439,6 +459,9 @@ def generate_yml(
                     ]:
                         # Make a copy of anaylsis_config and use it as template to create all other .yml files
                         template_yml = copy.deepcopy(analysis_config)
+                        # Optimization parameters
+                        template_yml[':algorithm_nsga_population'] = pop
+                        template_yml[':algorithm_nsga_n_generations'] = generations
                         # :building_type
                         template_yml[':options'][':building_type'] = [building_name]
                         # :epw_file
@@ -493,6 +516,9 @@ def generate_yml(
                     ]:
                         # Make a copy of anaylsis_config and use it as template to create all other .yml files
                         template_yml = copy.deepcopy(analysis_config)
+                        # Optimization parameters
+                        template_yml[':algorithm_nsga_population'] = pop
+                        template_yml[':algorithm_nsga_n_generations'] = generations
                         # :building_type
                         template_yml[':options'][':building_type'] = [building_name]
                         # :epw_file
@@ -551,6 +577,9 @@ def generate_yml(
                     ]:
                         # Make a copy of anaylsis_config and use it as template to create all other .yml files
                         template_yml = copy.deepcopy(analysis_config)
+                        # Optimization parameters
+                        template_yml[':algorithm_nsga_population'] = pop
+                        template_yml[':algorithm_nsga_n_generations'] = generations
                         # :building_type
                         template_yml[':options'][':building_type'] = [building_name]
                         # :epw_file
@@ -603,6 +632,9 @@ def generate_yml(
                     ]:
                         # Make a copy of anaylsis_config and use it as template to create all other .yml files
                         template_yml = copy.deepcopy(analysis_config)
+                        # Optimization parameters
+                        template_yml[':algorithm_nsga_population'] = pop
+                        template_yml[':algorithm_nsga_n_generations'] = generations
                         # :building_type
                         template_yml[':options'][':building_type'] = [building_name]
                         # :epw_file
