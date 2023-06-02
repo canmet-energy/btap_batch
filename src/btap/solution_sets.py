@@ -757,8 +757,7 @@ def post_process_analyses(solution_sets_raw_results_folder = "",
         ### Read output results file of proposed buildings of the folder
 
             df_prop = results_df.loc[results_df[':analysis_name'] == output_folder_name]
-            df_prop = df_prop.iloc[1:] # This removes first row from df_prop as the first row is the reference building when running on aws
-
+            df_prop = df_prop.dropna(subset=['baseline_energy_percent_better'], how='all') # This removes rows with null 'baseline_energy_percent_better' from df_prop as that row is the reference building when running on aws
         else:
 
 
@@ -803,11 +802,9 @@ def post_process_analyses(solution_sets_raw_results_folder = "",
         # Define bins
         bins = [float(i) for i in list(range(0, 101, 1))]
 
-        # print('bins are', bins)
         df_prop['bin_baseline_energy_percent_better'] = pd.cut(df_prop['baseline_energy_percent_better'], bins)
         # print(df_prop['bin_baseline_energy_percent_better'])
         # print(type(df_prop['bin_baseline_energy_percent_better'][0]))
-
 
         # save as .xlsx file
         excel_path = Path(os.path.join(Path(solution_set_output_folder), output_folder_name, 'nsga2', 'results',
