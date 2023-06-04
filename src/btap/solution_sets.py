@@ -903,6 +903,17 @@ def post_process_analyses(solution_sets_raw_results_folder = "",
 
         df = pd.read_excel(file_name)
 
+        # Cast columns to bool type, where applicable
+        df['MetCoolingUnmetRequirement'] = df['MetCoolingUnmetRequirement'].astype('boolean')
+        df['IsOptimalPackage?'] = df['IsOptimalPackage?'].astype('boolean')
+        df[':run_annual_simulation'] = df[':run_annual_simulation'].astype('boolean')
+        df['phius_necb_meet_cooling_demand'] = df['phius_necb_meet_cooling_demand'].astype('boolean')
+        df['phius_necb_meet_cooling_peak_load'] = df['phius_necb_meet_cooling_peak_load'].astype(
+            'boolean')
+        df['phius_necb_meet_heating_demand'] = df['phius_necb_meet_heating_demand'].astype('boolean')
+        df['phius_necb_meet_heating_peak_load'] = df['phius_necb_meet_heating_peak_load'].astype(
+            'boolean')
+
         # Create an empty dataframe
         if file_number == 0.0:
             # Get column headers of the df
@@ -912,16 +923,21 @@ def post_process_analyses(solution_sets_raw_results_folder = "",
 
         df_output = pd.concat([df_output, df], ignore_index=True, sort=False)
 
+        # Cast columns to bool type, where applicable
+        df_output['MetCoolingUnmetRequirement'] = df_output['MetCoolingUnmetRequirement'].astype('boolean')
+        df_output['IsOptimalPackage?'] = df_output['IsOptimalPackage?'].astype('boolean')
+        df_output[':run_annual_simulation'] = df_output[':run_annual_simulation'].astype('boolean')
+        df_output['phius_necb_meet_cooling_demand'] = df_output['phius_necb_meet_cooling_demand'].astype('boolean')
+        df_output['phius_necb_meet_cooling_peak_load'] = df_output['phius_necb_meet_cooling_peak_load'].astype(
+            'boolean')
+        df_output['phius_necb_meet_heating_demand'] = df_output['phius_necb_meet_heating_demand'].astype('boolean')
+        df_output['phius_necb_meet_heating_peak_load'] = df_output['phius_necb_meet_heating_peak_load'].astype(
+            'boolean')
+        # print(df_output.dtypes)
+        # print(df_output.dtypes[df_output.dtypes == 'object'])
+
         file_number += 1.0
-    df_output['MetCoolingUnmetRequirement'] = df_output['MetCoolingUnmetRequirement'].astype('boolean')
-    df_output['IsOptimalPackage?'] = df_output['IsOptimalPackage?'].astype('boolean')
-    df_output[':run_annual_simulation'] = df_output[':run_annual_simulation'].astype('boolean')
-    df_output['phius_necb_meet_cooling_demand'] = df_output['phius_necb_meet_cooling_demand'].astype('boolean')
-    df_output['phius_necb_meet_cooling_peak_load'] = df_output['phius_necb_meet_cooling_peak_load'].astype('boolean')
-    df_output['phius_necb_meet_heating_demand'] = df_output['phius_necb_meet_heating_demand'].astype('boolean')
-    df_output['phius_necb_meet_heating_peak_load'] = df_output['phius_necb_meet_heating_peak_load'].astype('boolean')
-    # print(df_output.dtypes)
-    # print(df_output.dtypes[df_output.dtypes == 'object'])
+
     df_output.to_excel(os.path.join(Path(solution_set_output_folder), 'output_processed_all_cases.xlsx'), index=False)
     ##### Merge all processed output files of all folders END
 
