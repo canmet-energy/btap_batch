@@ -115,7 +115,7 @@
                     ],
     "remove_building_options": [
       ":adv_dx_units",
-      ":air_loop_economizer_type",
+      ":airloop_economizer_type",
       ":chiller_type"
     ]
   },
@@ -138,7 +138,7 @@
       ":furnace_eff",
       ":shw_eff",
       ":adv_dx_units",
-      ":air_loop_economizer_type",
+      ":airloop_economizer_type",
       ":chiller_type"
     ]
   },
@@ -159,7 +159,7 @@
     "remove_building_options": [
       ":boiler_eff",
       ":adv_dx_units",
-      ":air_loop_economizer_type",
+      ":airloop_economizer_type",
       ":chiller_type"
     ]
   },
@@ -182,7 +182,7 @@
       ":furnace_eff",
       ":shw_eff",
       ":adv_dx_units",
-      ":air_loop_economizer_type",
+      ":airloop_economizer_type",
       ":chiller_type"
     ]
   },
@@ -202,7 +202,7 @@
                     ],
     "remove_building_options": [
       ":adv_dx_units",
-      ":air_loop_economizer_type",
+      ":airloop_economizer_type",
       ":chiller_type"
     ]
   },
@@ -225,7 +225,7 @@
       ":furnace_eff",
       ":shw_eff",
       ":adv_dx_units",
-      ":air_loop_economizer_type",
+      ":airloop_economizer_type",
       ":chiller_type"
     ]
   }
