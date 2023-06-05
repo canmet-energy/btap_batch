@@ -1,0 +1,232 @@
+[
+  {
+    "index": 1,
+    "hvac_type": "NECB_Default",
+    "fuel_type": "NaturalGas",
+    "building_types": [
+      "MediumOffice",
+      "LargeOffice"
+    ],
+    "remove_building_options": []
+  },
+  {
+    "index": 2,
+    "hvac_type": "NECB_Default",
+    "fuel_type": "NaturalGas",
+    "building_types": [
+      "SmallOffice",
+      "PrimarySchool",
+      "SecondarySchool",
+      "LowriseApartment",
+      "MidriseApartment",
+      "HighriseApartment"
+    ],
+    "remove_building_options": [
+      ":chiller_type"
+    ]
+  },
+  {
+    "index": 3,
+    "hvac_type": "NECB_Default",
+    "fuel_type": "Electricity",
+    "building_types": [
+                        "MediumOffice",
+                        "LargeOffice"
+                    ],
+    "remove_building_options": [
+      ":boiler_eff",
+      ":furnace_eff",
+      ":shw_eff"
+    ]
+  },
+  {
+    "index": 4,
+    "hvac_type": "NECB_Default",
+    "fuel_type": "Electricity",
+    "building_types": [
+      "SmallOffice",
+      "PrimarySchool",
+      "SecondarySchool",
+      "LowriseApartment",
+      "MidriseApartment",
+      "HighriseApartment"
+    ],
+    "remove_building_options": [
+      ":boiler_eff",
+      ":furnace_eff",
+      ":shw_eff",
+      ":chiller_type"
+    ]
+  },
+    {
+    "index": 5,
+    "hvac_type": "HS09_CCASHP_Baseboard",
+    "fuel_type": "NaturalGasHPGasBackup",
+    "building_types": [
+                        "MediumOffice",
+                        "LargeOffice",
+                        "SmallOffice",
+                        "PrimarySchool",
+                        "SecondarySchool",
+                        "LowriseApartment",
+                        "MidriseApartment",
+                        "HighriseApartment"
+                    ],
+    "remove_building_options": [
+      ":adv_dx_units",
+      ":chiller_type"
+    ]
+  },
+      {
+    "index": 6,
+    "hvac_type": "HS09_CCASHP_Baseboard",
+    "fuel_type": "ElectricityHPElecBackup",
+    "building_types": [
+                        "MediumOffice",
+                        "LargeOffice",
+                        "SmallOffice",
+                        "PrimarySchool",
+                        "SecondarySchool",
+                        "LowriseApartment",
+                        "MidriseApartment",
+                        "HighriseApartment"
+                    ],
+    "remove_building_options": [
+      ":boiler_eff",
+      ":furnace_eff",
+      ":shw_eff",
+      ":adv_dx_units",
+      ":chiller_type"
+    ]
+  },
+  {
+    "index": 7,
+    "hvac_type": "HS08_CCASHP_VRF",
+    "fuel_type": "NaturalGasHPGasBackup",
+    "building_types": [
+                        "MediumOffice",
+                        "LargeOffice",
+                        "SmallOffice",
+                        "PrimarySchool",
+                        "SecondarySchool",
+                        "LowriseApartment",
+                        "MidriseApartment",
+                        "HighriseApartment"
+                    ],
+    "remove_building_options": [
+      ":adv_dx_units",
+      ":air_loop_economizer_type",
+      ":chiller_type"
+    ]
+  },
+   {
+    "index": 8,
+    "hvac_type": "HS08_CCASHP_VRF",
+    "fuel_type": "ElectricityHPElecBackup",
+    "building_types": [
+                        "MediumOffice",
+                        "LargeOffice",
+                        "SmallOffice",
+                        "PrimarySchool",
+                        "SecondarySchool",
+                        "LowriseApartment",
+                        "MidriseApartment",
+                        "HighriseApartment"
+                    ],
+    "remove_building_options": [
+      ":boiler_eff",
+      ":furnace_eff",
+      ":shw_eff",
+      ":adv_dx_units",
+      ":air_loop_economizer_type",
+      ":chiller_type"
+    ]
+  },
+     {
+    "index": 9,
+    "hvac_type": "HS11_ASHP_PTHP",
+    "fuel_type": "NaturalGasHPGasBackup",
+    "building_types": [
+                        "MediumOffice",
+                        "LargeOffice",
+                        "SmallOffice",
+                        "PrimarySchool",
+                        "SecondarySchool",
+                        "LowriseApartment",
+                        "MidriseApartment",
+                        "HighriseApartment"
+                    ],
+    "remove_building_options": [
+      ":boiler_eff",
+      ":adv_dx_units",
+      ":air_loop_economizer_type",
+      ":chiller_type"
+    ]
+  },
+   {
+    "index": 10,
+    "hvac_type": "HS11_ASHP_PTHP",
+    "fuel_type": "ElectricityHPElecBackup",
+    "building_types": [
+                        "MediumOffice",
+                        "LargeOffice",
+                        "SmallOffice",
+                        "PrimarySchool",
+                        "SecondarySchool",
+                        "LowriseApartment",
+                        "MidriseApartment",
+                        "HighriseApartment"
+                    ],
+    "remove_building_options": [
+      ":boiler_eff",
+      ":furnace_eff",
+      ":shw_eff",
+      ":adv_dx_units",
+      ":air_loop_economizer_type",
+      ":chiller_type"
+    ]
+  },
+     {
+    "index": 11,
+    "hvac_type": "HS13_ASHP_VRF",
+    "fuel_type": "NaturalGasHPGasBackup",
+    "building_types": [
+                        "MediumOffice",
+                        "LargeOffice",
+                        "SmallOffice",
+                        "PrimarySchool",
+                        "SecondarySchool",
+                        "LowriseApartment",
+                        "MidriseApartment",
+                        "HighriseApartment"
+                    ],
+    "remove_building_options": [
+      ":adv_dx_units",
+      ":air_loop_economizer_type",
+      ":chiller_type"
+    ]
+  },
+       {
+    "index": 12,
+    "hvac_type": "HS13_ASHP_VRF",
+    "fuel_type": "ElectricityHPElecBackup",
+    "building_types": [
+                        "MediumOffice",
+                        "LargeOffice",
+                        "SmallOffice",
+                        "PrimarySchool",
+                        "SecondarySchool",
+                        "LowriseApartment",
+                        "MidriseApartment",
+                        "HighriseApartment"
+                    ],
+    "remove_building_options": [
+      ":boiler_eff",
+      ":furnace_eff",
+      ":shw_eff",
+      ":adv_dx_units",
+      ":air_loop_economizer_type",
+      ":chiller_type"
+    ]
+  }
+]
