@@ -67,7 +67,7 @@ takes advantage of Amazons cost-effective batch queue system to complete simulat
 * A github account and [git-token](https://docs.github.com/en/github/authenticating-to-github/creating-a-personal-access-token)
 * Add the github token as a user windows/linux environment variable as GIT_API_TOKEN. Search for'Edit Environment Variables for your Account' in Window control panel to add your token name and value.
 * A computer with at least 8GB+ ram and 4 or more cores (8+ threads). Preferably a powerful multi-core computer to run simulations fast locally. (24 core/48 thread with 32GB+) 
-* [OpenStudio 1.5.0](https://github.com/openstudiocoalition/OpenStudioApplication/releases) (optional) Required to use the OpenStudio App to edit osm files. 
+* [OpenStudio Application 1.6.0](https://github.com/openstudiocoalition/OpenStudioApplication/releases) (optional) Required to use the OpenStudio App to edit osm files.
 * If you would like to use costing and have an RSMeans account contact chris.kirney@nrcan-rncan.gc.ca for permissions to access canmet-energy repositories (For use of the btap_private_cli costing image.)
 
 ### Amazon HPC only:
