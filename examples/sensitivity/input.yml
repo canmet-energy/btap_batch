@@ -78,14 +78,16 @@
   # Is this different from the LED option?
   :daylighting_type: [
       'NECB_Default',
-    #      'add_daylighting_controls'
+#      'add_daylighting_controls',
+#      'none'
   ]
   :ecm_system_name: [
       'NECB_Default',
       'HS09_CCASHP_Baseboard',
       'HS08_CCASHP_VRF',
       'HS11_ASHP_PTHP',
-      'HS12_ASHP_Baseboard'
+      'HS12_ASHP_Baseboard',
+      'HS14_CGSHP_FanCoils'
   ]
 
   :erv_package: [
