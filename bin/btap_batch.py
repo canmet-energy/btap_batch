@@ -65,9 +65,8 @@ def credits():
 @click.option('--btap_batch_branch', default='dev', help='btap_batch branch. Default = dev.')
 @click.option('--os_standards_branch', default='nrcan', help='openstudio-standards branch. Default=nrcan.')
 @click.option('--btap_costing_branch', default='master', help='btap_costing branch.Default=master.')
-@click.option('--openstudio_version', default='3.5.1', help='OpenStudio version. Default=3.5.1')
-@click.option('--disable_costing', is_flag=True,
-              help='Disable costing. Choose this if you do not have an RSMeans licence and access to the BTAPCosting repo.')
+@click.option('--openstudio_version', default='3.6.1', help='OpenStudio version. Default=3.6.1')
+@click.option('--disable_costing', is_flag=True, help='Disable costing. Choose this if you do not have an RSMeans licence and access to the BTAPCosting repo.')
 def build_environment(**kwargs):
     from src.btap.cli_helper_methods import build_and_configure_docker_and_aws
     """
