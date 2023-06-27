@@ -10,6 +10,7 @@ from src.btap.docker_job import DockerBTAPJob
 from src.btap.aws_credentials import AWSCredentials
 from src.btap.aws_dynamodb import AWSResultsTable
 from src.btap.common_paths import CommonPaths
+import re
 from icecream import ic
 
 
@@ -123,6 +124,9 @@ class AWSBTAPJob(DockerBTAPJob):
         return f"{self.job_id}"
 
     def __job_wrapper(self, n=0):
+        if len(self.aws_job_name()) > 128 or not re.match('^[\w-]+$', self.aws_job_name()):
+            print("aws_job_name is either longer than 128 char or does not only contain alphanumeric or _ and _ charecters.")
+            exit(1)
         try:
             batch_client = AWSCredentials().batch_client
             submitJobResponse = batch_client.submit_job(

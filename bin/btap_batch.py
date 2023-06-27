@@ -1,38 +1,39 @@
-
 from pathlib import Path
 import click
 import os
 import sys
 
+
 # Avoid having to add PYTHONPATH to env.
 PROJECT_ROOT = str(Path(os.path.dirname(os.path.realpath(__file__))).parent.absolute())
 sys.path.append(PROJECT_ROOT)
 
-
-
 PROJECT_FOLDER = os.path.join(Path(os.path.dirname(os.path.realpath(__file__))).parent.absolute())
-EXAMPLE_FOLDER = os.path.join(PROJECT_FOLDER,'examples')
+EXAMPLE_FOLDER = os.path.join(PROJECT_FOLDER, 'examples')
 OUTPUT_FOLDER = os.path.join(PROJECT_FOLDER, "output")
 CONTEXT_SETTINGS = dict(help_option_names=['-h', '--help'])
 
 
 def check_environment_vars_are_defined(compute_environment=None):
     failed = False
-    if os.environ.get('AWS_USERNAME') is None and ( compute_environment == 'aws_batch' or compute_environment == 'aws_batch_analysis'):
-        print('Please set AWS_USERNAME environment variable to your aws username. See https://github.com/canmet-energy/btap_batch/blob/main/README.md#requirements to ensure all requirements are met before running. ')
-        failed=True
+    if os.environ.get('AWS_USERNAME') is None and (
+            compute_environment == 'aws_batch' or compute_environment == 'aws_batch_analysis'):
+        print(
+            'Please set AWS_USERNAME environment variable to your aws username. See https://github.com/canmet-energy/btap_batch/blob/main/README.md#requirements to ensure all requirements are met before running. ')
+        failed = True
     if os.environ.get('GIT_API_TOKEN') is None:
-        print('Please set GIT_API_TOKEN environment variable to your aws username. See https://github.com/canmet-energy/btap_batch/blob/main/README.md#requirements')
+        print(
+            'Please set GIT_API_TOKEN environment variable to your aws username. See https://github.com/canmet-energy/btap_batch/blob/main/README.md#requirements')
         failed = True
     if failed:
         exit(1)
-
 
 
 @click.group(context_settings=CONTEXT_SETTINGS)
 @click.version_option(version='1.0.0')
 def btap():
     pass
+
 
 @btap.command()
 def credits():
@@ -58,8 +59,10 @@ def credits():
     ]:
         print(random.choice(colors) + pyfiglet.figlet_format(x) + Fore.RESET)
 
+
 @btap.command()
-@click.option('--compute_environment', default='local_docker', help='local_docker for local computer, aws_batch to configure aws, or all. Default=local_docker.')
+@click.option('--compute_environment', '-c', default='local_docker',
+              help='local_docker for local computer, aws_batch to configure aws, or all. Default=local_docker.')
 @click.option('--btap_batch_branch', default='dev', help='btap_batch branch. Default = dev.')
 @click.option('--os_standards_branch', default='nrcan', help='openstudio-standards branch. Default=nrcan.')
 @click.option('--btap_costing_branch', default='master', help='btap_costing branch.Default=master.')
@@ -109,9 +112,8 @@ def build_environment(**kwargs):
     disable_costing = kwargs['disable_costing']
 
     if disable_costing:
-        #Setting the costing branch to an empty string will force the docker file to not use costing.
+        # Setting the costing branch to an empty string will force the docker file to not use costing.
         btap_costing_branch = ''
-
 
     check_environment_vars_are_defined(compute_environment=compute_environment)
     build_and_configure_docker_and_aws(btap_batch_branch=btap_batch_branch,
@@ -122,9 +124,9 @@ def build_environment(**kwargs):
 
 
 @btap.command()
-@click.option('--compute_environment', default='local_docker',
+@click.option('--compute_environment', '-c', default='local_docker',
               help='Environment to run analysis. Either local_docker, which runs on your computer, or aws_batch_analysis which runs completely on AWS. The default is local_docker')
-@click.option('--project_folder', default=os.path.join(EXAMPLE_FOLDER,'optimization'),
+@click.option('--project_folder', '-p', default=os.path.join(EXAMPLE_FOLDER, 'optimization'),
               help='location of folder containing input.yml file and optionally support folders such as osm_files folder for custom models. Default is the optimization example folder.')
 @click.option('--reference_run', is_flag=True,
               help='Run reference. Required for baseline comparisons')
@@ -144,7 +146,6 @@ def run_analysis_project(**kwargs):
         python ./bin/btap_batch.py run-analysis-project --compute_environment aws_batch_analysis --project_folder examples\parametric --reference_run
     """
 
-
     # Input folder name
     analysis_project_folder = kwargs['project_folder']
     compute_environment = kwargs['compute_environment']
@@ -163,7 +164,7 @@ def aws_db_reset(**kwargs):
 
     Example:
 
-       python ./bin/btap_batch.py aws_db_reset
+       python ./bin/btap_batch.py aws-db-reset
 
     """
     AWSResultsTable().delete_table()
@@ -192,8 +193,6 @@ def aws_db_dump(**kwargs):
     AWSResultsTable().dump_table(folder_path=folder_path, type=type, analysis_name=analysis_name)
 
 
-
-
 @btap.command()
 def aws_db_analyses_status(**kwargs):
     import pandas
@@ -209,6 +208,7 @@ def aws_db_analyses_status(**kwargs):
     pandas.set_option('display.max_columns', None)
     check_environment_vars_are_defined(compute_environment='aws_batch')
     print(AWSResultsTable().aws_db_analyses_status())
+
 
 @btap.command()
 @click.option('--analysis_name', default=None, help='Filter by analysis name given. Default shows all.')
@@ -226,6 +226,8 @@ def aws_db_failures(**kwargs):
     pandas.set_option('display.max_columns', None)
     check_environment_vars_are_defined(compute_environment='aws_batch')
     print(AWSResultsTable().aws_db_failures(analysis_name=kwargs['analysis_name']))
+
+
 #
 # @btap.command()
 # @click.option('--analysis_name', default=None, help='Filter by analysis name given. Default shows all.')
@@ -259,7 +261,8 @@ def aws_db_failures(**kwargs):
 #
 
 @btap.command(help="This will run all the analysis projects in the examples file. Locally or on AWS.")
-@click.option('--compute_environment', default='local_docker',  help='Environment to run analysis either local_docker, or aws_batch_analysis')
+@click.option('--compute_environment', default='local_docker',
+              help='Environment to run analysis either local_docker, or aws_batch_analysis')
 def parallel_test_examples(**kwargs):
     import time
     from src.btap.cli_helper_methods import analysis
@@ -291,9 +294,178 @@ def parallel_test_examples(**kwargs):
     for folder in example_folders:
         project_input_folder = os.path.join(examples_folder, folder)
         print(project_input_folder)
-        analysis(project_input_folder=project_input_folder, compute_environment=kwargs['compute_environment'], reference_run=True, output_folder=OUTPUT_FOLDER)
+        analysis(project_input_folder=project_input_folder, compute_environment=kwargs['compute_environment'],
+                 reference_run=True, output_folder=OUTPUT_FOLDER)
     end = time.time()
     print(f"Time elapsed: {end - start}")
+
+
+@btap.command(help="This will run all the analysis projects in a given folder path. Locally or on AWS.")
+@click.option('--compute_environment','-c', default='local_docker',
+              help='Environment to run analysis either local_docker, or aws_batch_analysis')
+@click.option('--analyses_folder_path', default=os.path.join(PROJECT_FOLDER, 'examples'),
+              help='folder containing multiple project analysis folders to run.')
+@click.option('--output_folder', default=OUTPUT_FOLDER,
+              help='Path to output results. Defaulted to this projects output folder ./btap_batch/output')
+def batch_analyses(**kwargs):
+    import time
+    from src.btap.cli_helper_methods import analysis
+    """
+    This command will self test btap_batch by performing example analyses locally or on aws. This test is simply to see if it will run.
+
+    Example:
+
+    # To run test locally....
+    python ./bin/btap_batch.py batch-analyses --compute_environment local_docker --analyses_folder_path
+
+    # To run test on aws.
+    python ./bin/btap_batch.py batch-analyses --compute_environment aws_batch_analysis --analyses_folder_path
+
+    """
+    check_environment_vars_are_defined(compute_environment=kwargs['compute_environment'])
+    start = time.time()
+    analyses_folder_path = kwargs['analyses_folder_path']
+    folders = [os.path.abspath(os.path.join(analyses_folder_path,name)) for name in os.listdir(analyses_folder_path) if os.path.isdir(os.path.join(analyses_folder_path,name))]
+
+    for project_input_folder in folders:
+        print(project_input_folder)
+        analysis(project_input_folder=project_input_folder, compute_environment=kwargs['compute_environment'],
+                 reference_run=True, output_folder=kwargs['output_folder'])
+    end = time.time()
+    print(f"Time elapsed: {end - start}")
+
+
+@btap.command(
+    help="This will run an NECB 2020 optimization solution set run on a given building type and location for all fueltypes. Will optimize for Total Energy and Net Present Value.")
+@click.option('--compute_environment', '-c', default='local_docker',
+              help='Environment to run analysis either local_docker, aws_batch or aws_batch_analysis')
+@click.option('--building_types', '-b', default=['SmallOffice'], multiple=True,
+              help='NECB prototype building to use. Must be only Offices, Apartment/Condos and Schools types')
+@click.option('--epw_files', '-e',
+              default=[
+                  'CAN_BC_Vancouver.Intl.AP.718920_CWEC2016.epw'],
+              multiple=True,
+              help='Environment to run analysis either local_docker, aws_batch or aws_batch_analysis')
+@click.option('--hvac_fuel_types_list', '-h',
+              multiple=True,
+              help='This is the FuelSet combination to use. ',
+              default=['NECB_Default-NaturalGas']
+              )
+@click.option('--population', '-p', default=35, help='Population to use in NSGAII optimization')
+@click.option('--generations', '-g', default=2, help='Generations to use in NSGAII optimization')
+@click.option('--working_folder', '-w', default=os.path.join(PROJECT_FOLDER, 'solution_sets'), help='location to output results')
+def optimized_solution_sets(**kwargs):
+    from src.btap.solution_sets import generate_solution_sets
+    import time
+    import shutil
+    """
+    This will run an NECB 2020 optimization solution set run on a given building type and location. This will examine 
+    all possible fueltypes and use the correct reference fuel accordingly. The optimization will be based on the total EUI
+    and the Net Present value."
+
+    Example:
+
+    # To run locally.... This will create a solutions set folder with all the project yaml files, with the  the simulation and results with the given building type, locations, and FuelType 
+    python ./bin/btap_batch.py optimized-solution-sets -c local_docker -b SmallOffice -e CAN_QC_Montreal-Trudeau.Intl.AP.716270_CWEC2016.epw -h NECB_Default-NaturalGas -h NECB_Default-Electricity
+
+    # To run test on aws. This will run 
+    python ./bin/btap_batch.py optimized-solution-sets -c aws_batch_analysis 
+
+    """
+    check_environment_vars_are_defined(compute_environment=kwargs['compute_environment'])
+    start = time.time()
+    # Check if analyses folder exists
+    if os.path.isdir(kwargs['working_folder']):
+        # Remove old folder
+        try:
+            shutil.rmtree(kwargs['working_folder'])
+        except PermissionError:
+            message = f'Could not delete {kwargs["working_folder"]}. Do you have a file open in that folder? Exiting'
+            print(message)
+            exit(1)
+
+    supported_fuel_types = ['NECB_Default-NaturalGas',
+                            'NECB_Default-Electricity',
+                            'HS09_CCASHP_Baseboard-NaturalGasHPGasBackup',
+                            'HS09_CCASHP_Baseboard-ElectricityHPElecBackup',
+                            'HS08_CCASHP_VRF-NaturalGasHPGasBackup',
+                            'HS08_CCASHP_VRF-ElectricityHPElecBackup',
+                            'HS11_ASHP_PTHP-NaturalGasHPGasBackup',
+                            'HS11_ASHP_PTHP-ElectricityHPElecBackup',
+                            'HS13_ASHP_VRF-NaturalGasHPGasBackup',
+                            'HS13_ASHP_VRF-ElectricityHPElecBackup']
+
+    supported_building_types = [
+        'MediumOffice',
+        'LargeOffice',
+        'SmallOffice',
+        'PrimarySchool',
+        'SecondarySchool',
+        'LowriseApartment',
+        'MidriseApartment',
+        'HighriseApartment'
+    ]
+
+    if not (set(kwargs['hvac_fuel_types_list']).issubset(set(supported_fuel_types))):
+        print("Invalid fueltype system mix. Please use only the following:")
+        print(supported_fuel_types)
+        exit(1)
+
+    if not (set(kwargs['building_types']).issubset(set(supported_building_types))):
+        print("Invalid building types detected. Please use only the following:")
+        print(supported_fuel_types)
+        exit(1)
+
+    generate_solution_sets(
+        compute_environment=kwargs['compute_environment'],  # local_docker, aws_batch, aws_batch_analysis...
+        building_types_list=kwargs['building_types'],  # a list of the building_types to look at.
+        epw_files=kwargs['epw_files'],  # a list of the epw files.
+        hvac_fuel_types_list=[x.split('-') for x in kwargs['hvac_fuel_types_list']],
+        working_folder=os.path.join(kwargs['working_folder']),
+        pop=kwargs['population'],
+        generations=kwargs['generations'],
+        run_analyses=True
+    )
+
+
+@btap.command(
+    help="This will perform the post-processing on the results to use in Tableau or other analyses.")
+@click.option('--solution_sets_projects_results_folder', '-r', default=os.path.join(PROJECT_FOLDER, 'solution_sets','projects_results'),
+              help='Folder containing btap project results. Not required for AWS runs.')
+@click.option('--aws_database', '-a', is_flag=True, help='Gather all results from AWS database.')
+def post_process_solution_sets(**kwargs):
+    """
+    This command will self test btap_batch by performing example analyses locally or on aws. This test is simply to see if it will run.
+
+    Example:
+
+    # To postprocess a local simulation....
+    python ./bin/btap_batch.py post-process-solution-sets
+
+    # To postprocess an aws simulation. Warning. This will pull all simulation that are present in your Dynamo
+    python ./bin/btap_batch.py post-process-solution-sets -a
+
+    """
+    from src.btap.solution_sets import post_process_analyses
+
+
+
+    post_process_analyses(solution_sets_raw_results_folder=kwargs["solution_sets_projects_results_folder"],
+                          # Only required if runs were done with local_docker. Must contain nsga results.
+                          aws_database=kwargs["aws_database"],  # use aws database will download all results nsga or not,
+                          )
+
+@btap.command(
+    help="This will terminate all aws analyses. It will not delete anything fron S3.")
+def terminate_aws_analyses(**kwargs):
+    from src.btap.cli_helper_methods import terminate_aws_analyses
+    terminate_aws_analyses()
+
+@btap.command(help="This will list active analyses")
+def list_active_analyses():
+    from src.btap.cli_helper_methods import list_active_analyses
+    print(list_active_analyses())
+
 
 
 if __name__ == '__main__':
