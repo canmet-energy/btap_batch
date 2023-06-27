@@ -3,6 +3,7 @@ import click
 import os
 import sys
 
+
 # Avoid having to add PYTHONPATH to env.
 PROJECT_ROOT = str(Path(os.path.dirname(os.path.realpath(__file__))).parent.absolute())
 sys.path.append(PROJECT_ROOT)
@@ -163,7 +164,7 @@ def aws_db_reset(**kwargs):
 
     Example:
 
-       python ./bin/btap_batch.py aws_db_reset
+       python ./bin/btap_batch.py aws-db-reset
 
     """
     AWSResultsTable().delete_table()
@@ -299,6 +300,41 @@ def parallel_test_examples(**kwargs):
     print(f"Time elapsed: {end - start}")
 
 
+@btap.command(help="This will run all the analysis projects in a given folder path. Locally or on AWS.")
+@click.option('--compute_environment','-c', default='local_docker',
+              help='Environment to run analysis either local_docker, or aws_batch_analysis')
+@click.option('--analyses_folder_path', default=os.path.join(PROJECT_FOLDER, 'examples'),
+              help='folder containing multiple project analysis folders to run.')
+@click.option('--output_folder', default=OUTPUT_FOLDER,
+              help='Path to output results. Defaulted to this projects output folder ./btap_batch/output')
+def batch_analyses(**kwargs):
+    import time
+    from src.btap.cli_helper_methods import analysis
+    """
+    This command will self test btap_batch by performing example analyses locally or on aws. This test is simply to see if it will run.
+
+    Example:
+
+    # To run test locally....
+    python ./bin/btap_batch.py batch-analyses --compute_environment local_docker --analyses_folder_path
+
+    # To run test on aws.
+    python ./bin/btap_batch.py batch-analyses --compute_environment aws_batch_analysis --analyses_folder_path
+
+    """
+    check_environment_vars_are_defined(compute_environment=kwargs['compute_environment'])
+    start = time.time()
+    analyses_folder_path = kwargs['analyses_folder_path']
+    folders = [os.path.abspath(os.path.join(analyses_folder_path,name)) for name in os.listdir(analyses_folder_path) if os.path.isdir(os.path.join(analyses_folder_path,name))]
+
+    for project_input_folder in folders:
+        print(project_input_folder)
+        analysis(project_input_folder=project_input_folder, compute_environment=kwargs['compute_environment'],
+                 reference_run=True, output_folder=kwargs['output_folder'])
+    end = time.time()
+    print(f"Time elapsed: {end - start}")
+
+
 @btap.command(
     help="This will run an NECB 2020 optimization solution set run on a given building type and location for all fueltypes. Will optimize for Total Energy and Net Present Value.")
 @click.option('--compute_environment', '-c', default='local_docker',
@@ -418,6 +454,18 @@ def post_process_solution_sets(**kwargs):
                           # Only required if runs were done with local_docker. Must contain nsga results.
                           aws_database=kwargs["aws_database"],  # use aws database will download all results nsga or not,
                           )
+
+@btap.command(
+    help="This will terminate all aws analyses. It will not delete anything fron S3.")
+def terminate_aws_analyses(**kwargs):
+    from src.btap.cli_helper_methods import terminate_aws_analyses
+    terminate_aws_analyses()
+
+@btap.command(help="This will list active analyses")
+def list_active_analyses():
+    from src.btap.cli_helper_methods import list_active_analyses
+    print(list_active_analyses())
+
 
 
 if __name__ == '__main__':

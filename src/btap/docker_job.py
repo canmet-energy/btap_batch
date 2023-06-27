@@ -8,9 +8,10 @@ from src.btap.common_paths import CommonPaths
 from icecream import ic
 
 class DockerBTAPJob:
-    def __init__(self, batch=None, job_id=None,):
+    def __init__(self, batch=None, job_id=None, analysis_name = None ):
         self.batch = batch
         self.job_id = job_id
+        self.analysis_name = analysis_name # Not used but may be in the future.
         self.engine_command = 'bundle exec ruby btap_cli.rb'
         self._set_paths()
     #public
