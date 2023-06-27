@@ -212,3 +212,29 @@ def analysis(project_input_folder=None,
         # Submit analysis job to aws.
         job = batch.create_job(job_id=analysis_name, reference_run=reference_run)
         return job.submit_job()
+
+def list_active_analyses():
+    # Gets an AWSBatch analyses object.
+    ace = AWSComputeEnvironment()
+    analysis_queue = AWSBatch(image_manager=AWSImageManager(image_name='btap_cli'),
+                     compute_environment=ace
+                     )
+    return analysis_queue.get_active_jobs()
+
+
+def terminate_aws_analyses():
+    # Gets an AWSBatch analyses object.
+    ace = AWSComputeEnvironment()
+    analysis_queue = AWSBatch(image_manager=AWSImageManager(image_name='btap_batch'),
+                     compute_environment=ace
+                     )
+    analysis_queue.clear_queue()
+    batch_cli = AWSBatch(image_manager=AWSImageManager(image_name='btap_cli'), compute_environment=ace)
+    batch_cli.clear_queue()
+
+
+
+
+
+
+

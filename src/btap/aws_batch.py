@@ -196,3 +196,52 @@ class AWSBatch:
 
 
 
+    def get_active_jobs(self):
+
+        # Connect to AWS Batch
+        client = AWSCredentials().batch_client
+
+        jobs = []
+            # Make into a list
+        job_status = ["SUBMITTED", "PENDING", "RUNNABLE",
+                      "STARTING", "RUNNING"]
+        for js in job_status:
+            r = client.list_jobs(
+                jobQueue=self.job_queue_name,
+                jobStatus=js
+            )
+            jobs.extend(r["jobSummaryList"])
+            while r.get("nextToken") is not None:
+                r = client.list_jobs(
+                    jobQueue=self.job_queue_name,
+                    jobStatus=js,
+                    nextToken=r["nextToken"]
+                )
+                jobs.extend(r["jobSummaryList"])
+
+        # Subset to jobs with a given status
+        jobs = [
+            j for j in jobs if j["status"] in job_status
+        ]
+
+        print("Number of jobs to clear from {}: {:,}".format(
+            self.job_queue_name, len(jobs)
+        ))
+        if len(jobs) == 0:
+            return
+        return jobs
+
+
+    def clear_queue(self):
+        jobs =  self.get_active_jobs()
+        for j in jobs:
+            if j["status"] not in ["SUCCEEDED", "FAILED", "CANCELED"]:
+                print("Cancelling {}".format(j["jobId"]))
+                # Get a message to submit as justfication for the failure
+                cancel_msg = "Cancelled by user\n"
+                # Connect to AWS Batch
+                client = AWSCredentials().batch_client
+                client.cancel_job(jobId=j["jobId"], reason=cancel_msg)
+                client.terminate_job(jobId=j["jobId"], reason=cancel_msg)
+
+

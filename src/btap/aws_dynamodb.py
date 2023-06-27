@@ -60,7 +60,7 @@ class AWSResultsTable():
         with table.batch_writer() as batch:
             batch.put_item(json.loads(json.dumps(run_options), parse_float=Decimal))
 
-    def dump_table(self, folder_path=None, type=None, analysis_name=None):
+    def dump_table(self, folder_path=None, type=None, analysis_name=None, save_output = True):
         filepath = pathlib.Path(os.path.join(folder_path, f"database.{type}"))
         failed_filepath = pathlib.Path(os.path.join(folder_path, f"database_failed.{type}"))
         filepath.parent.mkdir(parents=True, exist_ok=True)
@@ -75,18 +75,19 @@ class AWSResultsTable():
             df = df.loc[df[':analysis_name'] == analysis_name]
 
         unique_failures = df.loc[df['status'] == 'FAILED'] #[[':datapoint_id', 'container_error', 'run_options', 'datapoint_output_url']]
-        if df.empty:
-            print('DataFrame is empty! Outputting empty file.')
-        if type == 'csv':
-            df.to_csv(filepath)
-            unique_failures.to_csv(failed_filepath)
-        if type == 'pickle':
-            df.to_pickle(filepath)
-            unique_failures.to_pickle(failed_filepath)
-        print(f"Dumped results to {filepath}")
 
-        # Dump failures as well.
-
+        if save_output:
+            if df.empty:
+                print('DataFrame is empty! Outputting empty file.')
+            if type == 'csv':
+                # Results
+                df.to_csv(filepath)
+                # Failures
+                unique_failures.to_csv(failed_filepath)
+            if type == 'pickle':
+                df.to_pickle(filepath)
+                unique_failures.to_pickle(failed_filepath)
+            print(f"Dumped results to {filepath}")
 
         return df
 
