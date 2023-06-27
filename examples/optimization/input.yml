@@ -57,7 +57,8 @@
     #  "BTAP1980TO2010",
     #  "NECB2011",
     #  "NECB2015",
-      "NECB2017"
+    #  "NECB2017",
+      "NECB2020"
   ]
   :epw_file: [
       'CAN_QC_Montreal-Trudeau.Intl.AP.716270_CWEC2016.epw',
@@ -66,7 +67,7 @@
       #'CAN_BC_Vancouver.Intl.AP.718920_CWEC2016.epw',
       #'CAN_AB_Calgary.Intl.AP.718770_CWEC2016.epw',
       #'CAN_ON_Toronto.Pearson.Intl.AP.716240_CWEC2016.epw',
-      #'CAN_YT_Whitehorse.Intl.AP.719640_CWEC2016.epw'
+      #'CAN_NT_Yellowknife.AP.719360_CWEC2016.epw'
   ]
   :primary_heating_fuel: [
       "Electricity",
