@@ -104,7 +104,7 @@ def generate_yml(
                             template_yml[':options'][':primary_heating_fuel'][0] + '_' + \
                             template_yml[':options'][':ecm_system_name'][0]
             # :analysis_name
-            template_yml[':analysis_name'] = yml_file_namegit
+            template_yml[':analysis_name'] = yml_file_name
             # yml file path
             yaml_folder_path = Path(os.path.join(Path(yaml_project_generation_folder), yml_file_name))
             yml_file_path = os.path.join(yaml_folder_path, 'input.yml')
@@ -128,7 +128,6 @@ def generate_solution_sets(
         generations=None,
         run_analyses=None
 ):
-    run_analyses = False
     yaml_project_generation_folder = os.path.join(working_folder, 'projects_inputs')
     simulation_results_folder = os.path.join(working_folder, 'projects_results')
 
