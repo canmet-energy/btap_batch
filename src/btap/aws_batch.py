@@ -224,11 +224,11 @@ class AWSBatch:
             j for j in jobs if j["status"] in job_status
         ]
 
-        print("Number of jobs to clear from {}: {:,}".format(
-            self.job_queue_name, len(jobs)
-        ))
+        # print("Number of jobs to clear from {}: {:,}".format(
+        #     self.job_queue_name, len(jobs)
+        # ))
         if len(jobs) == 0:
-            return
+            return None
         return jobs
 
 

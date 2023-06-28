@@ -216,7 +216,7 @@ def analysis(project_input_folder=None,
 def list_active_analyses():
     # Gets an AWSBatch analyses object.
     ace = AWSComputeEnvironment()
-    analysis_queue = AWSBatch(image_manager=AWSImageManager(image_name='btap_cli'),
+    analysis_queue = AWSBatch(image_manager=AWSImageManager(image_name='btap_batch'),
                      compute_environment=ace
                      )
     return analysis_queue.get_active_jobs()

@@ -463,9 +463,12 @@ def terminate_aws_analyses(**kwargs):
 
 @btap.command(help="This will list active analyses")
 def list_active_analyses():
+    import pandas
     from src.btap.cli_helper_methods import list_active_analyses
-    print(list_active_analyses())
 
+    if list_active_analyses() != None:
+        df = pandas.json_normalize(list_active_analyses())
+        print(df)
 
 
 if __name__ == '__main__':

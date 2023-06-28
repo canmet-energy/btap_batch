@@ -7,6 +7,7 @@ import json
 import pandas
 import pathlib
 import plotly.express as px
+from icecream import ic
 from src.btap.aws_credentials import AWSCredentials
 
 
@@ -74,20 +75,22 @@ class AWSResultsTable():
         if analysis_name is not None:
             df = df.loc[df[':analysis_name'] == analysis_name]
 
-        unique_failures = df.loc[df['status'] == 'FAILED'] #[[':datapoint_id', 'container_error', 'run_options', 'datapoint_output_url']]
+
 
         if save_output:
             if df.empty:
-                print('DataFrame is empty! Outputting empty file.')
-            if type == 'csv':
-                # Results
-                df.to_csv(filepath)
-                # Failures
-                unique_failures.to_csv(failed_filepath)
-            if type == 'pickle':
-                df.to_pickle(filepath)
-                unique_failures.to_pickle(failed_filepath)
-            print(f"Dumped results to {filepath}")
+                print('AWS Database is empty! Nothing to dump.')
+            else:
+                unique_failures = df.loc[df['status'] == 'FAILED']  # [[':datapoint_id', 'container_error', 'run_options', 'datapoint_output_url']]
+                if type == 'csv':
+                    # Results
+                    df.to_csv(filepath)
+                    # Failures
+                    unique_failures.to_csv(failed_filepath)
+                if type == 'pickle':
+                    df.to_pickle(filepath)
+                    unique_failures.to_pickle(failed_filepath)
+                print(f"Dumped results to {filepath}")
 
         return df
 
