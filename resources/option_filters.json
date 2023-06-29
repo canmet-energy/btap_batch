@@ -228,5 +228,44 @@
       ":airloop_economizer_type",
       ":chiller_type"
     ]
+  },
+       {
+    "index": 13,
+    "hvac_type": "HS14_CGSHP_FanCoils",
+    "fuel_type": "NaturalGasHPGasBackup",
+    "building_types": [
+                        "MediumOffice",
+                        "LargeOffice",
+                        "SmallOffice",
+                        "PrimarySchool",
+                        "SecondarySchool",
+                        "LowriseApartment",
+                        "MidriseApartment",
+                        "HighriseApartment"
+                    ],
+    "remove_building_options": [
+      ":adv_dx_units"
+    ]
+  },
+       {
+    "index": 14,
+    "hvac_type": "HS14_CGSHP_FanCoils",
+    "fuel_type": "ElectricityHPElecBackup",
+    "building_types": [
+                        "MediumOffice",
+                        "LargeOffice",
+                        "SmallOffice",
+                        "PrimarySchool",
+                        "SecondarySchool",
+                        "LowriseApartment",
+                        "MidriseApartment",
+                        "HighriseApartment"
+                    ],
+    "remove_building_options": [
+      ":boiler_eff",
+      ":furnace_eff",
+      ":shw_eff",
+      ":adv_dx_units"
+    ]
   }
 ]
