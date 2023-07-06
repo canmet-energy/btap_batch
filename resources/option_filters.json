@@ -267,5 +267,46 @@
       ":shw_eff",
       ":adv_dx_units"
     ]
+  },
+    {
+    "index": 15,
+    "hvac_type": "HS12_ASHP_Baseboard",
+    "fuel_type": "NaturalGasHPGasBackup",
+    "building_types": [
+                        "MediumOffice",
+                        "LargeOffice",
+                        "SmallOffice",
+                        "PrimarySchool",
+                        "SecondarySchool",
+                        "LowriseApartment",
+                        "MidriseApartment",
+                        "HighriseApartment"
+                    ],
+    "remove_building_options": [
+      ":adv_dx_units",
+      ":chiller_type"
+    ]
+  },
+      {
+    "index": 16,
+    "hvac_type": "HS12_ASHP_Baseboard",
+    "fuel_type": "ElectricityHPElecBackup",
+    "building_types": [
+                        "MediumOffice",
+                        "LargeOffice",
+                        "SmallOffice",
+                        "PrimarySchool",
+                        "SecondarySchool",
+                        "LowriseApartment",
+                        "MidriseApartment",
+                        "HighriseApartment"
+                    ],
+    "remove_building_options": [
+      ":boiler_eff",
+      ":furnace_eff",
+      ":shw_eff",
+      ":adv_dx_units",
+      ":chiller_type"
+    ]
   }
 ]
