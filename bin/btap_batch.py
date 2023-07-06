@@ -393,7 +393,7 @@ def optimized_solution_sets(**kwargs):
                             'HS11_ASHP_PTHP-NaturalGasHPGasBackup',
                             'HS11_ASHP_PTHP-ElectricityHPElecBackup',
                             'HS12_ASHP_Baseboard-NaturalGasHPGasBackup',
-                            'HS12_ASHP_Baseboard-ElectricityHPElecBackup'
+                            'HS12_ASHP_Baseboard-ElectricityHPElecBackup',
                             'HS13_ASHP_VRF-NaturalGasHPGasBackup',
                             'HS13_ASHP_VRF-ElectricityHPElecBackup',
                             'HS14_CGSHP_FanCoils-NaturalGasHPGasBackup',
