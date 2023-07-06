@@ -386,14 +386,18 @@ def optimized_solution_sets(**kwargs):
 
     supported_fuel_types = ['NECB_Default-NaturalGas',
                             'NECB_Default-Electricity',
-                            'HS09_CCASHP_Baseboard-NaturalGasHPGasBackup',
-                            'HS09_CCASHP_Baseboard-ElectricityHPElecBackup',
                             'HS08_CCASHP_VRF-NaturalGasHPGasBackup',
                             'HS08_CCASHP_VRF-ElectricityHPElecBackup',
+                            'HS09_CCASHP_Baseboard-NaturalGasHPGasBackup',
+                            'HS09_CCASHP_Baseboard-ElectricityHPElecBackup',
                             'HS11_ASHP_PTHP-NaturalGasHPGasBackup',
                             'HS11_ASHP_PTHP-ElectricityHPElecBackup',
+                            'HS12_ASHP_Baseboard-NaturalGasHPGasBackup',
+                            'HS12_ASHP_Baseboard-ElectricityHPElecBackup'
                             'HS13_ASHP_VRF-NaturalGasHPGasBackup',
-                            'HS13_ASHP_VRF-ElectricityHPElecBackup']
+                            'HS13_ASHP_VRF-ElectricityHPElecBackup',
+                            'HS14_CGSHP_FanCoils-NaturalGasHPGasBackup',
+                            'HS14_CGSHP_FanCoils-ElectricityHPElecBackup']
 
     supported_building_types = [
         'MediumOffice',
