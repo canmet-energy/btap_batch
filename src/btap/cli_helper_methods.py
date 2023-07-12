@@ -233,6 +233,99 @@ def terminate_aws_analyses():
     batch_cli.clear_queue()
 
 
+def sensitivity_chart(excel_file = None, pdf_output = "sensitivity.pdf"):
+    import pandas as pd
+    import matplotlib.pyplot as plt
+    from matplotlib.backends.backend_pdf import PdfPages
+
+    # Location of Excel file used from sensitivity.
+    OUTPUT_XLSX = excel_file
+    # Load data into memory as a dataframe.
+    df = pd.read_excel(open(OUTPUT_XLSX, 'rb'), sheet_name='btap_data')
+    # Gets all unique values in the scenario column.
+    scenarios = df[':scenario'].unique()
+
+    # This is a pdf writer.. This will save all our charts to a PDF.
+    with PdfPages(pdf_output) as pdf:
+        # Determine Measures that had the biggest impact.
+        # Iterate through all scenarios.
+        for scenario in scenarios:
+            ## Stacked EUI chart.
+            # Filter Table rows by scenario. Save it to a new df named filtered_df.
+            filtered_df = df.loc[df[':scenario'] == scenario].reset_index()
+            # Filter the table to contain only these columns.
+            # List of columns to use for EUI sensitivity.
+            columns_to_use = [
+                scenario,
+                'energy_eui_cooling_gj_per_m_sq',
+                'energy_eui_heating_gj_per_m_sq',
+                'energy_eui_fans_gj_per_m_sq',
+                'energy_eui_heat recovery_gj_per_m_sq',
+                'energy_eui_interior lighting_gj_per_m_sq',
+                'energy_eui_interior equipment_gj_per_m_sq',
+                'energy_eui_water systems_gj_per_m_sq',
+                'energy_eui_pumps_gj_per_m_sq'
+            ]
+            filtered_df = filtered_df[columns_to_use]
+            # Set Scenario Col as String. This makes it easier to plot on the x-axis of the stacked bar chart.
+            filtered_df[scenario] = filtered_df[scenario].astype(str)
+            # Sort order of Scenarios in accending order.
+            filtered_df = filtered_df.sort_values(scenario)
+            # Plot chart.
+            ax = filtered_df.plot(
+                x=scenario,  # The column name used as the x component of the chart.
+                kind='bar',
+                stacked=True,
+                title=f"Sensitivity of {scenario} by EUI ",
+                figsize=(16, 12),
+                rot=0,
+                xlabel=scenario,  # Use the column name as the X label.
+                ylabel='GJ/M2')
+            # Have the amount for each stack in chart.
+            for c in ax.containers:
+                # if the segment is small or 0, do not report zero.remove the labels parameter if it's not needed for customized labels
+                labels = [round(v.get_height(), 3) if v.get_height() > 0 else '' for v in c]
+                ax.bar_label(c, labels=labels, label_type='center')
+            pdf.savefig()
+            plt.close()
+
+            ## Stacked Costing Chart.
+            # Filter Table rows by scenario. Save it to a new df named filtered_df.
+            filtered_df = df.loc[df[':scenario'] == scenario].reset_index()
+            # Filter the table to contain only these columns.
+            # List of columns that make up costing stacked totals.
+            columns_to_use = [
+                scenario,
+                'cost_equipment_heating_and_cooling_total_cost_per_m_sq',
+                'cost_equipment_lighting_total_cost_per_m_sq',
+                'cost_equipment_shw_total_cost_per_m_sq',
+                'cost_equipment_ventilation_total_cost_per_m_sq',
+                'cost_equipment_thermal_bridging_total_cost_per_m_sq'
+            ]
+            filtered_df = filtered_df[columns_to_use]
+            # Set Scenario Col as String. This makes it easier to plot on the x-axis of the stacked bar.
+            filtered_df[scenario] = filtered_df[scenario].astype(str)
+            # Sort order of Scenarios in accending order.
+            filtered_df = filtered_df.sort_values(scenario)
+            # Plot chart.
+            ax = filtered_df.plot(
+                x=scenario,
+                kind='bar',
+                stacked=True,
+                title=f"Sensitivity of {scenario} by Costing ",
+                figsize=(16, 12),
+                rot=0,
+                xlabel=scenario,
+                ylabel='$/M2')
+            # Have the amount for each stack in chart.
+            for c in ax.containers:
+                # if the segment is small or 0, do not report zero.remove the labels parameter if it's not needed for customized labels
+                labels = [round(v.get_height(), 3) if v.get_height() > 0 else '' for v in c]
+                ax.bar_label(c, labels=labels, label_type='center')
+            pdf.savefig()
+            plt.close()
+
+
 
 
 
