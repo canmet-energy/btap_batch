@@ -475,10 +475,10 @@ def list_active_analyses():
 @btap.command(
     help="This will generate charts from a sensitivity run output.xlsx file.")
 @click.option('--excel_file', '-e',  help='location to output results from a sensitivity analysis.')
+@click.option('--pdf_output_file', '-p', default="sensitivity.pdf", help='location to output pdf charts')
 def chart_sensitivity(**kwargs):
-    import pandas
     from src.btap.cli_helper_methods import sensitivity_chart
-    sensitivity_chart(excel_file= kwargs['excel_file'], pdf_output="sensitivity.pdf")
+    sensitivity_chart(excel_file= kwargs['excel_file'], pdf_output=kwargs['pdf_output_file'])
 
 
 
