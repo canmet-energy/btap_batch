@@ -477,3 +477,32 @@ def list_active_analyses():
 
 if __name__ == '__main__':
     btap()
+
+
+@btap.command(help="This command creates the library of weather files you will use for your analyses.  You can either inculde the .epw, .ddy, and .stat files in the weather_library folder of btap_batch or define the weather locations you want to use in the btap_batch/weather_library/weather_locs.yml file.")
+@click.option('--compute_environment', '-c', default='local_docker',
+              help='Environment to run analysis. Either local_docker, which runs on your computer, or aws_batch_analysis which runs completely on AWS. The default is local_docker')
+def define_weather_library(**kwargs):
+    from src.btap.weather_library import define_weather_library
+    """
+    This command will define the weather library containing all of the weather files used for analyses.  If the files
+    are user defined then whatever files in the btap_batch/weather_library will be used.  If no files are there, then
+    the weather_files.yml file in the btap_batch/weather_library folder will be read and any files defined in there will
+    downloaded from the btap_weather repository.  If no files are defined in the weather_files.yml file then, as a last
+    resort, the weather files for any weather location defined in the input.yml file that is being used will be
+    downloaded from the btap_weather repository.
+
+
+    Examples.
+
+        python ./bin/btap_batch.py define_weather_library --compute_environment local_docker
+
+        python ./bin/btap_batch.py define_weather_library --compute_environment aws_batch_analysis
+    """
+
+    # Input folder name
+    compute_environment = kwargs['compute_environment']
+
+    # Function to run analysis.
+    check_environment_vars_are_defined(compute_environment=compute_environment)
+    define_weather_library(analysis_project_folder, compute_environment)
