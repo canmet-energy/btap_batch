@@ -54,6 +54,14 @@ def define_weather_library(compute_environment=None,):
 
     # Check weather library folder for epw, ddy, and stat files.
     cust_weather_files = os.listdir(cust_weather_dir)
+    cust_weather_files_pre = []
+
+    for cust_weather_file in cust_weather_files:
+        ext_ind = cust_weather_file.rindex('.')
+        cust_weather_pre = cust_weather_file[0:ext_ind]
+        in_weather_list = cust_weather_pre in cust_weather_files_pre
+        if not in_weather_list:
+            cust_weather_files_pre.append(cust_weather_pre)
 
 
     analysis_input_folder = os.path.dirname(os.path.realpath(analysis_config_file))
