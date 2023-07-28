@@ -17,4 +17,7 @@ cloudpathlib==0.12.1
 colorama==0.4.6
 pyfiglet==0.8.post1
 plotly
+matplotlib
+fpdf2
+dataframe_image
 
