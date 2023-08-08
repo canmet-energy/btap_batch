@@ -18,5 +18,6 @@ class AWSWeatherLibrary:
         self.bucket = self.credentials.account_id
         self.region = self.credentials.region_name
 
-    def load_weather_library(self, ):
-        print("hello")
+    def load_weather_library(self, cust_weather_dir):
+        s3 = S3
+        s3.copy_folder_to_s3(bucket_name=self.bucket, source_folder=cust_weather_dir, target_folder=s3.get_username() + '/' + 'btap_weather_library')
