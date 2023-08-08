@@ -476,8 +476,16 @@ def list_active_analyses():
 
 
 @btap.command(
-    help="This command creates the library of weather files you will use for your analyses.  You can either inculde the .epw, .ddy, and .stat files in the weather_library folder of btap_batch or define the weather locations you want to use in the btap_batch/weather_library/weather_locs.yml file.")
-@click.option('--compute_environment', '-c', default='loacl_docker',
+    help="This will generate charts from a sensitivity run output.xlsx file.")
+@click.option('--excel_file', '-e',  help='location to output results from a sensitivity analysis.')
+@click.option('--pdf_output_file', '-p', default="./", help='location to output pdf charts')
+def chart_sensitivity(**kwargs):
+    from src.btap.cli_helper_methods import sensitivity_chart
+    sensitivity_chart(excel_file= kwargs['excel_file'], pdf_output_folder=kwargs['pdf_output_file'])
+
+
+@btap.command(help="This command creates the library of weather files you will use for your analyses.  You can either inculde the .epw, .ddy, and .stat files in the weather_library folder of btap_batch or define the weather locations you want to use in the btap_batch/weather_library/weather_locs.yml file.")
+@click.option('--compute_environment', '-c', default='local_docker',
               help='Environment to run analysis. Either local_docker, which runs on your computer, or aws_batch_analysis which runs completely on AWS. The default is local_docker')
 @click.option('--weather_folder', '-d', default='',
               help='Folder containing weather files. This is an optional input. The default is the weather_library folder in the main btap_batch folder.')

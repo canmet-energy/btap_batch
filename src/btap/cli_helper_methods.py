@@ -21,9 +21,35 @@ import copy
 import os
 from pathlib import Path
 import uuid
+import numpy as np
 from icecream import ic
 from src.btap.aws_dynamodb import AWSResultsTable
 
+
+def get_pareto_points(costs, return_mask=True):
+    """
+    Find the pareto-efficient points
+    :param costs: An (n_points, n_costs) array
+    :param return_mask: True to return a mask
+    :return: An array of indices of pareto-efficient points.
+        If return_mask is True, this will be an (n_points, ) boolean array
+        Otherwise it will be a (n_efficient_points, ) integer array of indices.
+    """
+    is_efficient = np.arange(costs.shape[0])
+    n_points = costs.shape[0]
+    next_point_index = 0  # Next index in the is_efficient array to search for
+    while next_point_index < len(costs):
+        nondominated_point_mask = np.any(costs < costs[next_point_index], axis=1)
+        nondominated_point_mask[next_point_index] = True
+        is_efficient = is_efficient[nondominated_point_mask]  # Remove dominated points
+        costs = costs[nondominated_point_mask]
+        next_point_index = np.sum(nondominated_point_mask[:next_point_index]) + 1
+    if return_mask:
+        is_efficient_mask = np.zeros(n_points, dtype=bool)
+        is_efficient_mask[is_efficient] = True
+        return is_efficient_mask
+    else:
+        return is_efficient
 
 def build_and_configure_docker_and_aws(btap_batch_branch=None,
                                        btap_costing_branch=None,
@@ -231,6 +257,204 @@ def terminate_aws_analyses():
     analysis_queue.clear_queue()
     batch_cli = AWSBatch(image_manager=AWSImageManager(image_name='btap_cli'), compute_environment=ace)
     batch_cli.clear_queue()
+
+
+def sensitivity_chart(excel_file = None, pdf_output_folder ="./"):
+    import pandas as pd
+    import numpy as np
+    import seaborn as sns
+    import matplotlib.pyplot as plt
+    from matplotlib.backends.backend_pdf import PdfPages
+    from icecream import ic
+    import dataframe_image as dfi
+
+
+    import time
+    # Location of Excel file used from sensitivity.
+    OUTPUT_XLSX = excel_file
+    # Load data into memory as a dataframe.
+    df = pd.read_excel(open(OUTPUT_XLSX, 'rb'), sheet_name='btap_data')
+    # Gets all unique values in the scenario column.
+    scenarios = df[':scenario'].unique()
+    analysis_names = df[':analysis_name'].unique()
+
+    for analysis_name in analysis_names:
+        pdf_output_folder = os.path.join(pdf_output_folder,analysis_name + ".pdf")
+        filtered_df = df.loc[df[':analysis_name'] == 'analysis_name']
+        algorithm_type = df[':algorithm_type'].unique()[0]
+
+        if algorithm_type == 'sensitivity':
+
+            # This is a pdf writer.. This will save all our charts to a PDF.
+            with PdfPages(pdf_output_folder) as pdf:
+                # Order Measures that had the biggest impact.
+                # https: // stackoverflow.com / questions / 32791911 / fast - calculation - of - pareto - front - in -python
+                ranked_df = df.copy()
+                #Remove rows where energy savings are negative.
+                ranked_df.drop(ranked_df[ranked_df['baseline_energy_percent_better'] <= 0].index, inplace = True)
+
+                # Use only columns for ranking.
+
+                ranked_df["scenario_value"]  = ranked_df.values[ranked_df.index.get_indexer(ranked_df[':scenario'].index), ranked_df.columns.get_indexer(ranked_df[':scenario'])]
+                ranked_df["energy_savings_per_cost"] =  ranked_df['baseline_energy_percent_better'] / ranked_df["cost_equipment_total_cost_per_m_sq"]
+                ranked_df['energy_savings_rank'] = ranked_df['energy_savings_per_cost'].rank(ascending=False)
+                ranked_df = ranked_df.sort_values(by=['energy_savings_rank'])
+                ranked_df['ECM'] = ranked_df[':scenario']+ "=" + ranked_df["scenario_value"].astype(str)
+                # Use only columns for ranking.
+                ranked_df = ranked_df[['ECM',':scenario','scenario_value','energy_savings_per_cost']]
+
+
+
+
+
+                ranked_df.plot.barh(x='ECM', y='energy_savings_per_cost')
+                plt.tight_layout()
+                pdf.savefig()
+                plt.close()
+
+                # Apply styling to dataframe and save
+                styled_df = ranked_df.style.format({'energy_savings_per_cost': "{:.4f}"}).hide(axis="index").bar(subset=["energy_savings_per_cost", ], color='lightgreen')
+                dfi.export(styled_df, 'ecm_ranked.png')
+
+
+                # Iterate through all scenarios.
+                for scenario in scenarios:
+
+                    # Scatter plot
+
+                    sns.scatterplot(
+                                    x="baseline_energy_percent_better",
+                                    y="cost_equipment_total_cost_per_m_sq",
+                                    hue=scenario,
+                                    data=df.loc[df[':scenario'] == scenario].reset_index())
+
+                    pdf.savefig()
+                    plt.close('all')
+
+
+
+                    ## Stacked EUI chart.
+                    # Filter Table rows by scenario. Save it to a new df named filtered_df.
+                    filtered_df = df.loc[df[':scenario'] == scenario].reset_index()
+                    # Filter the table to contain only these columns.
+                    # List of columns to use for EUI sensitivity.
+                    columns_to_use = [
+                        scenario,
+                        'energy_eui_cooling_gj_per_m_sq',
+                        'energy_eui_heating_gj_per_m_sq',
+                        'energy_eui_fans_gj_per_m_sq',
+                        'energy_eui_heat recovery_gj_per_m_sq',
+                        'energy_eui_interior lighting_gj_per_m_sq',
+                        'energy_eui_interior equipment_gj_per_m_sq',
+                        'energy_eui_water systems_gj_per_m_sq',
+                        'energy_eui_pumps_gj_per_m_sq'
+                    ]
+                    filtered_df = filtered_df[columns_to_use]
+                    # Set Scenario Col as String. This makes it easier to plot on the x-axis of the stacked bar chart.
+                    filtered_df[scenario] = filtered_df[scenario].astype(str)
+                    # Sort order of Scenarios in accending order.
+                    filtered_df = filtered_df.sort_values(scenario)
+                    # Plot EUI stacked chart.
+                    ax = filtered_df.plot(
+                        x=scenario,  # The column name used as the x component of the chart.
+                        kind='bar',
+                        stacked=True,
+                        title=f"Sensitivity of {scenario} by EUI ",
+                        figsize=(16, 12),
+                        rot=0,
+                        xlabel=scenario,  # Use the column name as the X label.
+                        ylabel='GJ/M2')
+                    # Have the amount for each stack in chart.
+                    for c in ax.containers:
+                        # if the segment is small or 0, do not report zero.remove the labels parameter if it's not needed for customized labels
+                        labels = [round(v.get_height(), 3) if v.get_height() > 0 else '' for v in c]
+                        ax.bar_label(c, labels=labels, label_type='center')
+                    pdf.savefig()
+                    plt.close()
+
+                    ## Stacked Costing Chart.
+                    # Filter Table rows by scenario. Save it to a new df named filtered_df.
+                    filtered_df = df.loc[df[':scenario'] == scenario].reset_index()
+                    # Filter the table to contain only these columns.
+                    # List of columns that make up costing stacked totals.
+                    columns_to_use = [
+                        scenario,
+                        'cost_equipment_heating_and_cooling_total_cost_per_m_sq',
+                        'cost_equipment_lighting_total_cost_per_m_sq',
+                        'cost_equipment_shw_total_cost_per_m_sq',
+                        'cost_equipment_ventilation_total_cost_per_m_sq',
+                        'cost_equipment_thermal_bridging_total_cost_per_m_sq',
+                        'cost_equipment_envelope_total_cost_per_m_sq'
+
+                    ]
+                    filtered_df = filtered_df[columns_to_use]
+                    # Set Scenario Col as String. This makes it easier to plot on the x-axis of the stacked bar.
+                    filtered_df[scenario] = filtered_df[scenario].astype(str)
+                    # Sort order of Scenarios in accending order.
+                    filtered_df = filtered_df.sort_values(scenario)
+                    # Plot chart.
+                    ax = filtered_df.plot(
+                        x=scenario,
+                        kind='bar',
+                        stacked=True,
+                        title=f"Sensitivity of {scenario} by Costing ",
+                        figsize=(16, 12),
+                        rot=0,
+                        xlabel=scenario,
+                        ylabel='$/M2')
+                    # Have the amount for each stack in chart.
+                    for c in ax.containers:
+                        # if the segment is small or 0, do not report zero.remove the labels parameter if it's not needed for customized labels
+                        labels = [round(v.get_height(), 3) if v.get_height() > 0 else '' for v in c]
+                        ax.bar_label(c, labels=labels, label_type='center')
+                    pdf.savefig()
+                    plt.close()
+
+        elif algorithm_type == "nsga2":
+
+            # https: // stackoverflow.com / questions / 32791911 / fast - calculation - of - pareto - front - in -python
+
+            #'baseline_necb_tier','cost_equipment_total_cost_per_m_sq'
+            optimization_column_names = ['baseline_energy_percent_better', 'cost_equipment_total_cost_per_m_sq']
+            # Add column to dataframe to indicate optimal datapoints.
+            df['is_on_pareto'] = get_pareto_points(np.array(df[optimization_column_names].values.tolist()))
+
+            # Filter by pareto curve.
+            pareto_df = df.loc[df['is_on_pareto'] == True].reset_index()
+            bins = [-100, 0, 25, 50, 60, 1000]
+            labels = ["Non-Compliant", "Tier-1", "Tier-2","Tier-3", "Tier-4"]
+            pareto_df['binned'] = pd.cut(pareto_df['baseline_energy_percent_better'], bins=bins, labels=labels)
+            sns.scatterplot(x="baseline_energy_percent_better",
+                            y="cost_equipment_total_cost_per_m_sq",
+                            hue="binned",
+                            data=pareto_df)
+
+
+            plt.show()
+
+        elif algorithm_type == "elimination":
+            print("No charting support for Elimination yet.")
+
+        elif algorithm_type == "parametric":
+            print("No charting support for parametric yet.")
+
+        elif algorithm_type == "sampling-lhs":
+            print("No charting support for sampling-lhs yet.")
+
+        elif algorithm_type == "reference":
+            print("No charting support for reference yet.")
+
+        else:
+            print(f"Unsupported analysis type {algorithm_type}")
+
+        print(pdf_output_folder)
+
+
+
+
+
+
+
 
 
 
