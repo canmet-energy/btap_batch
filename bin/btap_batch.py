@@ -475,16 +475,13 @@ def list_active_analyses():
         print(df)
 
 
-if __name__ == '__main__':
-    btap()
-
-
-@btap.command(help="This command creates the library of weather files you will use for your analyses.  You can either inculde the .epw, .ddy, and .stat files in the weather_library folder of btap_batch or define the weather locations you want to use in the btap_batch/weather_library/weather_locs.yml file.")
-@click.option('--compute_environment', '-c', default='local_docker',
+@btap.command(
+    help="This command creates the library of weather files you will use for your analyses.  You can either inculde the .epw, .ddy, and .stat files in the weather_library folder of btap_batch or define the weather locations you want to use in the btap_batch/weather_library/weather_locs.yml file.")
+@click.option('--compute_environment', '-c', default='loacl_docker',
               help='Environment to run analysis. Either local_docker, which runs on your computer, or aws_batch_analysis which runs completely on AWS. The default is local_docker')
-@click.option('--weather_folder', '-d', default='local_docker',
+@click.option('--weather_folder', '-d', default='',
               help='Folder containing weather files. This is an optional input. The default is the weather_library folder in the main btap_batch folder.')
-@click.option('--weather_dict', '-f', default='local_docker',
+@click.option('--weather_dict', '-f', default='',
               help='Location of the yaml file containing the list of weather files to add to the weather library. This is an optional input.  The default is the weather_locs.yml file in the weather_library folder in the main btap_batch directory.')
 def define_weather_library(**kwargs):
     from src.btap.weather_library import define_weather_library
@@ -503,10 +500,9 @@ def define_weather_library(**kwargs):
         python ./bin/btap_batch.py define_weather_library --compute_environment local_docker
 
         python ./bin/btap_batch.py define_weather_library --compute_environment aws_batch_analysis
-        
+
         pthyon ./bin/btap_batch.py define_weather_library --compute_environment local_docker --weather_folder C:/Users/someone/weather_files --weather_dict C:/Users/someone/weather_files/weather_locs.yml
     """
-
 
     # Input folder name
     compute_environment = kwargs['compute_environment']
@@ -516,3 +512,6 @@ def define_weather_library(**kwargs):
     # Function to run analysis.
     check_environment_vars_are_defined(compute_environment=compute_environment)
     define_weather_library(compute_environment=compute_environment, weather_folder=weather_folder, weather_dict=weather_dict)
+
+if __name__ == '__main__':
+    btap()

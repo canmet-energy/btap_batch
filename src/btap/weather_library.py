@@ -54,24 +54,24 @@ def download_weather_files(cust_weather_loc=None, cust_weather_dir=None, hist_fi
 def define_weather_library(compute_environment=None, weather_folder=None, weather_dict=None):
     # Get the default weather locations from the default_weather_locs.yml file.
     def_weather_dir = os.getcwd()
-    def_weather_file = os.path.join(def_weather_dir, 'default_weather_locs.yml')
+    def_weather_file = os.path.join(def_weather_dir, 'src', 'btap', 'default_weather_locs.yml')
     def_weather_config, def_weather_folder, def_weather_analyses_folder = BTAPAnalysis.load_analysis_input_file(
         analysis_config_file=def_weather_file)
     def_weather_locs = def_weather_config[':weather_locations']
 
     # Set default custom weather folder location
-    cust_weather_dir = os.path.join(def_weather_dir, '..', '..', 'weather_library')
+    cust_weather_dir = os.path.join(def_weather_dir, 'weather_library')
     # Set default custom weather yml file location
     cust_weather_file = os.path.join(cust_weather_dir, 'weather_locs.yml')
 
     # Check if a custom weather folder was defined.  If not then use the default folder defined above.
-    if weather_folder is not None:
+    if weather_folder != '':
         if not os.path.isdir(weather_folder):
             logging.error(f"could not find folder {weather_folder}. Exiting")
         cust_weather_dir = weather_folder
 
     # Check if a custom weather yml file was defined.  If not then use the default file defined above.
-    if weather_dict is not None:
+    if weather_dict != '':
         if not os.path.isfile(weather_dict):
             logging.error(f"could not find weather file list at {weather_dict}. Exiting")
         else:
@@ -81,7 +81,6 @@ def define_weather_library(compute_environment=None, weather_folder=None, weathe
         cust_weather_file = os.path.join(cust_weather_dir, 'weather_locs.yml')
         cust_weather_config, cust_weather_folder, cust_weather_analyses_folder = BTAPAnalysis.load_analysis_input_file(
             analysis_config_file=cust_weather_file)
-
 
     init_cust_weather_locs = cust_weather_config[':weather_locations']
 
@@ -107,6 +106,8 @@ def define_weather_library(compute_environment=None, weather_folder=None, weathe
             cust_weather_pre = cust_weather_loc[0:ext_ind]
             download_weather_files(cust_weather_loc=cust_weather_pre, cust_weather_dir=cust_weather_dir,
                                    hist_files=hist_files, fut_files=fut_files)
+    else:
+        print("Either no custom weather locations, or only default weather locations, were found in the weather locations yaml file: " + cust_weather_file)
 
     # Check weather library folder for epw, ddy, and stat files.
     cust_weather_files = os.listdir(cust_weather_dir)
@@ -114,6 +115,7 @@ def define_weather_library(compute_environment=None, weather_folder=None, weathe
 
     # Go through each weather file in the custom weather folder and make sure an epw, ddy, and stat file with the same
     # name are present.
+    weather_files_detected = 0
     for cust_weather_file in cust_weather_files:
         # Get the file name with the file extension
         ext_ind = cust_weather_file.rindex('.')
@@ -138,6 +140,13 @@ def define_weather_library(compute_environment=None, weather_folder=None, weathe
                 if not os.path.isfile(epw_loc):
                     logging.error(f"Missing stat file {stat_file}. Exiting")
                 cust_weather_files_pre.append(cust_weather_pre)
+                weather_files_detected += 1
+
+    if weather_files_detected == 0:
+        print("No weather files were downloaded or provided in the weather library directory: " + cust_weather_dir)
+        print("No weather library created.  Only default weather files will be used.")
+    else:
+        print(str(weather_files_detected) + "weather files were found in: " + cust_weather_dir)
 
     # If this is an AWS run copy the weather files to an S3 weather library
     if compute_environment == 'aws_batch_analysis':
