@@ -521,5 +521,8 @@ def define_weather_library(**kwargs):
     check_environment_vars_are_defined(compute_environment=compute_environment)
     define_weather_library(compute_environment=compute_environment, weather_folder=weather_folder, weather_dict=weather_dict)
 
+
+
+
 if __name__ == '__main__':
     btap()
