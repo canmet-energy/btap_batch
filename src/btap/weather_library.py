@@ -24,13 +24,14 @@ def download_weather_files(cust_weather_loc=None, cust_weather_dir=None, hist_fi
     future_file = False
     if weather_file in hist_files:
         repo_url = HISTORIC_WEATHER_REPO
-    if weather_file in fut_files:
+    elif weather_file in fut_files:
         repo_url = FUTURE_WEATHER_REPO
         future_file = True
     else:
         # If not in the repository produce an error
-        logging.error(f"Could not fine epw file {weather_file} in the btap_weather repository. Exiting")
+        logging.error(f"Could not find epw file {weather_file} in the btap_weather repository. Exiting")
     # Download the file and write it to the custom weather folder directory
+    print("Downloading: " + weather_file)
     download_url = repo_url + weather_file
     download_name = os.path.join(cust_weather_dir, weather_file)
     r = requests.get(download_url, allow_redirects=True)
@@ -38,6 +39,7 @@ def download_weather_files(cust_weather_loc=None, cust_weather_dir=None, hist_fi
     # loading the zip and creating a zip object
     with ZipFile(download_name, 'r') as zObject:
         # Extracting all files in the zip into a specific location.
+        print("Expanding: " + weather_file)
         zObject.extractall(path=cust_weather_dir)
     zObject.close()
     # If future weather data is used, copy the _ASHRAE.ddy file to be the .ddy file to avoid simulation issues.
@@ -133,11 +135,11 @@ def define_weather_library(compute_environment=None, weather_folder=None, weathe
                 epw_loc = os.path.join(cust_weather_dir, epw_file)
                 ddy_loc = os.path.join(cust_weather_dir, ddy_file)
                 stat_file = os.path.join(cust_weather_dir, stat_file)
-                if not os.path.isfile(epw_loc):
+                if (os.path.isfile(epw_loc) != True) and (ext_type == 'epw'):
                     logging.error(f"Missing epw file {epw_file}. Exiting")
-                if not os.path.isfile(ddy_loc):
+                if os.path.isfile(ddy_loc) != True and (ext_type == 'ddy'):
                     logging.error(f"Missing ddy file {epw_file}. Exiting")
-                if not os.path.isfile(epw_loc):
+                if (os.path.isfile(epw_loc) != True) and (ext_type == 'stat'):
                     logging.error(f"Missing stat file {stat_file}. Exiting")
                 cust_weather_files_pre.append(cust_weather_pre)
                 weather_files_detected += 1
@@ -145,13 +147,12 @@ def define_weather_library(compute_environment=None, weather_folder=None, weathe
     if weather_files_detected == 0:
         print("No weather files were downloaded or provided in the weather library directory: " + cust_weather_dir)
         print("No weather library created.  Only default weather files will be used.")
-    else:
-        print(str(weather_files_detected) + " weather files were found in: " + cust_weather_dir)
 
     # If this is an AWS run copy the weather files to an S3 weather library
     if compute_environment == 'aws_batch_analysis':
         if weather_files_detected > 0:
             destination_folder = 'weather_library'
-            AWSWeatherLibrary.load_weather_library(cust_weather_dir=cust_weather_dir)
+            aws_lib = AWSWeatherLibrary()
+            aws_lib.load_weather_library(cust_weather_dir=cust_weather_dir)
         else:
             print("No weather files were added to the AWS weather library.")
