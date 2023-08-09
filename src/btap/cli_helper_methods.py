@@ -51,6 +51,7 @@ def get_pareto_points(costs, return_mask=True):
     else:
         return is_efficient
 
+
 def build_and_configure_docker_and_aws(btap_batch_branch=None,
                                        btap_costing_branch=None,
                                        compute_environment=None,
@@ -239,12 +240,13 @@ def analysis(project_input_folder=None,
         job = batch.create_job(job_id=analysis_name, reference_run=reference_run)
         return job.submit_job()
 
+
 def list_active_analyses():
     # Gets an AWSBatch analyses object.
     ace = AWSComputeEnvironment()
     analysis_queue = AWSBatch(image_manager=AWSImageManager(image_name='btap_batch'),
-                     compute_environment=ace
-                     )
+                              compute_environment=ace
+                              )
     return analysis_queue.get_active_jobs()
 
 
@@ -252,24 +254,25 @@ def terminate_aws_analyses():
     # Gets an AWSBatch analyses object.
     ace = AWSComputeEnvironment()
     analysis_queue = AWSBatch(image_manager=AWSImageManager(image_name='btap_batch'),
-                     compute_environment=ace
-                     )
+                              compute_environment=ace
+                              )
     analysis_queue.clear_queue()
     batch_cli = AWSBatch(image_manager=AWSImageManager(image_name='btap_cli'), compute_environment=ace)
     batch_cli.clear_queue()
 
 
-def sensitivity_chart(excel_file = None, pdf_output_folder ="./"):
+def sensitivity_chart(excel_file=None, pdf_output_folder="./"):
     import pandas as pd
-    import numpy as np
     import seaborn as sns
     import matplotlib.pyplot as plt
-    from matplotlib.backends.backend_pdf import PdfPages
     from icecream import ic
     import dataframe_image as dfi
+    from fpdf import FPDF
+    import numpy as np
+    from io import BytesIO
 
-
-    import time
+    from datetime import datetime
+    start = datetime.now()
     # Location of Excel file used from sensitivity.
     OUTPUT_XLSX = excel_file
     # Load data into memory as a dataframe.
@@ -279,142 +282,228 @@ def sensitivity_chart(excel_file = None, pdf_output_folder ="./"):
     analysis_names = df[':analysis_name'].unique()
 
     for analysis_name in analysis_names:
-        pdf_output_folder = os.path.join(pdf_output_folder,analysis_name + ".pdf")
+        pdf_output_folder = os.path.join(pdf_output_folder, analysis_name + ".pdf")
         filtered_df = df.loc[df[':analysis_name'] == 'analysis_name']
         algorithm_type = df[':algorithm_type'].unique()[0]
 
         if algorithm_type == 'sensitivity':
 
-            # This is a pdf writer.. This will save all our charts to a PDF.
-            with PdfPages(pdf_output_folder) as pdf:
-                # Order Measures that had the biggest impact.
-                # https: // stackoverflow.com / questions / 32791911 / fast - calculation - of - pareto - front - in -python
-                ranked_df = df.copy()
-                #Remove rows where energy savings are negative.
-                ranked_df.drop(ranked_df[ranked_df['baseline_energy_percent_better'] <= 0].index, inplace = True)
+            pdf = FPDF()
+            pdf.add_page()
+            pdf.start_section(name="Sensitivity", level=0, strict=True)
 
-                # Use only columns for ranking.
+            # Order Measures that had the biggest impact.
+            # https: // stackoverflow.com / questions / 32791911 / fast - calculation - of - pareto - front - in -python
+            ranked_df = df.copy()
 
-                ranked_df["scenario_value"]  = ranked_df.values[ranked_df.index.get_indexer(ranked_df[':scenario'].index), ranked_df.columns.get_indexer(ranked_df[':scenario'])]
-                ranked_df["energy_savings_per_cost"] =  ranked_df['baseline_energy_percent_better'] / ranked_df["cost_equipment_total_cost_per_m_sq"]
-                ranked_df['energy_savings_rank'] = ranked_df['energy_savings_per_cost'].rank(ascending=False)
-                ranked_df = ranked_df.sort_values(by=['energy_savings_rank'])
-                ranked_df['ECM'] = ranked_df[':scenario']+ "=" + ranked_df["scenario_value"].astype(str)
-                # Use only columns for ranking.
-                ranked_df = ranked_df[['ECM',':scenario','scenario_value','energy_savings_per_cost']]
+            ranked_df["scenario_value"] = ranked_df.values[
+                ranked_df.index.get_indexer(ranked_df[':scenario'].index), ranked_df.columns.get_indexer(
+                    ranked_df[':scenario'])]
+            ranked_df["Energy Cost Effectiveness (% * m2/$)"] = ranked_df['baseline_energy_percent_better'] / ranked_df[
+                "baseline_difference_cost_equipment_total_cost_per_m_sq"]
+            ranked_df["GHG Cost Effectiveness (% * m2/$)"] = ranked_df['baseline_energy_percent_better'] / ranked_df[
+                "baseline_difference_cost_equipment_total_cost_per_m_sq"]
 
 
 
+            ranked_df['energy_savings_rank'] = ranked_df['Energy Cost Effectiveness (% * m2/$)'].rank(ascending=False)
+            ranked_df['ghg_savings_rank'] = ranked_df['Energy Cost Effectiveness (% * m2/$)'].rank(ascending=False)
+            ranked_df = ranked_df.sort_values(by=['energy_savings_rank'])
+            # Use only columns for ranking.
+            ranked_df = ranked_df[[':scenario', 'scenario_value', 'Energy Cost Effectiveness (% * m2/$)',
+                                   'baseline_energy_percent_better',
+                                   'baseline_difference_cost_equipment_total_cost_per_m_sq',
+                                   'cost_utility_ghg_total_kg_per_m_sq', 'energy_eui_electricity_gj_per_m_sq',
+                                   'energy_eui_natural_gas_gj_per_m_sq']]
 
+            # Apply styling to dataframe and save
+            pdf.start_section(name="Immediate Payback", level=1, strict=True)
+            print(f"Plotting Immediate Payback ")
+            immediate_payback_df = ranked_df.loc[(ranked_df['Energy Cost Effectiveness (% * m2/$)'] >= 0.0)].copy()
+            # Remove rows where energy savings are negative.
+            immediate_payback_df.drop(
+                immediate_payback_df[immediate_payback_df['baseline_energy_percent_better'] <= 0].index, inplace=True)
+            immediate_payback_df.rename(columns={
+                'baseline_difference_cost_equipment_total_cost_per_m_sq': 'ECM Net Capital Savings ($/m2)',
+                ':scenario': 'Measure Name',
+                'scenario_value': 'Measure Value',
+                'baseline_energy_percent_better': 'Energy Reduction (%)',
+                'cost_utility_ghg_total_kg_per_m_sq': 'Carbon (kg/m2)',
+                'energy_eui_electricity_gj_per_m_sq': 'Electricity (GJ/m2)',
+                'energy_eui_natural_gas_gj_per_m_sq': 'Natural Gas (GJ/m2)'
 
-                ranked_df.plot.barh(x='ECM', y='energy_savings_per_cost')
-                plt.tight_layout()
-                pdf.savefig()
-                plt.close()
+            }, inplace=True)
+            immediate_payback_df = immediate_payback_df.sort_values(by=['Energy Reduction (%)'], ascending=False)
+            immediate_payback_df = immediate_payback_df.drop('Energy Cost Effectiveness (% * m2/$)', axis=1)
+            styled_df = immediate_payback_df.style.format({
+                'ECM Net Capital Savings ($/m2)': "{:.2f}",
+                'Energy Reduction (%)': "{:.1f}",
+                'Carbon (kg/m2)': "{:.2f}",
+                'Electricity (GJ/m2)': "{:.2f}",
+                'Natural Gas (GJ/m2)':"{:.2f}"
 
-                # Apply styling to dataframe and save
-                styled_df = ranked_df.style.format({'energy_savings_per_cost': "{:.4f}"}).hide(axis="index").bar(subset=["energy_savings_per_cost", ], color='lightgreen')
-                dfi.export(styled_df, 'ecm_ranked.png')
+            }).hide(axis="index").bar(subset=["Energy Reduction (%)", ], color='lightgreen')
+            img_buf = BytesIO()  # Create image object
+            dfi.export(styled_df, img_buf, dpi=200)
+            pdf.image(img_buf, w=pdf.epw / 2)
+            img_buf.close()
 
+            # ECM Ranked Styled Table.
+            pdf.start_section(name="Ranked ECMs", level=1, strict=True)
+            print(f"Plotting Ranked ECMs ")
+            payback_df = ranked_df.loc[(ranked_df['Energy Cost Effectiveness (% * m2/$)'] < 0.0)].copy()
+            # Remove rows where energy savings are negative.
+            payback_df.drop(payback_df[payback_df['baseline_energy_percent_better'] <= 0].index, inplace=True)
 
-                # Iterate through all scenarios.
-                for scenario in scenarios:
+            payback_df.rename(columns={
+                'baseline_difference_cost_equipment_total_cost_per_m_sq': 'ECM Net Capital Cost ($/m2)',
+                ':scenario': 'Measure Name',
+                'scenario_value': 'Measure Value',
+                'baseline_energy_percent_better': 'Energy Reduction (%)',
+                'cost_utility_ghg_total_kg_per_m_sq': 'Carbon (kg/m2)',
+                'energy_eui_electricity_gj_per_m_sq': 'Electricity (GJ/m2)',
+                'energy_eui_natural_gas_gj_per_m_sq': 'Natural Gas (GJ/m2)'
 
-                    # Scatter plot
+            }, inplace=True)
 
-                    sns.scatterplot(
-                                    x="baseline_energy_percent_better",
-                                    y="cost_equipment_total_cost_per_m_sq",
-                                    hue=scenario,
-                                    data=df.loc[df[':scenario'] == scenario].reset_index())
+            payback_df['Energy Cost Effectiveness (% * m2/$)'] = payback_df[
+                'Energy Cost Effectiveness (% * m2/$)'].apply(lambda x: x * -1.0)
+            payback_df['ECM Net Capital Cost ($/m2)'] = payback_df['ECM Net Capital Cost ($/m2)'].apply(
+                lambda x: x * -1.0)
+            payback_df = payback_df.sort_values(by=['Energy Cost Effectiveness (% * m2/$)'], ascending=False)
+            styled_df = payback_df.style.format({
+                'Energy Cost Effectiveness (% * m2/$)': "{:.2f}",
+                'ECM Net Capital Cost ($/m2)': "{:.2f}",
+                'Energy Reduction (%)': "{:.1f}",
+                'Carbon (kg/m2)': "{:.2f}",
+                'Electricity (GJ/m2)': "{:.2f}",
+                'Natural Gas (GJ/m2)': "{:.2f}"
 
-                    pdf.savefig()
-                    plt.close('all')
+            }).hide(axis="index").bar(subset=["Energy Cost Effectiveness (% * m2/$)", ], color='lightgreen')
+            img_buf = BytesIO()  # Create image object
+            dfi.export(styled_df, img_buf, dpi=400)
+            pdf.image(img_buf, w=pdf.epw / 2)
+            img_buf.close()
 
+            pdf.start_section(name="Appendix A: ECM Results", level=0, strict=True)
 
+            # Iterate through all scenarios.
+            # for scenario in scenarios:
+            #     print(f"Plotting scenario: {scenario} ")
+            #     pdf.start_section(name=f"Appendix A: ECM {scenario}", level=1, strict=True)
+            #
+            #     # Scatter plot
+            #
+            #     sns.scatterplot(
+            #                     x="baseline_energy_percent_better",
+            #                     y="cost_equipment_total_cost_per_m_sq",
+            #                     hue=scenario,
+            #                     data=df.loc[df[':scenario'] == scenario].reset_index())
+            #
+            #     img_buf = BytesIO()  # Create image object
+            #     plt.savefig(img_buf, format="svg")
+            #     pdf.image(img_buf, w=pdf.epw / 2)
+            #     img_buf.close()
+            #     plt.close('all')
+            #
+            #
+            #
+            #
+            #     ## Stacked EUI chart.
+            #     # Filter Table rows by scenario. Save it to a new df named filtered_df.
+            #     filtered_df = df.loc[df[':scenario'] == scenario].reset_index()
+            #     # Filter the table to contain only these columns.
+            #     # List of columns to use for EUI sensitivity.
+            #     columns_to_use = [
+            #         scenario,
+            #         'energy_eui_cooling_gj_per_m_sq',
+            #         'energy_eui_heating_gj_per_m_sq',
+            #         'energy_eui_fans_gj_per_m_sq',
+            #         'energy_eui_heat recovery_gj_per_m_sq',
+            #         'energy_eui_interior lighting_gj_per_m_sq',
+            #         'energy_eui_interior equipment_gj_per_m_sq',
+            #         'energy_eui_water systems_gj_per_m_sq',
+            #         'energy_eui_pumps_gj_per_m_sq'
+            #     ]
+            #     filtered_df = filtered_df[columns_to_use]
+            #     # Set Scenario Col as String. This makes it easier to plot on the x-axis of the stacked bar chart.
+            #     filtered_df[scenario] = filtered_df[scenario].astype(str)
+            #     # Sort order of Scenarios in accending order.
+            #     filtered_df = filtered_df.sort_values(scenario)
+            #     # Plot EUI stacked chart.
+            #     ax = filtered_df.plot(
+            #         x=scenario,  # The column name used as the x component of the chart.
+            #         kind='bar',
+            #         stacked=True,
+            #         title=f"Sensitivity of {scenario} by EUI ",
+            #         figsize=(16, 12),
+            #         rot=0,
+            #         xlabel=scenario,  # Use the column name as the X label.
+            #         ylabel='GJ/M2')
+            #     # Have the amount for each stack in chart.
+            #     for c in ax.containers:
+            #         # if the segment is small or 0, do not report zero.remove the labels parameter if it's not needed for customized labels
+            #         labels = [round(v.get_height(), 3) if v.get_height() > 0 else '' for v in c]
+            #         ax.bar_label(c, labels=labels, label_type='center')
+            #
+            #
+            #
+            #     img_buf = BytesIO()  # Create image object
+            #     plt.savefig(img_buf, format="svg")
+            #     pdf.image(img_buf, w=pdf.epw / 2)
+            #     img_buf.close()
+            #     plt.close('all')
+            #
+            #     ## Stacked Costing Chart.
+            #     # Filter Table rows by scenario. Save it to a new df named filtered_df.
+            #     filtered_df = df.loc[df[':scenario'] == scenario].reset_index()
+            #     # Filter the table to contain only these columns.
+            #     # List of columns that make up costing stacked totals.
+            #     columns_to_use = [
+            #         scenario,
+            #         'cost_equipment_heating_and_cooling_total_cost_per_m_sq',
+            #         'cost_equipment_lighting_total_cost_per_m_sq',
+            #         'cost_equipment_shw_total_cost_per_m_sq',
+            #         'cost_equipment_ventilation_total_cost_per_m_sq',
+            #         'cost_equipment_thermal_bridging_total_cost_per_m_sq',
+            #         'cost_equipment_envelope_total_cost_per_m_sq'
+            #
+            #     ]
+            #     filtered_df = filtered_df[columns_to_use]
+            #     # Set Scenario Col as String. This makes it easier to plot on the x-axis of the stacked bar.
+            #     filtered_df[scenario] = filtered_df[scenario].astype(str)
+            #     # Sort order of Scenarios in accending order.
+            #     filtered_df = filtered_df.sort_values(scenario)
+            #     # Plot chart.
+            #     ax = filtered_df.plot(
+            #         x=scenario,
+            #         kind='bar',
+            #         stacked=True,
+            #         title=f"Sensitivity of {scenario} by Costing ",
+            #         figsize=(16, 12),
+            #         rot=0,
+            #         xlabel=scenario,
+            #         ylabel='$/M2')
+            #     # Have the amount for each stack in chart.
+            #     for c in ax.containers:
+            #         # if the segment is small or 0, do not report zero.remove the labels parameter if it's not needed for customized labels
+            #         labels = [round(v.get_height(), 3) if v.get_height() > 0 else '' for v in c]
+            #         ax.bar_label(c, labels=labels, label_type='center')
+            #     img_buf = BytesIO()  # Create image object
+            #     plt.savefig(img_buf, format="svg")
+            #     pdf.image(img_buf, w=pdf.epw / 2)
+            #     img_buf.close()
+            #     plt.close('all')
+            #
+            #
+            pdf.output("panda.pdf")
 
-                    ## Stacked EUI chart.
-                    # Filter Table rows by scenario. Save it to a new df named filtered_df.
-                    filtered_df = df.loc[df[':scenario'] == scenario].reset_index()
-                    # Filter the table to contain only these columns.
-                    # List of columns to use for EUI sensitivity.
-                    columns_to_use = [
-                        scenario,
-                        'energy_eui_cooling_gj_per_m_sq',
-                        'energy_eui_heating_gj_per_m_sq',
-                        'energy_eui_fans_gj_per_m_sq',
-                        'energy_eui_heat recovery_gj_per_m_sq',
-                        'energy_eui_interior lighting_gj_per_m_sq',
-                        'energy_eui_interior equipment_gj_per_m_sq',
-                        'energy_eui_water systems_gj_per_m_sq',
-                        'energy_eui_pumps_gj_per_m_sq'
-                    ]
-                    filtered_df = filtered_df[columns_to_use]
-                    # Set Scenario Col as String. This makes it easier to plot on the x-axis of the stacked bar chart.
-                    filtered_df[scenario] = filtered_df[scenario].astype(str)
-                    # Sort order of Scenarios in accending order.
-                    filtered_df = filtered_df.sort_values(scenario)
-                    # Plot EUI stacked chart.
-                    ax = filtered_df.plot(
-                        x=scenario,  # The column name used as the x component of the chart.
-                        kind='bar',
-                        stacked=True,
-                        title=f"Sensitivity of {scenario} by EUI ",
-                        figsize=(16, 12),
-                        rot=0,
-                        xlabel=scenario,  # Use the column name as the X label.
-                        ylabel='GJ/M2')
-                    # Have the amount for each stack in chart.
-                    for c in ax.containers:
-                        # if the segment is small or 0, do not report zero.remove the labels parameter if it's not needed for customized labels
-                        labels = [round(v.get_height(), 3) if v.get_height() > 0 else '' for v in c]
-                        ax.bar_label(c, labels=labels, label_type='center')
-                    pdf.savefig()
-                    plt.close()
-
-                    ## Stacked Costing Chart.
-                    # Filter Table rows by scenario. Save it to a new df named filtered_df.
-                    filtered_df = df.loc[df[':scenario'] == scenario].reset_index()
-                    # Filter the table to contain only these columns.
-                    # List of columns that make up costing stacked totals.
-                    columns_to_use = [
-                        scenario,
-                        'cost_equipment_heating_and_cooling_total_cost_per_m_sq',
-                        'cost_equipment_lighting_total_cost_per_m_sq',
-                        'cost_equipment_shw_total_cost_per_m_sq',
-                        'cost_equipment_ventilation_total_cost_per_m_sq',
-                        'cost_equipment_thermal_bridging_total_cost_per_m_sq',
-                        'cost_equipment_envelope_total_cost_per_m_sq'
-
-                    ]
-                    filtered_df = filtered_df[columns_to_use]
-                    # Set Scenario Col as String. This makes it easier to plot on the x-axis of the stacked bar.
-                    filtered_df[scenario] = filtered_df[scenario].astype(str)
-                    # Sort order of Scenarios in accending order.
-                    filtered_df = filtered_df.sort_values(scenario)
-                    # Plot chart.
-                    ax = filtered_df.plot(
-                        x=scenario,
-                        kind='bar',
-                        stacked=True,
-                        title=f"Sensitivity of {scenario} by Costing ",
-                        figsize=(16, 12),
-                        rot=0,
-                        xlabel=scenario,
-                        ylabel='$/M2')
-                    # Have the amount for each stack in chart.
-                    for c in ax.containers:
-                        # if the segment is small or 0, do not report zero.remove the labels parameter if it's not needed for customized labels
-                        labels = [round(v.get_height(), 3) if v.get_height() > 0 else '' for v in c]
-                        ax.bar_label(c, labels=labels, label_type='center')
-                    pdf.savefig()
-                    plt.close()
 
         elif algorithm_type == "nsga2":
 
             # https: // stackoverflow.com / questions / 32791911 / fast - calculation - of - pareto - front - in -python
 
-            #'baseline_necb_tier','cost_equipment_total_cost_per_m_sq'
+            # 'baseline_necb_tier','cost_equipment_total_cost_per_m_sq'
             optimization_column_names = ['baseline_energy_percent_better', 'cost_equipment_total_cost_per_m_sq']
             # Add column to dataframe to indicate optimal datapoints.
             df['is_on_pareto'] = get_pareto_points(np.array(df[optimization_column_names].values.tolist()))
@@ -422,13 +511,12 @@ def sensitivity_chart(excel_file = None, pdf_output_folder ="./"):
             # Filter by pareto curve.
             pareto_df = df.loc[df['is_on_pareto'] == True].reset_index()
             bins = [-100, 0, 25, 50, 60, 1000]
-            labels = ["Non-Compliant", "Tier-1", "Tier-2","Tier-3", "Tier-4"]
+            labels = ["Non-Compliant", "Tier-1", "Tier-2", "Tier-3", "Tier-4"]
             pareto_df['binned'] = pd.cut(pareto_df['baseline_energy_percent_better'], bins=bins, labels=labels)
             sns.scatterplot(x="baseline_energy_percent_better",
                             y="cost_equipment_total_cost_per_m_sq",
                             hue="binned",
                             data=pareto_df)
-
 
             plt.show()
 
@@ -447,18 +535,5 @@ def sensitivity_chart(excel_file = None, pdf_output_folder ="./"):
         else:
             print(f"Unsupported analysis type {algorithm_type}")
 
-        print(pdf_output_folder)
-
-
-
-
-
-
-
-
-
-
-
-
-
-
+        print(f"PDF report save here:{pdf_output_folder}")
+        print(datetime.now() - start)
