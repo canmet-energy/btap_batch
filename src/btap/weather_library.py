@@ -149,9 +149,8 @@ def define_weather_library(compute_environment=None, weather_folder=None, weathe
         print("No weather library created.  Only default weather files will be used.")
 
     # If this is an AWS run copy the weather files to an S3 weather library
-    if compute_environment == 'aws_batch_analysis':
+    if (compute_environment == 'aws_batch_analysis') or (compute_environment == 'aws_batch'):
         if weather_files_detected > 0:
-            destination_folder = 'weather_library'
             aws_lib = AWSWeatherLibrary()
             aws_lib.load_weather_library(cust_weather_dir=cust_weather_dir)
         else:
