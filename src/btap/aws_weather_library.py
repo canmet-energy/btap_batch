@@ -23,3 +23,5 @@ class AWSWeatherLibrary:
         bucket_name = self.bucket
         target_folder = str(aws_username) + '/' + 'btap_weather_library'
         s3.copy_folder_to_s3(bucket_name=bucket_name, source_folder=cust_weather_dir, target_folder=target_folder)
+        full_target_folder = f"s3://{bucket_name}/{target_folder}"
+        print("Weather library uploaded to: " + full_target_folder)
