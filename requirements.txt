@@ -20,4 +20,5 @@ plotly
 matplotlib
 fpdf2
 dataframe_image
+seaborn
 
