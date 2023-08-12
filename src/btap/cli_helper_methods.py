@@ -296,34 +296,73 @@ def sensitivity_chart(excel_file=None, pdf_output_folder="./"):
             # https: // stackoverflow.com / questions / 32791911 / fast - calculation - of - pareto - front - in -python
             ranked_df = df.copy()
 
+            # Get the scenario value.
             ranked_df["scenario_value"] = ranked_df.values[
                 ranked_df.index.get_indexer(ranked_df[':scenario'].index), ranked_df.columns.get_indexer(
                     ranked_df[':scenario'])]
-            ranked_df["Energy Cost Effectiveness (% * m2/$)"] = ranked_df['baseline_energy_percent_better'] / ranked_df[
-                "baseline_difference_cost_equipment_total_cost_per_m_sq"]
-            ranked_df["GHG Cost Effectiveness (% * m2/$)"] = ranked_df['baseline_ghg_percent_better'] / ranked_df[
-                "baseline_difference_cost_equipment_total_cost_per_m_sq"]
-            ranked_df["Peak Shaving Cost Effectiveness (% * m2/$)"] = ranked_df['baseline_peak_electric_percent_better'] / ranked_df[
-                "baseline_difference_cost_equipment_total_cost_per_m_sq"]
+
+            ranked_df = ranked_df[[
+                ':scenario',
+                'baseline_energy_percent_better',
+                'baseline_ghg_percent_better',
+                'baseline_peak_electric_percent_better',
+                'baseline_difference_cost_equipment_total_cost_per_m_sq',
+                'scenario_value', 'cost_utility_ghg_total_kg_per_m_sq',
+                'energy_eui_electricity_gj_per_m_sq',
+                'energy_eui_natural_gas_gj_per_m_sq'
+            ]].copy()
+
+            # Rank based on Energy Savings, GHG and Peak Elec, and
+            columns = ['baseline_energy_percent_better',
+                       'baseline_ghg_percent_better',
+                       'baseline_peak_electric_percent_better',
+                       'baseline_difference_cost_equipment_total_cost_per_m_sq']
+            for column in columns:
+                print(column)
+                ranked_df[column + "_normalized"] = (ranked_df[column] - ranked_df[column].min()) / (
+                        ranked_df[column].max() - ranked_df[column].min())
+
+            ranked_df["energy_savings_cost_eff"] = ranked_df['baseline_energy_percent_better_normalized'] / ranked_df[
+                "baseline_difference_cost_equipment_total_cost_per_m_sq_normalized"]
+            ranked_df["ghg_savings_cost_eff"] = ranked_df['baseline_ghg_percent_better_normalized'] / ranked_df[
+                "baseline_difference_cost_equipment_total_cost_per_m_sq_normalized"]
+            ranked_df["peak_shaving_cost_eff"] = ranked_df['baseline_peak_electric_percent_better_normalized'] / \
+                                                 ranked_df[
+                                                     "baseline_difference_cost_equipment_total_cost_per_m_sq_normalized"]
 
             # Rank ecms.
             ranked_df['energy_savings_rank'] = ranked_df['baseline_energy_percent_better'].rank(ascending=False)
             ranked_df['ghg_savings_rank'] = ranked_df['baseline_ghg_percent_better'].rank(ascending=False)
             ranked_df['peak_shaving_rank'] = ranked_df['baseline_peak_electric_percent_better'].rank(ascending=False)
-            ranked_df['cost_eff_energy_savings_rank'] = ranked_df['Energy Cost Effectiveness (% * m2/$)'].rank(ascending=False)
-            ranked_df['cost_eff_ghg_savings_rank'] = ranked_df['GHG Cost Effectiveness (% * m2/$)'].rank(ascending=False)
-            ranked_df['cost_eff_peak_shaving_rank'] = ranked_df['Peak Shaving Cost Effectiveness (% * m2/$)'].rank(ascending=False)
+            ranked_df['energy_savings_cost_eff_rank'] = ranked_df['energy_savings_cost_eff'].rank(ascending=False)
+            ranked_df['ghg_savings_cost_eff_rank'] = ranked_df['ghg_savings_cost_eff'].rank(ascending=False)
+            ranked_df['peak_shaving_cost_eff_rank'] = ranked_df['peak_shaving_cost_eff'].rank(ascending=False)
 
-
+            # Create packages
+            package_names = [
+                'energy_savings_rank',
+                'ghg_savings_rank',
+                'peak_shaving_rank',
+                'energy_savings_cost_eff_rank',
+                'ghg_savings_cost_eff_rank',
+                'peak_shaving_cost_eff_rank'
+            ]
+            packages = dict()
+            for package_name in package_names:
+                package_df = ranked_df.sort_values([package_name], ascending=True).groupby(
+                    ':scenario').head(1)
+                packages[package_name] = dict()
+                for row in package_df[[':scenario', 'scenario_value']].values:
+                    packages[package_name][row[0]] = row[1]
 
 
 
 
             # Use only columns for ranking.
             ranked_df = ranked_df[[':scenario', 'scenario_value',
-                                   'Energy Cost Effectiveness (% * m2/$)',
-                                   'GHG Cost Effectiveness (% * m2/$)',
-                                   'Peak Shaving Cost Effectiveness (% * m2/$)',
+                                   'energy_savings_cost_eff',
+                                   'ghg_savings_cost_eff',
+                                   'peak_shaving_cost_eff',
                                    'baseline_energy_percent_better',
                                    'baseline_difference_cost_equipment_total_cost_per_m_sq',
                                    'cost_utility_ghg_total_kg_per_m_sq',
@@ -334,24 +373,21 @@ def sensitivity_chart(excel_file=None, pdf_output_folder="./"):
                                    'energy_savings_rank',
                                    'ghg_savings_rank',
                                    'peak_shaving_rank',
-                                   'cost_eff_energy_savings_rank',
-                                   'cost_eff_ghg_savings_rank',
-                                   'cost_eff_peak_shaving_rank'
+                                   'energy_savings_cost_eff_rank',
+                                   'ghg_savings_cost_eff_rank',
+                                   'peak_shaving_cost_eff_rank'
                                    ]]
 
             # Apply styling to dataframe and save
             pdf.start_section(name="Immediate Payback", level=1, strict=True)
             print(f"Plotting Immediate Payback ")
-            immediate_payback_df = ranked_df.loc[(ranked_df['Energy Cost Effectiveness (% * m2/$)'] >= 0.0)].copy()
+            immediate_payback_df = ranked_df.copy()
+            # immediate_payback_df = ranked_df.loc[(ranked_df['energy_savings_cost_eff'] >= 0.0)].copy()
 
             # Remove rows where energy savings are negative.
-            immediate_payback_df.drop(
-                immediate_payback_df[immediate_payback_df['baseline_energy_percent_better'] <= 0].index, inplace=True)
-
-
+            # immediate_payback_df.drop( immediate_payback_df[immediate_payback_df['baseline_energy_percent_better'] <= 0].index, inplace=True)
 
             immediate_payback_df = immediate_payback_df.sort_values(by=['energy_savings_rank'])
-
 
             immediate_payback_df.rename(columns={
                 'baseline_difference_cost_equipment_total_cost_per_m_sq': 'ECM Net Capital Savings ($/m2)',
@@ -364,16 +400,16 @@ def sensitivity_chart(excel_file=None, pdf_output_folder="./"):
 
             }, inplace=True)
             # Sort by energy savings ranks and keep the first one of each ecm type.
-            immediate_payback_df = immediate_payback_df.sort_values(['energy_savings_rank'], ascending=True).groupby(
-                'Measure Name').head(1)
+            # immediate_payback_df = immediate_payback_df.sort_values(['energy_savings_rank'], ascending=True).groupby('Measure Name').head(1)
             immediate_payback_df = immediate_payback_df.sort_values(by=['Energy Reduction (%)'], ascending=False)
-            immediate_payback_df = immediate_payback_df.drop('Energy Cost Effectiveness (% * m2/$)', axis=1)
+            # immediate_payback_df = immediate_payback_df.drop('energy_savings_cost_eff', axis=1)
+            immediate_payback_df.to_excel("panda.xlsx")
             styled_df = immediate_payback_df.style.format({
                 'ECM Net Capital Savings ($/m2)': "{:.2f}",
                 'Energy Reduction (%)': "{:.1f}",
                 'Carbon (kg/m2)': "{:.2f}",
                 'Electricity (GJ/m2)': "{:.2f}",
-                'Natural Gas (GJ/m2)':"{:.2f}"
+                'Natural Gas (GJ/m2)': "{:.2f}"
 
             }).hide(axis="index").bar(subset=["Energy Reduction (%)", ], color='lightgreen')
             img_buf = BytesIO()  # Create image object
@@ -384,7 +420,7 @@ def sensitivity_chart(excel_file=None, pdf_output_folder="./"):
             # ECM Ranked Styled Table.
             pdf.start_section(name="Ranked ECMs", level=1, strict=True)
             print(f"Plotting Ranked ECMs ")
-            payback_df = ranked_df.loc[(ranked_df['Energy Cost Effectiveness (% * m2/$)'] < 0.0)].copy()
+            payback_df = ranked_df.loc[(ranked_df['energy_savings_cost_eff'] < 0.0)].copy()
             # Remove rows where energy savings are negative.
             payback_df.drop(payback_df[payback_df['baseline_energy_percent_better'] <= 0].index, inplace=True)
 
@@ -399,20 +435,20 @@ def sensitivity_chart(excel_file=None, pdf_output_folder="./"):
 
             }, inplace=True)
 
-            payback_df['Energy Cost Effectiveness (% * m2/$)'] = payback_df[
-                'Energy Cost Effectiveness (% * m2/$)'].apply(lambda x: x * -1.0)
+            payback_df['energy_savings_cost_eff'] = payback_df[
+                'energy_savings_cost_eff'].apply(lambda x: x * -1.0)
             payback_df['ECM Net Capital Cost ($/m2)'] = payback_df['ECM Net Capital Cost ($/m2)'].apply(
                 lambda x: x * -1.0)
-            payback_df = payback_df.sort_values(by=['Energy Cost Effectiveness (% * m2/$)'], ascending=False)
+            payback_df = payback_df.sort_values(by=['energy_savings_cost_eff'], ascending=False)
             styled_df = payback_df.style.format({
-                'Energy Cost Effectiveness (% * m2/$)': "{:.2f}",
+                'energy_savings_cost_eff': "{:.2f}",
                 'ECM Net Capital Cost ($/m2)': "{:.2f}",
                 'Energy Reduction (%)': "{:.1f}",
                 'Carbon (kg/m2)': "{:.2f}",
                 'Electricity (GJ/m2)': "{:.2f}",
                 'Natural Gas (GJ/m2)': "{:.2f}"
 
-            }).hide(axis="index").bar(subset=["Energy Cost Effectiveness (% * m2/$)", ], color='lightgreen')
+            }).hide(axis="index").bar(subset=["energy_savings_cost_eff", ], color='lightgreen')
             img_buf = BytesIO()  # Create image object
             dfi.export(styled_df, img_buf, dpi=400)
             pdf.image(img_buf, w=pdf.epw / 2)
