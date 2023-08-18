@@ -24,6 +24,7 @@ import uuid
 import numpy as np
 from icecream import ic
 from src.btap.aws_dynamodb import AWSResultsTable
+import pandas as pd
 
 
 def get_pareto_points(costs, return_mask=True):
@@ -184,12 +185,14 @@ def analysis(project_input_folder=None,
                                   analysis_input_folder=analysis_input_folder,
                                   output_folder=output_folder,
                                   reference_run_data_path=reference_run_data_path)
+            ba.run()
         # parametric
         elif analysis_config[':algorithm_type'] == 'parametric':
             ba = BTAPParametric(analysis_config=analysis_config,
                                 analysis_input_folder=analysis_input_folder,
                                 output_folder=output_folder,
                                 reference_run_data_path=reference_run_data_path)
+            ba.run()
 
         # parametric
         elif analysis_config[':algorithm_type'] == 'elimination':
@@ -197,29 +200,59 @@ def analysis(project_input_folder=None,
                                  analysis_input_folder=analysis_input_folder,
                                  output_folder=output_folder,
                                  reference_run_data_path=reference_run_data_path)
+            ba.run()
 
         elif analysis_config[':algorithm_type'] == 'sampling-lhs':
             ba = BTAPSamplingLHS(analysis_config=analysis_config,
                                  analysis_input_folder=analysis_input_folder,
                                  output_folder=output_folder,
                                  reference_run_data_path=reference_run_data_path)
+            ba.run()
 
         elif analysis_config[':algorithm_type'] == 'sensitivity':
             ba = BTAPSensitivity(analysis_config=analysis_config,
                                  analysis_input_folder=analysis_input_folder,
                                  output_folder=output_folder,
                                  reference_run_data_path=reference_run_data_path)
+            ba.run()
+            sensitivity_run_data_path = ba.analysis_excel_results_path()
+            bp = BTAPSensitivity.run_sensitivity_best_packages(output_folder=output_folder,
+                                          project_input_folder=project_input_folder,
+                                          reference_run_data_path=reference_run_data_path,
+                                          sensitivity_run_data_path=sensitivity_run_data_path,
+                                          compute_environment=compute_environment)
+            bp.run()
+            sensitivity_package_run_data_path = bp.analysis_excel_results_path()
+            excel_list = list()
+            excel_list.append(pd.read_excel(reference_run_data_path))
+            excel_list.append(pd.read_excel(sensitivity_package_run_data_path))
+            excel_list.append(pd.read_excel(sensitivity_run_data_path))
+            excl_merged = pd.concat(excel_list, ignore_index=True)
+            # Up three folders to parent analysis folder.
+
+            bp.analysis_name_folder()
+            #excl_merged.to_excel(os.path.join(bp.analysis_name_folder()),'merged_output.xlsx', index=False)
+
+
+
+            #merge results.
+
+
+
+
+
 
         elif analysis_config[':algorithm_type'] == 'reference':
             ba = BTAPReference(analysis_config=analysis_config,
                                analysis_input_folder=analysis_input_folder,
                                output_folder=output_folder)
+            ba.run()
 
         else:
             print(f"Error:Analysis type {analysis_config[':algorithm_type']} not supported. Exiting.")
             exit(1)
 
-        ba.run()
+
         print(f"Excel results file {ba.analysis_excel_results_path()}")
 
     if compute_environment == 'aws_batch_analysis':
@@ -349,13 +382,10 @@ def sensitivity_chart(excel_file=None, pdf_output_folder="./"):
             ]
             packages = dict()
             for package_name in package_names:
-                package_df = ranked_df.sort_values([package_name], ascending=True).groupby(
-                    ':scenario').head(1)
+                package_df = ranked_df.sort_values([package_name], ascending=True).groupby(':scenario').head(1)
                 packages[package_name] = dict()
                 for row in package_df[[':scenario', 'scenario_value']].values:
                     packages[package_name][row[0]] = row[1]
-
-
 
 
             # Use only columns for ranking.
