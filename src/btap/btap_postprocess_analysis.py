@@ -21,12 +21,12 @@ from icecream import ic
 
 class PostProcessResults():
     def __init__(self,
-                 baseline_results=BASELINE_RESULTS,
-                 database_folder=None,
-                 results_folder=None,
-                 compute_environment=None,
-                 output_variables=None,
-                 username=None
+                 baseline_results=BASELINE_RESULTS, # Path to reference run
+                 database_folder=None, # Path to location of analysis csv simulation results.. ie output/optimization/results/database
+                 results_folder=None,  # Path to result folder ie output/optimization/results/ probably should be removed as redundant.
+                 compute_environment=None, # where the analysis was run.
+                 output_variables=None, # Custom E+ output varialbles.
+                 username=None # username, usually aws username.
                  ):
 
         logging.info(f'PostProcessResults(baseline_results=r"{baseline_results}",database_folder=r"{database_folder}", results_folder=r"{results_folder}, compute_environment ="{compute_environment}", output_variables="{output_variables}", username="{username}")')

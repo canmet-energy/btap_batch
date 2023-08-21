@@ -171,10 +171,9 @@ def analysis(project_input_folder=None,
                                analysis_input_folder=analysis_input_folder,
                                output_folder=os.path.join(output_folder))
             br.run()
-
             reference_run_data_path = br.analysis_excel_results_path()
 
-        # ic(reference_run_data_path)
+
 
         # BTAP analysis placeholder.
         ba = None
@@ -186,6 +185,7 @@ def analysis(project_input_folder=None,
                                   output_folder=output_folder,
                                   reference_run_data_path=reference_run_data_path)
             ba.run()
+            merge_excel(rootdir=ba.analysis_name_folder())
         # parametric
         elif analysis_config[':algorithm_type'] == 'parametric':
             ba = BTAPParametric(analysis_config=analysis_config,
@@ -193,6 +193,7 @@ def analysis(project_input_folder=None,
                                 output_folder=output_folder,
                                 reference_run_data_path=reference_run_data_path)
             ba.run()
+            merge_excel(rootdir=ba.analysis_name_folder())
 
         # parametric
         elif analysis_config[':algorithm_type'] == 'elimination':
@@ -201,6 +202,7 @@ def analysis(project_input_folder=None,
                                  output_folder=output_folder,
                                  reference_run_data_path=reference_run_data_path)
             ba.run()
+            merge_excel(rootdir=ba.analysis_name_folder())
 
         elif analysis_config[':algorithm_type'] == 'sampling-lhs':
             ba = BTAPSamplingLHS(analysis_config=analysis_config,
@@ -208,6 +210,7 @@ def analysis(project_input_folder=None,
                                  output_folder=output_folder,
                                  reference_run_data_path=reference_run_data_path)
             ba.run()
+            merge_excel(rootdir=ba.analysis_name_folder())
 
         elif analysis_config[':algorithm_type'] == 'sensitivity':
             ba = BTAPSensitivity(analysis_config=analysis_config,
@@ -222,24 +225,7 @@ def analysis(project_input_folder=None,
                                           sensitivity_run_data_path=sensitivity_run_data_path,
                                           compute_environment=compute_environment)
             bp.run()
-            sensitivity_package_run_data_path = bp.analysis_excel_results_path()
-            excel_list = list()
-            excel_list.append(pd.read_excel(reference_run_data_path))
-            excel_list.append(pd.read_excel(sensitivity_package_run_data_path))
-            excel_list.append(pd.read_excel(sensitivity_run_data_path))
-            excl_merged = pd.concat(excel_list, ignore_index=True)
-            # Up three folders to parent analysis folder.
-
-            bp.analysis_name_folder()
-            #excl_merged.to_excel(os.path.join(bp.analysis_name_folder()),'merged_output.xlsx', index=False)
-
-
-
-            #merge results.
-
-
-
-
+            merge_excel(rootdir=ba.analysis_name_folder())
 
 
         elif analysis_config[':algorithm_type'] == 'reference':
@@ -247,6 +233,7 @@ def analysis(project_input_folder=None,
                                analysis_input_folder=analysis_input_folder,
                                output_folder=output_folder)
             ba.run()
+            merge_excel(rootdir=ba.analysis_name_folder())
 
         else:
             print(f"Error:Analysis type {analysis_config[':algorithm_type']} not supported. Exiting.")
@@ -272,6 +259,24 @@ def analysis(project_input_folder=None,
         # Submit analysis job to aws.
         job = batch.create_job(job_id=analysis_name, reference_run=reference_run)
         return job.submit_job()
+
+
+def merge_excel( rootdir = r"C:\Users\plopez\btap_batch\output\sensitivity_example"):
+    # Merge all analysis to a single output.xlsx file.
+    excel_list = list()
+    for folder in [it.path for it in os.scandir(rootdir) if it.is_dir()]:
+        # Determine if output.xlsx file exists for this sub analysis
+        file = os.path.join(folder,"results","output.xlsx")
+        if os.path.isfile(file):
+            # Convert excel file to df and add to a list.
+            excel_list.append(pd.read_excel(file))
+    # merge all dfs.
+    excl_merged = pd.concat(excel_list, ignore_index=True)
+    # save the file to the root analysis folder.
+    output_file = os.path.join(rootdir,'output.xlsx')
+    print(f"Main results file is saved here {output_file}")
+    excl_merged.to_excel(output_file, index=False)
+
 
 
 def list_active_analyses():
