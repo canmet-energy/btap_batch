@@ -41,6 +41,7 @@ class BTAPSensitivity(BTAPParametric):
 
     @staticmethod
     def rank_sensitivity_ecms(df):
+
         # Create copy of dataframe.
         ranked_df = df.copy()
 
@@ -49,60 +50,11 @@ class BTAPSensitivity(BTAPParametric):
             ranked_df.index.get_indexer(ranked_df[':scenario'].index), ranked_df.columns.get_indexer(
                 ranked_df[':scenario'])]
 
-        # Reduce columns to the ones below to make pandas processing faster
-        ranked_df = ranked_df[[
-            ':scenario',
-            'scenario_value',
-            'baseline_energy_percent_better',
-            'baseline_ghg_percent_better',
-            'baseline_peak_electric_percent_better',
-            'baseline_difference_cost_equipment_total_cost_per_m_sq',
-            'cost_utility_ghg_total_kg_per_m_sq',
-            'energy_eui_electricity_gj_per_m_sq',
-            'energy_eui_natural_gas_gj_per_m_sq',
-            'energy_eui_total_gj_per_m_sq',
-            'energy_peak_electric_w_per_m_sq'
-
-        ]].copy()
-
-        # Normalize incremental cost difference.
-        ranked_df["baseline_difference_cost_equipment_total_cost_per_m_sq_normalized"] = (ranked_df[
-                                                                                              'baseline_difference_cost_equipment_total_cost_per_m_sq'] -
-                                                                                          ranked_df[
-                                                                                              'baseline_difference_cost_equipment_total_cost_per_m_sq'].min()) / (
-                                                                                                 ranked_df[
-                                                                                                     'baseline_difference_cost_equipment_total_cost_per_m_sq'].max() -
-                                                                                                 ranked_df[
-                                                                                                     'baseline_difference_cost_equipment_total_cost_per_m_sq'].min())
-        # Normalizing Energy Savings, GHG and Peak Elec. and save in new columns.
-        columns = ['energy_eui_total_gj_per_m_sq',
-                   'energy_peak_electric_w_per_m_sq',
-                   'cost_utility_ghg_total_kg_per_m_sq']
-        for column in columns:
-            # Save normalized values
-            ranked_df[column + "_normalized"] = (ranked_df[column] - ranked_df[column].min()) / (
-                    ranked_df[column].max() - ranked_df[column].min())
-            # Save cost effectiveness
-            ranked_df[column + "_cost_eff"] = ranked_df[column + "_normalized"] / \
-                                              ranked_df[
-                                                  "baseline_difference_cost_equipment_total_cost_per_m_sq_normalized"]
-
-        # Create scale to be able to rank cost effectiveness for each target
-        ranked_df["ghg_savings_cost_eff"] = ranked_df['cost_utility_ghg_total_kg_per_m_sq_normalized'] / ranked_df[
-            "baseline_difference_cost_equipment_total_cost_per_m_sq_normalized"]
-        ranked_df["peak_shaving_cost_eff"] = ranked_df['energy_peak_electric_w_per_m_sq_normalized'] / \
-                                             ranked_df[
-                                                 "baseline_difference_cost_equipment_total_cost_per_m_sq_normalized"]
         # Rank ecms.
-        ranked_df['energy_savings_rank'] = ranked_df['energy_eui_total_gj_per_m_sq_normalized'].rank(ascending=True)
-        ranked_df['ghg_savings_rank'] = ranked_df['cost_utility_ghg_total_kg_per_m_sq_normalized'].rank(ascending=True)
-        ranked_df['peak_shaving_rank'] = ranked_df['energy_peak_electric_w_per_m_sq_normalized'].rank(ascending=True)
-        ranked_df['energy_savings_cost_eff_rank'] = ranked_df['energy_eui_total_gj_per_m_sq_cost_eff'].rank(
-            ascending=True)
-        ranked_df['ghg_savings_cost_eff_rank'] = ranked_df['cost_utility_ghg_total_kg_per_m_sq_cost_eff'].rank(
-            ascending=True)
-        ranked_df['peak_shaving_cost_eff_rank'] = ranked_df['energy_peak_electric_w_per_m_sq_cost_eff'].rank(
-            ascending=True)
+        ranked_df['energy_savings_rank'] = ranked_df['energy_eui_total_gj_per_m_sq'].rank(ascending=True)
+        ranked_df['ghg_savings_rank'] = ranked_df['cost_utility_ghg_total_kg_per_m_sq'].rank(ascending=True)
+        ranked_df['peak_shaving_rank'] = ranked_df['energy_peak_electric_w_per_m_sq'].rank(ascending=True)
+
         return ranked_df
 
     @staticmethod
@@ -124,9 +76,6 @@ class BTAPSensitivity(BTAPParametric):
             'energy_savings_rank',
             'ghg_savings_rank',
             'peak_shaving_rank',
-            'energy_savings_cost_eff_rank',
-            'ghg_savings_cost_eff_rank',
-            'peak_shaving_cost_eff_rank'
         ]
         # Get information from sensitivity input.yml
         analysis_config, analysis_input_folder, analyses_folder = BTAPAnalysis.load_analysis_input_file(
@@ -168,10 +117,13 @@ class BTAPSensitivity(BTAPParametric):
     @staticmethod
     def generate_pdf_report(df):
 
-        # Set up Excel output
-        writer = pd.ExcelWriter("dataframe.xlsx", engine='xlsxwriter')
+
         # Set up FPDF Object.
         pdf = FPDF()
+
+        # Set up Excel output
+        writer = pd.ExcelWriter(r'C:\Users\plopez\btap_batch\dataframe.xlsx', engine='xlsxwriter')
+
         # Add Page
         pdf.add_page()
         # First Section
@@ -182,81 +134,131 @@ class BTAPSensitivity(BTAPParametric):
         print(f"Plotting Immediate Payback ")
 
         # Remove ECMs that have no effect on model at all.
-        df = df.query(
-            "baseline_ghg_percent_better != 0 and baseline_peak_electric_percent_better != 0 and baseline_energy_percent_better != 0 ")
+
 
         # Filter by sensitivity runs.
-        sensitivity_df = BTAPSensitivity.rank_sensitivity_ecms(
-            df.query("`:algorithm_type` == 'sensitivity'").copy().reset_index())
-        sensitivity_df = sensitivity_df[[
-            ':scenario',
-            'scenario_value',
-            'energy_savings_rank',
-            'energy_savings_cost_eff_rank',
-            'baseline_energy_percent_better',
-            'ghg_savings_rank',
-            'ghg_savings_cost_eff_rank',
-            'baseline_ghg_percent_better',
-            'peak_shaving_rank',
-            'peak_shaving_cost_eff_rank',
-            'baseline_peak_electric_percent_better',
-            'baseline_difference_cost_equipment_total_cost_per_m_sq'
-        ]].copy()
-        sensitivity_df = sensitivity_df.sort_values(by=['energy_savings_rank'])
+        ranked_df = BTAPSensitivity.rank_sensitivity_ecms(
+            df.query("`:algorithm_type` == 'sensitivity'").copy().reset_index(drop=True))
+
+
+        # Costing Table
+        costing_df = ranked_df[[':scenario',
+                               'scenario_value',
+                                'baseline_energy_percent_better',
+                                'baseline_ghg_percent_better',
+                                'baseline_peak_electric_percent_better',
+                                'baseline_difference_cost_equipment_envelope_total_cost_per_m_sq',
+                                'baseline_difference_cost_equipment_heating_and_cooling_total_cost_per_m_sq',
+                                'baseline_difference_cost_equipment_lighting_total_cost_per_m_sq',
+                                'baseline_difference_cost_equipment_renewables_total_cost_per_m_sq',
+                                'baseline_difference_cost_equipment_shw_total_cost_per_m_sq',
+                                'baseline_difference_cost_equipment_thermal_bridging_total_cost_per_m_sq',
+                                'baseline_difference_cost_equipment_ventilation_total_cost_per_m_sq',
+                                'baseline_difference_cost_equipment_total_cost_per_m_sq'
+                               ]].copy()
+
+        costing_df.to_excel(writer, sheet_name='costing', index=False)
+
+
+        #costing_df = costing_df.query("scenario_value != 'NECB_Default'").copy().reset_index(drop=True)
+        # Remove ECMs that have no effect on model at all.
+        costing_df = costing_df[(costing_df['baseline_energy_percent_better'] != 0.0) ]
+        costing_df.to_excel(writer, sheet_name='costing2', index=False)
+
+
+        costing_df = costing_df.sort_values(by=['baseline_energy_percent_better'],ascending=False).reset_index(drop=True)
+        costing_df = costing_df.rename(columns=
+                       {
+                        ':scenario': 'Measure Name',
+                        'scenario_value': 'Measure Value',
+                        'baseline_energy_percent_better': '% Energy Savings',
+                        'baseline_ghg_percent_better': '% GHG Savings',
+                        'baseline_peak_electric_percent_better': '% Peak Savings',
+                        'baseline_difference_cost_equipment_envelope_total_cost_per_m_sq': 'Envelope ($/m2)',
+                        'baseline_difference_cost_equipment_thermal_bridging_total_cost_per_m_sq': 'Thermal Bridging ($/m2)',
+                        'baseline_difference_cost_equipment_heating_and_cooling_total_cost_per_m_sq': 'Heating & Cooling ($/m2)',
+                        'baseline_difference_cost_equipment_lighting_total_cost_per_m_sq': 'Lighting ($/m2)',
+                        'baseline_difference_cost_equipment_renewables_total_cost_per_m_sq': 'Renewables ($/m2)',
+                        'baseline_difference_cost_equipment_shw_total_cost_per_m_sq': 'SHW ($/m2)',
+                        'baseline_difference_cost_equipment_ventilation_total_cost_per_m_sq': 'Ventilation & Ductwork ($/m2)',
+                        'baseline_difference_cost_equipment_total_cost_per_m_sq': 'Total ($/m2)',
+                        })
+        # Remove empty columns
+        columns_removed = []
+        for column in costing_df:  # iterates by-name
+            if costing_df[column].isna().all() or (costing_df[column] == 0).all():
+                columns_removed.append(column)
+        costing_df = costing_df.replace(0, np.nan).dropna(axis=1, how="all").fillna(0)
+
+
+
+
+        styled_df = costing_df.style.format()
+        styled_df.hide(axis="index")
+        styled_df.format(precision=2)
+        headers = ["% Energy Savings",
+         "% GHG Savings",
+         "% Peak Savings",
+         'Envelope ($/m2)',
+         'Thermal Bridging ($/m2)',
+         'Heating & Cooling ($/m2)',
+         'Lighting ($/m2)',
+         'Renewables ($/m2)',
+         'SHW ($/m2)',
+         'Ventilation & Ductwork ($/m2)',
+         'Total ($/m2)'
+         ]
+
+        # Remove
+        headers = [x for x in headers if x not in columns_removed]
+        print(headers)
+        styled_df.bar(subset=headers,  color=['red', 'lightgreen'])
+
+        # styled_df.bar(subset='Heating & Cooling', color=['red', 'lightgreen'])
+
+
+
+
+        img_buf = BytesIO()  # Create image object
+        dfi.export(styled_df, img_buf, dpi=200)
+        pdf.image(img_buf,w=pdf.epw)
+        img_buf.close()
+
+
+        writer.close()
+        pdf.output(r'C:\Users\plopez\btap_batch\panda.pdf')
+        exit(1)
 
         # Energy Table
-        energy_df = sensitivity_df[[':scenario',
-                                    'scenario_value',
-                                    'energy_savings_rank',
-                                    'energy_savings_cost_eff_rank',
-                                    'baseline_energy_percent_better',
-                                    'baseline_difference_cost_equipment_total_cost_per_m_sq'
-                                    ]].copy()
+        energy_df = ranked_df[[':scenario',
+                               'scenario_value',
+                               'energy_savings_rank',
+                               'baseline_energy_percent_better',
+                               'baseline_difference_cost_equipment_total_cost_per_m_sq'
+                               ]].copy()
         energy_df = energy_df.sort_values(by=['energy_savings_rank'])
         energy_df.to_excel(writer, sheet_name='energy_rankings', index=False)
 
         # GHG Table
-        ghg_df = sensitivity_df[[':scenario',
-                                 'scenario_value',
-                                 'ghg_savings_rank',
-                                 'ghg_savings_cost_eff_rank',
-                                 'baseline_ghg_percent_better',
-                                 'baseline_difference_cost_equipment_total_cost_per_m_sq'
+        ghg_df = ranked_df[[':scenario',
+                            'scenario_value',
+                            'ghg_savings_rank',
+                            'baseline_ghg_percent_better',
+                            'baseline_difference_cost_equipment_total_cost_per_m_sq'
 
-                                 ]].copy()
+                            ]].copy()
         ghg_df = ghg_df.sort_values(by=['ghg_savings_rank'])
         ghg_df.to_excel(writer, sheet_name='ghg_rankings', index=False)
 
         # Peak Table
-        peak_df = sensitivity_df[[':scenario',
-                                  'scenario_value',
-                                  'peak_shaving_rank',
-                                  'peak_shaving_cost_eff_rank',
-                                  'baseline_peak_electric_percent_better',
-                                  'baseline_difference_cost_equipment_total_cost_per_m_sq'
-                                  ]].copy()
+        peak_df = ranked_df[[':scenario',
+                             'scenario_value',
+                             'peak_shaving_rank',
+                             'baseline_peak_electric_percent_better',
+                             'baseline_difference_cost_equipment_total_cost_per_m_sq'
+                             ]].copy()
         peak_df = peak_df.sort_values(by=['peak_shaving_rank'])
         peak_df.to_excel(writer, sheet_name='peak_rankings', index=False)
-
-        reference_df = df.query("`:algorithm_type` == 'reference'").copy().reset_index()
-        sensitivity_best_packages_df = df.query("`:algorithm_type` == 'sensitivity_best_packages'").copy().reset_index()
-
-        reference_df.to_excel(writer, sheet_name='reference', index=False)
-        sensitivity_best_packages_df.to_excel(writer, sheet_name='packages', index=False)
-        writer.close()
-
-        exit(1)
-
-        immediate_payback_df.rename(columns={
-            'baseline_difference_cost_equipment_total_cost_per_m_sq': 'ECM Net Capital Savings ($/m2)',
-            ':scenario': 'Measure Name',
-            'scenario_value': 'Measure Value',
-            'baseline_energy_percent_better': 'Energy Reduction (%)',
-            'cost_utility_ghg_total_kg_per_m_sq': 'Carbon (kg/m2)',
-            'energy_eui_electricity_gj_per_m_sq': 'Electricity (GJ/m2)',
-            'energy_eui_natural_gas_gj_per_m_sq': 'Natural Gas (GJ/m2)'
-
-        }, inplace=True)
 
         # Sort by energy savings ranks and keep the first one of each ecm type.
         # immediate_payback_df = immediate_payback_df.sort_values(['energy_savings_rank'], ascending=True).groupby('Measure Name').head(1)
@@ -424,7 +426,7 @@ class BTAPSensitivity(BTAPParametric):
         #     plt.close('all')
         #
         #
-        pdf.output("panda.pdf")
+
 
 
 df = pd.read_excel(r'C:\Users\plopez\btap_batch\output\sensitivity_example\output.xlsx', index_col=0)

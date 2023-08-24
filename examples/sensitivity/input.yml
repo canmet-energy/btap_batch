@@ -1,5 +1,5 @@
 ---
-:analysis_name: sensitivity_example
+:analysis_name: hr_apt_sensitivity_example
 :algorithm_type: sensitivity
 :algorithm_nsga_population: null
 :algorithm_nsga_n_generations: null
@@ -34,9 +34,9 @@
     #      'RetailStandalone',
     #      'RetailStripmall',
     #      'QuickServiceRestaurant',
-      'FullServiceRestaurant',
+    #      'FullServiceRestaurant',
     #      'MidriseApartment',
-    #      'HighriseApartment',
+           'HighriseApartment',
     #      'LowriseApartment',
     #      'Hospital',
     #      'Outpatient'
