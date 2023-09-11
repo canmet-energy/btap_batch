@@ -1,5 +1,5 @@
 ---
-:analysis_name: sensitivity_sqi
+:analysis_name: sensitivity_sqi2
 :algorithm_type: sensitivity
 :algorithm_nsga_population: null
 :algorithm_nsga_n_generations: null
