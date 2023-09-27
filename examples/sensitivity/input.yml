@@ -31,13 +31,12 @@
     #      'RetailStandalone',
     #      'RetailStripmall',
     #      'QuickServiceRestaurant',
-    #       'FullServiceRestaurant',
+           'FullServiceRestaurant',
     #      'MidriseApartment',
     #      'HighriseApartment',
     #      'LowriseApartment',
     #      'Hospital',
     #      'Outpatient'
-          'sqi_sec_school'
   ]
   # The standard template to use for baseline assumptions.
   :template: [
@@ -100,8 +99,8 @@
   # What are the existing vs all versions?
   :boiler_eff: [
       'NECB_Default',
-      'NECB 88% Efficient Condensing Boiler',
-      'Viessmann Vitocrossal 300 CT3-17 96.2% Efficient Condensing Gas Boiler'
+#      'NECB 88% Efficient Condensing Boiler',
+#      'Viessmann Vitocrossal 300 CT3-17 96.2% Efficient Condensing Gas Boiler'
   ]
   :furnace_eff: [
       'NECB_Default',
@@ -109,68 +108,68 @@
   ]
   :shw_eff: [
       'NECB_Default',
-      'Natural Gas Power Vent with Electric Ignition',
-      'Natural Gas Direct Vent with Electric Ignition'
+#      'Natural Gas Power Vent with Electric Ignition',
+#      'Natural Gas Direct Vent with Electric Ignition'
   ]
   # Default DHW is consistent with primary heating fuel
   :ext_wall_cond: [
       'NECB_Default',
-      '0.314',
-      '0.278',
-      '0.247',
-      '0.210',
-      '0.183'
+#      '0.314',
+#      '0.278',
+#      '0.247',
+#      '0.210',
+#      '0.183'
   ]
 
   :ext_floor_cond: [
       'NECB_Default',
-      '0.227',
-      '0.183',
-      '0.162',
-      '0.142'
+#      '0.227',
+#      '0.183',
+#      '0.162',
+#      '0.142'
   ]
   :ext_roof_cond: [
       'NECB_Default',
-      '0.227',
-      '0.193',
-      '0.183',
-      '0.162',
-      '0.142',
-      '0.138',
-      '0.121'
+#      '0.227',
+#      '0.193',
+#      '0.183',
+#      '0.162',
+#      '0.142',
+#      '0.138',
+#      '0.121'
   ]
   :ground_wall_cond: [
       'NECB_Default',
-      '0.568',
-      '0.379',
-      '0.284',
-      '0.210'
+#      '0.568',
+#      '0.379',
+#      '0.284',
+#      '0.210'
   ]
 
   :ground_floor_cond: [
       'NECB_Default',
-      '0.758',
-      '0.379'
+#      '0.758',
+#      '0.379'
   ]
 
   :ground_roof_cond: [
       'NECB_Default',
-      '0.568',
-      '0.379' ,
-      '0.284',
-      '0.210'
+#      '0.568',
+#      '0.379' ,
+#      '0.284',
+#      '0.210'
   ]
   :door_construction_cond: [
       'NECB_Default',
-      '2.4',
-      '2.2',
-      '1.6'
+#      '2.4',
+#      '2.2',
+#      '1.6'
   ]
   :fixed_window_cond: [
       'NECB_Default',
-      '2.4',
-      '2.2',
-      '1.6'
+#      '2.4',
+#      '2.2',
+#      '1.6'
   ]
   :glass_door_cond: [
       'NECB_Default',
@@ -197,42 +196,42 @@
   ]
   :fixed_wind_solar_trans: [
       'NECB_Default',
-      '0.2',
-      '0.3',
-      '0.4',
-      '0.5',
-      '0.6'
+#      '0.2',
+#      '0.3',
+#      '0.4',
+#      '0.5',
+#      '0.6'
   ]
   # This is the same as SHGC
   :skylight_solar_trans: [
       'NECB_Default',
-      '0.05',
-      '0.50',
-      '0.95'
+#      '0.05',
+#      '0.50',
+#      '0.95'
   ]
 
   :fdwr_set: [
       'NECB_Default',
-      '0.30',
-      '0.50',
-      '0.80'
+#      '0.30',
+#      '0.50',
+#      '0.80'
   ]
   # Skylight to roof ratio
   :srr_set: [
       'NECB_Default',
-      '0.03',
-      '0.05',
-      '0.10'
+#      '0.03',
+#      '0.05',
+#      '0.10'
   ]
   :rotation_degrees: [
       'NECB_Default',
-      '45.0',
-      '90.0',
-      '135.0',
-      '180.0',
-      '225.0',
-      '270.0',
-      '315.0'
+#      '45.0',
+#      '90.0',
+#      '135.0',
+#      '180.0',
+#      '225.0',
+#      '270.0',
+#      '315.0'
   ]
   # Picking the worst orientation (major axis of building oriented N-S)
   :scale_x: [

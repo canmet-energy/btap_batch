@@ -72,19 +72,21 @@ class BTAPSensitivity(BTAPParametric):
         return ranked_df
 
     @staticmethod
-    def run_sensitivity_best_packages(output_folder=os.path.abspath(r"..\..\output"),
-                                      project_input_folder=os.path.abspath(r"..\..\examples\sensitivity"),
-                                      reference_run_data_path=os.path.abspath(
-                                          r"..\..\output\sensitivity_example\reference\results\output.xlsx"),
-                                      sensitivity_run_data_path=os.path.abspath(
-                                          r"..\..\output\sensitivity_example\sensitivity\results\output.xlsx"),
+    def run_sensitivity_best_packages(
+                                      output_folder=None,
+                                      project_input_folder=None,
+                                      df = None,
                                       compute_environment='local_docker'):
         import pandas as pd
         import os
 
-        df = pd.read_excel(open(sensitivity_run_data_path, 'rb'), sheet_name='btap_data')
+        # Filter by sensitivity type.
+        sensitivity_df = df.query("`:algorithm_type` == 'sensitivity'").copy().reset_index(drop=True)
+
+        reference_run_df = df.query("`:algorithm_type` == 'reference'").copy().reset_index(drop=True)
+
         # Rank the results.
-        ranked_df = BTAPSensitivity.rank_sensitivity_ecms(df)
+        ranked_df = BTAPSensitivity.rank_sensitivity_ecms(sensitivity_df)
         # Create packages
         package_names = [
             'energy_savings_rank',
@@ -124,7 +126,7 @@ class BTAPSensitivity(BTAPParametric):
         bp = BTAPPackages(analysis_config=analysis_config,
                           analysis_input_folder=analysis_input_folder,
                           output_folder=output_folder,
-                          reference_run_data_path=reference_run_data_path)
+                          reference_run_df=reference_run_df)
         bp.add_packages(best_packages)
         return bp
 
@@ -133,6 +135,8 @@ class BTAPSensitivity(BTAPParametric):
                             pdf_output = None,
                             ):
 
+        # Filter by sensitivity type.
+        df = df.query("`:algorithm_type` == 'sensitivity'").copy().reset_index(drop=True)
 
         # Set up FPDF Object.
         pdf = FPDF()
@@ -143,14 +147,7 @@ class BTAPSensitivity(BTAPParametric):
         # Add Page
         pdf.add_page()
         # First Section
-        pdf.start_section(name="Sensitivity", level=0, strict=True)
-
-        # Apply styling to dataframe and save
-        pdf.start_section(name="Immediate Payback", level=1, strict=True)
-        print(f"Plotting Immediate Payback ")
-
-        # Remove ECMs that have no effect on model at all.
-
+        pdf.start_section(name="Sensitivity Analysis Summary", level=0, strict=True)
 
         # Filter by sensitivity runs.
         ranked_df = BTAPSensitivity.rank_sensitivity_ecms(
@@ -192,6 +189,7 @@ class BTAPSensitivity(BTAPParametric):
                         'baseline_energy_percent_better': '% Energy Savings',
                         'baseline_ghg_percent_better': '% GHG Savings',
                         'baseline_peak_electric_percent_better': '% Peak Savings',
+                        'npv_total_per_m2': 'NPV ($/m2)',
                         'baseline_difference_cost_equipment_envelope_total_cost_per_m_sq': 'Envelope ($/m2)',
                         'baseline_difference_cost_equipment_thermal_bridging_total_cost_per_m_sq': 'Thermal Bridging ($/m2)',
                         'baseline_difference_cost_equipment_heating_and_cooling_total_cost_per_m_sq': 'Heating & Cooling ($/m2)',
@@ -232,7 +230,7 @@ class BTAPSensitivity(BTAPParametric):
         print(headers)
         styled_df.bar(subset=headers,  color=['red', 'lightgreen'])
 
-        # styled_df.bar(subset='Heating & Cooling', color=['red', 'lightgreen'])
+        styled_df.to_excel(writer, sheet_name='colored', index=False)
 
 
 
@@ -249,7 +247,7 @@ class BTAPSensitivity(BTAPParametric):
         # Iterate through all scenarios.
         for scenario in df[':scenario'].unique():
             print(f"Plotting scenario: {scenario} ")
-            pdf.start_section(name=f"Appendix A: ECM {scenario}", level=1, strict=True)
+            pdf.start_section(name=f"Appendix A: ECM {scenario}", level=0, strict=True)
 
             # Scatter plot
 
@@ -353,12 +351,15 @@ class BTAPSensitivity(BTAPParametric):
             pdf.image(img_buf, w=pdf.epw / 2)
             img_buf.close()
             plt.close('all')
-        pdf.output(r'C:\Users\plopez\btap_batch\panda.pdf')
+        pdf.output(pdf_output)
 
 
 
 
-# df = pd.read_excel(r'C:\Users\plopez\btap_batch\sqi.xlsx')
+# df = pd.read_excel(r'C:\Users\plopez\btap_batch\sqi2.xlsx')
 # BTAPSensitivity.generate_pdf_report(df=df)
+#
+# #python ./bin/btap_batch.py build-environment --btap_costing_branch sqi_394
 
-#python ./bin/btap_batch.py build-environment --btap_costing_branch sqi_394
+#python bin/btap_batch.py run-analysis-project --reference_run -p C:\Users\plopez\btap_batch\examples\sensitivity
+

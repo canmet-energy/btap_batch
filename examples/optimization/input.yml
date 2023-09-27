@@ -70,9 +70,12 @@
       #'CAN_NT_Yellowknife.AP.719360_CWEC2016.epw'
   ]
   :primary_heating_fuel: [
-      "Electricity",
-     # "NaturalGas",
-     # "FuelOilNo2"
+#    'Electricity',
+    'NaturalGas',
+#    'NaturalGasHPGasBackup',
+#    'NaturalGasHPElecBackupMixed',
+#    'ElectricityHPElecBackup',
+#    'ElectricityHPGasBackupMixed'
   ]
   :dcv_type: [
       'NECB_Default',

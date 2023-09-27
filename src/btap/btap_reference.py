@@ -10,7 +10,14 @@ class BTAPReference(BTAPParametric):
     def compute_scenarios(self):
         # Create default options scenario. Uses first value of all arrays.
         for bt in self.options[':building_type']:
-            for fuel_type in self.options[':primary_heating_fuel']:
+            for fuel_type in [
+                                'Electricity',
+                                'NaturalGas',
+                                'NaturalGasHPGasBackup',
+                                'NaturalGasHPElecBackupMixed',
+                                'ElectricityHPElecBackup',
+                                'ElectricityHPGasBackupMixed'
+                              ]:
                 for epw in self.options[':epw_file']:
                     for template in self.options[':template']:
                         run_option = copy.deepcopy(self.options)

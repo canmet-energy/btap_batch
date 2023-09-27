@@ -24,6 +24,7 @@ import uuid
 import numpy as np
 from icecream import ic
 from src.btap.aws_dynamodb import AWSResultsTable
+import pandas as pd
 
 
 def get_pareto_points(costs, return_mask=True):
@@ -160,7 +161,7 @@ def analysis(project_input_folder=None,
     if compute_environment == 'local_docker' or compute_environment == 'aws_batch':
         analysis_config[':compute_environment'] = compute_environment
 
-        reference_run_data_path = None
+        reference_run_df = None
         if reference_run:
             # Run reference
             ref_analysis_config = copy.deepcopy(analysis_config)
@@ -170,7 +171,7 @@ def analysis(project_input_folder=None,
                                output_folder=os.path.join(output_folder))
             br.run()
 
-            reference_run_data_path = br.analysis_excel_results_path()
+            reference_run_df = br.btap_data_df
 
         # ic(reference_run_data_path)
 
@@ -182,32 +183,32 @@ def analysis(project_input_folder=None,
             ba = BTAPOptimization(analysis_config=analysis_config,
                                   analysis_input_folder=analysis_input_folder,
                                   output_folder=output_folder,
-                                  reference_run_data_path=reference_run_data_path)
+                                  reference_run_df=reference_run_df)
         # parametric
         elif analysis_config[':algorithm_type'] == 'parametric':
             ba = BTAPParametric(analysis_config=analysis_config,
                                 analysis_input_folder=analysis_input_folder,
                                 output_folder=output_folder,
-                                reference_run_data_path=reference_run_data_path)
+                                reference_run_df=reference_run_df)
 
         # parametric
         elif analysis_config[':algorithm_type'] == 'elimination':
             ba = BTAPElimination(analysis_config=analysis_config,
                                  analysis_input_folder=analysis_input_folder,
                                  output_folder=output_folder,
-                                 reference_run_data_path=reference_run_data_path)
+                                 reference_run_df=reference_run_df)
 
         elif analysis_config[':algorithm_type'] == 'sampling-lhs':
             ba = BTAPSamplingLHS(analysis_config=analysis_config,
                                  analysis_input_folder=analysis_input_folder,
                                  output_folder=output_folder,
-                                 reference_run_data_path=reference_run_data_path)
+                                 reference_run_df=reference_run_df)
 
         elif analysis_config[':algorithm_type'] == 'sensitivity':
             ba = BTAPSensitivity(analysis_config=analysis_config,
                                  analysis_input_folder=analysis_input_folder,
                                  output_folder=output_folder,
-                                 reference_run_data_path=reference_run_data_path)
+                                 reference_run_df=reference_run_df)
 
         elif analysis_config[':algorithm_type'] == 'reference':
             ba = BTAPReference(analysis_config=analysis_config,
@@ -219,7 +220,35 @@ def analysis(project_input_folder=None,
             exit(1)
 
         ba.run()
-        print(f"Excel results file {ba.analysis_excel_results_path()}")
+
+        all_df = ba.btap_data_df
+        # If reference run was done, add to dataframe
+        if isinstance(br.btap_data_df,pd.DataFrame):
+            all_df = pd.concat([br.btap_data_df, ba.btap_data_df])
+
+
+        # Save data to excel file.
+        excel_path = os.path.join(ba.cp.algorithm_folder(), 'output.xlsx')
+        with pd.ExcelWriter(excel_path) as writer:
+            if isinstance(all_df, pd.DataFrame):
+                all_df.to_excel(writer, index=False, sheet_name='btap_data')
+                message = f'Saved Excel Output: {excel_path}'
+                print(message)
+            else:
+                message = 'No simulations completed.'
+
+        # Generate PDF
+        ba.generate_pdf_report(df=all_df, pdf_output=os.path.join(ba.cp.algorithm_folder(),'results.pdf'))
+        # Save data to excel file.
+        excel_path = os.path.join(ba.cp.algorithm_folder(), 'output.xlsx')
+        with pd.ExcelWriter(excel_path) as writer:
+            if isinstance(all_df, pd.DataFrame):
+                all_df.to_excel(writer, index=False, sheet_name='btap_data')
+                message = f'Saved Excel Output: {excel_path}'
+                print(message)
+            else:
+                message = 'No simulations completed.'
+
 
     if compute_environment == 'aws_batch_analysis':
         analysis_name = analysis_config[':analysis_name']
