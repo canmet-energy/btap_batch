@@ -210,6 +210,14 @@ def analysis(project_input_folder=None,
                                  output_folder=output_folder,
                                  reference_run_df=reference_run_df)
 
+            # bp = BTAPSensitivity.run_sensitivity_best_packages(
+            #     output_folder=ba.cp.output_folder(),
+            #     project_input_folder=ba.cp.project_input_folder,
+            #     df=ba.btap_data_df)
+            # bp.run()
+            # print(bp.btap_data_df)
+
+
         elif analysis_config[':algorithm_type'] == 'reference':
             ba = BTAPReference(analysis_config=analysis_config,
                                analysis_input_folder=analysis_input_folder,
@@ -225,6 +233,11 @@ def analysis(project_input_folder=None,
         # If reference run was done, add to dataframe
         if isinstance(br.btap_data_df,pd.DataFrame):
             all_df = pd.concat([br.btap_data_df, ba.btap_data_df])
+
+        # If Sensitivity best packages was run, add to dataframe.
+        if isinstance(br.btap_data_df,pd.DataFrame):
+            all_df = pd.concat([br.btap_data_df, ba.btap_data_df])
+
 
 
         # Save data to excel file.
