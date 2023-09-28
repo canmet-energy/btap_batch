@@ -161,6 +161,9 @@ def analysis(project_input_folder=None,
     if compute_environment == 'local_docker' or compute_environment == 'aws_batch':
         analysis_config[':compute_environment'] = compute_environment
 
+        # BTAP analysis placeholder.
+        ba = None
+        sens_best_packages = None
         reference_run_df = None
         if reference_run:
             # Run reference
@@ -175,8 +178,7 @@ def analysis(project_input_folder=None,
 
         # ic(reference_run_data_path)
 
-        # BTAP analysis placeholder.
-        ba = None
+
 
         # nsga2
         if analysis_config[':algorithm_type'] == 'nsga2':
@@ -184,12 +186,14 @@ def analysis(project_input_folder=None,
                                   analysis_input_folder=analysis_input_folder,
                                   output_folder=output_folder,
                                   reference_run_df=reference_run_df)
+            ba.run()
         # parametric
         elif analysis_config[':algorithm_type'] == 'parametric':
             ba = BTAPParametric(analysis_config=analysis_config,
                                 analysis_input_folder=analysis_input_folder,
                                 output_folder=output_folder,
                                 reference_run_df=reference_run_df)
+            ba.run()
 
         # parametric
         elif analysis_config[':algorithm_type'] == 'elimination':
@@ -197,46 +201,50 @@ def analysis(project_input_folder=None,
                                  analysis_input_folder=analysis_input_folder,
                                  output_folder=output_folder,
                                  reference_run_df=reference_run_df)
+            ba.run()
 
         elif analysis_config[':algorithm_type'] == 'sampling-lhs':
             ba = BTAPSamplingLHS(analysis_config=analysis_config,
                                  analysis_input_folder=analysis_input_folder,
                                  output_folder=output_folder,
                                  reference_run_df=reference_run_df)
+            ba.run()
 
         elif analysis_config[':algorithm_type'] == 'sensitivity':
             ba = BTAPSensitivity(analysis_config=analysis_config,
                                  analysis_input_folder=analysis_input_folder,
                                  output_folder=output_folder,
                                  reference_run_df=reference_run_df)
+            ba.run()
 
-            # bp = BTAPSensitivity.run_sensitivity_best_packages(
-            #     output_folder=ba.cp.output_folder(),
-            #     project_input_folder=ba.cp.project_input_folder,
-            #     df=ba.btap_data_df)
-            # bp.run()
-            # print(bp.btap_data_df)
+            sens_best_packages = BTAPSensitivity.run_sensitivity_best_packages(
+                output_folder=ba.cp.output_folder(),
+                project_input_folder=ba.cp.project_input_folder,
+                df=ba.btap_data_df)
+            sens_best_packages.run()
+            print(sens_best_packages.btap_data_df)
 
 
         elif analysis_config[':algorithm_type'] == 'reference':
             ba = BTAPReference(analysis_config=analysis_config,
                                analysis_input_folder=analysis_input_folder,
                                output_folder=output_folder)
+            ba.run()
 
         else:
             print(f"Error:Analysis type {analysis_config[':algorithm_type']} not supported. Exiting.")
             exit(1)
 
-        ba.run()
+
 
         all_df = ba.btap_data_df
         # If reference run was done, add to dataframe
-        if isinstance(br.btap_data_df,pd.DataFrame):
+        if br != None and isinstance(br.btap_data_df,pd.DataFrame):
             all_df = pd.concat([br.btap_data_df, ba.btap_data_df])
 
         # If Sensitivity best packages was run, add to dataframe.
-        if isinstance(br.btap_data_df,pd.DataFrame):
-            all_df = pd.concat([br.btap_data_df, ba.btap_data_df])
+        if sens_best_packages != None and isinstance(sens_best_packages.btap_data_df,pd.DataFrame):
+            all_df = pd.concat([sens_best_packages.btap_data_df, all_df])
 
 
 

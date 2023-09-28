@@ -2,7 +2,7 @@ import os
 BTAP_BATCH_VERSION = '1.0.005'
 
 # Maximum AWS CPUS that AWS will allocate for the run.
-MAX_AWS_VCPUS = 500
+MAX_AWS_VCPUS = 1000
 # Number of VCPUs that AWSBatch will initialize with.
 # DESIRED_AWS_VCPUS = 50 # Not used currently
 # Minimum number of CPU should be set to zero.
