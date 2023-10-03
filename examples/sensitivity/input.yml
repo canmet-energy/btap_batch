@@ -1,5 +1,5 @@
 ---
-:analysis_name: sensitivity_sqi2
+:analysis_name: sens-LowriseApartment-QC_Montreal
 :algorithm_type: sensitivity
 :algorithm_nsga_population: null
 :algorithm_nsga_n_generations: null
@@ -31,10 +31,10 @@
     #      'RetailStandalone',
     #      'RetailStripmall',
     #      'QuickServiceRestaurant',
-           'FullServiceRestaurant',
+    #       'FullServiceRestaurant',
     #      'MidriseApartment',
     #      'HighriseApartment',
-    #      'LowriseApartment',
+          'LowriseApartment',
     #      'Hospital',
     #      'Outpatient'
   ]
@@ -99,8 +99,8 @@
   # What are the existing vs all versions?
   :boiler_eff: [
       'NECB_Default',
-#      'NECB 88% Efficient Condensing Boiler',
-#      'Viessmann Vitocrossal 300 CT3-17 96.2% Efficient Condensing Gas Boiler'
+      'NECB 88% Efficient Condensing Boiler',
+      'Viessmann Vitocrossal 300 CT3-17 96.2% Efficient Condensing Gas Boiler'
   ]
   :furnace_eff: [
       'NECB_Default',
@@ -108,106 +108,113 @@
   ]
   :shw_eff: [
       'NECB_Default',
-#      'Natural Gas Power Vent with Electric Ignition',
-#      'Natural Gas Direct Vent with Electric Ignition'
+      'Natural Gas Power Vent with Electric Ignition',
+      'Natural Gas Direct Vent with Electric Ignition'
   ]
   # Default DHW is consistent with primary heating fuel
   :ext_wall_cond: [
       'NECB_Default',
-#      '0.314',
-#      '0.278',
-#      '0.247',
-#      '0.210',
-#      '0.183'
+      '0.314', # R18
+      '0.278', # R20
+      '0.247', # R22
+      '0.210', # R27
+      '0.183',  #R31
+#      '0.141', #R40 Extrapolation does not work.
+#      '0.113', #R50
+#      '0.094', #R60
+#      '0.081', #R80
   ]
 
   :ext_floor_cond: [
       'NECB_Default',
-#      '0.227',
-#      '0.183',
-#      '0.162',
-#      '0.142'
+      '0.227',
+      '0.183',
+      '0.162',
+      '0.142'
   ]
   :ext_roof_cond: [
       'NECB_Default',
-#      '0.227',
-#      '0.193',
-#      '0.183',
-#      '0.162',
-#      '0.142',
-#      '0.138',
-#      '0.121'
+      '0.227',
+      '0.193',
+      '0.183',
+      '0.162',
+      '0.142', #R40
+      '0.138',
+      '0.121',
+#      '0.113', #R50 Extrapolation does not work.
+#      '0.094', #R60
+#      '0.081', #R70
   ]
   :ground_wall_cond: [
       'NECB_Default',
-#      '0.568',
-#      '0.379',
-#      '0.284',
-#      '0.210'
+      '0.568',
+      '0.379',
+      '0.284',
+      '0.210'
   ]
 
   :ground_floor_cond: [
       'NECB_Default',
-#      '0.758',
-#      '0.379'
+      '0.758',
+      '0.379'
   ]
 
   :ground_roof_cond: [
       'NECB_Default',
-#      '0.568',
-#      '0.379' ,
-#      '0.284',
-#      '0.210'
+      '0.568',
+      '0.379' ,
+      '0.284',
+      '0.210'
   ]
   :door_construction_cond: [
       'NECB_Default',
-#      '2.4',
-#      '2.2',
-#      '1.6'
+      '2.4',
+      '2.2',
+      '1.6'
   ]
   :fixed_window_cond: [
       'NECB_Default',
-#      '2.4',
-#      '2.2',
-#      '1.6'
+      '2.4',
+      '2.2',
+      '1.6'
   ]
   :glass_door_cond: [
       'NECB_Default',
-#      '2.4',
-#      '2.2',
-#      '1.6'
+      '2.4',
+      '2.2',
+      '1.6'
   ]
   :overhead_door_cond: [
       'NECB_Default',
-#      '2.4',
-#      '2.2',
-#      '1.6'
+      '2.4',
+      '2.2',
+      '1.6'
   ]
   :skylight_cond: [
       'NECB_Default',
-#      '2.4',
-#      '2.2',
-#      '1.6'
+      '2.4',
+      '2.2',
+      '1.6'
   ]
   :glass_door_solar_trans: [
       'NECB_Default',
-#      '0.05',
-#      '0.95'
+      '0.05',
+      '0.95'
   ]
   :fixed_wind_solar_trans: [
       'NECB_Default',
-#      '0.2',
-#      '0.3',
-#      '0.4',
-#      '0.5',
-#      '0.6'
+      '0.2',
+      '0.3',
+      '0.4',
+      '0.5',
+      '0.6'
   ]
   # This is the same as SHGC
   :skylight_solar_trans: [
       'NECB_Default',
-#      '0.05',
-#      '0.50',
-#      '0.95'
+      '0.05',
+      '0.50',
+      '0.95'
   ]
 
   :fdwr_set: [
@@ -225,10 +232,10 @@
   ]
   :rotation_degrees: [
       'NECB_Default',
-#      '45.0',
-#      '90.0',
-#      '135.0',
-#      '180.0',
+      '45.0',
+      '90.0',
+      '135.0',
+      '180.0',
 #      '225.0',
 #      '270.0',
 #      '315.0'
@@ -278,8 +285,8 @@
   ] # Options: (1) 'NECB_Default'/nil/'none'/false (i.e. do nothing), (2) e.g. 'VSD'
   :airloop_economizer_type: [  # (1) nil/'NECB_Default' (2) 'DifferentialEnthalpy (3) 'DifferentialDryBulb'
     'NECB_Default',
-#    'DifferentialEnthalpy'
-#    'DifferentialDryBulb'
+    'DifferentialEnthalpy',
+    'DifferentialDryBulb'
   ]
   :shw_scale: [ # Options: (1) 'NECB_Default'/nil/'none'/false (i.e. do nothing), (2) a float number larger than 0.0
       'NECB_Default',
@@ -287,7 +294,7 @@
   ]
   :baseline_system_zones_map_option: [ # Options: (1) 'NECB_Default'/'none'/nil (i.e. 'one_sys_per_bldg'), (2) 'one_sys_per_dwelling_unit', (3) 'one_sys_per_bldg'
    'NECB_Default',
-#   'one_sys_per_bldg', # Note: this option is the default  (i.e. 'NECB_Default')
+   'one_sys_per_bldg', # Note: this option is the default  (i.e. 'NECB_Default')
    'one_sys_per_dwelling_unit'
  ]
   :npv_start_year: [ # Options: (1) 'NECB_Default'/nil/'none' (i.e. set it as 2022), (2) an integer number larger than 2005 (first year of neb_end_use_prices.csv)

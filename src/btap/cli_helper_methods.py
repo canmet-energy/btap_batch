@@ -163,7 +163,7 @@ def analysis(project_input_folder=None,
 
         # BTAP analysis placeholder.
         ba = None
-        sens_best_packages = None
+        sens_best_packages_df = None
         reference_run_df = None
         if reference_run:
             # Run reference
@@ -222,7 +222,7 @@ def analysis(project_input_folder=None,
                 project_input_folder=ba.cp.project_input_folder,
                 df=ba.btap_data_df)
             sens_best_packages.run()
-            print(sens_best_packages.btap_data_df)
+            sens_best_packages_df = sens_best_packages.btap_data_df
 
 
         elif analysis_config[':algorithm_type'] == 'reference':
@@ -239,12 +239,12 @@ def analysis(project_input_folder=None,
 
         all_df = ba.btap_data_df
         # If reference run was done, add to dataframe
-        if br != None and isinstance(br.btap_data_df,pd.DataFrame):
-            all_df = pd.concat([br.btap_data_df, ba.btap_data_df])
+        if isinstance(reference_run_df,pd.DataFrame):
+            all_df = pd.concat([reference_run_df, ba.btap_data_df])
 
         # If Sensitivity best packages was run, add to dataframe.
-        if sens_best_packages != None and isinstance(sens_best_packages.btap_data_df,pd.DataFrame):
-            all_df = pd.concat([sens_best_packages.btap_data_df, all_df])
+        if isinstance(sens_best_packages_df,pd.DataFrame):
+            all_df = pd.concat([sens_best_packages_df, all_df])
 
 
 
@@ -257,18 +257,21 @@ def analysis(project_input_folder=None,
                 print(message)
             else:
                 message = 'No simulations completed.'
+
+        # Save data to excel file.
+        excel_path = os.path.join(ba.cp.project_output_folder(), 'output.xlsx')
+        with pd.ExcelWriter(excel_path) as writer:
+            if isinstance(all_df, pd.DataFrame):
+                all_df.to_excel(writer, index=False, sheet_name='btap_data')
+                message = f'Saved Excel Output: {excel_path}'
+                print(message)
+            else:
+                message = 'No simulations completed.'
+
 
         # Generate PDF
-        ba.generate_pdf_report(df=all_df, pdf_output=os.path.join(ba.cp.algorithm_folder(),'results.pdf'))
-        # Save data to excel file.
-        excel_path = os.path.join(ba.cp.algorithm_folder(), 'output.xlsx')
-        with pd.ExcelWriter(excel_path) as writer:
-            if isinstance(all_df, pd.DataFrame):
-                all_df.to_excel(writer, index=False, sheet_name='btap_data')
-                message = f'Saved Excel Output: {excel_path}'
-                print(message)
-            else:
-                message = 'No simulations completed.'
+        ba.generate_pdf_report(df=all_df, pdf_output=os.path.join(ba.cp.project_output_folder(),'results.pdf'))
+
 
 
     if compute_environment == 'aws_batch_analysis':

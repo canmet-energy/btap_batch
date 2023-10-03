@@ -37,6 +37,8 @@ class BTAPSensitivity(BTAPParametric):
         # Create default options scenario. Uses first value of all arrays.
         default_options = copy.deepcopy(self.options)
         for key, value in self.options.items():
+            print(key)
+            print(value)
             default_options[key] = value[0]
         # Create scenario
         for key, value in self.options.items():
