@@ -83,14 +83,14 @@ class BTAPAnalysis():
                  analysis_config=None,
                  output_folder=None,
                  analysis_input_folder=None,
-                 reference_run_data_path=None):
+                 reference_run_df=None):
 
         #Will always use the btap_cli image that run the ruby code.
         self.image_name = 'btap_cli'
         self.analysis_config = analysis_config
         self.analysis_input_folder = analysis_input_folder
         self.output_folder = output_folder
-        self.reference_run_data_path = reference_run_data_path
+        self.reference_run_df = reference_run_df
 
 
         # Get analysis information for runs.
@@ -335,7 +335,7 @@ class BTAPAnalysis():
         return df
 
     def shutdown_analysis(self):
-        self.generate_output_file(baseline_results=self.reference_run_data_path)
+        self.generate_output_file(baseline_results=self.reference_run_df)
 
     # This method creates a encoder and decoder of the simulation options to integers.  The ML and AI routines use float,
     # conventionally for optimization problems. Since most of the analysis that we do are discrete options for designers
@@ -436,3 +436,7 @@ class BTAPAnalysis():
 
 
         return
+    @staticmethod
+    def generate_pdf_report(df=None,
+                           pdf_output=None):
+        return None
