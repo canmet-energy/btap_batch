@@ -1,5 +1,5 @@
 ---
-:analysis_name: sensitivity_example
+:analysis_name: sens-LowriseApartment-QC_Montreal
 :algorithm_type: sensitivity
 :algorithm_nsga_population: null
 :algorithm_nsga_n_generations: null
@@ -13,10 +13,7 @@
 ###########################################     Hourly Data     #######################################################
   # Note: the 'operation' and 'unit' keys in :output_variables are for performing operations on hourly output.
   # For now, allowed operation type is 'sum'; allowed units are 'GJ' and 'kWh'.
-:output_variables: [
-  { key: '*',     variable: 'Zone Air Temperature',     frequency: 'hourly',     operation: '*',     unit: '*' },
-  { key: '*',     variable: 'Lights Total Heating Energy',     frequency: 'hourly',     operation: 'sum',     unit: 'GJ' }
-]
+:output_variables: []
 :output_meters: []
 
 #########################################  BUILDING OPTIONS (All inputs should be 'strings') ###########################################################
@@ -34,10 +31,10 @@
     #      'RetailStandalone',
     #      'RetailStripmall',
     #      'QuickServiceRestaurant',
-    #      'FullServiceRestaurant',
+    #       'FullServiceRestaurant',
     #      'MidriseApartment',
     #      'HighriseApartment',
-    #      'LowriseApartment',
+          'LowriseApartment',
     #      'Hospital',
     #      'Outpatient'
   ]
@@ -60,8 +57,8 @@
     #      'CAN_NT_Yellowknife.AP.719360_CWEC2016.epw'
   ]
   :primary_heating_fuel: [
-      'Electricity',
-    #       'NaturalGas',
+    #   'Electricity',
+           'NaturalGas'
     #      'FuelOilNo2'
   ]
   :dcv_type: [
@@ -79,8 +76,8 @@
   # Is this different from the LED option?
   :daylighting_type: [
       'NECB_Default',
-#      'add_daylighting_controls',
-#      'none'
+      'add_daylighting_controls',
+      'none'
   ]
   :ecm_system_name: [
       'NECB_Default',
@@ -117,11 +114,15 @@
   # Default DHW is consistent with primary heating fuel
   :ext_wall_cond: [
       'NECB_Default',
-      '0.314',
-      '0.278',
-      '0.247',
-      '0.210',
-      '0.183'
+      '0.314', # R18
+      '0.278', # R20
+      '0.247', # R22
+      '0.210', # R27
+      '0.183',  #R31
+      '0.141', #R40 Extrapolation does not work.
+      '0.113', #R50
+      '0.094', #R60
+      '0.081', #R80
   ]
 
   :ext_floor_cond: [
@@ -137,9 +138,12 @@
       '0.193',
       '0.183',
       '0.162',
-      '0.142',
+      '0.142', #R40
       '0.138',
-      '0.121'
+      '0.121',
+      '0.113', #R50 Extrapolation does not work.
+      '0.094', #R60
+      '0.081', #R70
   ]
   :ground_wall_cond: [
       'NECB_Default',
@@ -215,6 +219,7 @@
 
   :fdwr_set: [
       'NECB_Default',
+      '0.08',
       '0.30',
       '0.50',
       '0.80'
@@ -222,19 +227,19 @@
   # Skylight to roof ratio
   :srr_set: [
       'NECB_Default',
-      '0.03',
-      '0.05',
-      '0.10'
+#      '0.03',
+#      '0.05',
+#      '0.10'
   ]
   :rotation_degrees: [
       'NECB_Default',
-      #'45.0',
-      #'90.0',
-      #'135.0',
-      #'180.0',
-      #'225.0',
-      #'270.0',
-      #'315.0'
+      '45.0',
+      '90.0',
+      '135.0',
+      '180.0',
+#      '225.0',
+#      '270.0',
+#      '315.0'
   ]
   # Picking the worst orientation (major axis of building oriented N-S)
   :scale_x: [
@@ -271,26 +276,26 @@
   :nv_opening_fraction: [ 'NECB_Default' ] #options: (1) nil/none/false (2) 'NECB_Default' (i.e. 0.1) (3) opening fraction of windows, which can be a float number between 0.0 and 1.0
   :nv_temp_out_min: [ 'NECB_Default' ] #options: (1) nil/none/false (2) 'NECB_Default' (i.e. 13.0 based on inputs from Michel Tardif re a real school in QC) (3) minimum outdoor air temperature (in Celsius) below which natural ventilation is shut down
   :nv_delta_temp_in_out: [ 'NECB_Default' ] #options: (1) nil/none/false (2) 'NECB_Default' (i.e. 1.0 based on inputs from Michel Tardif re a real school in QC) (3) temperature difference (in Celsius) between the indoor and outdoor air temperatures below which ventilation is shut down
-  :occupancy_loads_scale: [ 'NECB_Default', '0.0', '0.5', '1.0' ]
-  :electrical_loads_scale: [ 'NECB_Default', '0.0', '0.5', '1.0 ' ]
-  :oa_scale: [ 'NECB_Default', '0.0', '0.5', '1.0 ' ]
-  :infiltration_scale: [ 'NECB_Default', '0.0', '0.5', '1.0 ' ]
+  :occupancy_loads_scale: [ 'NECB_Default' ]
+  :electrical_loads_scale: [ 'NECB_Default' ,'0.50']
+  :oa_scale: [ 'NECB_Default' ]
+  :infiltration_scale: [ 'NECB_Default', '0.50']
   :chiller_type: [
       'NECB_Default',
       'VSD'
   ] # Options: (1) 'NECB_Default'/nil/'none'/false (i.e. do nothing), (2) e.g. 'VSD'
   :airloop_economizer_type: [  # (1) nil/'NECB_Default' (2) 'DifferentialEnthalpy (3) 'DifferentialDryBulb'
     'NECB_Default',
-    #'DifferentialEnthalpy'
-    #'DifferentialDryBulb'
+    'DifferentialEnthalpy',
+    'DifferentialDryBulb'
   ]
   :shw_scale: [ # Options: (1) 'NECB_Default'/nil/'none'/false (i.e. do nothing), (2) a float number larger than 0.0
       'NECB_Default',
-    #    '0.5'
+        '0.5'
   ]
   :baseline_system_zones_map_option: [ # Options: (1) 'NECB_Default'/'none'/nil (i.e. 'one_sys_per_bldg'), (2) 'one_sys_per_dwelling_unit', (3) 'one_sys_per_bldg'
    'NECB_Default',
-#   'one_sys_per_bldg', # Note: this option is the default  (i.e. 'NECB_Default')
+   'one_sys_per_bldg', # Note: this option is the default  (i.e. 'NECB_Default')
    'one_sys_per_dwelling_unit'
  ]
   :npv_start_year: [ # Options: (1) 'NECB_Default'/nil/'none' (i.e. set it as 2022), (2) an integer number larger than 2005 (first year of neb_end_use_prices.csv)
