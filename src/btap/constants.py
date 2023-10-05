@@ -2,7 +2,7 @@ import os
 BTAP_BATCH_VERSION = '1.0.005'
 
 # Maximum AWS CPUS that AWS will allocate for the run.
-MAX_AWS_VCPUS = 500
+MAX_AWS_VCPUS = 2000
 # Number of VCPUs that AWSBatch will initialize with.
 # DESIRED_AWS_VCPUS = 50 # Not used currently
 # Minimum number of CPU should be set to zero.
@@ -26,7 +26,7 @@ MANAGER_CONTAINER_STORAGE = 500
 AWS_BATCH_ALLOCATION_STRATEGY = 'BEST_FIT_PROGRESSIVE'
 # AWS Compute instances types..setting to optimal to let AWS figure it out for me.
 # https://docs.aws.amazon.com/batch/latest/userguide/create-compute-environment.html
-AWS_BATCH_COMPUTE_INSTANCE_TYPES = ['optimal']
+AWS_BATCH_COMPUTE_INSTANCE_TYPES = ['optimal'] #['m6i.32xlarge','c6i.32xlarge']
 # Using the public Amazon Linux 2 AMI to make use of overlay disk storage. Has all aws goodies already installed,
 # makeing secure session manager possible, and has docker pre-installed.
 AWS_BATCH_DEFAULT_IMAGE = 'ami-0a06b44c462364156'

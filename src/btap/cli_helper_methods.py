@@ -221,8 +221,7 @@ def analysis(project_input_folder=None,
             exit(1)
 
         ba.run()
-        # Generate PDF
-        ba.generate_pdf_report(df=ba.btap_data_df, pdf_output=os.path.join(ba.cp.project_output_folder(),'results.pdf'))
+
         print(f"Excel results file {ba.analysis_excel_results_path()}")
 
     if compute_environment == 'aws_batch_analysis':
