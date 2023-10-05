@@ -484,7 +484,7 @@ def sensitivity_report(**kwargs):
     from src.btap.btap_sensitivity import BTAPSensitivity
     import pandas as pd
     # Generate PDF
-    df = pd.read_excel(excel_file= kwargs['excel_file'], index_col=0)
+    df = pd.read_excel(kwargs['excel_file'], index_col=0)
     BTAPSensitivity.generate_pdf_report( df=df,
                                          pdf_output=os.path.join(kwargs['pdf_output_file'], 'results.pdf'))
 
