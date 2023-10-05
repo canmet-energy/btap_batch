@@ -142,7 +142,7 @@ class BTAPSensitivity(BTAPParametric):
         pdf = FPDF()
 
         # Set up Excel output
-        writer = pd.ExcelWriter(r'C:\Users\plopez\btap_batch\dataframe.xlsx', engine='xlsxwriter')
+        # writer = pd.ExcelWriter(r'C:\Users\plopez\btap_batch\dataframe.xlsx', engine='xlsxwriter')
 
         # Add Page
         pdf.add_page()
@@ -172,13 +172,13 @@ class BTAPSensitivity(BTAPParametric):
                                 'baseline_difference_cost_equipment_total_cost_per_m_sq'
                                ]].copy()
 
-        costing_df.to_excel(writer, sheet_name='costing', index=False)
+        #costing_df.to_excel(writer, sheet_name='costing', index=False)
 
 
         #costing_df = costing_df.query("scenario_value != 'NECB_Default'").copy().reset_index(drop=True)
         # Remove ECMs that have no effect on model at all.
         costing_df = costing_df[(costing_df['baseline_energy_percent_better'] != 0.0) ]
-        costing_df.to_excel(writer, sheet_name='costing2', index=False)
+        #costing_df.to_excel(writer, sheet_name='costing2', index=False)
 
 
         costing_df = costing_df.sort_values(by=['baseline_energy_percent_better'],ascending=False).reset_index(drop=True)
@@ -230,7 +230,7 @@ class BTAPSensitivity(BTAPParametric):
         print(headers)
         styled_df.bar(subset=headers,  color=['red', 'lightgreen'])
 
-        styled_df.to_excel(writer, sheet_name='colored', index=False)
+        #styled_df.to_excel(writer, sheet_name='colored', index=False)
 
 
 
@@ -241,7 +241,7 @@ class BTAPSensitivity(BTAPParametric):
         img_buf.close()
 
 
-        writer.close()
+        #writer.close()
 
 
         # Iterate through all scenarios.
