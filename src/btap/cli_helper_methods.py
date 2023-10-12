@@ -160,7 +160,9 @@ def analysis(project_input_folder=None,
     if compute_environment == 'local_docker' or compute_environment == 'aws_batch':
         analysis_config[':compute_environment'] = compute_environment
 
-        reference_run_data_path = None
+        reference_run_df = None
+        # Hardcode to always run reference.
+        reference_run = True
         if reference_run:
             # Run reference
             ref_analysis_config = copy.deepcopy(analysis_config)
@@ -170,7 +172,7 @@ def analysis(project_input_folder=None,
                                output_folder=os.path.join(output_folder))
             br.run()
 
-            reference_run_data_path = br.analysis_excel_results_path()
+            reference_run_df = br.btap_data_df
 
         # ic(reference_run_data_path)
 
@@ -182,32 +184,32 @@ def analysis(project_input_folder=None,
             ba = BTAPOptimization(analysis_config=analysis_config,
                                   analysis_input_folder=analysis_input_folder,
                                   output_folder=output_folder,
-                                  reference_run_data_path=reference_run_data_path)
+                                  reference_run_df=reference_run_df)
         # parametric
         elif analysis_config[':algorithm_type'] == 'parametric':
             ba = BTAPParametric(analysis_config=analysis_config,
                                 analysis_input_folder=analysis_input_folder,
                                 output_folder=output_folder,
-                                reference_run_data_path=reference_run_data_path)
+                                reference_run_df=reference_run_df)
 
         # parametric
         elif analysis_config[':algorithm_type'] == 'elimination':
             ba = BTAPElimination(analysis_config=analysis_config,
                                  analysis_input_folder=analysis_input_folder,
                                  output_folder=output_folder,
-                                 reference_run_data_path=reference_run_data_path)
+                                 reference_run_df=reference_run_df)
 
         elif analysis_config[':algorithm_type'] == 'sampling-lhs':
             ba = BTAPSamplingLHS(analysis_config=analysis_config,
                                  analysis_input_folder=analysis_input_folder,
                                  output_folder=output_folder,
-                                 reference_run_data_path=reference_run_data_path)
+                                 reference_run_df=reference_run_df)
 
         elif analysis_config[':algorithm_type'] == 'sensitivity':
             ba = BTAPSensitivity(analysis_config=analysis_config,
                                  analysis_input_folder=analysis_input_folder,
                                  output_folder=output_folder,
-                                 reference_run_data_path=reference_run_data_path)
+                                 reference_run_df=reference_run_df)
 
         elif analysis_config[':algorithm_type'] == 'reference':
             ba = BTAPReference(analysis_config=analysis_config,
@@ -219,6 +221,7 @@ def analysis(project_input_folder=None,
             exit(1)
 
         ba.run()
+
         print(f"Excel results file {ba.analysis_excel_results_path()}")
 
     if compute_environment == 'aws_batch_analysis':
