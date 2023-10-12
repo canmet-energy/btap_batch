@@ -20,6 +20,17 @@ RUN cd /btap_batch && /root/.local/bin/pip install -r requirements.txt
 RUN yum -y update
 RUN yum -y install docker
 RUN yum -y install nano
+RUN yum -y install wget
+#Install Chromium for Python charts.
+RUN wget https://dl.google.com/linux/direct/google-chrome-stable_current_x86_64.rpm
+RUN yum -y install ./google-chrome-stable_current_x86_64.rpm
+RUN ln -s /usr/bin/google-chrome-stable /usr/bin/chromium
+# Alternate install chrome driver
+#RUN wget https://chromedriver.storage.googleapis.com/2.37/chromedriver_linux64.zip
+#RUN unzip chromedriver_linux64.zip
+#RUN mv chromedriver /usr/bin/chromedriverchromedriver --version
+
+
 CMD ["/bin/bash"]
 
 #Sample invocation commands
