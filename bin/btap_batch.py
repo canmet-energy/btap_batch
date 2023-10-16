@@ -127,7 +127,7 @@ def build_environment(**kwargs):
 @click.option('--compute_environment', '-c', default='local_docker',
               help='Environment to run analysis. Either local_docker, which runs on your computer, or aws_batch_analysis which runs completely on AWS. The default is local_docker')
 @click.option('--project_folder', '-p', default=os.path.join(EXAMPLE_FOLDER, 'optimization'),
-              help='location of folder containing input.yml file and optionally support folders such as osm_files folder for custom models. Default is the optimization example folder.')
+              help='location of folder containing input.yml file and optionally support folders such as osm_folder folder for custom models. Default is the optimization example folder.')
 @click.option('--reference_run', is_flag=True,
               help='Run reference. Required for baseline comparisons')
 @click.option('--output_folder', default=OUTPUT_FOLDER,
