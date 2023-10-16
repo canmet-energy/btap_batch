@@ -13,6 +13,7 @@ from src.btap.btap_parametric import BTAPParametric
 from src.btap.btap_elimination import BTAPElimination
 from src.btap.btap_lhs import BTAPSamplingLHS
 from src.btap.btap_sensitivity import BTAPSensitivity
+from src.btap.btap_batch_analysis import BTAPBatchAnalysis
 from src.btap.aws_s3 import S3
 from src.btap.common_paths import CommonPaths
 import shutil
@@ -161,9 +162,8 @@ def analysis(project_input_folder=None,
         analysis_config[':compute_environment'] = compute_environment
 
         reference_run_df = None
-        # Hardcode to always run reference.
-        reference_run = True
-        if reference_run:
+        # Hardcode to always run reference except in batch mode.
+        if analysis_config[':algorithm_type'] != 'batch':
             # Run reference
             ref_analysis_config = copy.deepcopy(analysis_config)
             ref_analysis_config[':algorithm_type'] = 'reference'
@@ -215,6 +215,12 @@ def analysis(project_input_folder=None,
             ba = BTAPReference(analysis_config=analysis_config,
                                analysis_input_folder=analysis_input_folder,
                                output_folder=output_folder)
+
+        elif analysis_config[':algorithm_type'] == 'batch':
+            ba = BTAPBatchAnalysis(analysis_config=analysis_config,
+                               analysis_input_folder=analysis_input_folder,
+                               output_folder=output_folder)
+
 
         else:
             print(f"Error:Analysis type {analysis_config[':algorithm_type']} not supported. Exiting.")
