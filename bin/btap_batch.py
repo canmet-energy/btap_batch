@@ -23,7 +23,7 @@ def check_environment_vars_are_defined(compute_environment=None):
         failed = True
     if os.environ.get('GIT_API_TOKEN') is None:
         print(
-            'Please set GIT_API_TOKEN environment variable to your aws username. See https://github.com/canmet-energy/btap_batch/blob/main/README.md#requirements')
+            'Please set GIT_API_TOKEN environment variable to your git token string. See https://github.com/canmet-energy/btap_batch/blob/main/README.md#requirements')
         failed = True
     if failed:
         exit(1)
