@@ -50,7 +50,10 @@ class PostProcessResults():
 
     def run(self):
         self.reference_comparisons()
-        self.get_files(file_paths=['run_dir/run/in.osm', 'run_dir/run/eplustbl.htm', 'hourly.csv'])
+        self.get_files(file_paths=['run_dir/run/in.osm',
+                                   'run_dir/run/eplustbl.htm',
+                                   'hourly.csv',
+                                   'run_dir/run/eplusout.sql'])
         self.save_excel_output()
         if self.compute_environment == 'aws_batch':
             self.save_dynamodb()
@@ -61,7 +64,10 @@ class PostProcessResults():
     # This is all done serially...if this is too slow, we should implement a parallel method using threads.. While probably
     # Not an issue for local analyses, it may be needed for large run. Here is an example of somebody with an example of parallel
     # downloads from S3 using threads.  https://emasquil.github.io/posts/multithreading-boto3/
-    def get_files(self, file_paths=['run_dir/run/in.osm', 'run_dir/run/eplustbl.htm', 'hourly.csv']):
+    def get_files(self, file_paths=['run_dir/run/in.osm',
+                                   'run_dir/run/eplustbl.htm',
+                                   'hourly.csv',
+                                   'run_dir/run/eplusout.sql']):
         for file_path in file_paths:
             pathlib.Path(os.path.dirname(self.results_folder)).mkdir(parents=True, exist_ok=True)
             filename = os.path.basename(file_path)

@@ -56,6 +56,7 @@ class IAMRoles():
             )
         except iam.exceptions.NoSuchEntityException:
             logging.info(f'iam_role {self.full_role_name()} did not exist. So not deleting.')
+            print(f'iam_role {self.full_role_name()} did not exist. So not deleting.')
         logging.info(f'iam_role {self.full_role_name()} deleted.')
 
     def get_credentials(self):

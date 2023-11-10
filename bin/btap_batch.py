@@ -346,7 +346,7 @@ def batch_analyses(**kwargs):
                   'CAN_BC_Vancouver.Intl.AP.718920_CWEC2016.epw'],
               multiple=True,
               help='Environment to run analysis either local_docker, aws_batch or aws_batch_analysis')
-@click.option('--hvac_fuel_types_list', '-h',
+@click.option('--hvac_fuel_types_list', '-f',
               multiple=True,
               help='This is the FuelSet combination to use. ',
               default=['NECB_Default-NaturalGas']
@@ -356,8 +356,6 @@ def batch_analyses(**kwargs):
 @click.option('--working_folder', '-w', default=os.path.join(PROJECT_FOLDER, 'solution_sets'), help='location to output results')
 def optimized_solution_sets(**kwargs):
     from src.btap.solution_sets import generate_solution_sets
-    import time
-    import shutil
     """
     This will run an NECB 2020 optimization solution set run on a given building type and location. This will examine 
     all possible fueltypes and use the correct reference fuel accordingly. The optimization will be based on the total EUI
@@ -366,68 +364,30 @@ def optimized_solution_sets(**kwargs):
     Example:
 
     # To run locally.... This will create a solutions set folder with all the project yaml files, with the  the simulation and results with the given building type, locations, and FuelType 
-    python ./bin/btap_batch.py optimized-solution-sets -c local_docker -b SmallOffice -e CAN_QC_Montreal-Trudeau.Intl.AP.716270_CWEC2016.epw -h NECB_Default-NaturalGas -h NECB_Default-Electricity
+    python ./bin/btap_batch.py optimized-solution-sets -c local_docker -b SmallOffice -e CAN_QC_Montreal-Trudeau.Intl.AP.716270_CWEC2016.epw -f NECB_Default-NaturalGas -f NECB_Default-Electricity
 
     # To run test on aws. This will run 
     python ./bin/btap_batch.py optimized-solution-sets -c aws_batch_analysis 
 
     """
     check_environment_vars_are_defined(compute_environment=kwargs['compute_environment'])
-    start = time.time()
-    # Check if analyses folder exists
-    if os.path.isdir(kwargs['working_folder']):
-        # Remove old folder
-        try:
-            shutil.rmtree(kwargs['working_folder'])
-        except PermissionError:
-            message = f'Could not delete {kwargs["working_folder"]}. Do you have a file open in that folder? Exiting'
-            print(message)
-            exit(1)
+    working_folder = kwargs['working_folder']
+    hvac_fuel_types_list = kwargs['hvac_fuel_types_list']
+    compute_environment = kwargs['compute_environment']
+    building_types = kwargs['building_types']
+    epw_files = kwargs['epw_files']
+    nsga_population = kwargs['population']
+    nsga_generations = kwargs['generations']
 
-    supported_fuel_types = ['NECB_Default-NaturalGas',
-                            'NECB_Default-Electricity',
-                            'HS08_CCASHP_VRF-NaturalGasHPGasBackup',
-                            'HS08_CCASHP_VRF-ElectricityHPElecBackup',
-                            'HS09_CCASHP_Baseboard-NaturalGasHPGasBackup',
-                            'HS09_CCASHP_Baseboard-ElectricityHPElecBackup',
-                            'HS11_ASHP_PTHP-NaturalGasHPGasBackup',
-                            'HS11_ASHP_PTHP-ElectricityHPElecBackup',
-                            'HS12_ASHP_Baseboard-NaturalGasHPGasBackup',
-                            'HS12_ASHP_Baseboard-ElectricityHPElecBackup',
-                            'HS13_ASHP_VRF-NaturalGasHPGasBackup',
-                            'HS13_ASHP_VRF-ElectricityHPElecBackup',
-                            'HS14_CGSHP_FanCoils-NaturalGasHPGasBackup',
-                            'HS14_CGSHP_FanCoils-ElectricityHPElecBackup']
-
-    supported_building_types = [
-        'MediumOffice',
-        'LargeOffice',
-        'SmallOffice',
-        'PrimarySchool',
-        'SecondarySchool',
-        'LowriseApartment',
-        'MidriseApartment',
-        'HighriseApartment'
-    ]
-
-    if not (set(kwargs['hvac_fuel_types_list']).issubset(set(supported_fuel_types))):
-        print("Invalid fueltype system mix. Please use only the following:")
-        print(supported_fuel_types)
-        exit(1)
-
-    if not (set(kwargs['building_types']).issubset(set(supported_building_types))):
-        print("Invalid building types detected. Please use only the following:")
-        print(supported_fuel_types)
-        exit(1)
 
     generate_solution_sets(
-        compute_environment=kwargs['compute_environment'],  # local_docker, aws_batch, aws_batch_analysis...
-        building_types_list=kwargs['building_types'],  # a list of the building_types to look at.
-        epw_files=kwargs['epw_files'],  # a list of the epw files.
-        hvac_fuel_types_list=[x.split('-') for x in kwargs['hvac_fuel_types_list']],
-        working_folder=os.path.join(kwargs['working_folder']),
-        pop=kwargs['population'],
-        generations=kwargs['generations'],
+        compute_environment=compute_environment,  # local_docker, aws_batch, aws_batch_analysis...
+        building_types_list=building_types,  # a list of the building_types to look at.
+        epw_files=epw_files,  # a list of the epw files.
+        hvac_fuel_types_list=hvac_fuel_types_list,
+        working_folder=os.path.join(working_folder),
+        pop=nsga_population,
+        generations=nsga_generations,
         run_analyses=True
     )
 

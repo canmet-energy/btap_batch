@@ -1,7 +1,11 @@
 ---
 # aws_batch local_docker
 :analysis_name: optimization_example
-:algorithm_type: nsga2
+
+:algorithm_lhs_n_samples: null
+:algorithm_lhs_type: null
+:algorithm_lhs_random_seed: null
+:run_annual_simulation: tru:algorithm_type: nsga2
 :algorithm_nsga_population: 5
 :algorithm_nsga_n_generations: 2
 :algorithm_nsga_prob: 0.85
@@ -15,11 +19,7 @@
   #'cost_utility_neb_total_cost_per_m_sq', # Total Utility costs based on national energy board rates.
     'energy_eui_total_gj_per_m_sq', # Total energy consumed by building
   #'cost_equipment_total_cost_per_m_sq' # This is only available in btap_private_cli
-]
-:algorithm_lhs_n_samples: null
-:algorithm_lhs_type: null
-:algorithm_lhs_random_seed: null
-:run_annual_simulation: true
+]e
 
 ###########################################     Hourly Data     #######################################################
   # Note: the 'operation' and 'unit' keys in :output_variables are for performing operations on hourly output.

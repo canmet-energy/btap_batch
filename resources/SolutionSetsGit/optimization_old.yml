@@ -1,0 +1,321 @@
+---
+# aws_batch local_docker
+:analysis_name: optimization_LowriseApartment_ElectricityHPElecBackup_Toronto
+:algorithm_type: nsga2
+:algorithm_nsga_population: 50
+:algorithm_nsga_n_generations: 10
+:algorithm_nsga_prob: 0.85
+:algorithm_nsga_eta: 3.0
+:algorithm_nsga_minimize_objectives: [
+
+   'energy_eui_total_gj_per_m_sq', # Total energy consumed by building
+   'npv_total_per_m_sq'
+]
+:algorithm_lhs_n_samples: null
+:algorithm_lhs_type: null
+:algorithm_lhs_random_seed: null
+:run_annual_simulation: true
+
+###########################################     Hourly Data     #######################################################
+  # Note: the 'operation' and 'unit' keys in :output_variables are for performing operations on hourly output.
+  # For now, allowed operation type is 'sum'; allowed units are 'GJ' and 'kWh'.
+:output_variables: []
+:output_meters: []
+#########################################  BUILDING OPTIONS  ###########################################################
+# Building options
+
+:options:
+  :building_type: [
+    #      'SecondarySchool',
+    #      'PrimarySchool',
+    #      'SmallOffice',
+    #      'MediumOffice',
+    #      'LargeOffice',
+    #      'SmallHotel',
+    #      'LargeHotel',
+    #      'Warehouse',
+    #      'RetailStandalone',
+    #      'RetailStripmall',
+    #      'QuickServiceRestaurant',
+    #       'FullServiceRestaurant',
+    #      'MidriseApartment',
+    #      'HighriseApartment',
+          'LowriseApartment',
+    #      'Hospital',
+    #      'Outpatient'
+  ]
+  # The standard template to use for baseline assumptions.
+  :template: [
+    #  'BTAPPRE1980',
+    #  'BTAP1980TO2010',
+    #  'NECB2011',
+    #  'NECB2015',
+    #  'NECB2017',
+      'NECB2020'
+  ]
+  :epw_file: [
+     #   'CAN_QC_Montreal-Trudeau.Intl.AP.716270_CWEC2016.epw',
+    #      'CAN_NS_Halifax.Dockyard.713280_CWEC2016.epw',
+      #   'CAN_AB_Edmonton.Intl.AP.711230_CWEC2016.epw',
+     #   'CAN_BC_Vancouver.Intl.AP.718920_CWEC2016.epw',
+    #     'CAN_AB_Calgary.Intl.AP.718770_CWEC2016.epw',
+        'CAN_ON_Toronto.Pearson.Intl.AP.716240_CWEC2016.epw',
+    #      'CAN_NT_Yellowknife.AP.719360_CWEC2016.epw'
+  ]
+  :primary_heating_fuel: [
+#      "Electricity",
+     # "NaturalGas",
+     # "FuelOilNo2",
+     'ElectricityHPElecBackup',
+#      'ElectricityHPGasBackupMixed',
+#      'NaturalGasHPGasBackup',
+#      'NaturalGasHPElecBackupMixed'
+  ]
+  :dcv_type: [
+      #'NECB_Default',
+      'No_DCV',
+      'Occupancy_based_DCV',
+      'CO2_based_DCV'
+  ]
+  :lights_type: [
+      'NECB_Default',
+      #'LED'
+  ]
+  :lights_scale: [
+      '1.0',
+      '0.75'
+      ]
+  # Is this different from the LED option?
+  :daylighting_type: [
+      'NECB_Default',
+      'add_daylighting_controls',
+      'none'
+  ]
+  :ecm_system_name: [
+      'NECB_Default',
+      'HS09_CCASHP_Baseboard',
+      'HS08_CCASHP_VRF',
+      'HS11_ASHP_PTHP',
+      'HS12_ASHP_Baseboard',
+      'HS13_ASHP_VRF',
+      'HS14_CGSHP_FanCoils'
+  ]
+
+  :erv_package: [
+      'NECB_Default',
+      #'NECB_Default_All',
+      #'Plate-All',
+      'Plate-Existing',
+      #'Rotary-All',
+      'Rotary-Existing'
+  ]
+  # What are the existing vs all versions?
+  :boiler_eff: [
+      'NECB_Default',
+      #'NECB 88% Efficient Condensing Boiler',
+      'Viessmann Vitocrossal 300 CT3-17 96.2% Efficient Condensing Gas Boiler'
+  ]
+  :furnace_eff: [
+      'NECB_Default',
+      #'NECB 85% Efficient Condensing Gas Furnace'
+  ]
+  :shw_eff: [
+      'NECB_Default',
+      'Natural Gas Power Vent with Electric Ignition',
+      #'Natural Gas Direct Vent with Electric Ignition' #Mike mentioned that RSMeans has costing data for the "power vent", but not the "direct vent"
+  ]
+  # Default DHW is consistent with primary heating fuel
+  :ext_wall_cond: [
+      #'NECB_Default',
+      '0.314', # R18
+      '0.278', # R20
+      '0.247', # R22
+      '0.210', # R27
+      '0.183',  #R31
+      '0.141', #R40 Extrapolation does not work.
+      #'0.113', #R50
+      #'0.094', #R60
+      #'0.081', #R80
+  ]
+
+  :ext_floor_cond: [
+      #'NECB_Default',
+      '0.227',
+      '0.183',
+      '0.162',
+      '0.142'
+  ]
+  :ext_roof_cond: [
+      #'NECB_Default',
+      '0.227',
+      '0.193',
+      '0.183',
+      '0.162',
+      '0.142', #R40
+      '0.138',
+      '0.121',
+      #'0.113', #R50 Extrapolation does not work.
+      #'0.094', #R60
+      #'0.081', #R70
+  ]
+  :ground_wall_cond: [
+      'NECB_Default',
+      #'0.568',
+      #'0.379',
+      #'0.284',
+      #'0.210'
+  ]
+
+  :ground_floor_cond: [
+      #'NECB_Default',
+      '0.758',
+      '0.379'
+  ]
+
+  :ground_roof_cond: [
+      'NECB_Default',
+      #'0.568',
+      #'0.379' ,
+      #'0.284',
+      #'0.210'
+  ]
+  :door_construction_cond: [
+      'NECB_Default',
+      #'2.4',
+      #'2.2',
+      #'1.6'
+  ]
+  :fixed_window_cond: [
+      #'NECB_Default',
+      '2.4',
+      '2.2',
+      '1.6'
+  ]
+  :glass_door_cond: [
+      'NECB_Default',
+      #'2.4',
+      #'2.2',
+      #'1.6'
+  ]
+  :overhead_door_cond: [
+      'NECB_Default',
+      #'2.4',
+      #'2.2',
+      #'1.6'
+  ]
+  :skylight_cond: [
+      'NECB_Default',
+      #'2.4',
+      #'2.2',
+      #'1.6'
+  ]
+  :glass_door_solar_trans: [
+      'NECB_Default',
+      #'0.05',
+      #'0.95'
+  ]
+  :fixed_wind_solar_trans: [
+      #'NECB_Default',
+      '0.2',
+      '0.3',
+      '0.4',
+      '0.5',
+      '0.6'
+  ]
+  # This is the same as SHGC
+  :skylight_solar_trans: [
+      'NECB_Default',
+      #'0.05',
+      #'0.50',
+      #'0.95'
+  ]
+
+  :fdwr_set: [
+      'NECB_Default'
+  ]
+  # Skylight to roof ratio
+  :srr_set: [
+      'NECB_Default'
+  ]
+  :rotation_degrees: [
+      'NECB_Default',
+#      '45.0',
+#      '90.0',
+#      '135.0',
+#      '180.0',
+#      '225.0',
+#      '270.0',
+#      '315.0'
+  ]
+  # Picking the worst orientation (major axis of building oriented N-S)
+  :scale_x: [
+      'NECB_Default',
+  ]
+  :scale_y: [
+      'NECB_Default',
+  ]
+  :scale_z: [
+      'NECB_Default',
+  ]
+  :pv_ground_type: [ # Two options: (1) nil/none/false/'NECB_Default', (2) 'add_pv_ground'
+      'NECB_Default',
+    #  'add_pv_ground'
+  ]
+  :pv_ground_total_area_pv_panels_m2: [ 'NECB_Default' ] # Options: (1) nil/none/false, (2) 'NECB_Default' (i.e. building footprint), (3) area value (e.g. 50)
+  :pv_ground_tilt_angle: [ 'NECB_Default' ] # Options: (1) 'NECB_Default' (i.e. latitude), (2) tilt angle value (e.g. 20)
+  :pv_ground_azimuth_angle: [ 'NECB_Default' ] # Options: (1) 'NECB_Default' (i.e. south), (2) azimuth angle value (e.g. 90)
+  :pv_ground_module_description: [ # Options: (1) nil/none/false, (2) 'NECB_Default' (i.e. Standard), (3) other options ('Standard', 'Premium', ThinFilm')
+      'NECB_Default',
+      #'Premium',
+      #'ThinFilm'
+  ]
+  # Advances DX units type.
+  :adv_dx_units: [
+      'NECB_Default',
+      'Carrier WeatherExpert',
+      'Lennox Model L Ultra High Efficiency'
+  ]
+  :nv_type: [ # Two options: (1) nil/none/false/'NECB_Default', (2) 'add_nv'
+      'NECB_Default',
+      'add_nv'
+  ]
+  :nv_opening_fraction: [ 'NECB_Default' ] #options: (1) nil/none/false (2) 'NECB_Default' (i.e. 0.1) (3) opening fraction of windows, which can be a float number between 0.0 and 1.0
+  :nv_temp_out_min: [ 'NECB_Default' ] #options: (1) nil/none/false (2) 'NECB_Default' (i.e. 13.0 based on inputs from Michel Tardif re a real school in QC) (3) minimum outdoor air temperature (in Celsius) below which natural ventilation is shut down
+  :nv_delta_temp_in_out: [ 'NECB_Default' ] #options: (1) nil/none/false (2) 'NECB_Default' (i.e. 1.0 based on inputs from Michel Tardif re a real school in QC) (3) temperature difference (in Celsius) between the indoor and outdoor air temperatures below which ventilation is shut down
+  :occupancy_loads_scale: [ 'NECB_Default' ]
+  :electrical_loads_scale: [
+  'NECB_Default',
+  '0.50'
+  ]
+  :oa_scale: [ 'NECB_Default' ]
+  :infiltration_scale: [ 'NECB_Default', '0.50']
+  :chiller_type: [
+      'NECB_Default',
+      'VSD'
+  ] # Options: (1) 'NECB_Default'/nil/'none'/false (i.e. do nothing), (2) e.g. 'VSD'
+  :airloop_economizer_type: [  # (1) nil/'NECB_Default' (2) 'DifferentialEnthalpy (3) 'DifferentialDryBulb'
+    'NECB_Default',
+    #'DifferentialEnthalpy',
+    #'DifferentialDryBulb'
+  ]
+  :shw_scale: [ # Options: (1) 'NECB_Default'/nil/'none'/false (i.e. do nothing), (2) a float number larger than 0.0
+      'NECB_Default',
+        '0.25'
+  ]
+  :baseline_system_zones_map_option: [ # Options: (1) 'NECB_Default'/'none'/nil (i.e. 'one_sys_per_bldg'), (2) 'one_sys_per_dwelling_unit', (3) 'one_sys_per_bldg'
+   'NECB_Default',
+   #'one_sys_per_bldg', # Note: this option is the default  (i.e. 'NECB_Default')
+   #'one_sys_per_dwelling_unit'
+ ]
+  :npv_start_year: [ # Options: (1) 'NECB_Default'/nil/'none' (i.e. set it as 2022), (2) an integer number larger than 2005 (first year of neb_end_use_prices.csv)
+    'NECB_Default',
+#    '2020'
+  ]
+  :npv_end_year: [ # Options: (1) 'NECB_Default'/nil/'none' (i.e. set it as 2041), (2) an integer number smaller than 2051 (last year of neb_end_use_prices.csv)
+    'NECB_Default',
+#    '2050'
+  ]
+  :npv_discount_rate: [ # Options: (1) 'NECB_Default'/nil/'none' (i.e. set it as 0.03), (2) a float number between 0.0 and 1.0
+    'NECB_Default',
+#    '0.02'
+  ]
