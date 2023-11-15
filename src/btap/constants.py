@@ -51,6 +51,6 @@ BATCH_JOB_ROLE = 'arn:aws:iam::834599497928:role/batchJobRole'
 # Role to give permissions to batch to run.
 BATCH_SERVICE_ROLE = 'arn:aws:iam::834599497928:role/service-role/AWSBatchServiceRole'
 # Max Retry attemps for aws clients.
-AWS_MAX_RETRIES = 12
+AWS_MAX_RETRIES = 60
 # Dockerfile url location
 DOCKERFILE_URL = 'https://raw.githubusercontent.com/canmet-energy/btap_cli/dev/Dockerfile'
