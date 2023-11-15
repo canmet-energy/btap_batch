@@ -152,7 +152,7 @@ for building_type in building_types:
                 'NaturalGasHPGasBackup']
 
             epw_short = re.search(r"CAN_(\w*_\w*).*", epw_file).group(1)
-            analysis_configuration[':analysis_name'] = f"lhs_{building_type}_{epw_short}_{primary_heating_fuel}"
+            analysis_configuration[':analysis_name'] = f"lhs_{building_type}_{epw_short}"
             analysis_folder = os.path.join(projects_folder, analysis_configuration[':analysis_name'])
             pathlib.Path(analysis_folder).mkdir(parents=True, exist_ok=True)
             f = open(os.path.join(analysis_folder, "input.yml"), 'w')
