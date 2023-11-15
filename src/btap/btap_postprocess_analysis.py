@@ -29,11 +29,32 @@ class PostProcessResults():
                  username=None # username, usually aws username.
                  ):
 
+        # ic(baseline_results)
+        # ic(database_folder)
+        # ic(results_folder)
+        # ic(compute_environment)
+        # ic(output_variables)
+        # ic(username)
+
+
+
         logging.info(f'PostProcessResults(database_folder=r"{database_folder}", results_folder=r"{results_folder}, compute_environment ="{compute_environment}", output_variables="{output_variables}", username="{username}")')
 
         filepaths = [os.path.join(database_folder, f) for f in os.listdir(database_folder) if f.endswith('.csv')]
         btap_data_df = pd.concat(map(pd.read_csv, filepaths))
         btap_data_df.reset_index()
+
+        # the primary fuel type should be set to the correct baseline if a HP is set in the :ecm_system_name
+        def primary_fuel(row):
+            if isinstance(row[':ecm_system_name'],str):
+                if row[':primary_heating_fuel'] == "NaturalGas" and 'HP' in row[':ecm_system_name'] :
+                    return 'NaturalGasHPGasBackup'
+                if row[':primary_heating_fuel'] == "Electricity" and 'HP' in row[':ecm_system_name'] :
+                    return 'ElectricityHPElecBackup'
+            return row[':primary_heating_fuel']
+        btap_data_df['orig_fuel_type'] = btap_data_df[':primary_heating_fuel']
+        btap_data_df[':primary_heating_fuel'] = btap_data_df.apply(primary_fuel, axis=1)
+
 
         if isinstance(btap_data_df, pd.DataFrame):
             self.btap_data_df = btap_data_df
@@ -388,9 +409,9 @@ class PostProcessResults():
 #                    output_variables=[],
 #                    username="phylroy_lopez")
 
-
+#
 # PostProcessResults(baseline_results=None,
-#                    database_folder=r"C:\Users\plopez\btap_batch\output\parametric_example\parametric\results\database",
-#                    results_folder=r"C:\Users\plopez\btap_batch\output\parametric_example\parametric\results",
-#                    compute_environment ="aws_batch",
-#                    output_variables=[], username="phylroy_lopez").run()
+#                    database_folder=r"/home/plopez/btap_batch/output/parametric_example/reference/results/database",
+#                    results_folder=r"/home/plopez/btap_batch/output/parametric_example/reference/results",
+#                    compute_environment ="local_docker",
+#                    output_variables=[], username="lowrise_apartment").run()

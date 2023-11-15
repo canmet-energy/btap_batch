@@ -85,3 +85,14 @@ class S3:
         logging.info(f"uploading {file} to s3 bucket {bucket_name} target {target_path}")
         self.s3client.upload_file(file, bucket_name, target_path)
 
+
+# def find_files(self, bucket_name=None,  pattern=None):
+#     import boto3
+#     client = boto3.client('s3')
+#     paginator = client.get_paginator('list_objects_v2')
+#     page_iterator = paginator.paginate(Bucket=bucket_name)
+#     objects = page_iterator.search(f"Contents[?contains(Key, `{pattern}`)][]")
+#
+#
+#     find_files(bucket_name='834599497928',
+#                pattern='output.xlsx')

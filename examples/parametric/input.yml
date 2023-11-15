@@ -1,5 +1,5 @@
 ---
-:analysis_name: parametric_example_oil
+:analysis_name: parametric_example
 :algorithm_type: parametric
 :algorithm_nsga_population: null
 :algorithm_nsga_n_generations: null
@@ -60,11 +60,11 @@
   ]
   # The standard template to use for baseline assumptions.
   :template: [
-       'BTAPPRE1980',
-       'BTAP1980TO2010',
-       'NECB2011',
-       'NECB2015',
-       'NECB2017',
+#       'BTAPPRE1980',
+#       'BTAP1980TO2010',
+#       'NECB2011',
+#       'NECB2015',
+#       'NECB2017',
        'NECB2020'
   ]
   :epw_file: [
@@ -77,9 +77,11 @@
 #      'CAN_NT_Yellowknife.AP.719360_CWEC2016.epw'
   ]
   :primary_heating_fuel: [
-  #     'Electricity',
-  #     'NaturalGas',
-      'FuelOilNo2'
+       'Electricity',
+       'NaturalGas',
+       'NaturalGasHPGasBackup',
+       'ElectricityHPElecBackup',
+
   ]
   :dcv_type: [
        'NECB_Default',
@@ -104,12 +106,12 @@
   ]
   :ecm_system_name: [
       'NECB_Default',
-#      'HS09_CCASHP_Baseboard',
-#      'HS08_CCASHP_VRF',
-#      'HS11_ASHP_PTHP',
-#      'HS12_ASHP_Baseboard',
-#      'HS13_ASHP_VRF',
-#      'HS14_CGSHP_FanCoils'
+      'HS09_CCASHP_Baseboard',
+      'HS08_CCASHP_VRF',
+      'HS11_ASHP_PTHP',
+      'HS12_ASHP_Baseboard',
+      'HS13_ASHP_VRF',
+      'HS14_CGSHP_FanCoils'
   ]
 
   :erv_package: [
