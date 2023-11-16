@@ -132,6 +132,11 @@ def analysis(project_input_folder=None,
              compute_environment=None,
              reference_run=None,
              output_folder=None):
+    ic(project_input_folder)
+    ic(compute_environment)
+    ic(reference_run)
+    ic(output_folder)
+
     if project_input_folder.startswith('s3:'):
         # download project to local temp folder.
         local_dir = os.path.join(str(Path.home()), 'temp_analysis_folder')

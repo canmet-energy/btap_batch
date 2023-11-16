@@ -19,7 +19,6 @@
   - DifferentialDryBulb
   :baseline_system_zones_map_option:
   - NECB_Default
-  - one_sys_per_bldg
   :boiler_eff:
   - NECB_Default
   - Viessmann Vitocrossal 300 CT3-17 96.2% Efficient Condensing Gas Boiler
@@ -70,6 +69,9 @@
   - '0.142'
   - '0.138'
   - '0.121'
+  - '0.113'
+  - '0.094'
+  - '0.081'
   :ext_wall_cond:
   - NECB_Default
   - '0.314'
@@ -77,6 +79,10 @@
   - '0.247'
   - '0.210'
   - '0.183'
+  - '0.141'
+  - '0.113'
+  - '0.094'
+  - '0.081'
   :fdwr_set:
   - NECB_Default
   :fixed_wind_solar_trans:
@@ -97,8 +103,6 @@
   - NECB_Default
   :glass_door_solar_trans:
   - NECB_Default
-  - '0.05'
-  - '0.95'
   :ground_floor_cond:
   - NECB_Default
   - '0.758'
@@ -107,16 +111,13 @@
   - NECB_Default
   :ground_wall_cond:
   - NECB_Default
-  - '0.568'
-  - '0.379'
-  - '0.284'
-  - '0.210'
   :infiltration_scale:
   - NECB_Default
   - '0.75'
   - '0.50'
   :lights_scale:
   - '1.0'
+  - '0.75'
   - '0.50'
   :lights_type:
   - NECB_Default
@@ -169,6 +170,8 @@
   - Natural Gas Power Vent with Electric Ignition
   :shw_scale:
   - NECB_Default
+  - '0.75'
+  - '0.50'
   - '0.25'
   :skylight_cond:
   - NECB_Default
@@ -198,7 +201,7 @@
 - frequency: hourly
   name: Cooling:Electricity
 - frequency: hourly
-  name: Heating:DistrictCooling
+  name: Cooling:DistrictCooling
 - frequency: hourly
   name: Fans:Electricity
 - frequency: hourly

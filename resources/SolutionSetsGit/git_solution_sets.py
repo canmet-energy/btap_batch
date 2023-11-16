@@ -6,10 +6,10 @@ import pathlib
 from src.btap.cli_helper_methods import analysis
 from src.btap.solution_sets import generate_solution_sets
 
-REFERENCE_RUNS = True
-SENSITIVITY_RUNS = True
+REFERENCE_RUNS = False
+SENSITIVITY_RUNS = False
 LHS_RUNS = True
-OPTIMIZATION_RUNS = False
+#OPTIMIZATION_RUNS = True
 
 building_types = [
     'LowriseApartment'  # ,
@@ -32,10 +32,10 @@ epw_files = [
 compute_environment = 'aws_batch_analysis'
 
 # LHS constants
-algorithm_lhs_n_samples = 4000
+algorithm_lhs_n_samples = 1000
 
 # Optimization
-algorithm_nsga_population = 100
+algorithm_nsga_population = 50
 algorithm_nsga_n_generations = 10
 algorithm_nsga_minimize_objectives = [
     'energy_eui_total_gj_per_m_sq',
@@ -111,6 +111,37 @@ with open(lhs_template_file, 'w') as outfile:
 for building_type in building_types:
     for epw_file in epw_files:
 
+        # Reference Runs
+        if REFERENCE_RUNS:
+            analysis_configuration = copy.deepcopy(sensitivity_template)
+            analysis_configuration[':building_type'] = building_type
+            analysis_configuration[':epw_file'] = epw_file
+            analysis_configuration[':output_meters'] = output_meters
+            analysis_configuration[':primary_heating_fuel'] = [
+                'Electricity',
+                'ElectricityHPElecBackup',
+                'NaturalGas',
+                'NaturalGasHPGasBackup'
+            ]
+            analysis_configuration[':template'] = [
+                'NECB2011',
+                'NECB2015',
+                'NECB2017',
+                'NECB2020']
+
+            epw_short = re.search(r"CAN_(\w*_\w*).*", epw_file).group(1)
+            analysis_configuration[':analysis_name'] = f"ref_{building_type}_{epw_short}"
+            analysis_folder = os.path.join(projects_folder, analysis_configuration[':analysis_name'])
+            pathlib.Path(analysis_folder).mkdir(parents=True, exist_ok=True)
+            f = open(os.path.join(analysis_folder, "input.yml"), 'w')
+            yaml.dump(analysis_configuration, f)
+            # Submit analysis
+            print(f"Running  {analysis_configuration[':analysis_name']}")
+            analysis(project_input_folder=analysis_folder,
+                     compute_environment=compute_environment,
+                     reference_run=True,
+                     output_folder=output_folder)
+
         if SENSITIVITY_RUNS:
             # Sensitivity Analysis
             analysis_configuration = copy.deepcopy(sensitivity_template)
@@ -163,37 +194,6 @@ for building_type in building_types:
                      compute_environment=compute_environment,
                      reference_run=True,
                      output_folder=output_folder)
-
-            # Reference Runs
-            if REFERENCE_RUNS:
-                analysis_configuration = copy.deepcopy(sensitivity_template)
-                analysis_configuration[':building_type'] = building_type
-                analysis_configuration[':epw_file'] = epw_file
-                analysis_configuration[':output_meters'] = output_meters
-                analysis_configuration[':primary_heating_fuel'] = [
-                    'Electricity',
-                    'ElectricityHPElecBackup',
-                    'NaturalGas',
-                    'NaturalGasHPGasBackup'
-                ]
-                analysis_configuration[':template'] = [
-                    'NECB2011',
-                    'NECB2015',
-                    'NECB2017',
-                    'NECB2020']
-
-                epw_short = re.search(r"CAN_(\w*_\w*).*", epw_file).group(1)
-                analysis_configuration[':analysis_name'] = f"ref_{building_type}_{epw_short}"
-                analysis_folder = os.path.join(projects_folder, analysis_configuration[':analysis_name'])
-                pathlib.Path(analysis_folder).mkdir(parents=True, exist_ok=True)
-                f = open(os.path.join(analysis_folder, "input.yml"), 'w')
-                yaml.dump(analysis_configuration, f)
-                # Submit analysis
-                print(f"Running  {analysis_configuration[':analysis_name']}")
-                analysis(project_input_folder=analysis_folder,
-                         compute_environment=compute_environment,
-                         reference_run=True,
-                         output_folder=output_folder)
 
         # General Optimization
         if OPTIMIZATION_RUNS:
