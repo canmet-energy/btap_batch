@@ -4,6 +4,7 @@ from src.btap.constants import AWS_BATCH_COMPUTE_INSTANCE_TYPES
 from src.btap.constants import MIN_AWS_VCPUS
 from src.btap.constants import AWS_BATCH_DEFAULT_IMAGE
 from src.btap.constants import WORKER_CONTAINER_STORAGE
+from src.btap.constants import AWS_VOLUME_TYPE
 import time
 import logging
 from random import random
@@ -62,7 +63,7 @@ class AWSComputeEnvironment:
                             'DeviceName': '/dev/xvda',
                             'Ebs': {
                                 'VolumeSize': sizegb,
-                                'VolumeType': 'gp2'
+                                'VolumeType': AWS_VOLUME_TYPE
                             }
                         }
                     ]
