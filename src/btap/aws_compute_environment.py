@@ -67,8 +67,8 @@ class AWSComputeEnvironment:
                                 'DeleteOnTermination': True,
                                 'Encrypted': False,
                                 'VolumeSize': sizegb,
-                                'VolumeType': 'io2',
-                                'Iops': 5000
+                                'VolumeType': AWS_VOLUME_TYPE,
+                                'Iops': IOPS_VALUE
                             }
                         }
                     ]

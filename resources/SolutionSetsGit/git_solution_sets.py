@@ -12,7 +12,7 @@ LHS_RUNS = False
 OPTIMIZATION_RUNS = True
 
 building_types = [
-    'LowriseApartment'  # ,
+    'LowriseApartment' ,
     # 'MidriseApartment',
     # 'HighriseApartment'
     # 'SmallOffice',
@@ -114,6 +114,7 @@ for building_type in building_types:
         # Reference Runs
         if REFERENCE_RUNS:
             analysis_configuration = copy.deepcopy(sensitivity_template)
+            analysis_configuration[':algorithm_type:'] = 'reference'
             analysis_configuration[':building_type'] = building_type
             analysis_configuration[':epw_file'] = epw_file
             analysis_configuration[':output_meters'] = output_meters
@@ -144,23 +145,24 @@ for building_type in building_types:
 
         if SENSITIVITY_RUNS:
             # Sensitivity Analysis
-            analysis_configuration = copy.deepcopy(sensitivity_template)
-            analysis_configuration[':building_type'] = building_type
-            analysis_configuration[':epw_file'] = epw_file
-            analysis_configuration[':algorithm_type'] = 'sensitivity'
-            analysis_configuration[':output_meters'] = output_meters
-            epw_short = re.search(r"CAN_(\w*_\w*).*", epw_file).group(1)
-            analysis_configuration[':analysis_name'] = f"sens_{building_type}_{epw_short}"
-            analysis_folder = os.path.join(projects_folder, analysis_configuration[':analysis_name'])
-            pathlib.Path(analysis_folder).mkdir(parents=True, exist_ok=True)
-            f = open(os.path.join(analysis_folder, "input.yml"), 'w')
-            yaml.dump(analysis_configuration, f)
-            # Submit analysis
-            print(f"Running {analysis_configuration[':analysis_name']}")
-            analysis(project_input_folder=analysis_folder,
-                     compute_environment=compute_environment,
-                     reference_run=True,
-                     output_folder=output_folder)
+            for primary_heating_fuel in ['Electricity','NaturalGas']:
+                analysis_configuration = copy.deepcopy(sensitivity_template)
+                analysis_configuration[':building_type'] = building_type
+                analysis_configuration[':epw_file'] = epw_file
+                analysis_configuration[':algorithm_type'] = 'sensitivity'
+                analysis_configuration[':output_meters'] = output_meters
+                epw_short = re.search(r"CAN_(\w*_\w*).*", epw_file).group(1)
+                analysis_configuration[':analysis_name'] = f"sens_{building_type}_{epw_short}"
+                analysis_folder = os.path.join(projects_folder, analysis_configuration[':analysis_name'])
+                pathlib.Path(analysis_folder).mkdir(parents=True, exist_ok=True)
+                f = open(os.path.join(analysis_folder, "input.yml"), 'w')
+                yaml.dump(analysis_configuration, f)
+                # Submit analysis
+                print(f"Running {analysis_configuration[':analysis_name']}")
+                analysis(project_input_folder=analysis_folder,
+                         compute_environment=compute_environment,
+                         reference_run=True,
+                         output_folder=output_folder)
 
         if LHS_RUNS:
             # LHS Analysis
