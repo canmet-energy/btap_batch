@@ -5,6 +5,7 @@ from src.btap.constants import MIN_AWS_VCPUS
 from src.btap.constants import AWS_BATCH_DEFAULT_IMAGE
 from src.btap.constants import WORKER_CONTAINER_STORAGE
 from src.btap.constants import AWS_VOLUME_TYPE
+from src.btap.constants import IOPS_VALUE
 import time
 import logging
 from random import random
@@ -50,8 +51,9 @@ class AWSComputeEnvironment:
         launch_template = self.ec2.describe_launch_templates()['LaunchTemplates']
         if next((item for item in launch_template if item["LaunchTemplateName"] == self.launch_template_name),
                 None) == None:
-            message = f'Creating EC2 instance launch template with 100GB of space named {self.launch_template_name}'
+            message = f'Creating EC2 instance launch template using  with {sizegb} of space named {self.launch_template_name}'
             logging.info(message)
+            print(message)
             response = self.ec2.create_launch_template(
                 DryRun=False,
                 LaunchTemplateName=self.launch_template_name,
@@ -62,8 +64,11 @@ class AWSComputeEnvironment:
                         {
                             'DeviceName': '/dev/xvda',
                             'Ebs': {
+                                'DeleteOnTermination': True,
+                                'Encrypted': False,
                                 'VolumeSize': sizegb,
-                                'VolumeType': AWS_VOLUME_TYPE
+                                'VolumeType': 'io2',
+                                'Iops': 5000
                             }
                         }
                     ]
@@ -72,6 +77,7 @@ class AWSComputeEnvironment:
         else:
             message = f"Launch Template {self.launch_template_name} already exists. Using existing."
             logging.info(message)
+            print(message)
         return self.launch_template_name
 
     def __describe_compute_environments(self, compute_environment_name, n=0):

@@ -201,7 +201,7 @@
 - frequency: hourly
   name: Cooling:Electricity
 - frequency: hourly
-  name: Cooling:DistrictCooling
+  name: Heating:DistrictCooling
 - frequency: hourly
   name: Fans:Electricity
 - frequency: hourly

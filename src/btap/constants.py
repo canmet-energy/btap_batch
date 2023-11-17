@@ -12,15 +12,16 @@ WORKER_CONTAINER_VCPU = 1
 # Container allocated Memory (MB) for AWS Batch
 WORKER_CONTAINER_MEMORY = 4000
 # Container Storage (GB)
-WORKER_CONTAINER_STORAGE = 100
+WORKER_CONTAINER_STORAGE = 1000
 # Container allocated VCPU for AWS Batch
 MANAGER_CONTAINER_VCPU = 16
 # Container allocated Memory (MB) for AWS Batch
 MANAGER_CONTAINER_MEMORY = 64000
 # Container Storage (GB)
-MANAGER_CONTAINER_STORAGE = 500
+MANAGER_CONTAINER_STORAGE = 500 # Not used right now
 # Volume Type
 AWS_VOLUME_TYPE = 'io2' # could be gp2,gp3,io1,io2
+IOPS_VALUE = 5000 #Only used for io2 volumes.
 
 
 
@@ -28,7 +29,13 @@ AWS_VOLUME_TYPE = 'io2' # could be gp2,gp3,io1,io2
 AWS_BATCH_ALLOCATION_STRATEGY = 'BEST_FIT_PROGRESSIVE'
 # AWS Compute instances types..setting to optimal to let AWS figure it out for me.
 # https://docs.aws.amazon.com/batch/latest/userguide/create-compute-environment.html
-AWS_BATCH_COMPUTE_INSTANCE_TYPES = ['m6i.32xlarge']
+AWS_BATCH_COMPUTE_INSTANCE_TYPES = ['m6i.32xlarge',
+                                    'm6i.24xlarge',
+                                    'm6i.16xlarge',
+                                    'm5.24xlarge',
+                                    'm5.16xlarge',
+                                    'm4.16xlarge',
+                                    'm5.16xlarge']
 # Using the public Amazon Linux 2 AMI to make use of overlay disk storage. Has all aws goodies already installed,
 # makeing secure session manager possible, and has docker pre-installed.
 AWS_BATCH_DEFAULT_IMAGE = 'ami-0a06b44c462364156'

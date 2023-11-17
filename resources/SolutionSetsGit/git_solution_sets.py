@@ -6,10 +6,10 @@ import pathlib
 from src.btap.cli_helper_methods import analysis
 from src.btap.solution_sets import generate_solution_sets
 
-REFERENCE_RUNS = False
-SENSITIVITY_RUNS = False
-LHS_RUNS = True
-#OPTIMIZATION_RUNS = True
+REFERENCE_RUNS = True
+SENSITIVITY_RUNS = True
+LHS_RUNS = False
+OPTIMIZATION_RUNS = True
 
 building_types = [
     'LowriseApartment'  # ,
@@ -32,7 +32,7 @@ epw_files = [
 compute_environment = 'aws_batch_analysis'
 
 # LHS constants
-algorithm_lhs_n_samples = 1000
+algorithm_lhs_n_samples = 2000
 
 # Optimization
 algorithm_nsga_population = 50
@@ -220,7 +220,7 @@ for building_type in building_types:
 
             epw_short = re.search(r"CAN_(\w*_\w*).*", epw_file).group(1)
             analysis_configuration[
-                ':analysis_name'] = f"opt_natgas_{building_type}_{epw_short}_{analysis_configuration[':primary_heating_fuel'][0]}"
+                ':analysis_name'] = f"opt_{building_type}_{epw_short}_{analysis_configuration[':primary_heating_fuel'][0]}"
             analysis_folder = os.path.join(projects_folder, analysis_configuration[':analysis_name'])
             pathlib.Path(analysis_folder).mkdir(parents=True, exist_ok=True)
             f = open(os.path.join(analysis_folder, "input.yml"), 'w')
