@@ -21,12 +21,12 @@ building_types = [
 ]
 
 epw_files = [
-    ['CAN_BC_Vancouver.Intl.AP.718920_CWEC2016.epw','YVR'],  # CZ 4
-    ['CAN_QC_Montreal-Trudeau.Intl.AP.716270_CWEC2016.epw','YUL'],  # CZ 5
-    ['CAN_ON_Toronto.Pearson.Intl.AP.716240_CWEC2016.epw', 'YYZ'],  # CZ 6
-    ['CAN_AB_Edmonton.Intl.AP.711230_CWEC2016.epw', 'YEG'], # CZ 7A
-    ['CAN_AB_Fort.McMurray.AP.716890_CWEC2016.epw', 'YMM'],  # CZ 7B
-    ['CAN_NT_Yellowknife.AP.719360_CWEC2016.epw', 'YZF']  # CZ 8
+    ['CAN_BC_Vancouver.Intl.AP.718920_CWEC2016.epw','YVR']#,  # CZ 4
+    # ['CAN_QC_Montreal-Trudeau.Intl.AP.716270_CWEC2016.epw','YUL'],  # CZ 5
+    # ['CAN_ON_Toronto.Pearson.Intl.AP.716240_CWEC2016.epw', 'YYZ'],  # CZ 6
+    # ['CAN_AB_Edmonton.Intl.AP.711230_CWEC2016.epw', 'YEG'], # CZ 7A
+    # ['CAN_AB_Fort.McMurray.AP.716890_CWEC2016.epw', 'YMM'],  # CZ 7B
+    # ['CAN_NT_Yellowknife.AP.719360_CWEC2016.epw', 'YZF']  # CZ 8
 ]
 
 compute_environment = 'aws_batch_analysis'
@@ -108,7 +108,7 @@ for building_type in building_types:
         # Reference Runs
         if REFERENCE_RUNS:
             analysis_configuration = copy.deepcopy(sensitivity_template)
-            analysis_configuration[':algorithm_type:'] = 'reference'
+            analysis_configuration[':algorithm_type'] = 'reference'
             analysis_configuration[':building_type'] = [building_type]
             analysis_configuration[':epw_file'] = [epw_file[0]]
             analysis_configuration[':output_meters'] = output_meters
@@ -162,7 +162,7 @@ for building_type in building_types:
         if LHS_RUNS:
             # LHS Analysis
 
-            analysis_configuration = copy.deepcopy(sensitivity_template)
+            analysis_configuration = copy.deepcopy(optimization_template)
 
             analysis_configuration[':building_type'] = [building_type]
             analysis_configuration[':epw_file'] = [epw_file[0]]
