@@ -69,9 +69,6 @@
   - '0.142'
   - '0.138'
   - '0.121'
-  - '0.113'
-  - '0.094'
-  - '0.081'
   :ext_wall_cond:
   - NECB_Default
   - '0.314'
@@ -79,10 +76,6 @@
   - '0.247'
   - '0.210'
   - '0.183'
-  - '0.141'
-  - '0.113'
-  - '0.094'
-  - '0.081'
   :fdwr_set:
   - NECB_Default
   :fixed_wind_solar_trans:
@@ -113,11 +106,9 @@
   - NECB_Default
   :infiltration_scale:
   - NECB_Default
-  - '0.75'
   - '0.50'
   :lights_scale:
   - '1.0'
-  - '0.75'
   - '0.50'
   :lights_type:
   - NECB_Default

@@ -3,7 +3,7 @@ from src.btap.constants import AWS_BATCH_ALLOCATION_STRATEGY
 from src.btap.constants import AWS_BATCH_COMPUTE_INSTANCE_TYPES
 from src.btap.constants import MIN_AWS_VCPUS
 from src.btap.constants import AWS_BATCH_DEFAULT_IMAGE
-from src.btap.constants import WORKER_CONTAINER_STORAGE
+from src.btap.constants import INSTANCE_STORAGE_SIZE_GB
 from src.btap.constants import AWS_VOLUME_TYPE
 from src.btap.constants import IOPS_VALUE
 import time
@@ -22,18 +22,19 @@ BATCH_SERVICE_ROLE = 'arn:aws:iam::834599497928:role/service-role/AWSBatchServic
 
 
 class AWSComputeEnvironment:
-    def __init__(self):
+    def __init__(self,name = ''):
         username = CommonPaths().get_username().replace('.', '_')
-        self._compute_environment_name = f"{username}_compute_environment"
-        self.launch_template_name = f'{username}_storage_template'
+        self._compute_environment_name = f"{username}_{name}_compute_environment"
+        self.launch_template_name = f'{username}_{name}_storage_template'
 
     def get_compute_environment_name(self):
         return self._compute_environment_name
 
-    def setup(self):
+    def setup(self, maxvCpus=MAX_AWS_VCPUS):
         # This method creates batch infrastructure for user.
         launch_template = self.__add_storage_space_launch_template()
-        self.__create_compute_environment(launch_template=launch_template)
+        self.__create_compute_environment(launch_template=launch_template,
+                                          maxvCpus=maxvCpus)
 
     def tear_down(self):
         # This method creates batch infrastructure for user.
@@ -45,7 +46,7 @@ class AWSComputeEnvironment:
 
 
     # Short method that creates a template to increase the disk size of the containers. Default 100GB.
-    def __add_storage_space_launch_template(self, sizegb=WORKER_CONTAINER_STORAGE):
+    def __add_storage_space_launch_template(self, sizegb=INSTANCE_STORAGE_SIZE_GB):
         self.ec2 = AWSCredentials().ec2_client
 
         launch_template = self.ec2.describe_launch_templates()['LaunchTemplates']
@@ -93,7 +94,16 @@ class AWSComputeEnvironment:
             time.sleep(wait_time)
             return self.__describe_compute_environments(compute_environment_name, n=n + 1)
 
-    def __create_compute_environment(self, launch_template=None):
+    def __create_compute_environment(self,
+                                     launch_template=None,
+                                     allocationStrategy=AWS_BATCH_ALLOCATION_STRATEGY,
+                                     minvCpus=MIN_AWS_VCPUS,
+                                     maxvCpus=MAX_AWS_VCPUS,
+                                     instanceTypes=AWS_BATCH_COMPUTE_INSTANCE_TYPES,
+                                     imageId=AWS_BATCH_DEFAULT_IMAGE,
+                                     subnets =  AWS_EC2Info().subnet_id_list,
+                                     securityGroupIds = AWS_EC2Info().securityGroupIds,
+                                     ):
 
         batch_client = AWSCredentials().batch_client
         # Inform user starting to create CE.
@@ -110,14 +120,14 @@ class AWSComputeEnvironment:
             serviceRole=IAMBatchServiceRole().arn(),
             computeResources={
                 'type': 'EC2',
-                'allocationStrategy': AWS_BATCH_ALLOCATION_STRATEGY,
-                'minvCpus': MIN_AWS_VCPUS,
-                'maxvCpus': MAX_AWS_VCPUS,
+                'allocationStrategy': allocationStrategy,
+                'minvCpus': minvCpus,
+                'maxvCpus': maxvCpus,
                 # 'desiredvCpus': DESIRED_AWS_VCPUS,
-                'instanceTypes': AWS_BATCH_COMPUTE_INSTANCE_TYPES,
-                'imageId': AWS_BATCH_DEFAULT_IMAGE,
-                'subnets': AWS_EC2Info().subnet_id_list,
-                'securityGroupIds': AWS_EC2Info().securityGroupIds,
+                'instanceTypes': instanceTypes,
+                'imageId': imageId,
+                'subnets': subnets,
+                'securityGroupIds': securityGroupIds,
                 'instanceRole': 'ecsInstanceRole',
                 'launchTemplate': {
                     'launchTemplateName': launch_template}

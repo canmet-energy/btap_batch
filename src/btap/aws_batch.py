@@ -1,6 +1,6 @@
 from src.btap.constants import WORKER_CONTAINER_MEMORY
 from src.btap.constants import WORKER_CONTAINER_VCPU
-from src.btap.constants import WORKER_CONTAINER_STORAGE
+from src.btap.constants import INSTANCE_STORAGE_SIZE_GB
 import time
 import logging
 from random import random

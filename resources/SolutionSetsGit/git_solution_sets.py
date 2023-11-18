@@ -7,21 +7,21 @@ from src.btap.cli_helper_methods import analysis
 from src.btap.solution_sets import generate_solution_sets
 
 REFERENCE_RUNS = True
-SENSITIVITY_RUNS = True
-LHS_RUNS = True
-OPTIMIZATION_RUNS = True
+SENSITIVITY_RUNS = False #x2
+LHS_RUNS = False
+OPTIMIZATION_RUNS = False
 
 building_types = [
     'LowriseApartment',
     # 'MidriseApartment',
-    # 'HighriseApartment'
+    # 'HighriseApartment',
     # 'SmallOffice',
     # 'MediumOffice',
     # 'LargeOffice',
 ]
 
 epw_files = [
-    ['CAN_BC_Vancouver.Intl.AP.718920_CWEC2016.epw','YVR']#,  # CZ 4
+    ['CAN_BC_Vancouver.Intl.AP.718920_CWEC2016.epw','YVR'],  # CZ 4
     # ['CAN_QC_Montreal-Trudeau.Intl.AP.716270_CWEC2016.epw','YUL'],  # CZ 5
     # ['CAN_ON_Toronto.Pearson.Intl.AP.716240_CWEC2016.epw', 'YYZ'],  # CZ 6
     # ['CAN_AB_Edmonton.Intl.AP.711230_CWEC2016.epw', 'YEG'], # CZ 7A
@@ -32,11 +32,11 @@ epw_files = [
 compute_environment = 'aws_batch_analysis'
 
 # LHS constants
-algorithm_lhs_n_samples = 2000
+algorithm_lhs_n_samples = 10
 
 # Optimization
-algorithm_nsga_population = 50
-algorithm_nsga_n_generations = 10
+algorithm_nsga_population = 20
+algorithm_nsga_n_generations = 2
 algorithm_nsga_minimize_objectives = [
     'energy_eui_total_gj_per_m_sq',
     'npv_total_per_m_sq'

@@ -1,6 +1,7 @@
 import pip_system_certs.wrapt_requests
-from src.btap.constants import WORKER_CONTAINER_MEMORY, WORKER_CONTAINER_STORAGE, WORKER_CONTAINER_VCPU
-from src.btap.constants import MANAGER_CONTAINER_VCPU, MANAGER_CONTAINER_MEMORY, MANAGER_CONTAINER_STORAGE
+from src.btap.constants import WORKER_CONTAINER_MEMORY, WORKER_CONTAINER_VCPU
+from src.btap.constants import MANAGER_CONTAINER_VCPU, MANAGER_CONTAINER_MEMORY
+from src.btap.constants import MAX_AWS_VCPUS
 from src.btap.aws_batch import AWSBatch
 from src.btap.aws_compute_environment import AWSComputeEnvironment
 from src.btap.aws_image_manager import AWSImageManager
@@ -25,7 +26,7 @@ import uuid
 import numpy as np
 from icecream import ic
 from src.btap.aws_dynamodb import AWSResultsTable
-
+import math
 
 def get_pareto_points(costs, return_mask=True):
     """
@@ -65,20 +66,20 @@ def build_and_configure_docker_and_aws(btap_batch_branch=None,
     build_args_btap_batch = {'BTAP_BATCH_BRANCH': btap_batch_branch}
     if compute_environment == 'aws_batch' or compute_environment == 'all':
         # Tear down
-        ace = AWSComputeEnvironment()
-        image_cli = AWSImageManager(image_name='btap_cli')
-        image_btap_batch = AWSImageManager(image_name='btap_batch', compute_environment=ace)
+        ace_worker = AWSComputeEnvironment(name='btap_cli')
+        image_worker = AWSImageManager(image_name='btap_cli')
+        image_btap_batch = AWSImageManager(image_name='btap_batch', compute_environment=ace_worker)
 
         # tear down aws_btap_cli batch framework.
-        batch_cli = AWSBatch(image_manager=image_cli, compute_environment=ace)
+        batch_cli = AWSBatch(image_manager=image_worker, compute_environment=ace_worker)
         batch_cli.tear_down()
 
         # tear down aws_btap_batch batch framework.
-        batch_batch = AWSBatch(image_manager=image_btap_batch, compute_environment=ace)
-        batch_batch.tear_down()
+        batch_manager = AWSBatch(image_manager=image_btap_batch, compute_environment=ace_worker)
+        batch_manager.tear_down()
 
         # tear down compute resources.
-        ace.tear_down()
+        ace_worker.tear_down()
 
         # Delete user role permissions.
         IAMBatchJobRole().delete()
@@ -90,27 +91,39 @@ def build_and_configure_docker_and_aws(btap_batch_branch=None,
         IAMCodeBuildRole().create_role()
         IAMBatchServiceRole().create_role()
         time.sleep(30)  # Give a few seconds for role to apply.
-        ace = AWSComputeEnvironment()
-        ace.setup()
-        image_cli = AWSImageManager(image_name='btap_cli')
-        print('Building AWS btap_cli image')
-        image_cli.build_image(build_args=build_args_btap_cli)
 
-        image_batch = AWSImageManager(image_name='btap_batch')
-        print('Building AWS btap_batch image')
-        image_batch.build_image(build_args=build_args_btap_batch)
 
-        # create aws_btap_cli batch framework.
-        batch_cli = AWSBatch(image_manager=image_cli,
-                             compute_environment=ace
+        #Create Compute Environment for workers
+        ace_worker = AWSComputeEnvironment(name='btap_cli')
+        ace_worker.setup(maxvCpus=math.floor(MAX_AWS_VCPUS * 0.90))
+
+        #Build Image for worker
+        image_worker = AWSImageManager(image_name='btap_cli')
+        print('Building worker image')
+        image_worker.build_image(build_args=build_args_btap_cli)
+
+        #Create Job description and queues for workers.
+        batch_cli = AWSBatch(image_manager=image_worker,
+                             compute_environment=ace_worker
                              )
         batch_cli.setup(container_vcpu=WORKER_CONTAINER_VCPU,
                         container_memory=WORKER_CONTAINER_MEMORY)
-        # create aws_btap_batch batch framework.
-        batch_batch = AWSBatch(image_manager=image_batch,
-                               compute_environment=ace
+
+
+        #Create compute environment for analysis managers, which is a 10% of MAXVCPU
+        ace_manager = AWSComputeEnvironment(name='btap_batch')
+        ace_manager.setup(maxvCpus=math.floor(MAX_AWS_VCPUS * 0.10))
+
+        #Build image for btap_batch manager
+        image_manager = AWSImageManager(image_name='btap_batch')
+        print('Building AWS batch manager image')
+        image_manager.build_image(build_args=build_args_btap_batch)
+
+        # Create Job description and queues for analysis manager.
+        batch_manager = AWSBatch(image_manager=image_manager,
+                               compute_environment=ace_manager
                                )
-        batch_batch.setup(container_vcpu=MANAGER_CONTAINER_VCPU,
+        batch_manager.setup(container_vcpu=MANAGER_CONTAINER_VCPU,
                           container_memory=MANAGER_CONTAINER_MEMORY)
 
         # Create AWS database for results if it does not already exist.
@@ -118,9 +131,9 @@ def build_and_configure_docker_and_aws(btap_batch_branch=None,
 
     if compute_environment == 'all' or compute_environment == 'local_docker':
         # Build btap_batch image
-        image_cli = DockerImageManager(image_name='btap_cli')
+        image_worker = DockerImageManager(image_name='btap_cli')
         print('Building btap_cli image')
-        image_cli.build_image(build_args=build_args_btap_cli)
+        image_worker.build_image(build_args=build_args_btap_cli)
 
         # # Build batch image
         # image_batch = DockerImageManager(image_name='btap_batch')

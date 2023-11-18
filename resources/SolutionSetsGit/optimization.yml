@@ -17,6 +17,8 @@
   - Lennox Model L Ultra High Efficiency
   :airloop_economizer_type:
   - NECB_Default
+  - DifferentialEnthalpy
+  - DifferentialDryBulb
   :baseline_system_zones_map_option:
   - NECB_Default
   :boiler_eff:
@@ -49,10 +51,13 @@
   - NECB_Default
   - '0.50'
   :epw_file:
-  - CAN_ON_Toronto.Pearson.Intl.AP.716240_CWEC2016.epw
+  - CAN_QC_Montreal-Trudeau.Intl.AP.716270_CWEC2016.epw
   :erv_package:
   - NECB_Default
+  - NECB_Default_All
+  - Plate-All
   - Plate-Existing
+  - Rotary-All
   - Rotary-Existing
   :ext_floor_cond:
   - NECB_Default
@@ -70,7 +75,6 @@
   - '0.247'
   - '0.210'
   - '0.183'
-  - '0.141'
   :fdwr_set:
   - NECB_Default
   :fixed_wind_solar_trans:
@@ -126,7 +130,7 @@
   :overhead_door_cond:
   - NECB_Default
   :primary_heating_fuel:
-  - ElectricityHPElecBackup
+  - Electricity
   :pv_ground_azimuth_angle:
   - NECB_Default
   :pv_ground_module_description:
