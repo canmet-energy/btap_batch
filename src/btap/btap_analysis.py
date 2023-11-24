@@ -160,7 +160,7 @@ class BTAPAnalysis():
 
         # Set analysis name folder.
         logging.info(f'analysis_folder:{self.analysis_name_folder()}')
-        logging.info(f'analysis_id_folder:{self.analysis_id_folder()}')
+        logging.info(f'analysis_output_folder:{self.analysis_output_folder()}')
 
         # Tell log we are deleting previous runs.
         message = f'Deleting previous runs from: {self.cp.algorithm_folder()}'
@@ -183,29 +183,24 @@ class BTAPAnalysis():
         # create local input and output folders
 
         # Make input / output folder for mounting to container.
-        os.makedirs(self.cp.analysis_input_folder(), exist_ok=True)
-        os.makedirs(self.cp.analysis_output_folder(), exist_ok=True)
+        os.makedirs(self.cp.algorithm_folder(), exist_ok=True)
         os.makedirs(self.cp.analysis_results_folder(), exist_ok=True)
         os.makedirs(self.cp.analysis_database_folder(), exist_ok=True)
         os.makedirs(self.cp.analysis_failures_folder(), exist_ok=True)
-        logging.info(f"local mounted input folder:{self.cp.analysis_input_folder()}")
-        logging.info(f"local mounted output folder:{self.cp.analysis_output_folder()}")
+        logging.info(f"local mounted input folder:{self.cp.algorithm_folder()}")
+        logging.info(f"local mounted output folder:{self.cp.algorithm_folder()}")
         logging.info(f"local mounted results_folder folder:{self.cp.analysis_results_folder()}")
         logging.info(f"local mounted database_folder folder:{self.cp.analysis_database_folder()}")
         logging.info(f"local mounted failures_folder folder:{self.cp.analysis_failures_folder()}")
 
-    def analysis_input_folder(self):
-        return self.cp.analysis_input_folder()
+    def algorithm_folder(self):
+        return self.cp.algorithm_folder()
 
     def analysis_name_folder(self):
         return self.cp.project_output_folder()
 
-    # Set analysis name folder.
-    def analysis_id_folder(self):
-        return self.cp.algorithm_folder()
-
     def analysis_output_folder(self):
-        return self.cp.analysis_output_folder()
+        return self.cp.algorithm_folder()
 
     def analysis_results_folder(self):
         return self.cp.analysis_results_folder()
@@ -267,11 +262,11 @@ class BTAPAnalysis():
         run_options[':output_meters'] = self.output_meters
 
         # Local Paths
-        local_datapoint_input_folder = os.path.join(self.cp.analysis_input_folder(), job_id)
-        local_run_option_file = os.path.join(self.cp.analysis_input_job_id_folder(job_id=job_id), 'run_options.yml')
+        local_datapoint_input_folder = os.path.join(self.cp.algorithm_folder(), job_id)
+        local_run_option_file = os.path.join(self.cp.analysis_job_id_folder(job_id=job_id), 'run_options.yml')
 
         # Save run_option file for this simulation.
-        os.makedirs(self.cp.analysis_input_job_id_folder(job_id=job_id), exist_ok=True)
+        os.makedirs(self.cp.analysis_job_id_folder(job_id=job_id), exist_ok=True)
         logging.info(f'saving simulation input file here:{local_run_option_file}')
         with open(local_run_option_file, 'w') as outfile:
             yaml.dump(run_options, outfile, encoding=('utf-8'))
@@ -280,9 +275,9 @@ class BTAPAnalysis():
         local_osm_dict = self.get_local_osm_files()
         if run_options[':building_type'] in local_osm_dict:
             shutil.copy(local_osm_dict[run_options[':building_type']],
-                        self.cp.analysis_input_job_id_folder(job_id=job_id))
+                        self.cp.analysis_job_id_folder(job_id=job_id))
             logging.info(
-                f"Copying osm file from {local_osm_dict[run_options[':building_type']]} to {self.cp.analysis_input_job_id_folder(job_id=job_id)}")
+                f"Copying osm file from {local_osm_dict[run_options[':building_type']]} to {self.cp.analysis_job_id_folder(job_id=job_id)}")
 
         # Submit Job to batch
         job = self.batch.create_job(job_id=job_id)
@@ -430,7 +425,7 @@ class BTAPAnalysis():
             self.credentials = AWSCredentials()
             message = "Uploading %s..." % self.cp.s3_analysis_excel_output_path()
             logging.info(message)
-            S3().upload_file(self.cp.analysis_excel_output_path(),
+            S3().upload_file(self.cp.analysis_excel_results_path(),
                              self.credentials.account_id,
                              self.cp.s3_analysis_excel_output_path())
 

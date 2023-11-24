@@ -124,6 +124,8 @@ class PostProcessResults():
                     wr = csv.writer(csvfile, quoting=csv.QUOTE_ALL)
                     wr.writerow(failed_downloads)
 
+
+
     def download_file(self, bin_folder, extension, file_path, s3, row):
         # If files are local
         if row['datapoint_output_url'].startswith('file:///'):

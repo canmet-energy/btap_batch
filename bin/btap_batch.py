@@ -7,7 +7,6 @@ import sys
 # Avoid having to add PYTHONPATH to env.
 PROJECT_ROOT = str(Path(os.path.dirname(os.path.realpath(__file__))).parent.absolute())
 sys.path.append(PROJECT_ROOT)
-
 PROJECT_FOLDER = os.path.join(Path(os.path.dirname(os.path.realpath(__file__))).parent.absolute())
 EXAMPLE_FOLDER = os.path.join(PROJECT_FOLDER, 'examples')
 OUTPUT_FOLDER = os.path.join(PROJECT_FOLDER, "output")
@@ -189,7 +188,6 @@ def aws_db_dump(**kwargs):
     folder_path = kwargs['folder_path']
     analysis_name = kwargs['analysis_name']
     check_environment_vars_are_defined(compute_environment='aws_batch')
-
     AWSResultsTable().dump_table(folder_path=folder_path, type=type, analysis_name=analysis_name)
 
 
@@ -199,9 +197,7 @@ def aws_db_analyses_status(**kwargs):
     from src.btap.aws_dynamodb import AWSResultsTable
     """
     This command will show the state of each analysis that has been, and that is currently running.
-
         Example:
-
         python ./bin/btap_batch.py aws_db_analyses_status
     """
     pandas.set_option('display.max_colwidth', None)
@@ -227,38 +223,6 @@ def aws_db_failures(**kwargs):
     check_environment_vars_are_defined(compute_environment='aws_batch')
     print(AWSResultsTable().aws_db_failures(analysis_name=kwargs['analysis_name']))
 
-
-#
-# @btap.command()
-# @click.option('--analysis_name', default=None, help='Filter by analysis name given. Default shows all.')
-# @click.option('--x_data', default='energy_eui_total_gj_per_m_sq', help='X-data for chart. Default is energy_eui_total_gj_per_m_sq ')
-# @click.option('--y_data', default='cost_equipment_total_cost_per_m_sq', help='Y-data for chart. Default is cost_equipment_total_cost_per_m_sq')
-# @click.option('--color', default=':scenario', help='color of points. Default is :scenario')
-# @click.option('--size', default=None, help='Filter by analysis name given. Default is none')
-# def aws_db_chart(**kwargs):
-#     """
-#     This command will generate a plotly scatter chart based on the initial data collected during an analysis run on aws. This can be used
-#     to monitor the progress of an analysis while it is still being completed.
-#
-#     Example:
-#
-#     python ./bin/btap_batch.py aws-db-chart --analysis_name optimization_example --x energy_eui_total_gj_per_m_sq --y cost_equipment_total_cost_per_m_sq
-#
-#     """
-#     x = kwargs['x_data']
-#     y = kwargs['y_data']
-#     color = kwargs['color']
-#     size = kwargs['size']
-#     analysis_name = kwargs['analysis_name']
-#     pandas.set_option('display.max_colwidth', None)
-#     pandas.set_option('display.max_columns', None)
-#     check_environment_vars_are_defined(compute_environment='aws_batch')
-#     AWSResultsTable().aws_db_analyses_chart_scatter(x=x,
-#                                                     y=y,
-#                                                     color=color,
-#                                                     size=size,
-#                                                     analysis_name=analysis_name)
-#
 
 @btap.command(help="This will run all the analysis projects in the examples file. Locally or on AWS.")
 @click.option('--compute_environment', default='local_docker',

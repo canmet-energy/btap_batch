@@ -27,6 +27,9 @@ import numpy as np
 from icecream import ic
 from src.btap.aws_dynamodb import AWSResultsTable
 import math
+import pandas as pd
+from distutils.dir_util import copy_tree
+
 
 def get_pareto_points(costs, return_mask=True):
     """
@@ -52,6 +55,7 @@ def get_pareto_points(costs, return_mask=True):
         return is_efficient_mask
     else:
         return is_efficient
+
 
 def build_and_configure_docker_and_aws(btap_batch_branch=None,
                                        btap_costing_branch=None,
@@ -92,39 +96,37 @@ def build_and_configure_docker_and_aws(btap_batch_branch=None,
         IAMBatchServiceRole().create_role()
         time.sleep(30)  # Give a few seconds for role to apply.
 
-
-        #Create Compute Environment for workers
+        # Create Compute Environment for workers
         ace_worker = AWSComputeEnvironment(name='btap_cli')
         ace_worker.setup(maxvCpus=math.floor(MAX_AWS_VCPUS * 0.90))
 
-        #Build Image for worker
+        # Build Image for worker
         image_worker = AWSImageManager(image_name='btap_cli')
         print('Building worker image')
         image_worker.build_image(build_args=build_args_btap_cli)
 
-        #Create Job description and queues for workers.
+        # Create Job description and queues for workers.
         batch_cli = AWSBatch(image_manager=image_worker,
                              compute_environment=ace_worker
                              )
         batch_cli.setup(container_vcpu=WORKER_CONTAINER_VCPU,
                         container_memory=WORKER_CONTAINER_MEMORY)
 
-
-        #Create compute environment for analysis managers, which is a 10% of MAXVCPU
+        # Create compute environment for analysis managers, which is a 10% of MAXVCPU
         ace_manager = AWSComputeEnvironment(name='btap_batch')
         ace_manager.setup(maxvCpus=math.floor(MAX_AWS_VCPUS * 0.10))
 
-        #Build image for btap_batch manager
+        # Build image for btap_batch manager
         image_manager = AWSImageManager(image_name='btap_batch')
         print('Building AWS batch manager image')
         image_manager.build_image(build_args=build_args_btap_batch)
 
         # Create Job description and queues for analysis manager.
         batch_manager = AWSBatch(image_manager=image_manager,
-                               compute_environment=ace_manager
-                               )
+                                 compute_environment=ace_manager
+                                 )
         batch_manager.setup(container_vcpu=MANAGER_CONTAINER_VCPU,
-                          container_memory=MANAGER_CONTAINER_MEMORY)
+                            container_memory=MANAGER_CONTAINER_MEMORY)
 
         # Create AWS database for results if it does not already exist.
         AWSResultsTable().create_table()
@@ -236,8 +238,8 @@ def analysis(project_input_folder=None,
 
         elif analysis_config[':algorithm_type'] == 'batch':
             ba = BTAPBatchAnalysis(analysis_config=analysis_config,
-                               analysis_input_folder=analysis_input_folder,
-                               output_folder=output_folder)
+                                   analysis_input_folder=analysis_input_folder,
+                                   output_folder=output_folder)
 
 
         else:
@@ -245,8 +247,35 @@ def analysis(project_input_folder=None,
             exit(1)
 
         ba.run()
-
         print(f"Excel results file {ba.analysis_excel_results_path()}")
+
+        # # Collect results from reference and proposed runs.
+        # # Project folder.
+        # project_results_folder = os.path.join(ba.cp.project_output_folder(), 'results')
+        #
+        # # Collect all Results from reference and proposed to a single file.
+        # if reference_run_df != None:
+        #     ba.btap_data_df = pd.concat([ba.btap_data_df, br.btap_data_df])
+        # ba.btap_data_df.to_excel()
+        # # Collect all hourly data from reference and algorithm folders into hourly.parquette file.
+        #
+        # for folder in ['hourly.csv',
+        #                'in.osm',
+        #                'eplusout.sql',
+        #                'eplustbl.htm',
+        #                'failures',
+        #                'database'
+        #                ]:
+        #     # Reference
+        #     folder_path = os.path.join(br.analysis_results_folder(), folder)
+        #     target_path = os.path.join(project_results_folder, folder)
+        #     copy_tree(folder_path, target_path)
+        #     # Proposed
+        #     folder_path = os.path.join(ba.analysis_results_folder(), folder)
+        #     target_path = os.path.join(project_results_folder, folder)
+        #     copy_tree(folder_path, target_path)
+
+        # Collect all OpenStudio files in parquette file.
 
     if compute_environment == 'aws_batch_analysis':
         analysis_name = analysis_config[':analysis_name']
@@ -266,12 +295,13 @@ def analysis(project_input_folder=None,
         job = batch.create_job(job_id=analysis_name, reference_run=reference_run)
         return job.submit_job()
 
+
 def list_active_analyses():
     # Gets an AWSBatch analyses object.
     ace = AWSComputeEnvironment()
     analysis_queue = AWSBatch(image_manager=AWSImageManager(image_name='btap_batch'),
-                     compute_environment=ace
-                     )
+                              compute_environment=ace
+                              )
     return analysis_queue.get_active_jobs()
 
 
@@ -279,14 +309,14 @@ def terminate_aws_analyses():
     # Gets an AWSBatch analyses object.
     ace = AWSComputeEnvironment()
     analysis_queue = AWSBatch(image_manager=AWSImageManager(image_name='btap_batch'),
-                     compute_environment=ace
-                     )
+                              compute_environment=ace
+                              )
     analysis_queue.clear_queue()
     batch_cli = AWSBatch(image_manager=AWSImageManager(image_name='btap_cli'), compute_environment=ace)
     batch_cli.clear_queue()
 
 
-def sensitivity_chart(excel_file = None, pdf_output_folder ="./"):
+def sensitivity_chart(excel_file=None, pdf_output_folder="./"):
     import pandas as pd
     import numpy as np
     import seaborn as sns
@@ -294,7 +324,6 @@ def sensitivity_chart(excel_file = None, pdf_output_folder ="./"):
     from matplotlib.backends.backend_pdf import PdfPages
     from icecream import ic
     import dataframe_image as dfi
-
 
     import time
     # Location of Excel file used from sensitivity.
@@ -306,7 +335,7 @@ def sensitivity_chart(excel_file = None, pdf_output_folder ="./"):
     analysis_names = df[':analysis_name'].unique()
 
     for analysis_name in analysis_names:
-        pdf_output_folder = os.path.join(pdf_output_folder,analysis_name + ".pdf")
+        pdf_output_folder = os.path.join(pdf_output_folder, analysis_name + ".pdf")
         filtered_df = df.loc[df[':analysis_name'] == 'analysis_name']
         algorithm_type = df[':algorithm_type'].unique()[0]
 
@@ -317,22 +346,21 @@ def sensitivity_chart(excel_file = None, pdf_output_folder ="./"):
                 # Order Measures that had the biggest impact.
                 # https: // stackoverflow.com / questions / 32791911 / fast - calculation - of - pareto - front - in -python
                 ranked_df = df.copy()
-                #Remove rows where energy savings are negative.
-                ranked_df.drop(ranked_df[ranked_df['baseline_energy_percent_better'] <= 0].index, inplace = True)
+                # Remove rows where energy savings are negative.
+                ranked_df.drop(ranked_df[ranked_df['baseline_energy_percent_better'] <= 0].index, inplace=True)
 
                 # Use only columns for ranking.
 
-                ranked_df["scenario_value"]  = ranked_df.values[ranked_df.index.get_indexer(ranked_df[':scenario'].index), ranked_df.columns.get_indexer(ranked_df[':scenario'])]
-                ranked_df["energy_savings_per_cost"] =  ranked_df['baseline_energy_percent_better'] / ranked_df["cost_equipment_total_cost_per_m_sq"]
+                ranked_df["scenario_value"] = ranked_df.values[
+                    ranked_df.index.get_indexer(ranked_df[':scenario'].index), ranked_df.columns.get_indexer(
+                        ranked_df[':scenario'])]
+                ranked_df["energy_savings_per_cost"] = ranked_df['baseline_energy_percent_better'] / ranked_df[
+                    "cost_equipment_total_cost_per_m_sq"]
                 ranked_df['energy_savings_rank'] = ranked_df['energy_savings_per_cost'].rank(ascending=False)
                 ranked_df = ranked_df.sort_values(by=['energy_savings_rank'])
-                ranked_df['ECM'] = ranked_df[':scenario']+ "=" + ranked_df["scenario_value"].astype(str)
+                ranked_df['ECM'] = ranked_df[':scenario'] + "=" + ranked_df["scenario_value"].astype(str)
                 # Use only columns for ranking.
-                ranked_df = ranked_df[['ECM',':scenario','scenario_value','energy_savings_per_cost']]
-
-
-
-
+                ranked_df = ranked_df[['ECM', ':scenario', 'scenario_value', 'energy_savings_per_cost']]
 
                 ranked_df.plot.barh(x='ECM', y='energy_savings_per_cost')
                 plt.tight_layout()
@@ -340,9 +368,9 @@ def sensitivity_chart(excel_file = None, pdf_output_folder ="./"):
                 plt.close()
 
                 # Apply styling to dataframe and save
-                styled_df = ranked_df.style.format({'energy_savings_per_cost': "{:.4f}"}).hide(axis="index").bar(subset=["energy_savings_per_cost", ], color='lightgreen')
+                styled_df = ranked_df.style.format({'energy_savings_per_cost': "{:.4f}"}).hide(axis="index").bar(
+                    subset=["energy_savings_per_cost", ], color='lightgreen')
                 dfi.export(styled_df, 'ecm_ranked.png')
-
 
                 # Iterate through all scenarios.
                 for scenario in scenarios:
@@ -350,15 +378,13 @@ def sensitivity_chart(excel_file = None, pdf_output_folder ="./"):
                     # Scatter plot
 
                     sns.scatterplot(
-                                    x="baseline_energy_percent_better",
-                                    y="cost_equipment_total_cost_per_m_sq",
-                                    hue=scenario,
-                                    data=df.loc[df[':scenario'] == scenario].reset_index())
+                        x="baseline_energy_percent_better",
+                        y="cost_equipment_total_cost_per_m_sq",
+                        hue=scenario,
+                        data=df.loc[df[':scenario'] == scenario].reset_index())
 
                     pdf.savefig()
                     plt.close('all')
-
-
 
                     ## Stacked EUI chart.
                     # Filter Table rows by scenario. Save it to a new df named filtered_df.
@@ -441,7 +467,7 @@ def sensitivity_chart(excel_file = None, pdf_output_folder ="./"):
 
             # https: // stackoverflow.com / questions / 32791911 / fast - calculation - of - pareto - front - in -python
 
-            #'baseline_necb_tier','cost_equipment_total_cost_per_m_sq'
+            # 'baseline_necb_tier','cost_equipment_total_cost_per_m_sq'
             optimization_column_names = ['baseline_energy_percent_better', 'cost_equipment_total_cost_per_m_sq']
             # Add column to dataframe to indicate optimal datapoints.
             df['is_on_pareto'] = get_pareto_points(np.array(df[optimization_column_names].values.tolist()))
@@ -449,13 +475,12 @@ def sensitivity_chart(excel_file = None, pdf_output_folder ="./"):
             # Filter by pareto curve.
             pareto_df = df.loc[df['is_on_pareto'] == True].reset_index()
             bins = [-100, 0, 25, 50, 60, 1000]
-            labels = ["Non-Compliant", "Tier-1", "Tier-2","Tier-3", "Tier-4"]
+            labels = ["Non-Compliant", "Tier-1", "Tier-2", "Tier-3", "Tier-4"]
             pareto_df['binned'] = pd.cut(pareto_df['baseline_energy_percent_better'], bins=bins, labels=labels)
             sns.scatterplot(x="baseline_energy_percent_better",
                             y="cost_equipment_total_cost_per_m_sq",
                             hue="binned",
                             data=pareto_df)
-
 
             plt.show()
 
@@ -475,17 +500,3 @@ def sensitivity_chart(excel_file = None, pdf_output_folder ="./"):
             print(f"Unsupported analysis type {algorithm_type}")
 
         print(pdf_output_folder)
-
-
-
-
-
-
-
-
-
-
-
-
-
-
