@@ -21,15 +21,15 @@ from icecream import ic
 
 class PostProcessResults():
     def __init__(self,
-                 baseline_results=BASELINE_RESULTS,
-                 database_folder=None,
-                 results_folder=None,
-                 compute_environment=None,
-                 output_variables=None,
-                 username=None
+                 baseline_results=BASELINE_RESULTS, #dataframe of reference runs
+                 database_folder=None, # Path to location of analysis csv simulation results.. ie output/optimization/results/database
+                 results_folder=None,  # Path to result folder ie output/optimization/results/ probably should be removed as redundant.
+                 compute_environment=None, # where the analysis was run.
+                 output_variables=None, # Custom E+ output varialbles.
+                 username=None # username, usually aws username.
                  ):
 
-        logging.info(f'PostProcessResults(baseline_results=r"{baseline_results}",database_folder=r"{database_folder}", results_folder=r"{results_folder}, compute_environment ="{compute_environment}", output_variables="{output_variables}", username="{username}")')
+        logging.info(f'PostProcessResults(database_folder=r"{database_folder}", results_folder=r"{results_folder}, compute_environment ="{compute_environment}", output_variables="{output_variables}", username="{username}")')
 
         filepaths = [os.path.join(database_folder, f) for f in os.listdir(database_folder) if f.endswith('.csv')]
         btap_data_df = pd.concat(map(pd.read_csv, filepaths))
@@ -242,10 +242,8 @@ class PostProcessResults():
 
 
     def reference_comparisons(self):
-        if self.baseline_results != None:
-            file = open(self.baseline_results, 'rb')
-            self.baseline_df = pd.read_excel(file, sheet_name='btap_data')
-            file.close()
+        self.baseline_df = self.baseline_results
+        if isinstance(self.baseline_df, pd.DataFrame):
             merge_columns = [':building_type', ':template', ':primary_heating_fuel', ':epw_file']
             df = pd.merge(self.btap_data_df, self.baseline_df, how='left', left_on=merge_columns,
                           right_on=merge_columns).reset_index()  # Note: in this case, the 'x' suffix stands for the proposed building; and 'y' stands for the baseline (reference) building
@@ -267,6 +265,19 @@ class PostProcessResults():
             self.btap_data_df['baseline_difference_energy_eui_additional_fuel_gj_per_m_sq'] = round(
                 (df['energy_eui_additional_fuel_gj_per_m_sq_y'] - df[
                     'energy_eui_additional_fuel_gj_per_m_sq_x']), 1).values
+
+            costing_columns = [
+                'cost_equipment_envelope_total_cost_per_m_sq',
+                'cost_equipment_heating_and_cooling_total_cost_per_m_sq',
+                'cost_equipment_lighting_total_cost_per_m_sq',
+                'cost_equipment_renewables_total_cost_per_m_sq',
+                'cost_equipment_shw_total_cost_per_m_sq',
+                'cost_equipment_thermal_bridging_total_cost_per_m_sq',
+                'cost_equipment_ventilation_total_cost_per_m_sq']
+            for name in costing_columns:
+                self.add_baseline_diff(df, name)
+
+
 
             if (('cost_equipment_total_cost_per_m_sq_y' in df.columns) and (
                     'cost_equipment_total_cost_per_m_sq_x' in df.columns)):
@@ -349,6 +360,19 @@ class PostProcessResults():
                     'zones_total_outdoor_air_natural_ventilation_flow_per_exterior_area_m3_per_s_m2_y']
                 self.btap_data_df['baseline_zones_total_outdoor_air_natural_ventilation_m3'] = df[
                     'zones_total_outdoor_air_natural_ventilation_m3_y']
+
+    def add_baseline_percent_diff(self, df, name):
+        if ((name + '_y' in df.columns) and (
+                name + '_x' in df.columns)):
+            self.btap_data_df['baseline_percent_difference_'+ name] = round(
+                ((df[name + '_y'] - df[
+                    name + '_x' ]) * 100.0 / df[name + '_y']), 1).values
+
+    def add_baseline_diff(self, df, name):
+        if ((name + '_y' in df.columns) and (
+                name + '_x' in df.columns)):
+            self.btap_data_df['baseline_difference_'+name ] = round(
+                (df[name + '_y'] - df[name + '_x' ]), 1).values
 
 
 # PostProcessResults(baseline_results=None,
