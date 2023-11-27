@@ -3,6 +3,7 @@ from src.btap.constants import WORKER_CONTAINER_MEMORY, WORKER_CONTAINER_VCPU
 from src.btap.constants import MANAGER_CONTAINER_VCPU, MANAGER_CONTAINER_MEMORY
 from src.btap.constants import MAX_AWS_VCPUS
 from src.btap.aws_batch import AWSBatch
+from src.btap.aws_credentials import AWSCredentials
 from src.btap.aws_compute_environment import AWSComputeEnvironment
 from src.btap.aws_image_manager import AWSImageManager
 from src.btap.docker_image_manager import DockerImageManager
@@ -61,7 +62,9 @@ def build_and_configure_docker_and_aws(btap_batch_branch=None,
                                        btap_costing_branch=None,
                                        compute_environment=None,
                                        openstudio_version=None,
-                                       os_standards_branch=None):
+                                       os_standards_branch=None,
+                                       build_btap_cli=True,
+                                       build_btap_batch=True):
     # build args for aws and btap_cli container.
     build_args_btap_cli = {'OPENSTUDIO_VERSION': openstudio_version,
                            'BTAP_COSTING_BRANCH': btap_costing_branch,
@@ -71,6 +74,7 @@ def build_and_configure_docker_and_aws(btap_batch_branch=None,
     if compute_environment == 'aws_batch' or compute_environment == 'all':
         # Tear down
         ace_worker = AWSComputeEnvironment(name='btap_cli')
+        ace_manager = AWSComputeEnvironment(name='btap_batch')
         image_worker = AWSImageManager(image_name='btap_cli')
         image_btap_batch = AWSImageManager(image_name='btap_batch', compute_environment=ace_worker)
 
@@ -79,11 +83,12 @@ def build_and_configure_docker_and_aws(btap_batch_branch=None,
         batch_cli.tear_down()
 
         # tear down aws_btap_batch batch framework.
-        batch_manager = AWSBatch(image_manager=image_btap_batch, compute_environment=ace_worker)
+        batch_manager = AWSBatch(image_manager=image_btap_batch, compute_environment=ace_manager)
         batch_manager.tear_down()
 
         # tear down compute resources.
         ace_worker.tear_down()
+        ace_manager.tear_down()
 
         # Delete user role permissions.
         IAMBatchJobRole().delete()
@@ -103,7 +108,8 @@ def build_and_configure_docker_and_aws(btap_batch_branch=None,
         # Build Image for worker
         image_worker = AWSImageManager(image_name='btap_cli')
         print('Building worker image')
-        image_worker.build_image(build_args=build_args_btap_cli)
+        if build_btap_cli:
+            image_worker.build_image(build_args=build_args_btap_cli)
 
         # Create Job description and queues for workers.
         batch_cli = AWSBatch(image_manager=image_worker,
@@ -118,8 +124,9 @@ def build_and_configure_docker_and_aws(btap_batch_branch=None,
 
         # Build image for btap_batch manager
         image_manager = AWSImageManager(image_name='btap_batch')
-        print('Building AWS batch manager image')
-        image_manager.build_image(build_args=build_args_btap_batch)
+        if build_btap_batch:
+            print('Building AWS batch manager image')
+            image_manager.build_image(build_args=build_args_btap_batch)
 
         # Create Job description and queues for analysis manager.
         batch_manager = AWSBatch(image_manager=image_manager,
@@ -132,15 +139,10 @@ def build_and_configure_docker_and_aws(btap_batch_branch=None,
         AWSResultsTable().create_table()
 
     if compute_environment == 'all' or compute_environment == 'local_docker':
-        # Build btap_batch image
+        # Build btap_cli image
         image_worker = DockerImageManager(image_name='btap_cli')
         print('Building btap_cli image')
         image_worker.build_image(build_args=build_args_btap_cli)
-
-        # # Build batch image
-        # image_batch = DockerImageManager(image_name='btap_batch')
-        # print('Building btap_batch image')
-        # image_batch.build_image(build_args=build_args_btap_batch)
 
 
 def analysis(project_input_folder=None,
@@ -177,6 +179,32 @@ def analysis(project_input_folder=None,
         exit(1)
     analysis_config, analysis_input_folder, analyses_folder = BTAPAnalysis.load_analysis_input_file(
         analysis_config_file=analysis_config_file)
+    # ic(analysis_config)
+    # ic(analysis_input_folder)
+    # ic(analyses_folder)
+
+
+    # delete output from previous run if present locally
+    project_folder = os.path.join(output_folder,analysis_config[':analysis_name'])
+    ic(project_folder)
+    # Check if folder exists
+    if os.path.isdir(project_folder):
+        # Remove old folder
+        try:
+            shutil.rmtree(project_folder)
+        except PermissionError:
+            message = f'Could not delete {project_folder}. Do you have a file open in that folder or permissions to delete that folder? When running locally docker sometimes runs as another user requiring you to be admin to delete files. Exiting'
+            print(message)
+            exit(1)
+
+    # delete output from previous run if present on s3
+    if compute_environment == 'aws_batch':
+        bucket = AWSCredentials().account_id
+        user_name = os.environ.get('AWS_USERNAME').replace('.', '_')
+        prefix = os.path.join(user_name, analysis_config[':analysis_name'] + '/')
+        print(f"Deleting old files in S3 folder {prefix}")
+        S3().bulk_del_with_pbar(bucket=bucket, prefix=prefix)
+
 
     if compute_environment == 'local_docker' or compute_environment == 'aws_batch':
         analysis_config[':compute_environment'] = compute_environment
@@ -190,6 +218,7 @@ def analysis(project_input_folder=None,
             br = BTAPReference(analysis_config=ref_analysis_config,
                                analysis_input_folder=analysis_input_folder,
                                output_folder=os.path.join(output_folder))
+
             br.run()
 
             reference_run_df = br.btap_data_df
@@ -209,7 +238,7 @@ def analysis(project_input_folder=None,
         elif analysis_config[':algorithm_type'] == 'parametric':
             ba = BTAPParametric(analysis_config=analysis_config,
                                 analysis_input_folder=analysis_input_folder,
-                                output_folder=output_folder,
+                                output_folder=os.path.join(output_folder),
                                 reference_run_df=reference_run_df)
 
         # parametric
@@ -249,33 +278,6 @@ def analysis(project_input_folder=None,
         ba.run()
         print(f"Excel results file {ba.analysis_excel_results_path()}")
 
-        # # Collect results from reference and proposed runs.
-        # # Project folder.
-        # project_results_folder = os.path.join(ba.cp.project_output_folder(), 'results')
-        #
-        # # Collect all Results from reference and proposed to a single file.
-        # if reference_run_df != None:
-        #     ba.btap_data_df = pd.concat([ba.btap_data_df, br.btap_data_df])
-        # ba.btap_data_df.to_excel()
-        # # Collect all hourly data from reference and algorithm folders into hourly.parquette file.
-        #
-        # for folder in ['hourly.csv',
-        #                'in.osm',
-        #                'eplusout.sql',
-        #                'eplustbl.htm',
-        #                'failures',
-        #                'database'
-        #                ]:
-        #     # Reference
-        #     folder_path = os.path.join(br.analysis_results_folder(), folder)
-        #     target_path = os.path.join(project_results_folder, folder)
-        #     copy_tree(folder_path, target_path)
-        #     # Proposed
-        #     folder_path = os.path.join(ba.analysis_results_folder(), folder)
-        #     target_path = os.path.join(project_results_folder, folder)
-        #     copy_tree(folder_path, target_path)
-
-        # Collect all OpenStudio files in parquette file.
 
     if compute_environment == 'aws_batch_analysis':
         analysis_name = analysis_config[':analysis_name']

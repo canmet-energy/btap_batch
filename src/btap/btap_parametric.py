@@ -29,6 +29,9 @@ class BTAPParametric(BTAPAnalysis):
 
 
     def run(self):
+        # Create required paths and folders for analysis
+        self.create_paths_folders()
+
         # Compute all the scenarios for parametric run.
         self.compute_scenarios()
         try:

@@ -145,6 +145,7 @@ class PostProcessResults():
             s3_file_path = prefix + file_path
             target_on_local = os.path.join(bin_folder, row[':datapoint_id'] + extension)
             message = f"Getting file from S3 bucket {bucket} at path {s3_file_path} to {target_on_local}"
+
             logging.info(message)
             try:
                 s3.Bucket(bucket).download_file(s3_file_path, target_on_local)
@@ -153,14 +154,23 @@ class PostProcessResults():
                     print("The object does not exist.")
                 else:
                     raise
-            # Copy output files ('run_dir/run/in.osm', 'run_dir/run/eplustbl.htm', 'hourly.csv') to s3 for storage.
-
-            target_path_on_aws = os.path.join("/".join(s3_file_path.split("/")[:3]), 'results', os.path.basename(file_path),
-                                              row[':datapoint_id'] + extension)
-            target_path_on_aws = target_path_on_aws.replace('\\', '/')  # s3 likes forward slashes.
-            message = "Uploading %s..." % target_path_on_aws
-            logging.info(message)
-            S3().upload_file(target_on_local, AWSCredentials().account_id, target_path_on_aws)
+            # # Copy output files ('run_dir/run/in.osm', 'run_dir/run/eplustbl.htm', 'hourly.csv') to s3 for storage.
+            # # This path needs to change to use the cp analysis folder.
+            # target_path_on_aws = os.path.join("/".join(s3_file_path.split("/")[:3]),
+            #                                   'results',
+            #                                   os.path.basename(file_path),
+            #                                   row[':datapoint_id'] + extension)
+            #
+            # target_path_on_aws = os.path.join("/".join(s3_file_path.split("/")[:3]),
+            #                                   'results',
+            #                                   os.path.basename(file_path),
+            #                                   row[':datapoint_id'] + extension)
+            #
+            # target_path_on_aws = target_path_on_aws.replace('\\', '/')  # s3 likes forward slashes.
+            # message = "Uploading %s..." % target_path_on_aws
+            # print(message)
+            # logging.info(message)
+            # S3().upload_file(target_on_local, AWSCredentials().account_id, target_path_on_aws)
 
     def save_excel_output(self):
         # Create excel object

@@ -19,6 +19,7 @@ from src.btap.aws_compute_environment import AWSComputeEnvironment
 from src.btap.aws_dynamodb import AWSResultsTable
 from icecream import ic
 
+
 # Parent Analysis class from with all analysis inherit
 class BTAPAnalysis():
     # This does some simple check on the osm file to ensure that it has the required inputs for btap.
@@ -85,13 +86,12 @@ class BTAPAnalysis():
                  analysis_input_folder=None,
                  reference_run_df=None):
 
-        #Will always use the btap_cli image that run the ruby code.
+        # Will always use the btap_cli image that run the ruby code.
         self.image_name = 'btap_cli'
         self.analysis_config = analysis_config
         self.analysis_input_folder = analysis_input_folder
         self.output_folder = output_folder
         self.reference_run_df = reference_run_df
-
 
         # Get analysis information for runs.
 
@@ -131,7 +131,8 @@ class BTAPAnalysis():
         elif self.compute_environment == 'aws_batch':
             print(f"running on {self.compute_environment}")
 
-            self.image_manager = AWSImageManager(image_name=self.image_name, compute_environment=AWSComputeEnvironment())
+            self.image_manager = AWSImageManager(image_name=self.image_name,
+                                                 compute_environment=AWSComputeEnvironment())
             self.credentials = AWSCredentials()
         else:
             logging.error(f"Unknown image {self.image_name}")
@@ -143,8 +144,7 @@ class BTAPAnalysis():
         self.btap_data_df = []
         self.failed_df = []
 
-        # Create required paths and folders for analysis
-        self.create_paths_folders()
+
 
     def create_paths_folders(self):
 
@@ -208,7 +208,6 @@ class BTAPAnalysis():
     def analysis_excel_results_path(self):
         return self.cp.analysis_excel_results_path()
 
-
     def analysis_failures_folder(self):
         return self.cp.analysis_failures_folder()
 
@@ -222,10 +221,10 @@ class BTAPAnalysis():
             logging.error(f"could not find analysis input file at {analysis_config_file}. Exiting")
         # Open the yaml in analysis dict.
         with open(analysis_config_file, 'r') as stream:
-            analysis_config =  yaml.safe_load(stream)
+            analysis_config = yaml.safe_load(stream)
         analyses_folder = os.path.dirname(os.path.realpath(analysis_config_file))
         analysis_input_folder = os.path.dirname(os.path.realpath(analysis_config_file))
-        return analysis_config,analysis_input_folder,analyses_folder
+        return analysis_config, analysis_input_folder, analyses_folder
 
     def get_num_of_runs_failed(self):
         if os.path.isdir(self.analysis_failures_folder()):
@@ -297,7 +296,6 @@ class BTAPAnalysis():
         # to csv file.
         pathlib.Path(self.cp.analysis_database_folder()).mkdir(parents=True, exist_ok=True)
         df.to_csv(os.path.join(self.cp.analysis_database_folder(), f"{job_data[':datapoint_id']}.csv"))
-
 
         # Save failures to a folder as well.
 
@@ -412,11 +410,11 @@ class BTAPAnalysis():
     def generate_output_file(self, baseline_results=None):
         # Process csv file to create single dataframe with all simulation results
         ppr = PostProcessResults(baseline_results=baseline_results,
-                           database_folder=self.cp.analysis_database_folder(),
-                           results_folder=self.cp.analysis_results_folder(),
-                           compute_environment=self.compute_environment,
-                           output_variables=self.output_variables,
-                           username = self.cp.get_username())
+                                 database_folder=self.cp.analysis_database_folder(),
+                                 results_folder=self.cp.analysis_results_folder(),
+                                 compute_environment=self.compute_environment,
+                                 output_variables=self.output_variables,
+                                 username=self.cp.get_username())
         # Store post process run into analysis object. Will need it later.
         self.btap_data_df = ppr.run()
 
@@ -429,9 +427,25 @@ class BTAPAnalysis():
                              self.credentials.account_id,
                              self.cp.s3_analysis_excel_output_path())
 
+            # now copy results to s3
+
+            folders = ['in.osm',
+                       'eplustbl.htm',
+                       'hourly.csv',
+                       'eplusout.sql']
+
+            for folder in folders:
+                print(f"Uploading {folder} to S3 results")
+                source_folder = os.path.join(self.analysis_results_folder(), folder)
+                target_folder = os.path.join(self.cp.s3_analysis_results_folder(),folder).replace('\\', '/')
+                S3().copy_folder_to_s3(bucket_name=self.credentials.account_id,
+                                       source_folder=source_folder,
+                                       target_folder=target_folder)
+            print("Data upload to S3 Complete")
 
         return
+
     @staticmethod
     def generate_pdf_report(df=None,
-                           pdf_output=None):
+                            pdf_output=None):
         return None

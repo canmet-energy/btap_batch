@@ -6,6 +6,7 @@ import pathlib
 from src.btap.cli_helper_methods import analysis
 from src.btap.solution_sets import generate_solution_sets
 
+VINTAGE_RUNS = True
 REFERENCE_RUNS = True
 SENSITIVITY_RUNS = True #x2
 LHS_RUNS = True
@@ -126,6 +127,34 @@ for building_type in building_types:
 
 
             analysis_configuration[':analysis_name'] = f"ref_{building_type}_{epw_file[1]}"
+            analysis_folder = os.path.join(projects_folder, analysis_configuration[':analysis_name'])
+            pathlib.Path(analysis_folder).mkdir(parents=True, exist_ok=True)
+            f = open(os.path.join(analysis_folder, "input.yml"), 'w')
+            yaml.dump(analysis_configuration, f)
+            # Submit analysis
+            print(f"Running  {analysis_configuration[':analysis_name']}")
+            analysis(project_input_folder=analysis_folder,
+                     compute_environment=compute_environment,
+                     reference_run=True,
+                     output_folder=output_folder)
+
+
+        # Vintage Runs
+        if VINTAGE_RUNS:
+            analysis_configuration = copy.deepcopy(sensitivity_template)
+            analysis_configuration[':algorithm_type'] = 'reference'
+            analysis_configuration[':building_type'] = [building_type]
+            analysis_configuration[':epw_file'] = [epw_file[0]]
+            analysis_configuration[':output_meters'] = output_meters
+            analysis_configuration[':primary_heating_fuel'] = [
+                'Electricity',
+                'NaturalGas',
+            ]
+            analysis_configuration[':template'] = [
+                'BTAP1980TO2010',
+                'BTAPPRE1980']
+
+            analysis_configuration[':analysis_name'] = f"vin_{building_type}_{epw_file[1]}"
             analysis_folder = os.path.join(projects_folder, analysis_configuration[':analysis_name'])
             pathlib.Path(analysis_folder).mkdir(parents=True, exist_ok=True)
             f = open(os.path.join(analysis_folder, "input.yml"), 'w')

@@ -99,6 +99,8 @@ class BTAPOptimization(BTAPAnalysis):
         self.max_number_of_simulations = None
 
     def run(self):
+        # Create required paths and folders for analysis
+        self.create_paths_folders()
 
         message = "success"
         try:
