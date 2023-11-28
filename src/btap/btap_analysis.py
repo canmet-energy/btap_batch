@@ -418,6 +418,28 @@ class BTAPAnalysis():
         # Store post process run into analysis object. Will need it later.
         self.btap_data_df = ppr.run()
 
+        folders = ['in.osm',
+                   'eplustbl.htm',
+                   'hourly.csv',
+                   'eplusout.sql']
+
+        #Create Zip Files.
+        for folder in folders:
+            print(f"Zipping {folder} to S3 results zipfile")
+            source_folder = os.path.join(self.analysis_results_folder(), folder)
+            source_zip = os.path.join(self.analysis_results_folder(), 'zips',  folder)
+            # Delete file if it exists.
+            pathlib.Path(source_zip).unlink(missing_ok=True)
+            # Create zip
+            shutil.make_archive(source_zip, 'zip', source_folder)
+
+
+
+
+
+
+
+
         # If this is an aws_batch run, copy the excel file to s3 for storage.
         if self.compute_environment == 'aws_batch':
             self.credentials = AWSCredentials()
@@ -429,11 +451,6 @@ class BTAPAnalysis():
 
             # now copy results to s3
 
-            folders = ['in.osm',
-                       'eplustbl.htm',
-                       'hourly.csv',
-                       'eplusout.sql']
-
             for folder in folders:
                 print(f"Uploading {folder} to S3 results")
                 source_folder = os.path.join(self.analysis_results_folder(), folder)
@@ -441,7 +458,16 @@ class BTAPAnalysis():
                 S3().copy_folder_to_s3(bucket_name=self.credentials.account_id,
                                        source_folder=source_folder,
                                        target_folder=target_folder)
+                # Upload Zip files of results.
+                source_zip = os.path.join(self.analysis_results_folder(), 'zips', folder + '.zip' )
+                s3_target_zip = os.path.join(self.cp.s3_analysis_results_folder(), 'zips', folder + '.zip').replace('\\', '/')
+                S3().upload_file(source_zip, self.credentials.account_id, s3_target_zip)
+
+
             print("Data upload to S3 Complete")
+
+
+
 
         return
 

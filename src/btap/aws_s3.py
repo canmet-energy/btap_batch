@@ -10,6 +10,7 @@ from functools import partial
 from typing import Callable, Optional, Tuple
 from queue import PriorityQueue
 import boto3
+from tqdm import tqdm
 
 
 # Blob Storage operations
@@ -73,6 +74,7 @@ class S3:
     # Copy folder to S3. Single thread.
     def copy_folder_to_s3(self, bucket_name, source_folder, target_folder):
         # Get files in folder.
+        # print(f"Uploading {source_folder} to S3 {target_folder}")
         files = glob.glob(source_folder + '/**/*', recursive=True)
 
         # Go through all files recursively.
@@ -90,6 +92,32 @@ class S3:
         logging.info(f"uploading {file} to s3 bucket {bucket_name} target {target_path}")
         self.s3client.upload_file(file, bucket_name, target_path)
 
+
+    def download_file(self, s3_file=None, bucket_name=None, target_path=None):
+        pathlib.Path(target_path).parent.mkdir(parents=True, exist_ok=True)
+
+
+        try:
+            meta_data = self.s3client.head_object(Bucket=bucket_name, Key=s3_file)
+        except botocore.exceptions.ClientError as e:
+            if e.response['Error']['Code'] == "404":
+                print(f"ERROR: The file {s3_file} was not found on S3. Skipping")
+                return False
+            else:
+                print(f"ERROR: An error occurred tranferring {s3_file}. Skipping file.")
+                return False
+        else:
+            total_length = int(meta_data.get('ContentLength', 0))
+            with tqdm(total=total_length, desc=f'source: s3://{bucket_name}/{s3_file} to {target_path}',
+                      bar_format="{percentage:.1f}%|{bar:25} | {rate_fmt} | {desc}", unit='B', unit_scale=True,
+                      unit_divisor=1024,
+                      colour='green') as pbar:
+                self.s3client.download_file(bucket_name, s3_file, target_path, Callback=pbar.update)
+            return True
+
+
+
+
     # def find_files(self, bucket_name=None,  pattern=None):
     #     import boto3
     #     client = boto3.client('s3')
@@ -101,12 +129,15 @@ class S3:
     #     find_files(bucket_name='834599497928',
     #                pattern='output.xlsx')
 
-    def s3_get_list_of_folders_in_folder(bucket=None, prefix=None, delimiter='/'):
+    def s3_get_list_of_folders_in_folder(self, bucket=None, prefix=None, delimiter='/'):
+        from icecream import ic
+        folders = []
         import boto3
         client = boto3.client('s3')
         result = client.list_objects(Bucket=bucket, Prefix=prefix, Delimiter=delimiter)
         for o in result.get('CommonPrefixes'):
-            print(o.get('Prefix'))
+            folders.append(o.get('Prefix'))
+        return folders
 
     def count_objects_in_s3_folder(self, bucket_name, prefix):
         import boto3
@@ -240,5 +271,4 @@ class S3:
                 for _ in range(0, workers - 1):
                     queue.put(stop)
                 raise e from None
-
 

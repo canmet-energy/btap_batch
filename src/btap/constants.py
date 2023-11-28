@@ -8,9 +8,9 @@ MAX_AWS_VCPUS = 3000
 # Minimum number of CPU should be set to zero.
 MIN_AWS_VCPUS = 0
 # Container allocated VCPU for AWS Batch
-WORKER_CONTAINER_VCPU = 1
+WORKER_CONTAINER_VCPU = 2
 # Container allocated Memory (MB) for AWS Batch
-WORKER_CONTAINER_MEMORY = 4000
+WORKER_CONTAINER_MEMORY = 8000
 # Container Storage (GB)
 INSTANCE_STORAGE_SIZE_GB = 1000
 # Container allocated VCPU for AWS Batch
@@ -20,7 +20,7 @@ MANAGER_CONTAINER_MEMORY = 64000
 
 # Volume Type
 AWS_VOLUME_TYPE = 'io2' # could be gp2,gp3,io1,io2
-IOPS_VALUE = 5000 #Only used for io2 volumes.
+IOPS_VALUE = 10000 #Only used for io2 volumes.
 
 
 

@@ -90,6 +90,7 @@ class PostProcessResults():
                                    'hourly.csv',
                                    'run_dir/run/eplusout.sql']):
         for file_path in file_paths:
+            # mk results folder if it does not exist.
             pathlib.Path(os.path.dirname(self.results_folder)).mkdir(parents=True, exist_ok=True)
             filename = os.path.basename(file_path)
             extension = pathlib.Path(filename).suffix
