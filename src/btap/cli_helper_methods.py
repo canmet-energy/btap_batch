@@ -52,11 +52,66 @@ def get_pareto_points(costs, return_mask=True):
     else:
         return is_efficient
 
+
+def get_weather_locations(weather_list=None):
+    # Use the default weather file list if another list is not provided
+    if (weather_list == None) or (weather_list == ''):
+        weather_list = os.path.join(os.getcwd(), 'examples', 'weather_list.yml')
+
+    # Check if the weather file list exists
+    if not os.path.isfile(weather_list):
+        print(f"{weather_list} file does not exist.")
+        exit(1)
+
+    # Read the list
+    weather_config, weather_input_folder, weather_folder = BTAPAnalysis.load_analysis_input_file(
+        analysis_config_file=weather_list)
+    weather_files = weather_config[':weather_locations']
+
+    # Get the default weather file list location
+    default_weather_list = os.path.join(os.getcwd(), 'src', 'btap', 'default_weather_list.yml')
+
+    # Check if the default weather file list exists
+    if not os.path.isfile(default_weather_list):
+        print(f"Could not find the default weather list.  Please check if default_weather_list.yml is present in the /btap_batch/src/btap folder.  If is not present please get it from the btap_batch repository.")
+        exit(1)
+
+    # Get the default weather file list
+    default_weather_config, default_weather_input_folder, default_weather_folder = BTAPAnalysis.load_analysis_input_file(
+        analysis_config_file=default_weather_list)
+    default_weather_files = default_weather_config[':default_weather_locations']
+
+    # Check if any weather locations on the weather file list are not default weather locations
+    custom_weather_locs = []
+    for weather_loc in weather_files:
+        is_default_loc = weather_loc in default_weather_files
+        if not is_default_loc:
+            custom_weather_locs.append(weather_loc)
+
+    # Create a string containing the non-default weather locations, where each non-default weather location is separated
+    # by a space
+    custom_weather_string = ""
+    for weather_loc in custom_weather_locs:
+        if custom_weather_string == "":
+            custom_weather_string = str(weather_loc)
+        else:
+            custom_weather_string = custom_weather_string + str(" ") + str(weather_loc)
+
+    # return the non-default weather location string
+    return custom_weather_string
+
+
 def build_and_configure_docker_and_aws(btap_batch_branch=None,
                                        btap_costing_branch=None,
                                        compute_environment=None,
                                        openstudio_version=None,
+                                       weather_list=None,
                                        os_standards_branch=None):
+    # Get the weather locations from the weather list
+    weather_locations = get_weather_locations(weather_list)
+    print(f"custom weather string: {weather_locations}")
+    exit(1)
+
     # build args for aws and btap_cli container.
     build_args_btap_cli = {'OPENSTUDIO_VERSION': openstudio_version,
                            'BTAP_COSTING_BRANCH': btap_costing_branch,

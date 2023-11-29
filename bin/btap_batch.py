@@ -67,6 +67,7 @@ def credits():
 @click.option('--os_standards_branch', default='nrcan', help='openstudio-standards branch. Default=nrcan.')
 @click.option('--btap_costing_branch', default='master', help='btap_costing branch.Default=master.')
 @click.option('--openstudio_version', default='3.6.1', help='OpenStudio version. Default=3.6.1')
+@click.option('--weather_list', '-w', default='', help='File containing analysis weather locations. Default=./weather_list.yml')
 @click.option('--disable_costing', is_flag=True, help='Disable costing. Choose this if you do not have an RSMeans licence and access to the BTAPCosting repo.')
 def build_environment(**kwargs):
     from src.btap.cli_helper_methods import build_and_configure_docker_and_aws
@@ -110,6 +111,7 @@ def build_environment(**kwargs):
     btap_costing_branch = kwargs['btap_costing_branch']
     openstudio_version = kwargs['openstudio_version']
     disable_costing = kwargs['disable_costing']
+    weather_list = kwargs['weather_list']
 
     if disable_costing:
         # Setting the costing branch to an empty string will force the docker file to not use costing.
@@ -120,6 +122,7 @@ def build_environment(**kwargs):
                                        btap_costing_branch=btap_costing_branch,
                                        compute_environment=compute_environment,
                                        openstudio_version=openstudio_version,
+                                       weather_list=weather_list,
                                        os_standards_branch=os_standards_branch)
 
 
