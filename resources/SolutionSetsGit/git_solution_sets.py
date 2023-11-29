@@ -15,14 +15,15 @@ def git_solution_sets():
     # So 6*6*6 = 216 Analyses for solution sets.
 
     building_types = [
-        'LowriseApartment'
-        # 'MidriseApartment',
-        # 'HighriseApartment',
+        #'LowriseApartment'
+        #'MidriseApartment',
+         'HighriseApartment'
         # 'SmallOffice',
         # 'MediumOffice',
         # 'LargeOffice',
     ]
 
+# Using airport codes to identify the locations.  Much easier if sometimes slightly inaccurate.
     epw_files = [
         ['CAN_BC_Vancouver.Intl.AP.718920_CWEC2016.epw', 'YVR'],  # CZ 4
         ['CAN_QC_Montreal-Trudeau.Intl.AP.716270_CWEC2016.epw', 'YUL'],  # CZ 5
@@ -31,6 +32,7 @@ def git_solution_sets():
         ['CAN_AB_Fort.McMurray.AP.716890_CWEC2016.epw', 'YMM'],  # CZ 7B
         ['CAN_NT_Yellowknife.AP.719360_CWEC2016.epw', 'YZF']  # CZ 8
     ]
+
 
     compute_environment = 'aws_batch_analysis'
 
@@ -65,20 +67,20 @@ def git_solution_sets():
         {'name': 'WaterSystems:NaturalGas', 'frequency': 'hourly'},
     ]
 
-    # Not used yet
+    # Not used yet may run again once
     output_variables = [
         {'key': '*', 'variable': 'Zone Predicted Sensible Load to Setpoint Heat Transfer Rate', 'frequency': 'hourly',
-         'operation': 'average', 'unit': 'W'},
+         'operation': '*', 'unit': '*'},
         {'key': '*', 'variable': 'Zone Predicted Sensible Load to Heating Setpoint Heat Transfer Rate',
-         'frequency': 'hourly', 'operation': 'average', 'unit': 'W'},
+         'frequency': 'hourly', 'operation': '*', 'unit': '*'},
         {'key': '*', 'variable': 'Zone Predicted Sensible Load to Cooling Setpoint Heat Transfer Rate',
-         'frequency': 'hourly', 'operation': 'average', 'unit': 'W'},
+         'frequency': 'hourly', 'operation': '*', 'unit': '*'},
         {'key': '*', 'variable': 'Zone Predicted Moisture Load Moisture Transfer Rate', 'frequency': 'hourly',
-         'operation': 'average', 'unit': 'W'},
+         'operation': '*', 'unit': '*'},
         {'key': '*', 'variable': 'Zone Predicted Moisture Load to Humidifying Setpoint Moisture Transfer Rate',
-         'frequency': 'hourly', 'operation': 'average', 'unit': 'W'},
+         'frequency': 'hourly', 'operation': '*', 'unit': '*'},
         {'key': '*', 'variable': 'Zone Predicted Moisture Load to Dehumidifying Setpoint Moisture Transfer Rate',
-         'frequency': 'hourly', 'operation': 'average', 'unit': 'W'},
+         'frequency': 'hourly', 'operation': '*', 'unit': '*'},
     ]
     output_variables = []
     pwd = (os.path.dirname(os.path.realpath(__file__)))
@@ -255,3 +257,4 @@ def git_solution_sets():
                          reference_run=True,
                          output_folder=output_folder)
 
+git_solution_sets()

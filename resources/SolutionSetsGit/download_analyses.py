@@ -28,7 +28,6 @@ def download_analysis(key='phylroy_lopez_1/parametric_example/',
     target_zip_basename = os.path.join(target_path, os.path.basename(os.path.dirname(key)) + "_" + filetype)
     S3().download_file(s3_file=source_zip_file, bucket_name=bucket, target_path=target_zip_basename)
 
-
     if hourly_csv:
         filetype = 'hourly.csv.zip'
         source_zip_file = os.path.join(key, 'results', 'zips', filetype).replace('\\', '/')
@@ -36,7 +35,7 @@ def download_analysis(key='phylroy_lopez_1/parametric_example/',
         is_downloaded = S3().download_file(s3_file=source_zip_file, bucket_name=bucket, target_path=target_zip_basename)
         if unzip_and_delete and is_downloaded:
             extraction_folder_suffix = 'hourly.csv'
-            extraction_folder = os.path.join(target_path,extraction_folder_suffix)
+            extraction_folder = os.path.join(target_path, extraction_folder_suffix)
             pathlib.Path(extraction_folder).mkdir(parents=True, exist_ok=True)
             with zipfile.ZipFile(target_zip_basename, 'r') as zip_ref:
                 zip_ref.extractall(extraction_folder)
@@ -49,7 +48,7 @@ def download_analysis(key='phylroy_lopez_1/parametric_example/',
         is_downloaded = S3().download_file(s3_file=source_zip_file, bucket_name=bucket, target_path=target_zip_basename)
         if unzip_and_delete and is_downloaded:
             extraction_folder_suffix = 'in.osm'
-            extraction_folder = os.path.join(target_path,extraction_folder_suffix)
+            extraction_folder = os.path.join(target_path, extraction_folder_suffix)
             pathlib.Path(extraction_folder).mkdir(parents=True, exist_ok=True)
             with zipfile.ZipFile(target_zip_basename, 'r') as zip_ref:
                 zip_ref.extractall(extraction_folder)
@@ -62,7 +61,7 @@ def download_analysis(key='phylroy_lopez_1/parametric_example/',
         is_downloaded = S3().download_file(s3_file=source_zip_file, bucket_name=bucket, target_path=target_zip_basename)
         if unzip_and_delete and is_downloaded:
             extraction_folder_suffix = 'eplusout.sql'
-            extraction_folder = os.path.join(target_path,extraction_folder_suffix)
+            extraction_folder = os.path.join(target_path, extraction_folder_suffix)
             pathlib.Path(extraction_folder).mkdir(parents=True, exist_ok=True)
             with zipfile.ZipFile(target_zip_basename, 'r') as zip_ref:
                 zip_ref.extractall(extraction_folder)
@@ -75,7 +74,7 @@ def download_analysis(key='phylroy_lopez_1/parametric_example/',
         is_downloaded = S3().download_file(s3_file=source_zip_file, bucket_name=bucket, target_path=target_zip_basename)
         if unzip_and_delete and is_downloaded:
             extraction_folder_suffix = 'eplustbl.htm'
-            extraction_folder = os.path.join(target_path,extraction_folder_suffix)
+            extraction_folder = os.path.join(target_path, extraction_folder_suffix)
             pathlib.Path(extraction_folder).mkdir(parents=True, exist_ok=True)
             with zipfile.ZipFile(target_zip_basename, 'r') as zip_ref:
                 zip_ref.extractall(extraction_folder)
@@ -88,39 +87,41 @@ def download_analysis(key='phylroy_lopez_1/parametric_example/',
 # prefix is the s3 folder to parse. Note the trailing / is important. It denoted that it is a folder to S3.
 # target path is the path on this machine where the files will be stored.
 
-def download_all_analysis(bucket='834599497928',
-                          prefix='phylroy_lopez_1/',
-                          target_path='/home/plopez/btap_batch/downloads',
-                          hourly_csv=True,
-                          in_osm=True,
-                          eplusout_sql=True,
-                          eplustbl_htm=True,
-                          concat_excel_files=True,
-                          regex_filter = 'vin.*YUL.*'):
+def download_analyses(bucket='834599497928',
+                      prefix='solution_sets/',
+                      target_path='/home/plopez/btap_batch/downloads',
+                      hourly_csv=True,
+                      in_osm=True,
+                      eplusout_sql=True,
+                      eplustbl_htm=True,
+                      concat_excel_files=True,
+                      regex_filter='vin.*YUL.*',
+                      unzip_and_delete=True,
+                      dry_run=True
+                      ):
     folders = S3().s3_get_list_of_folders_in_folder(bucket=bucket, prefix=prefix)
-    print(folders)
     if prefix + 'btap_cli/' in folders:
         folders.remove(prefix + 'btap_cli/')
 
     if prefix + 'btap_batch/' in folders:
         folders.remove(prefix + 'btap_batch/')
-    print(folders)
 
     for folder in folders:
-        ic(regex_filter)
-        ic(folder)
-        ic(re.search(regex_filter, folder))
-        if re.search(regex_filter, folder):
+
+        if re.search(regex_filter, folder) != None:
+            print(f"Processing {folder}")
+        if re.search(regex_filter, folder) and not dry_run:
             download_analysis(key=folder,
                               bucket=bucket,
                               target_path=target_path,
                               hourly_csv=hourly_csv,
                               in_osm=in_osm,
                               eplusout_sql=eplusout_sql,
-                              eplustbl_htm=eplustbl_htm
+                              eplustbl_htm=eplustbl_htm,
+                              unzip_and_delete=unzip_and_delete
                               )
-    if concat_excel_files:
-        print(f"Creating master csv results file.")
+    if concat_excel_files and not dry_run:
+        print(f"Creating master csv and parquet results file.")
         all_files = os.listdir(target_path)
         xlsx_files = [f for f in all_files if f.endswith('.xlsx')]
         df_list = []
@@ -143,3 +144,17 @@ def download_all_analysis(bucket='834599497928',
         # Horrible workaround to deal with non-uniform datatypes in columns.
         big_df = pd.read_csv(master_csv_path, dtype='unicode')
         big_df.to_parquet(master_parquet_file)
+
+
+download_analyses(bucket='834599497928',
+                  prefix='solution_sets/',  # S3 prefix MUST have a trailing /
+                  target_path=r'/home/plopez/btap_batch/downloads/MidriseApartment',  # Your local download folder.
+                  hourly_csv=True,  # download hourly.csv zip
+                  in_osm=True,  # download osm zip
+                  eplusout_sql=True,  # download sqlite files zip
+                  eplustbl_htm=True,  # download e+ htm report zip
+                  concat_excel_files=True,  # concat all output.xlsx files to a master.csv and parquet file
+                  regex_filter='.*MidriseApartment_\S\S\S_ref.*',
+                  unzip_and_delete=True,  # This will unzip the zip files of all the above into a folder and delete the original zip file.
+                  dry_run=True  # If set to true.. will do a dry run and not download anything. This is used to make sure your regex is working as intended.
+                  )
