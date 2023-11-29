@@ -15,10 +15,10 @@ def git_solution_sets():
     # So 6*6*6 = 216 Analyses for solution sets.
 
     building_types = [
-        #'LowriseApartment'
+        'LowriseApartment'
         #'MidriseApartment',
-         'HighriseApartment'
-        # 'SmallOffice',
+        # 'HighriseApartment',
+        # 'SmallOffice'
         # 'MediumOffice',
         # 'LargeOffice',
     ]
@@ -26,15 +26,15 @@ def git_solution_sets():
 # Using airport codes to identify the locations.  Much easier if sometimes slightly inaccurate.
     epw_files = [
         ['CAN_BC_Vancouver.Intl.AP.718920_CWEC2016.epw', 'YVR'],  # CZ 4
-        ['CAN_QC_Montreal-Trudeau.Intl.AP.716270_CWEC2016.epw', 'YUL'],  # CZ 5
-        ['CAN_ON_Toronto.Pearson.Intl.AP.716240_CWEC2016.epw', 'YYZ'],  # CZ 6
-        ['CAN_AB_Edmonton.Intl.AP.711230_CWEC2016.epw', 'YEG'],  # CZ 7A
-        ['CAN_AB_Fort.McMurray.AP.716890_CWEC2016.epw', 'YMM'],  # CZ 7B
-        ['CAN_NT_Yellowknife.AP.719360_CWEC2016.epw', 'YZF']  # CZ 8
+        # ['CAN_ON_Toronto.Pearson.Intl.AP.716240_CWEC2016.epw', 'YYZ'],  # CZ 5
+        # ['CAN_QC_Montreal-Trudeau.Intl.AP.716270_CWEC2016.epw', 'YUL'],  # CZ 6
+        # ['CAN_AB_Edmonton.Intl.AP.711230_CWEC2016.epw', 'YEG'],  # CZ 7A
+        # ['CAN_AB_Fort.McMurray.AP.716890_CWEC2016.epw', 'YMM'],  # CZ 7B
+        # ['CAN_NT_Yellowknife.AP.719360_CWEC2016.epw', 'YZF']  # CZ 8
     ]
 
 
-    compute_environment = 'aws_batch_analysis'
+    compute_environment = 'local_docker'
 
     # LHS constants
     algorithm_lhs_n_samples = 2000
@@ -82,7 +82,7 @@ def git_solution_sets():
         {'key': '*', 'variable': 'Zone Predicted Moisture Load to Dehumidifying Setpoint Moisture Transfer Rate',
          'frequency': 'hourly', 'operation': '*', 'unit': '*'},
     ]
-    output_variables = []
+    output_variables =[]
     pwd = (os.path.dirname(os.path.realpath(__file__)))
     output_folder = os.path.join(pwd, 'output')
     pathlib.Path(output_folder).mkdir(parents=True, exist_ok=True)
@@ -113,8 +113,8 @@ def git_solution_sets():
             if REFERENCE_RUNS:
                 analysis_configuration = copy.deepcopy(sensitivity_template)
                 analysis_configuration[':algorithm_type'] = 'reference'
-                analysis_configuration[':building_type'] = [building_type]
-                analysis_configuration[':epw_file'] = [epw_file[0]]
+                analysis_configuration[':options'][':building_type'] = [building_type]
+                analysis_configuration[':options'][':epw_file'] = [epw_file[0]]
                 analysis_configuration[':output_meters'] = output_meters
                 analysis_configuration[':primary_heating_fuel'] = [
                     'Electricity',
@@ -144,8 +144,8 @@ def git_solution_sets():
             if VINTAGE_RUNS:
                 analysis_configuration = copy.deepcopy(sensitivity_template)
                 analysis_configuration[':algorithm_type'] = 'reference'
-                analysis_configuration[':building_type'] = [building_type]
-                analysis_configuration[':epw_file'] = [epw_file[0]]
+                analysis_configuration[':options'][':building_type'] = [building_type]
+                analysis_configuration[':options'][':epw_file'] = [epw_file[0]]
                 analysis_configuration[':output_meters'] = output_meters
                 analysis_configuration[':primary_heating_fuel'] = [
                     'Electricity',
@@ -171,9 +171,9 @@ def git_solution_sets():
                 # Sensitivity Analysis
                 for primary_heating_fuel in ['Electricity', 'NaturalGas']:
                     analysis_configuration = copy.deepcopy(sensitivity_template)
-                    analysis_configuration[':building_type'] = [building_type]
+                    analysis_configuration[':options'][':building_type'] = [building_type]
                     analysis_configuration[':primary_heating_fuel'] = [primary_heating_fuel]
-                    analysis_configuration[':epw_file'] = [epw_file[0]]
+                    analysis_configuration[':options'][':epw_file'] = [epw_file[0]]
                     analysis_configuration[':algorithm_type'] = 'sensitivity'
                     analysis_configuration[':output_meters'] = output_meters
 
@@ -195,8 +195,8 @@ def git_solution_sets():
 
                 analysis_configuration = copy.deepcopy(optimization_template)
 
-                analysis_configuration[':building_type'] = [building_type]
-                analysis_configuration[':epw_file'] = [epw_file[0]]
+                analysis_configuration[':options'][':building_type'] = [building_type]
+                analysis_configuration[':options'][':epw_file'] = [epw_file[0]]
                 analysis_configuration[':output_meters'] = output_meters
 
                 analysis_configuration[':algorithm_type'] = 'sampling-lhs'
@@ -225,8 +225,8 @@ def git_solution_sets():
             # General Optimization
             if OPTIMIZATION_RUNS:
                 analysis_configuration = copy.deepcopy(sensitivity_template)
-                analysis_configuration[':building_type'] = [building_type]
-                analysis_configuration[':epw_file'] = [epw_file[0]]
+                analysis_configuration[':options'][':building_type'] = [building_type]
+                analysis_configuration[':options'][':epw_file'] = [epw_file[0]]
                 analysis_configuration[':primary_heating_fuel'] = [
                     'NaturalGas',
                     'Electricity',
