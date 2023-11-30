@@ -147,13 +147,12 @@ def build_and_configure_docker_and_aws(btap_batch_branch=None,
                                        os_standards_branch=None):
     # Get the weather locations from the weather list
     weather_locations = get_weather_locations(weather_list)
-    print(f"custom weather string: {weather_locations}")
-    exit(1)
 
     # build args for aws and btap_cli container.
     build_args_btap_cli = {'OPENSTUDIO_VERSION': openstudio_version,
                            'BTAP_COSTING_BRANCH': btap_costing_branch,
-                           'OS_STANDARDS_BRANCH': os_standards_branch}
+                           'OS_STANDARDS_BRANCH': os_standards_branch,
+                           'WEATHER_FILES': weather_locations}
     # build args for btap_batch container.
     build_args_btap_batch = {'BTAP_BATCH_BRANCH': btap_batch_branch}
     if compute_environment == 'aws_batch' or compute_environment == 'all':
