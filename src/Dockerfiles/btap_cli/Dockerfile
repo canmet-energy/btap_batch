@@ -52,8 +52,8 @@ RUN mkdir weather
 WORKDIR /btap_costing/utilities/btap_cli/weather
 RUN if [ ! -z "$WEATHER_FILES" ] ; then \
     echo "Downloading weather files." \
-    && wget $WEATHER_FILES \
-    fi
+    && wget $WEATHER_FILES; \
+fi
 WORKDIR /btap_costing/utilities/btap_cli
 CMD ["/bin/bash"]
 
