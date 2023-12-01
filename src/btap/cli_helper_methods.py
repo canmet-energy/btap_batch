@@ -103,7 +103,7 @@ def build_and_configure_docker_and_aws(btap_batch_branch=None,
 
         # Create Compute Environment for workers
         ace_worker = AWSComputeEnvironment(name='btap_cli')
-        ace_worker.setup(maxvCpus=math.floor(MAX_AWS_VCPUS * 0.90))
+        ace_worker.setup(maxvCpus=math.floor(MAX_AWS_VCPUS * 0.95))
 
         # Build Image for worker
         image_worker = AWSImageManager(image_name='btap_cli')
@@ -120,7 +120,7 @@ def build_and_configure_docker_and_aws(btap_batch_branch=None,
 
         # Create compute environment for analysis managers, which is a 10% of MAXVCPU
         ace_manager = AWSComputeEnvironment(name='btap_batch')
-        ace_manager.setup(maxvCpus=math.floor(MAX_AWS_VCPUS * 0.10))
+        ace_manager.setup(maxvCpus=math.floor(MAX_AWS_VCPUS * 0.05))
 
         # Build image for btap_batch manager
         image_manager = AWSImageManager(image_name='btap_batch')
@@ -291,7 +291,7 @@ def analysis(project_input_folder=None,
                              project_input_folder=analysis_input_folder)
         # Gets an AWSAnalysisJob from AWSBatch
         batch = AWSBatch(image_manager=AWSImageManager(image_name='btap_batch'),
-                         compute_environment=AWSComputeEnvironment()
+                         compute_environment=AWSComputeEnvironment(name='btap_batch')
                          )
         # Submit analysis job to aws.
         job = batch.create_job(job_id=analysis_name, reference_run=reference_run)
@@ -300,7 +300,7 @@ def analysis(project_input_folder=None,
 
 def list_active_analyses():
     # Gets an AWSBatch analyses object.
-    ace = AWSComputeEnvironment()
+    ace = AWSComputeEnvironment(name='btap_batch')
     analysis_queue = AWSBatch(image_manager=AWSImageManager(image_name='btap_batch'),
                               compute_environment=ace
                               )
@@ -309,11 +309,13 @@ def list_active_analyses():
 
 def terminate_aws_analyses():
     # Gets an AWSBatch analyses object.
-    ace = AWSComputeEnvironment()
+    ace = AWSComputeEnvironment(name='btap_batch')
     analysis_queue = AWSBatch(image_manager=AWSImageManager(image_name='btap_batch'),
                               compute_environment=ace
                               )
     analysis_queue.clear_queue()
+
+    ace = AWSComputeEnvironment(name='btap_cli')
     batch_cli = AWSBatch(image_manager=AWSImageManager(image_name='btap_cli'), compute_environment=ace)
     batch_cli.clear_queue()
 
@@ -502,3 +504,26 @@ def sensitivity_chart(excel_file=None, pdf_output_folder="./"):
             print(f"Unsupported analysis type {algorithm_type}")
 
         print(pdf_output_folder)
+
+def get_number_of_failures(job_queue_name='btap_cli'):
+    # Gets an AWSBatch analyses object.
+    analysis_queue = AWSBatch(image_manager=AWSImageManager(image_name=job_queue_name),
+                              compute_environment=AWSComputeEnvironment(name=job_queue_name)
+                              )
+    # Connect to AWS Batch
+    client = AWSCredentials().batch_client
+
+    # Initialize the object count
+    object_count = 0
+
+    # Use the list_objects_v2 API to retrieve the objects in the folder
+    paginator = client.get_paginator('list_jobs')
+    response_iterator = paginator.paginate( jobQueue=analysis_queue.job_queue_name,
+                                            jobStatus='FAILED')
+
+    # Iterate through the paginated responses
+    for response in response_iterator:
+        if 'jobSummaryList' in response:
+            object_count += len(response['jobSummaryList'])
+    return object_count
+
