@@ -98,10 +98,9 @@ You need to configure the docker images locally and on AWS to run any analysis. 
 The btap_batch cli command for this is called 'build-environment'. You can invoke the help for this command using the -h switch. This lets to you know the option switches to change which branches you wish to use for your analyses. 
 ```
 python ./bin/btap_batch.py build-environment -h
-
 ```
 
-However to use the most recent stable versions openstudio-standards, btap_costing, and btap_batch, simply run this command to configure your system to run locally. Note: if you do not have an RSMeans licence you MUST disable costing.
+However, to use the most recent stable versions openstudio-standards, btap_costing, and btap_batch, simply run this command to configure your system to run locally. Note: if you do not have an RSMeans licence you MUST disable costing.
 ```
 python ./bin/btap_batch.py build-environment --compute_environment local_docker --disable_costing
 ```
@@ -110,6 +109,33 @@ and/or to configure Amazon Web Services..
 python ./bin/btap_batch.py build-environment --compute_environment aws_batch --disable_costing
 ```
 Please note that if you wish to update your environment to the latest branches of development, you will have to run these commands again. This will rebuild your environment.
+
+### Weather Locations
+
+Below are the default EnergyPlus weather files that btap_batch can use for analyses:
+- CAN_QC_Montreal-Trudeau.Intl.AP.716270_CWEC2016.epw
+- CAN_NS_Halifax.Dockyard.713280_CWEC2016.epw
+- CAN_AB_Edmonton.Intl.AP.711230_CWEC2016.epw
+- CAN_BC_Vancouver.Intl.AP.718920_CWEC2016.epw
+- CAN_AB_Calgary.Intl.AP.718770_CWEC2016.epw
+- CAN_ON_Toronto.Pearson.Intl.AP.716240_CWEC2016.epw
+- CAN_NT_Yellowknife.AP.719360_CWEC2016.epw
+- CAN_AB_Fort.McMurray.AP.716890_CWEC2016.epw
+
+Other weather locations are available. However, you have to define the ones you want to use when creating your environment.  The other locations that you can use can be found in this repository:
+https://github.com/canmet-energy/btap_weather
+
+To add a weather location to your environment, first modify the 'weather_list.yml' file in the 'btap_batch/examples' folder. Add whichever weather files you would like from the btap_weather repository. You can also delete files from the list if you will not need them.
+Once you are done editing the 'btap_weather.yml' file, simply create your environment again using the instructions in the Build Environment section above. Note that if you want to change the locations available to you for analyses you will have to build your environment again.
+Also, you don't have to use all of the locations you define in your environment in your analysis. Adding them to the environment just makes them available.
+
+You can create your own weather locations file using the 'btap_weather.yml' file as a template. If you would like to use your own file, rather than the standard 'btap_weather.yml' file, use the following command line argument when building your environment:
+
+```
+python ./bin/btap_batch.py build-environment --compute_environment local_docker --disable_costing --weather_list C:\Users\ckirney\btap_batch\chris-weather-list.yml
+```
+
+Replacing the example path above with the path to your own file. The command above also works for AWS analyses by replacing 'local_docker' with 'aws_batch' for the 'compute_environment' argument.
 
 
 ### Parametric Analysis Local Machine
