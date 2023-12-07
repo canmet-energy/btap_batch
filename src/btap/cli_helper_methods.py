@@ -16,6 +16,7 @@ from src.btap.btap_sensitivity import BTAPSensitivity
 from src.btap.btap_batch_analysis import BTAPBatchAnalysis
 from src.btap.aws_s3 import S3
 from src.btap.common_paths import CommonPaths
+import requests
 import shutil
 import time
 import copy
@@ -26,6 +27,10 @@ import numpy as np
 from icecream import ic
 from src.btap.aws_dynamodb import AWSResultsTable
 
+HISTORIC_WEATHER_LIST = "https://github.com/canmet-energy/btap_weather/raw/main/historic_weather_filenames.json"
+FUTURE_WEATHER_LIST = "https://github.com/canmet-energy/btap_weather/raw/main/future_weather_filenames.json"
+HISTORIC_WEATHER_REPO = "https://github.com/canmet-energy/btap_weather/raw/main/historic/"
+FUTURE_WEATHER_REPO = "https://github.com/canmet-energy/btap_weather/raw/main/future/"
 
 def get_pareto_points(costs, return_mask=True):
     """
@@ -52,15 +57,102 @@ def get_pareto_points(costs, return_mask=True):
     else:
         return is_efficient
 
+
+def get_weather_locations(weather_list=None):
+    # Use the default weather file list if another list is not provided
+    if (weather_list == None) or (weather_list == ''):
+        weather_list = os.path.join(os.getcwd(), 'examples', 'weather_list.yml')
+
+    # Check if the weather file list exists
+    if not os.path.isfile(weather_list):
+        print(f"{weather_list} file does not exist.")
+        exit(1)
+
+    # Read the list
+    weather_config, weather_input_folder, weather_folder = BTAPAnalysis.load_analysis_input_file(
+        analysis_config_file=weather_list)
+    weather_files = weather_config[':weather_locations']
+
+    # Get the default weather file list location
+    default_weather_list = os.path.join(os.getcwd(), 'src', 'btap', 'default_weather_list.yml')
+
+    # Check if the default weather file list exists
+    if not os.path.isfile(default_weather_list):
+        print(f"Could not find the default weather list.  Please check if default_weather_list.yml is present in the /btap_batch/src/btap folder.  If is not present please get it from the btap_batch repository.")
+        exit(1)
+
+    # Get the default weather file list
+    default_weather_config, default_weather_input_folder, default_weather_folder = BTAPAnalysis.load_analysis_input_file(
+        analysis_config_file=default_weather_list)
+    default_weather_files = default_weather_config[':default_weather_locations']
+
+    # Check if any weather locations on the weather file list are not default weather locations
+    custom_weather_locs = []
+    for weather_loc in weather_files:
+        is_default_loc = weather_loc in default_weather_files
+        if not is_default_loc:
+            custom_weather_locs.append(weather_loc)
+
+    # Create a string containing the non-default weather locations, where each non-default weather location is separated
+    # by a space
+    custom_weather_string = ""
+    weather_downloads = []
+    # Check if the weather file is in the btap_weather repository and, if it is, add it to the weather_download
+    # environment variable used to create the btap_cli image.
+    if custom_weather_locs:
+        # Download the btap_weather repository weather file manifests and see if the ones the user wants to add are on
+        # the list.
+        r = requests.get(HISTORIC_WEATHER_LIST, allow_redirects=True)
+        hist_files = r.json()
+        r = requests.get(FUTURE_WEATHER_LIST, allow_redirects=True)
+        fut_files = r.json()
+        # Cycle through the weather files we want, check if they are on either btap_weather manifest and, if they are,
+        # add them to the environment variable string.
+        for custom_weather_loc in custom_weather_locs:
+            # Remove the extension from the file name since the zip file contains many files with different extensions but
+            # the same initial name.
+            ext_ind = custom_weather_loc.rindex('.')
+            custom_weather_pre = custom_weather_loc[0:ext_ind]
+            # Add the .zip extension and check if they are in the historical weather files or future weather files
+            weather_file = custom_weather_pre + (".zip")
+            is_existing = weather_file in hist_files
+            is_future = weather_file in fut_files
+            # Add the appropriate url prefix to the file depending on if it is a future weather file or historical
+            # weather file and then add them to the list of weather file urls.
+            if is_existing:
+                download_string = HISTORIC_WEATHER_REPO + weather_file
+                weather_downloads.append(download_string)
+            elif is_future:
+                download_string = FUTURE_WEATHER_REPO + weather_file
+                weather_downloads.append(download_string)
+            else:
+                print(f"Could not find the weather file {weather_file} in the btap_batch repository.  Please check if it is spelled correctly and check if it is in the repasitory (https://github.com/canmet-energy/btap_weather).")
+                exit(1)
+        # Create a string containing the non-default weather urls, where each non-default weather location is separated
+        # by a space.
+        for download_loc in weather_downloads:
+            if custom_weather_string == "":
+                custom_weather_string = str(download_loc)
+            else:
+                custom_weather_string = custom_weather_string + str(" ") + str(download_loc)
+    # return the non-default weather location string
+    return custom_weather_string
+
+
 def build_and_configure_docker_and_aws(btap_batch_branch=None,
                                        btap_costing_branch=None,
                                        compute_environment=None,
                                        openstudio_version=None,
+                                       weather_list=None,
                                        os_standards_branch=None):
+    # Get the weather locations from the weather list
+    weather_locations = get_weather_locations(weather_list)
+
     # build args for aws and btap_cli container.
     build_args_btap_cli = {'OPENSTUDIO_VERSION': openstudio_version,
                            'BTAP_COSTING_BRANCH': btap_costing_branch,
-                           'OS_STANDARDS_BRANCH': os_standards_branch}
+                           'OS_STANDARDS_BRANCH': os_standards_branch,
+                           'WEATHER_FILES': weather_locations}
     # build args for btap_batch container.
     build_args_btap_batch = {'BTAP_BATCH_BRANCH': btap_batch_branch}
     if compute_environment == 'aws_batch' or compute_environment == 'all':
