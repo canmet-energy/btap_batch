@@ -5,6 +5,7 @@ ARG OPENSTUDIO_VERSION
 # Branch information.
 ARG BTAP_COSTING_BRANCH=''
 ARG OS_STANDARDS_BRANCH='nrcan'
+ARG WEATHER_FILES=''
 
 
 # Git api token secret. Do not share as a ENV.
@@ -45,6 +46,15 @@ RUN if [ ! -z "$BTAP_COSTING_BRANCH" ] ; then \
 WORKDIR /btap_costing/utilities/btap_cli
 RUN mkdir output
 RUN mkdir input
+RUN mkdir weather
+
+# Download non-standard weather files to the weather directory.
+WORKDIR /btap_costing/utilities/btap_cli/weather
+RUN if [ ! -z "$WEATHER_FILES" ] ; then \
+    echo "Downloading weather files." \
+    && wget $WEATHER_FILES; \
+fi
+WORKDIR /btap_costing/utilities/btap_cli
 CMD ["/bin/bash"]
 
 #Sample invocation commands
