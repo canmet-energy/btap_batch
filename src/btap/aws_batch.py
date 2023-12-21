@@ -1,6 +1,6 @@
 from src.btap.constants import WORKER_CONTAINER_MEMORY
 from src.btap.constants import WORKER_CONTAINER_VCPU
-from src.btap.constants import WORKER_CONTAINER_STORAGE
+from src.btap.constants import INSTANCE_STORAGE_SIZE_GB
 import time
 import logging
 from random import random
@@ -234,14 +234,15 @@ class AWSBatch:
 
     def clear_queue(self):
         jobs =  self.get_active_jobs()
-        for j in jobs:
-            if j["status"] not in ["SUCCEEDED", "FAILED", "CANCELED"]:
-                print("Cancelling {}".format(j["jobId"]))
-                # Get a message to submit as justfication for the failure
-                cancel_msg = "Cancelled by user\n"
-                # Connect to AWS Batch
-                client = AWSCredentials().batch_client
-                client.cancel_job(jobId=j["jobId"], reason=cancel_msg)
-                client.terminate_job(jobId=j["jobId"], reason=cancel_msg)
+        if jobs != None:
+            for j in jobs:
+                if j["status"] not in ["SUCCEEDED", "FAILED", "CANCELED"]:
+                    print("Cancelling {}".format(j["jobId"]))
+                    # Get a message to submit as justfication for the failure
+                    cancel_msg = "Cancelled by user\n"
+                    # Connect to AWS Batch
+                    client = AWSCredentials().batch_client
+                    client.cancel_job(jobId=j["jobId"], reason=cancel_msg)
+                    client.terminate_job(jobId=j["jobId"], reason=cancel_msg)
 
 

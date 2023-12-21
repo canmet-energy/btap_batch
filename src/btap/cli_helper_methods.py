@@ -1,7 +1,9 @@
 import pip_system_certs.wrapt_requests
-from src.btap.constants import WORKER_CONTAINER_MEMORY, WORKER_CONTAINER_STORAGE, WORKER_CONTAINER_VCPU
-from src.btap.constants import MANAGER_CONTAINER_VCPU, MANAGER_CONTAINER_MEMORY, MANAGER_CONTAINER_STORAGE
+from src.btap.constants import WORKER_CONTAINER_MEMORY, WORKER_CONTAINER_VCPU
+from src.btap.constants import MANAGER_CONTAINER_VCPU, MANAGER_CONTAINER_MEMORY
+from src.btap.constants import MAX_AWS_VCPUS
 from src.btap.aws_batch import AWSBatch
+from src.btap.aws_credentials import AWSCredentials
 from src.btap.aws_compute_environment import AWSComputeEnvironment
 from src.btap.aws_image_manager import AWSImageManager
 from src.btap.docker_image_manager import DockerImageManager
@@ -26,6 +28,9 @@ import uuid
 import numpy as np
 from icecream import ic
 from src.btap.aws_dynamodb import AWSResultsTable
+import math
+import pandas as pd
+from distutils.dir_util import copy_tree
 
 HISTORIC_WEATHER_LIST = "https://github.com/canmet-energy/btap_weather/raw/main/historic_weather_filenames.json"
 FUTURE_WEATHER_LIST = "https://github.com/canmet-energy/btap_weather/raw/main/future_weather_filenames.json"
@@ -58,6 +63,7 @@ def get_pareto_points(costs, return_mask=True):
         return is_efficient
 
 
+
 def get_weather_locations(weather_list=None):
     # Use the default weather file list if another list is not provided
     if (weather_list == None) or (weather_list == ''):
@@ -72,6 +78,8 @@ def get_weather_locations(weather_list=None):
     weather_config, weather_input_folder, weather_folder = BTAPAnalysis.load_analysis_input_file(
         analysis_config_file=weather_list)
     weather_files = weather_config[':weather_locations']
+    if len(weather_files) > 100:
+        raise("Too many weather files selected in the build environment. Please reorganize your analyses to use less than 100 weather files. ")
 
     # Get the default weather file list location
     default_weather_list = os.path.join(os.getcwd(), 'src', 'btap', 'default_weather_list.yml')
@@ -138,13 +146,14 @@ def get_weather_locations(weather_list=None):
     # return the non-default weather location string
     return custom_weather_string
 
-
 def build_and_configure_docker_and_aws(btap_batch_branch=None,
                                        btap_costing_branch=None,
                                        compute_environment=None,
                                        openstudio_version=None,
-                                       weather_list=None,
-                                       os_standards_branch=None):
+                                       os_standards_branch=None,
+                                       build_btap_cli=True,
+                                       build_btap_batch=True,
+                                       weather_list=None):
     # Get the weather locations from the weather list
     weather_locations = get_weather_locations(weather_list)
 
@@ -157,20 +166,22 @@ def build_and_configure_docker_and_aws(btap_batch_branch=None,
     build_args_btap_batch = {'BTAP_BATCH_BRANCH': btap_batch_branch}
     if compute_environment == 'aws_batch' or compute_environment == 'all':
         # Tear down
-        ace = AWSComputeEnvironment()
-        image_cli = AWSImageManager(image_name='btap_cli')
-        image_btap_batch = AWSImageManager(image_name='btap_batch', compute_environment=ace)
+        ace_worker = AWSComputeEnvironment(name='btap_cli')
+        ace_manager = AWSComputeEnvironment(name='btap_batch')
+        image_worker = AWSImageManager(image_name='btap_cli')
+        image_btap_batch = AWSImageManager(image_name='btap_batch', compute_environment=ace_worker)
 
         # tear down aws_btap_cli batch framework.
-        batch_cli = AWSBatch(image_manager=image_cli, compute_environment=ace)
+        batch_cli = AWSBatch(image_manager=image_worker, compute_environment=ace_worker)
         batch_cli.tear_down()
 
         # tear down aws_btap_batch batch framework.
-        batch_batch = AWSBatch(image_manager=image_btap_batch, compute_environment=ace)
-        batch_batch.tear_down()
+        batch_manager = AWSBatch(image_manager=image_btap_batch, compute_environment=ace_manager)
+        batch_manager.tear_down()
 
         # tear down compute resources.
-        ace.tear_down()
+        ace_worker.tear_down()
+        ace_manager.tear_down()
 
         # Delete user role permissions.
         IAMBatchJobRole().delete()
@@ -182,48 +193,60 @@ def build_and_configure_docker_and_aws(btap_batch_branch=None,
         IAMCodeBuildRole().create_role()
         IAMBatchServiceRole().create_role()
         time.sleep(30)  # Give a few seconds for role to apply.
-        ace = AWSComputeEnvironment()
-        ace.setup()
-        image_cli = AWSImageManager(image_name='btap_cli')
-        print('Building AWS btap_cli image')
-        image_cli.build_image(build_args=build_args_btap_cli)
 
-        image_batch = AWSImageManager(image_name='btap_batch')
-        print('Building AWS btap_batch image')
-        image_batch.build_image(build_args=build_args_btap_batch)
+        # Create Compute Environment for workers
+        ace_worker = AWSComputeEnvironment(name='btap_cli')
+        ace_worker.setup(maxvCpus=math.floor(MAX_AWS_VCPUS * 0.95))
 
-        # create aws_btap_cli batch framework.
-        batch_cli = AWSBatch(image_manager=image_cli,
-                             compute_environment=ace
+        # Build Image for worker
+        image_worker = AWSImageManager(image_name='btap_cli')
+        print('Building worker image')
+        if build_btap_cli:
+            image_worker.build_image(build_args=build_args_btap_cli)
+
+        # Create Job description and queues for workers.
+        batch_cli = AWSBatch(image_manager=image_worker,
+                             compute_environment=ace_worker
                              )
         batch_cli.setup(container_vcpu=WORKER_CONTAINER_VCPU,
                         container_memory=WORKER_CONTAINER_MEMORY)
-        # create aws_btap_batch batch framework.
-        batch_batch = AWSBatch(image_manager=image_batch,
-                               compute_environment=ace
-                               )
-        batch_batch.setup(container_vcpu=MANAGER_CONTAINER_VCPU,
-                          container_memory=MANAGER_CONTAINER_MEMORY)
+
+        # Create compute environment for analysis managers, which is a 10% of MAXVCPU
+        ace_manager = AWSComputeEnvironment(name='btap_batch')
+        ace_manager.setup(maxvCpus=math.floor(MAX_AWS_VCPUS * 0.05))
+
+        # Build image for btap_batch manager
+        image_manager = AWSImageManager(image_name='btap_batch')
+        if build_btap_batch:
+            print('Building AWS batch manager image')
+            image_manager.build_image(build_args=build_args_btap_batch)
+
+        # Create Job description and queues for analysis manager.
+        batch_manager = AWSBatch(image_manager=image_manager,
+                                 compute_environment=ace_manager
+                                 )
+        batch_manager.setup(container_vcpu=MANAGER_CONTAINER_VCPU,
+                            container_memory=MANAGER_CONTAINER_MEMORY)
 
         # Create AWS database for results if it does not already exist.
         AWSResultsTable().create_table()
 
     if compute_environment == 'all' or compute_environment == 'local_docker':
-        # Build btap_batch image
-        image_cli = DockerImageManager(image_name='btap_cli')
+        # Build btap_cli image
+        image_worker = DockerImageManager(image_name='btap_cli')
         print('Building btap_cli image')
-        image_cli.build_image(build_args=build_args_btap_cli)
-
-        # # Build batch image
-        # image_batch = DockerImageManager(image_name='btap_batch')
-        # print('Building btap_batch image')
-        # image_batch.build_image(build_args=build_args_btap_batch)
+        image_worker.build_image(build_args=build_args_btap_cli)
 
 
 def analysis(project_input_folder=None,
              compute_environment=None,
              reference_run=None,
              output_folder=None):
+    ic(project_input_folder)
+    ic(compute_environment)
+    ic(reference_run)
+    ic(output_folder)
+
     if project_input_folder.startswith('s3:'):
         # download project to local temp folder.
         local_dir = os.path.join(str(Path.home()), 'temp_analysis_folder')
@@ -249,6 +272,32 @@ def analysis(project_input_folder=None,
         exit(1)
     analysis_config, analysis_input_folder, analyses_folder = BTAPAnalysis.load_analysis_input_file(
         analysis_config_file=analysis_config_file)
+    # ic(analysis_config)
+    # ic(analysis_input_folder)
+    # ic(analyses_folder)
+
+
+    # delete output from previous run if present locally
+    project_folder = os.path.join(output_folder,analysis_config[':analysis_name'])
+    ic(project_folder)
+    # Check if folder exists
+    if os.path.isdir(project_folder):
+        # Remove old folder
+        try:
+            shutil.rmtree(project_folder)
+        except PermissionError:
+            message = f'Could not delete {project_folder}. Do you have a file open in that folder or permissions to delete that folder? When running locally docker sometimes runs as another user requiring you to be admin to delete files. Exiting'
+            print(message)
+            exit(1)
+
+    # delete output from previous run if present on s3
+    if compute_environment == 'aws_batch':
+        bucket = AWSCredentials().account_id
+        user_name = os.environ.get('AWS_USERNAME').replace('.', '_')
+        prefix = os.path.join(user_name, analysis_config[':analysis_name'] + '/')
+        print(f"Deleting old files in S3 folder {prefix}")
+        S3().bulk_del_with_pbar(bucket=bucket, prefix=prefix)
+
 
     if compute_environment == 'local_docker' or compute_environment == 'aws_batch':
         analysis_config[':compute_environment'] = compute_environment
@@ -262,6 +311,7 @@ def analysis(project_input_folder=None,
             br = BTAPReference(analysis_config=ref_analysis_config,
                                analysis_input_folder=analysis_input_folder,
                                output_folder=os.path.join(output_folder))
+
             br.run()
 
             reference_run_df = br.btap_data_df
@@ -281,7 +331,7 @@ def analysis(project_input_folder=None,
         elif analysis_config[':algorithm_type'] == 'parametric':
             ba = BTAPParametric(analysis_config=analysis_config,
                                 analysis_input_folder=analysis_input_folder,
-                                output_folder=output_folder,
+                                output_folder=os.path.join(output_folder),
                                 reference_run_df=reference_run_df)
 
         # parametric
@@ -310,8 +360,8 @@ def analysis(project_input_folder=None,
 
         elif analysis_config[':algorithm_type'] == 'batch':
             ba = BTAPBatchAnalysis(analysis_config=analysis_config,
-                               analysis_input_folder=analysis_input_folder,
-                               output_folder=output_folder)
+                                   analysis_input_folder=analysis_input_folder,
+                                   output_folder=output_folder)
 
 
         else:
@@ -319,8 +369,8 @@ def analysis(project_input_folder=None,
             exit(1)
 
         ba.run()
-
         print(f"Excel results file {ba.analysis_excel_results_path()}")
+
 
     if compute_environment == 'aws_batch_analysis':
         analysis_name = analysis_config[':analysis_name']
@@ -334,33 +384,36 @@ def analysis(project_input_folder=None,
                              project_input_folder=analysis_input_folder)
         # Gets an AWSAnalysisJob from AWSBatch
         batch = AWSBatch(image_manager=AWSImageManager(image_name='btap_batch'),
-                         compute_environment=AWSComputeEnvironment()
+                         compute_environment=AWSComputeEnvironment(name='btap_batch')
                          )
         # Submit analysis job to aws.
         job = batch.create_job(job_id=analysis_name, reference_run=reference_run)
         return job.submit_job()
 
+
 def list_active_analyses():
     # Gets an AWSBatch analyses object.
-    ace = AWSComputeEnvironment()
+    ace = AWSComputeEnvironment(name='btap_batch')
     analysis_queue = AWSBatch(image_manager=AWSImageManager(image_name='btap_batch'),
-                     compute_environment=ace
-                     )
+                              compute_environment=ace
+                              )
     return analysis_queue.get_active_jobs()
 
 
 def terminate_aws_analyses():
     # Gets an AWSBatch analyses object.
-    ace = AWSComputeEnvironment()
+    ace = AWSComputeEnvironment(name='btap_batch')
     analysis_queue = AWSBatch(image_manager=AWSImageManager(image_name='btap_batch'),
-                     compute_environment=ace
-                     )
+                              compute_environment=ace
+                              )
     analysis_queue.clear_queue()
+
+    ace = AWSComputeEnvironment(name='btap_cli')
     batch_cli = AWSBatch(image_manager=AWSImageManager(image_name='btap_cli'), compute_environment=ace)
     batch_cli.clear_queue()
 
 
-def sensitivity_chart(excel_file = None, pdf_output_folder ="./"):
+def sensitivity_chart(excel_file=None, pdf_output_folder="./"):
     import pandas as pd
     import numpy as np
     import seaborn as sns
@@ -368,7 +421,6 @@ def sensitivity_chart(excel_file = None, pdf_output_folder ="./"):
     from matplotlib.backends.backend_pdf import PdfPages
     from icecream import ic
     import dataframe_image as dfi
-
 
     import time
     # Location of Excel file used from sensitivity.
@@ -380,7 +432,7 @@ def sensitivity_chart(excel_file = None, pdf_output_folder ="./"):
     analysis_names = df[':analysis_name'].unique()
 
     for analysis_name in analysis_names:
-        pdf_output_folder = os.path.join(pdf_output_folder,analysis_name + ".pdf")
+        pdf_output_folder = os.path.join(pdf_output_folder, analysis_name + ".pdf")
         filtered_df = df.loc[df[':analysis_name'] == 'analysis_name']
         algorithm_type = df[':algorithm_type'].unique()[0]
 
@@ -391,22 +443,21 @@ def sensitivity_chart(excel_file = None, pdf_output_folder ="./"):
                 # Order Measures that had the biggest impact.
                 # https: // stackoverflow.com / questions / 32791911 / fast - calculation - of - pareto - front - in -python
                 ranked_df = df.copy()
-                #Remove rows where energy savings are negative.
-                ranked_df.drop(ranked_df[ranked_df['baseline_energy_percent_better'] <= 0].index, inplace = True)
+                # Remove rows where energy savings are negative.
+                ranked_df.drop(ranked_df[ranked_df['baseline_energy_percent_better'] <= 0].index, inplace=True)
 
                 # Use only columns for ranking.
 
-                ranked_df["scenario_value"]  = ranked_df.values[ranked_df.index.get_indexer(ranked_df[':scenario'].index), ranked_df.columns.get_indexer(ranked_df[':scenario'])]
-                ranked_df["energy_savings_per_cost"] =  ranked_df['baseline_energy_percent_better'] / ranked_df["cost_equipment_total_cost_per_m_sq"]
+                ranked_df["scenario_value"] = ranked_df.values[
+                    ranked_df.index.get_indexer(ranked_df[':scenario'].index), ranked_df.columns.get_indexer(
+                        ranked_df[':scenario'])]
+                ranked_df["energy_savings_per_cost"] = ranked_df['baseline_energy_percent_better'] / ranked_df[
+                    "cost_equipment_total_cost_per_m_sq"]
                 ranked_df['energy_savings_rank'] = ranked_df['energy_savings_per_cost'].rank(ascending=False)
                 ranked_df = ranked_df.sort_values(by=['energy_savings_rank'])
-                ranked_df['ECM'] = ranked_df[':scenario']+ "=" + ranked_df["scenario_value"].astype(str)
+                ranked_df['ECM'] = ranked_df[':scenario'] + "=" + ranked_df["scenario_value"].astype(str)
                 # Use only columns for ranking.
-                ranked_df = ranked_df[['ECM',':scenario','scenario_value','energy_savings_per_cost']]
-
-
-
-
+                ranked_df = ranked_df[['ECM', ':scenario', 'scenario_value', 'energy_savings_per_cost']]
 
                 ranked_df.plot.barh(x='ECM', y='energy_savings_per_cost')
                 plt.tight_layout()
@@ -414,9 +465,9 @@ def sensitivity_chart(excel_file = None, pdf_output_folder ="./"):
                 plt.close()
 
                 # Apply styling to dataframe and save
-                styled_df = ranked_df.style.format({'energy_savings_per_cost': "{:.4f}"}).hide(axis="index").bar(subset=["energy_savings_per_cost", ], color='lightgreen')
+                styled_df = ranked_df.style.format({'energy_savings_per_cost': "{:.4f}"}).hide(axis="index").bar(
+                    subset=["energy_savings_per_cost", ], color='lightgreen')
                 dfi.export(styled_df, 'ecm_ranked.png')
-
 
                 # Iterate through all scenarios.
                 for scenario in scenarios:
@@ -424,15 +475,13 @@ def sensitivity_chart(excel_file = None, pdf_output_folder ="./"):
                     # Scatter plot
 
                     sns.scatterplot(
-                                    x="baseline_energy_percent_better",
-                                    y="cost_equipment_total_cost_per_m_sq",
-                                    hue=scenario,
-                                    data=df.loc[df[':scenario'] == scenario].reset_index())
+                        x="baseline_energy_percent_better",
+                        y="cost_equipment_total_cost_per_m_sq",
+                        hue=scenario,
+                        data=df.loc[df[':scenario'] == scenario].reset_index())
 
                     pdf.savefig()
                     plt.close('all')
-
-
 
                     ## Stacked EUI chart.
                     # Filter Table rows by scenario. Save it to a new df named filtered_df.
@@ -515,7 +564,7 @@ def sensitivity_chart(excel_file = None, pdf_output_folder ="./"):
 
             # https: // stackoverflow.com / questions / 32791911 / fast - calculation - of - pareto - front - in -python
 
-            #'baseline_necb_tier','cost_equipment_total_cost_per_m_sq'
+            # 'baseline_necb_tier','cost_equipment_total_cost_per_m_sq'
             optimization_column_names = ['baseline_energy_percent_better', 'cost_equipment_total_cost_per_m_sq']
             # Add column to dataframe to indicate optimal datapoints.
             df['is_on_pareto'] = get_pareto_points(np.array(df[optimization_column_names].values.tolist()))
@@ -523,13 +572,12 @@ def sensitivity_chart(excel_file = None, pdf_output_folder ="./"):
             # Filter by pareto curve.
             pareto_df = df.loc[df['is_on_pareto'] == True].reset_index()
             bins = [-100, 0, 25, 50, 60, 1000]
-            labels = ["Non-Compliant", "Tier-1", "Tier-2","Tier-3", "Tier-4"]
+            labels = ["Non-Compliant", "Tier-1", "Tier-2", "Tier-3", "Tier-4"]
             pareto_df['binned'] = pd.cut(pareto_df['baseline_energy_percent_better'], bins=bins, labels=labels)
             sns.scatterplot(x="baseline_energy_percent_better",
                             y="cost_equipment_total_cost_per_m_sq",
                             hue="binned",
                             data=pareto_df)
-
 
             plt.show()
 
@@ -550,16 +598,25 @@ def sensitivity_chart(excel_file = None, pdf_output_folder ="./"):
 
         print(pdf_output_folder)
 
+def get_number_of_failures(job_queue_name='btap_cli'):
+    # Gets an AWSBatch analyses object.
+    analysis_queue = AWSBatch(image_manager=AWSImageManager(image_name=job_queue_name),
+                              compute_environment=AWSComputeEnvironment(name=job_queue_name)
+                              )
+    # Connect to AWS Batch
+    client = AWSCredentials().batch_client
 
+    # Initialize the object count
+    object_count = 0
 
+    # Use the list_objects_v2 API to retrieve the objects in the folder
+    paginator = client.get_paginator('list_jobs')
+    response_iterator = paginator.paginate( jobQueue=analysis_queue.job_queue_name,
+                                            jobStatus='FAILED')
 
-
-
-
-
-
-
-
-
-
+    # Iterate through the paginated responses
+    for response in response_iterator:
+        if 'jobSummaryList' in response:
+            object_count += len(response['jobSummaryList'])
+    return object_count
 

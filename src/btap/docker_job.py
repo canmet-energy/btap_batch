@@ -53,8 +53,8 @@ class DockerBTAPJob:
         # Common object for paths.
         self.cp = CommonPaths()
         self.analysis_output_folder = self.cp.algorithm_run_folder()
-        self.analysis_output_job_id_folder = self.cp.analysis_output_job_id_folder(job_id=self.job_id)
-        self.analysis_input_job_id_folder = self.cp.analysis_input_job_id_folder(job_id=self.job_id)
+        self.analysis_output_job_id_folder = self.cp.analysis_job_id_folder(job_id=self.job_id)
+        self.analysis_input_job_id_folder = self.cp.analysis_job_id_folder(job_id=self.job_id)
         self.local_json_file_path = self.cp.analysis_output_job_id_btap_json_path(job_id=self.job_id)
 
     def _command_args(self):

@@ -35,7 +35,10 @@ class AWSImageManager(DockerImageManager):
         return f"{self.credentials.account_id}.dkr.ecr.{self.credentials.region_name}.amazonaws.com/{self.get_full_image_name()}:{self.image_tag}"
 
     def get_threads(self):
-        return MAX_AWS_VCPUS
+        if MAX_AWS_VCPUS > 500:
+            return 500
+        else:
+            return MAX_AWS_VCPUS
 
     def _image_repo_name(self):
         return self.get_full_image_name()

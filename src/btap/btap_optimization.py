@@ -75,7 +75,7 @@ class BTAPProblem(ElementwiseProblem):
         for objective in self.btap_optimization.algorithm_nsga_minimize_objectives:
             if not (objective in results):
                 raise FailedSimulationException(
-                    f"Objective value {objective} not found in results of simulation. "
+                    f"Objective value {objective} not found in results of simulation: {results} in datapoint {run_options[':datapoint_id']} "
                     f"Most likely due to failure of simulation runs. Stopping optimization")
             objectives.append(results[objective])
 
@@ -99,6 +99,8 @@ class BTAPOptimization(BTAPAnalysis):
         self.max_number_of_simulations = None
 
     def run(self):
+        # Create required paths and folders for analysis
+        self.create_paths_folders()
 
         message = "success"
         try:

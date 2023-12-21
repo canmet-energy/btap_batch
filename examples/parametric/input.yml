@@ -14,10 +14,28 @@
   # Note: the 'operation' and 'unit' keys in :output_variables are for performing operations on hourly output.
   # For now, allowed operation type is 'sum'; allowed units are 'GJ' and 'kWh'.
 :output_variables: [
-    { key: '*',     variable: 'Zone Air Temperature',     frequency: 'hourly',     operation: '*',     unit: '*' },
-    { key: '*',     variable: 'Lights Total Heating Energy',     frequency: 'hourly',     operation: 'sum',     unit: 'GJ' }
   ]
-:output_meters: []
+:output_meters: [
+  #Utility
+  { name: 'NaturalGas:Facility',     frequency: 'hourly' },
+  { name: 'Electricity:Facility',     frequency: 'hourly' },
+  { name: 'FuelOilNo2:Facility',     frequency: 'hourly' },
+  #End Uses
+
+  { name: 'InteriorLights:Electricity',     frequency: 'hourly' },
+  { name: 'Heating:Electricity',     frequency: 'hourly' },
+  { name: 'Heating:NaturalGas',     frequency: 'hourly' },
+  { name: 'Heating:FuelOilNo2',     frequency: 'hourly' },
+  { name: 'Heating:DistrictHeating',     frequency: 'hourly' },
+  { name: 'Cooling:Electricity',     frequency: 'hourly' },
+  { name: 'Heating:DistrictCooling',     frequency: 'hourly' },
+  { name: 'Fans:Electricity',     frequency: 'hourly' },
+  { name: 'Pumps:Electricity',     frequency: 'hourly' },
+  { name: 'InteriorEquipment:Electricity',     frequency: 'hourly' },
+  { name: 'WaterSystems:Electricity',     frequency: 'hourly' },
+  { name: 'WaterSystems:NaturalGas',     frequency: 'hourly' },
+
+]
 #########################################  BUILDING OPTIONS  ###########################################################
 # Building options
 :options:
@@ -42,11 +60,11 @@
   ]
   # The standard template to use for baseline assumptions.
   :template: [
-       'BTAPPRE1980',
-       'BTAP1980TO2010',
-       'NECB2011',
-       'NECB2015',
-       'NECB2017',
+#       'BTAPPRE1980',
+#       'BTAP1980TO2010',
+#       'NECB2011',
+#       'NECB2015',
+#       'NECB2017',
        'NECB2020'
   ]
   :epw_file: [
@@ -60,8 +78,10 @@
   ]
   :primary_heating_fuel: [
        'Electricity',
- #      'NaturalGas',
- #      'FuelOilNo2'
+       'NaturalGas',
+       'NaturalGasHPGasBackup',
+       'ElectricityHPElecBackup',
+
   ]
   :dcv_type: [
        'NECB_Default',
@@ -86,7 +106,7 @@
   ]
   :ecm_system_name: [
       'NECB_Default',
-#      'HS09_CCASHP_Baseboard',
+      'HS09_CCASHP_Baseboard',
 #      'HS08_CCASHP_VRF',
 #      'HS11_ASHP_PTHP',
 #      'HS12_ASHP_Baseboard',

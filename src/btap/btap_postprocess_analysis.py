@@ -29,11 +29,32 @@ class PostProcessResults():
                  username=None # username, usually aws username.
                  ):
 
+        # ic(baseline_results)
+        # ic(database_folder)
+        # ic(results_folder)
+        # ic(compute_environment)
+        # ic(output_variables)
+        # ic(username)
+
+
+
         logging.info(f'PostProcessResults(database_folder=r"{database_folder}", results_folder=r"{results_folder}, compute_environment ="{compute_environment}", output_variables="{output_variables}", username="{username}")')
 
         filepaths = [os.path.join(database_folder, f) for f in os.listdir(database_folder) if f.endswith('.csv')]
         btap_data_df = pd.concat(map(pd.read_csv, filepaths))
         btap_data_df.reset_index()
+
+        # the primary fuel type should be set to the correct baseline if a HP is set in the :ecm_system_name
+        def primary_fuel(row):
+            if isinstance(row[':ecm_system_name'],str):
+                if row[':primary_heating_fuel'] == "NaturalGas" and 'HP' in row[':ecm_system_name'] :
+                    return 'NaturalGasHPGasBackup'
+                if row[':primary_heating_fuel'] == "Electricity" and 'HP' in row[':ecm_system_name'] :
+                    return 'ElectricityHPElecBackup'
+            return row[':primary_heating_fuel']
+        btap_data_df['orig_fuel_type'] = btap_data_df[':primary_heating_fuel']
+        btap_data_df[':primary_heating_fuel'] = btap_data_df.apply(primary_fuel, axis=1)
+
 
         if isinstance(btap_data_df, pd.DataFrame):
             self.btap_data_df = btap_data_df
@@ -50,7 +71,10 @@ class PostProcessResults():
 
     def run(self):
         self.reference_comparisons()
-        self.get_files(file_paths=['run_dir/run/in.osm', 'run_dir/run/eplustbl.htm', 'hourly.csv'])
+        self.get_files(file_paths=['run_dir/run/in.osm',
+                                   'run_dir/run/eplustbl.htm',
+                                   'hourly.csv',
+                                   'run_dir/run/eplusout.sql'])
         self.save_excel_output()
         if self.compute_environment == 'aws_batch':
             self.save_dynamodb()
@@ -61,8 +85,12 @@ class PostProcessResults():
     # This is all done serially...if this is too slow, we should implement a parallel method using threads.. While probably
     # Not an issue for local analyses, it may be needed for large run. Here is an example of somebody with an example of parallel
     # downloads from S3 using threads.  https://emasquil.github.io/posts/multithreading-boto3/
-    def get_files(self, file_paths=['run_dir/run/in.osm', 'run_dir/run/eplustbl.htm', 'hourly.csv']):
+    def get_files(self, file_paths=['run_dir/run/in.osm',
+                                   'run_dir/run/eplustbl.htm',
+                                   'hourly.csv',
+                                   'run_dir/run/eplusout.sql']):
         for file_path in file_paths:
+            # mk results folder if it does not exist.
             pathlib.Path(os.path.dirname(self.results_folder)).mkdir(parents=True, exist_ok=True)
             filename = os.path.basename(file_path)
             extension = pathlib.Path(filename).suffix
@@ -97,6 +125,8 @@ class PostProcessResults():
                     wr = csv.writer(csvfile, quoting=csv.QUOTE_ALL)
                     wr.writerow(failed_downloads)
 
+
+
     def download_file(self, bin_folder, extension, file_path, s3, row):
         # If files are local
         if row['datapoint_output_url'].startswith('file:///'):
@@ -116,6 +146,7 @@ class PostProcessResults():
             s3_file_path = prefix + file_path
             target_on_local = os.path.join(bin_folder, row[':datapoint_id'] + extension)
             message = f"Getting file from S3 bucket {bucket} at path {s3_file_path} to {target_on_local}"
+
             logging.info(message)
             try:
                 s3.Bucket(bucket).download_file(s3_file_path, target_on_local)
@@ -124,14 +155,23 @@ class PostProcessResults():
                     print("The object does not exist.")
                 else:
                     raise
-            # Copy output files ('run_dir/run/in.osm', 'run_dir/run/eplustbl.htm', 'hourly.csv') to s3 for storage.
-
-            target_path_on_aws = os.path.join("/".join(s3_file_path.split("/")[:3]), 'results', os.path.basename(file_path),
-                                              row[':datapoint_id'] + extension)
-            target_path_on_aws = target_path_on_aws.replace('\\', '/')  # s3 likes forward slashes.
-            message = "Uploading %s..." % target_path_on_aws
-            logging.info(message)
-            S3().upload_file(target_on_local, AWSCredentials().account_id, target_path_on_aws)
+            # # Copy output files ('run_dir/run/in.osm', 'run_dir/run/eplustbl.htm', 'hourly.csv') to s3 for storage.
+            # # This path needs to change to use the cp analysis folder.
+            # target_path_on_aws = os.path.join("/".join(s3_file_path.split("/")[:3]),
+            #                                   'results',
+            #                                   os.path.basename(file_path),
+            #                                   row[':datapoint_id'] + extension)
+            #
+            # target_path_on_aws = os.path.join("/".join(s3_file_path.split("/")[:3]),
+            #                                   'results',
+            #                                   os.path.basename(file_path),
+            #                                   row[':datapoint_id'] + extension)
+            #
+            # target_path_on_aws = target_path_on_aws.replace('\\', '/')  # s3 likes forward slashes.
+            # message = "Uploading %s..." % target_path_on_aws
+            # print(message)
+            # logging.info(message)
+            # S3().upload_file(target_on_local, AWSCredentials().account_id, target_path_on_aws)
 
     def save_excel_output(self):
         # Create excel object
@@ -382,9 +422,9 @@ class PostProcessResults():
 #                    output_variables=[],
 #                    username="phylroy_lopez")
 
-
+#
 # PostProcessResults(baseline_results=None,
-#                    database_folder=r"C:\Users\plopez\btap_batch\output\parametric_example\parametric\results\database",
-#                    results_folder=r"C:\Users\plopez\btap_batch\output\parametric_example\parametric\results",
-#                    compute_environment ="aws_batch",
-#                    output_variables=[], username="phylroy_lopez").run()
+#                    database_folder=r"/home/plopez/btap_batch/output/parametric_example/reference/results/database",
+#                    results_folder=r"/home/plopez/btap_batch/output/parametric_example/reference/results",
+#                    compute_environment ="local_docker",
+#                    output_variables=[], username="lowrise_apartment").run()
