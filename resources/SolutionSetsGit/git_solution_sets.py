@@ -7,35 +7,39 @@ from src.btap.cli_helper_methods import get_number_of_failures
 
 def git_solution_sets():
     # 2710 runs per building (6)  per location (6)  is 97,000 simulations.
-    VINTAGE_RUNS = True  # 4 runs (1)
-    REFERENCE_RUNS = True  # 16 Runs (1)
-    SENSITIVITY_RUNS = True  # 190 runs (2)
-    LHS_RUNS = True  # 2000 runs (1)
-    OPTIMIZATION_RUNS = True  # 500 runs. (1)
+    VINTAGE_RUNS = False  # 4 runs (1)
+    REFERENCE_RUNS = False  # 16 Runs (1)
+    SENSITIVITY_RUNS = False  # 190 runs (2)
+    OPTIMIZATION_RUNS = False  # 500 runs. (1)
+    LHS_RUNS = False  # 2000 runs (1)
 
     # So 6*6*6 = 216 Analyses for solution sets.
 
     building_types = [
-        'LowriseApartment'
-        'MidriseApartment',
-        'HighriseApartment',
-        'SmallOffice'
-        'MediumOffice',
-        'LargeOffice',
+        # 'LowriseApartment'
+        # 'MidriseApartment',
+        # 'HighriseApartment',
+        # 'SmallOffice'
+        # 'MediumOffice',
+        # 'LargeOffice',
+        # 'LEEPMidriseApartment',
+        # 'LEEPMultiTower',
+        # 'LEEPPointTower',
+        # 'LEEPTownHouse'
     ]
 
 # Using airport codes to identify the locations.  Much easier if sometimes slightly inaccurate.
     epw_files = [
-        ['CAN_BC_Vancouver.Intl.AP.718920_CWEC2016.epw', 'YVR'],  # CZ 4
-        ['CAN_ON_Toronto.Pearson.Intl.AP.716240_CWEC2016.epw', 'YYZ'],  # CZ 5
-        ['CAN_QC_Montreal-Trudeau.Intl.AP.716270_CWEC2016.epw', 'YUL'],  # CZ 6
-        ['CAN_AB_Edmonton.Intl.AP.711230_CWEC2016.epw', 'YEG'],  # CZ 7A
-        ['CAN_AB_Fort.McMurray.AP.716890_CWEC2016.epw', 'YMM'],  # CZ 7B
-        ['CAN_NT_Yellowknife.AP.719360_CWEC2016.epw', 'YZF']  # CZ 8
+        # ['CAN_BC_Vancouver.Intl.AP.718920_CWEC2016.epw', 'YVR'],  # CZ 4
+        # ['CAN_ON_Toronto.Pearson.Intl.AP.716240_CWEC2016.epw', 'YYZ'],  # CZ 5
+        # ['CAN_QC_Montreal-Trudeau.Intl.AP.716270_CWEC2016.epw', 'YUL'],  # CZ 6
+        # ['CAN_AB_Edmonton.Intl.AP.711230_CWEC2016.epw', 'YEG'],  # CZ 7A
+        # ['CAN_AB_Fort.McMurray.AP.716890_CWEC2016.epw', 'YMM'],  # CZ 7B
+        # ['CAN_NT_Yellowknife.AP.719360_CWEC2016.epw', 'YZF']  # CZ 8
     ]
 
 
-    compute_environment = 'aws_batch_analysis'
+    compute_environment = 'local_docker'
 
     if compute_environment != 'local_docker':
         print(f"Current Analysis Failures: {get_number_of_failures(job_queue_name='btap_batch')}")
@@ -88,7 +92,7 @@ def git_solution_sets():
         {'key': '*', 'variable': 'Zone Predicted Moisture Load to Dehumidifying Setpoint Moisture Transfer Rate',
          'frequency': 'hourly', 'operation': '*', 'unit': '*'},
     ]
-    output_variables =[]
+
     pwd = (os.path.dirname(os.path.realpath(__file__)))
     output_folder = os.path.join(pwd, 'output')
     pathlib.Path(output_folder).mkdir(parents=True, exist_ok=True)
@@ -143,7 +147,7 @@ def git_solution_sets():
                 print(f"Running  {analysis_configuration[':analysis_name']}")
                 analysis(project_input_folder=analysis_folder,
                          compute_environment=compute_environment,
-                         reference_run=True,
+                         reference_run=False,
                          output_folder=output_folder)
 
             # Vintage Runs

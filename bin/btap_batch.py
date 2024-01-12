@@ -130,8 +130,8 @@ def build_environment(**kwargs):
               help='Environment to run analysis. Either local_docker, which runs on your computer, or aws_batch_analysis which runs completely on AWS. The default is local_docker')
 @click.option('--project_folder', '-p', default=os.path.join(EXAMPLE_FOLDER, 'optimization'),
               help='location of folder containing input.yml file and optionally support folders such as osm_folder folder for custom models. Default is the optimization example folder.')
-@click.option('--reference_run', is_flag=True,
-              help='Run reference. Required for baseline comparisons')
+@click.option('--no_ref_run', is_flag=True,
+              help='Do not run the baseline references. This will effectively cancel baseline comparisons')
 @click.option('--output_folder', default=OUTPUT_FOLDER,
               help='Path to output results. Defaulted to this projects output folder ./btap_batch/output')
 def run_analysis_project(**kwargs):
@@ -151,7 +151,7 @@ def run_analysis_project(**kwargs):
     # Input folder name
     analysis_project_folder = kwargs['project_folder']
     compute_environment = kwargs['compute_environment']
-    reference_run = kwargs['reference_run']
+    reference_run = not kwargs['no_ref_run']
     output_folder = kwargs['output_folder']
     # Function to run analysis.
     check_environment_vars_are_defined(compute_environment=compute_environment)

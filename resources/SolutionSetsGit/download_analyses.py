@@ -148,13 +148,13 @@ def download_analyses(bucket='834599497928',
 
 download_analyses(bucket='834599497928',
                   prefix='solution_sets/',  # S3 prefix MUST have a trailing /
-                  target_path=r'/home/plopez/btap_batch/downloads/MidriseApartment',  # Your local download folder.
-                  hourly_csv=True,  # download hourly.csv zip
+                  target_path=r'/home/plopez/btap_batch/downloads/Solution',  # Your local download folder.
+                  hourly_csv=False,  # download hourly.csv zip
                   in_osm=True,  # download osm zip
-                  eplusout_sql=True,  # download sqlite files zip
-                  eplustbl_htm=True,  # download e+ htm report zip
+                  eplusout_sql=False,  # download sqlite files zip
+                  eplustbl_htm=False,  # download e+ htm report zip
                   concat_excel_files=True,  # concat all output.xlsx files to a master.csv and parquet file
-                  regex_filter='.*MidriseApartment_\S\S\S_ref.*',
-                  unzip_and_delete=True,  # This will unzip the zip files of all the above into a folder and delete the original zip file.
-                  dry_run=True  # If set to true.. will do a dry run and not download anything. This is used to make sure your regex is working as intended.
+                  regex_filter='solution_sets/MidriseApartment_.*YYZ_(?!vin).*$', # an example that gets MidriseApartment from Toronto except the vintage analyses
+                  unzip_and_delete=False,  # This will unzip the zip files of all the above into a folder and delete the original zip file.
+                  dry_run=False  # If set to true.. will do a dry run and not download anything. This is used to make sure your regex is working as intended.
                   )

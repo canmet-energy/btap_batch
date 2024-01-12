@@ -303,18 +303,17 @@ def analysis(project_input_folder=None,
         analysis_config[':compute_environment'] = compute_environment
 
         reference_run_df = None
-        # Hardcode to always run reference except in batch mode.
-        if analysis_config[':algorithm_type'] != 'batch':
-            # Run reference
-            ref_analysis_config = copy.deepcopy(analysis_config)
-            ref_analysis_config[':algorithm_type'] = 'reference'
-            br = BTAPReference(analysis_config=ref_analysis_config,
-                               analysis_input_folder=analysis_input_folder,
-                               output_folder=os.path.join(output_folder))
+        if reference_run == True:
+            if analysis_config[':algorithm_type'] != 'batch':
+                # Run reference
+                ref_analysis_config = copy.deepcopy(analysis_config)
+                ref_analysis_config[':algorithm_type'] = 'reference'
+                br = BTAPReference(analysis_config=ref_analysis_config,
+                                   analysis_input_folder=analysis_input_folder,
+                                   output_folder=os.path.join(output_folder))
 
-            br.run()
-
-            reference_run_df = br.btap_data_df
+                br.run()
+                reference_run_df = br.btap_data_df
 
         # ic(reference_run_data_path)
 

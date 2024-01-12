@@ -423,15 +423,17 @@ class BTAPAnalysis():
                    'hourly.csv',
                    'eplusout.sql']
 
-        #Create Zip Files.
-        for folder in folders:
-            print(f"Zipping {folder} to S3 results zipfile")
-            source_folder = os.path.join(self.analysis_results_folder(), folder)
-            source_zip = os.path.join(self.analysis_results_folder(), 'zips',  folder)
-            # Delete file if it exists.
-            pathlib.Path(source_zip).unlink(missing_ok=True)
-            # Create zip
-            shutil.make_archive(source_zip, 'zip', source_folder)
+
+        if self.compute_environment != 'local_docker':
+            #Create Zip Files.
+            for folder in folders:
+                print(f"Zipping {folder} to S3 results zipfile")
+                source_folder = os.path.join(self.analysis_results_folder(), folder)
+                source_zip = os.path.join(self.analysis_results_folder(), 'zips',  folder)
+                # Delete file if it exists.
+                pathlib.Path(source_zip).unlink(missing_ok=True)
+                # Create zip
+                shutil.make_archive(source_zip, 'zip', source_folder)
 
 
 

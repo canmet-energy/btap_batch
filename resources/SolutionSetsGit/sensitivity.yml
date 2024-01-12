@@ -203,5 +203,37 @@
   name: WaterSystems:Electricity
 - frequency: hourly
   name: WaterSystems:NaturalGas
-:output_variables: []
+:output_variables:
+- frequency: hourly
+  key: '*'
+  operation: '*'
+  unit: '*'
+  variable: Zone Predicted Sensible Load to Setpoint Heat Transfer Rate
+- frequency: hourly
+  key: '*'
+  operation: '*'
+  unit: '*'
+  variable: Zone Predicted Sensible Load to Heating Setpoint Heat Transfer Rate
+- frequency: hourly
+  key: '*'
+  operation: '*'
+  unit: '*'
+  variable: Zone Predicted Sensible Load to Cooling Setpoint Heat Transfer Rate
+- frequency: hourly
+  key: '*'
+  operation: '*'
+  unit: '*'
+  variable: Zone Predicted Moisture Load Moisture Transfer Rate
+- frequency: hourly
+  key: '*'
+  operation: '*'
+  unit: '*'
+  variable: Zone Predicted Moisture Load to Humidifying Setpoint Moisture Transfer
+    Rate
+- frequency: hourly
+  key: '*'
+  operation: '*'
+  unit: '*'
+  variable: Zone Predicted Moisture Load to Dehumidifying Setpoint Moisture Transfer
+    Rate
 :run_annual_simulation: true
