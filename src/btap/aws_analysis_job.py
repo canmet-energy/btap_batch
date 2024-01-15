@@ -80,8 +80,8 @@ class AWSAnalysisJob():
                    "aws_batch"
                    ]
         #Add reference run if requested.
-        if self.reference_run:
-            command.append("--reference_run")
+        if not self.reference_run:
+            command.append("--no_ref_run")
         return command
 
     def copy_files_to_run_location(self):
