@@ -10,6 +10,7 @@ sys.path.append(PROJECT_ROOT)
 PROJECT_FOLDER = os.path.join(Path(os.path.dirname(os.path.realpath(__file__))).parent.absolute())
 EXAMPLE_FOLDER = os.path.join(PROJECT_FOLDER, 'examples')
 OUTPUT_FOLDER = os.path.join(PROJECT_FOLDER, "output")
+CONFIG_FOLDER = os.path.join(PROJECT_FOLDER, 'config')
 CONTEXT_SETTINGS = dict(help_option_names=['-h', '--help'])
 
 
@@ -62,8 +63,13 @@ def credits():
 @btap.command()
 @click.option('--compute_environment', '-c', default='local_docker',
               help='local_docker for local computer, aws_batch to configure aws, or all. Default=local_docker.')
+@click.option('--build_config_path', '-p', default=os.path.join(CONFIG_FOLDER, 'build_config.yml'),
+              help=f'location of Location of build_config.yml file.  Default location is {CONFIG_FOLDER}')
+
 def build_environment(**kwargs):
     from src.btap.cli_helper_methods import build_and_configure_docker_and_aws
+    from src.btap.cli_helper_methods import generate_build_config
+    import jsonschema
     import yaml
     """
     This command will build the supporting permissions, databases, on aws and local docker. This optionally will allow
@@ -98,16 +104,47 @@ def build_environment(**kwargs):
         python ./bin/btap_batch.py build-environment --compute_environment aws_batch
 
     """
-    with open('/home/plopez/btap_batch/config/build_config.yml') as f:
-        dict = yaml.load(f, Loader=yaml.FullLoader)
-
     compute_environment = kwargs['compute_environment']
-    btap_batch_branch = dict['btap_batch_branch']
-    os_standards_branch = dict['os_standards_branch']
-    btap_costing_branch = dict['btap_costing_branch']
-    openstudio_version = dict['openstudio_version']
-    disable_costing = dict['disable_costing']
-    weather_list = dict['weather_list']
+    build_config_path = kwargs['build_config_path']
+
+
+
+    config = None
+    try:
+
+        with open(build_config_path) as f:
+            config = yaml.load(f, Loader=yaml.FullLoader)
+        with open('/home/plopez/btap_batch/config/build_config_schema.yml') as f:
+            schema = yaml.load(f, Loader=yaml.FullLoader)
+        # Validate against schema
+        jsonschema.validate(config, schema)
+
+    except FileNotFoundError:
+            print(f'The file does not exist. Creating a template at location {build_config_path}. Please edit it with your information.')
+            generate_build_config(build_config_path)
+            exit(1)
+
+    except yaml.parser.ParserError as e:
+        print(f"ERROR: {build_config_path} contains an invalid YAML format. Please check your YAML format.")
+        print(e.message)
+        exit(1)
+
+
+    except jsonschema.exceptions.ValidationError as e:
+        print(f"ERROR: {build_config_path} does not contain valid data. Please fix the error below and try again.")
+        print(e.message)
+        exit(1)
+
+    exit(1)
+
+    btap_batch_branch = config['btap_batch_branch']
+    os_standards_branch = config['os_standards_branch']
+    btap_costing_branch = config['btap_costing_branch']
+    openstudio_version = config['openstudio_version']
+    disable_costing = config['disable_costing']
+    weather_list = config['weather_list']
+    build_btap_cli = config['build_btap_cli']
+    build_btap_batch = config['build_btap_batch']
 
     if disable_costing:
         # Setting the costing branch to an empty string will force the docker file to not use costing.
@@ -119,7 +156,9 @@ def build_environment(**kwargs):
                                        compute_environment=compute_environment,
                                        openstudio_version=openstudio_version,
                                        weather_list=weather_list,
-                                       os_standards_branch=os_standards_branch)
+                                       os_standards_branch=os_standards_branch,
+                                       build_btap_batch=build_btap_batch,
+                                       build_btap_cli=build_btap_cli)
 
 
 @btap.command()

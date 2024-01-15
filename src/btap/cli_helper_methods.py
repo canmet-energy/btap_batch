@@ -30,7 +30,7 @@ from icecream import ic
 from src.btap.aws_dynamodb import AWSResultsTable
 import math
 import pandas as pd
-from distutils.dir_util import copy_tre
+from distutils.dir_util import copy_tree
 HISTORIC_WEATHER_LIST = "https://github.com/canmet-energy/btap_weather/raw/main/historic_weather_filenames.json"
 FUTURE_WEATHER_LIST = "https://github.com/canmet-energy/btap_weather/raw/main/future_weather_filenames.json"
 HISTORIC_WEATHER_REPO = "https://github.com/canmet-energy/btap_weather/raw/main/historic/"
@@ -142,8 +142,8 @@ def build_and_configure_docker_and_aws(btap_batch_branch=None,
                                        compute_environment=None,
                                        openstudio_version=None,
                                        os_standards_branch=None,
-                                       build_btap_cli=True,
-                                       build_btap_batch=True,
+                                       build_btap_cli=None,
+                                       build_btap_batch=None,
                                        weather_list=None):
     # Get the weather locations from the weather list
     weather_locations = get_weather_locations(weather_list)
@@ -191,8 +191,9 @@ def build_and_configure_docker_and_aws(btap_batch_branch=None,
 
         # Build Image for worker
         image_worker = AWSImageManager(image_name='btap_cli')
-        print('Building worker image')
+
         if build_btap_cli:
+            print('Building btap_cli on aws..')
             image_worker.build_image(build_args=build_args_btap_cli)
 
         # Create Job description and queues for workers.
@@ -225,8 +226,9 @@ def build_and_configure_docker_and_aws(btap_batch_branch=None,
     if compute_environment == 'all' or compute_environment == 'local_docker':
         # Build btap_cli image
         image_worker = DockerImageManager(image_name='btap_cli')
-        print('Building btap_cli image')
-        image_worker.build_image(build_args=build_args_btap_cli)
+        if build_btap_cli:
+            print('Building btap_cli image')
+            image_worker.build_image(build_args=build_args_btap_cli)
 
 
 def analysis(project_input_folder=None,
@@ -609,4 +611,48 @@ def get_number_of_failures(job_queue_name='btap_cli'):
         if 'jobSummaryList' in response:
             object_count += len(response['jobSummaryList'])
     return object_count
+
+def generate_build_config(build_config_path = None):
+    import yaml
+
+    config = """
+# Compute Environment
+compute_environment: local_dockers
+
+# Branch of btap_batch to be used in aws_batch_analysis compute_environment runs on AWS.
+btap_batch_branch: build_change
+
+# Branch of btap_costing to build used in environment
+btap_costing_branch: master
+
+# Branch of openstudio-standards used in environment
+os_standards_branch: nrcan
+
+# Branch of openstudio version to build into container environment. This by default will select the E+ version used with that version.
+openstudio_version: 3.6.1
+
+weather_list: [
+  'CAN_QC_Montreal-Trudeau.Intl.AP.716270_CWEC2016.epw',
+  'CAN_NS_Halifax.Dockyard.713280_CWEC2016.epw',
+  'CAN_AB_Edmonton.Intl.AP.711230_CWEC2016.epw',
+  'CAN_BC_Vancouver.Intl.AP.718920_CWEC2016.epw',
+  'CAN_AB_Calgary.Intl.AP.718770_CWEC2016.epw',
+  'CAN_ON_Toronto.Pearson.Intl.AP.716240_CWEC2016.epw',
+  'CAN_NT_Yellowknife.AP.719360_CWEC2016.epw',
+  'CAN_AB_Fort.McMurray.AP.716890_CWEC2016.epw'
+]
+
+# If you do not have access RSMEANs data api. This should be false.
+disable_costing: False
+
+# Rebuild btap_cli image
+build_btap_cli: True
+
+# Rebuild btap_batch image
+build_btap_batch: True
+    """
+
+    with open(build_config_path, "w") as file:
+        file.write(config)
+
 
