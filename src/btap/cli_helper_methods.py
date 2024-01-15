@@ -30,8 +30,7 @@ from icecream import ic
 from src.btap.aws_dynamodb import AWSResultsTable
 import math
 import pandas as pd
-from distutils.dir_util import copy_tree
-
+from distutils.dir_util import copy_tre
 HISTORIC_WEATHER_LIST = "https://github.com/canmet-energy/btap_weather/raw/main/historic_weather_filenames.json"
 FUTURE_WEATHER_LIST = "https://github.com/canmet-energy/btap_weather/raw/main/future_weather_filenames.json"
 HISTORIC_WEATHER_REPO = "https://github.com/canmet-energy/btap_weather/raw/main/historic/"
@@ -64,20 +63,12 @@ def get_pareto_points(costs, return_mask=True):
 
 
 
-def get_weather_locations(weather_list=None):
+def get_weather_locations(weather_list=[]):
     # Use the default weather file list if another list is not provided
-    if (weather_list == None) or (weather_list == ''):
-        weather_list = os.path.join(os.getcwd(), 'examples', 'weather_list.yml')
+    if (weather_list == None) or not weather_list:
+        print("No weather locations were provided in the build_config.yml file. Cannot continue building image.")
 
-    # Check if the weather file list exists
-    if not os.path.isfile(weather_list):
-        print(f"{weather_list} file does not exist.")
-        exit(1)
-
-    # Read the list
-    weather_config, weather_input_folder, weather_folder = BTAPAnalysis.load_analysis_input_file(
-        analysis_config_file=weather_list)
-    weather_files = weather_config[':weather_locations']
+    weather_files = weather_list
     if len(weather_files) > 100:
         raise("Too many weather files selected in the build environment. Please reorganize your analyses to use less than 100 weather files. ")
 

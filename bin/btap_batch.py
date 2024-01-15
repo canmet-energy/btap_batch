@@ -62,14 +62,9 @@ def credits():
 @btap.command()
 @click.option('--compute_environment', '-c', default='local_docker',
               help='local_docker for local computer, aws_batch to configure aws, or all. Default=local_docker.')
-@click.option('--btap_batch_branch', default='dev', help='btap_batch branch. Default = dev.')
-@click.option('--os_standards_branch', default='nrcan', help='openstudio-standards branch. Default=nrcan.')
-@click.option('--btap_costing_branch', default='master', help='btap_costing branch.Default=master.')
-@click.option('--openstudio_version', default='3.6.1', help='OpenStudio version. Default=3.6.1')
-@click.option('--weather_list', '-w', default='', help='File containing analysis weather locations. Default=./weather_list.yml')
-@click.option('--disable_costing', is_flag=True, help='Disable costing. Choose this if you do not have an RSMeans licence and access to the BTAPCosting repo.')
 def build_environment(**kwargs):
     from src.btap.cli_helper_methods import build_and_configure_docker_and_aws
+    import yaml
     """
     This command will build the supporting permissions, databases, on aws and local docker. This optionally will allow
     you to choose experimental development branches to use.
@@ -81,7 +76,6 @@ def build_environment(**kwargs):
     you have provided in your system variables.
 
     It will also create an aws compute resource, an aws job description, a btap job queue and an analysis job queue..
-    These are also suffixed with your provided AWS_USERNAME.
 
     Similarly to local_docker, it will create btap_cli image, but on the Amazon Container Registery. It will also build
     the btap_batch image to run the analysis completely remotely.
@@ -99,18 +93,21 @@ def build_environment(**kwargs):
 
     Examples:
 
-        python ./bin/btap_batch.py build-environment --compute_environment local_docker --disable_costing
+        python ./bin/btap_batch.py build-environment --compute_environment local_docker
 
-        python ./bin/btap_batch.py build-environment --compute_environment aws_batch --disable_costing
+        python ./bin/btap_batch.py build-environment --compute_environment aws_batch
 
     """
+    with open('/home/plopez/btap_batch/config/build_config.yml') as f:
+        dict = yaml.load(f, Loader=yaml.FullLoader)
+
     compute_environment = kwargs['compute_environment']
-    btap_batch_branch = kwargs['btap_batch_branch']
-    os_standards_branch = kwargs['os_standards_branch']
-    btap_costing_branch = kwargs['btap_costing_branch']
-    openstudio_version = kwargs['openstudio_version']
-    disable_costing = kwargs['disable_costing']
-    weather_list = kwargs['weather_list']
+    btap_batch_branch = dict['btap_batch_branch']
+    os_standards_branch = dict['os_standards_branch']
+    btap_costing_branch = dict['btap_costing_branch']
+    openstudio_version = dict['openstudio_version']
+    disable_costing = dict['disable_costing']
+    weather_list = dict['weather_list']
 
     if disable_costing:
         # Setting the costing branch to an empty string will force the docker file to not use costing.
