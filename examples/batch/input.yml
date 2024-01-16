@@ -1,5 +1,5 @@
 ---
-# aws_batch local_docker
+# local_managed_aws_workers local
 :analysis_name: batch_example
 :algorithm_type: batch
 :algorithm_nsga_population: null
@@ -10,7 +10,7 @@
 :algorithm_lhs_n_samples: null
 :algorithm_lhs_type: null
 :algorithm_lhs_random_seed: null
-:run_annual_simulation: true
+:reference_run: true
 ###########################################     Hourly Data     #######################################################
   # Note: the 'operation' and 'unit' keys in :output_variables are for performing operations on hourly output.
   # For now, allowed operation type is 'sum'; allowed units are 'GJ' and 'kWh'.

@@ -74,7 +74,7 @@ takes advantage of Amazons cost-effective batch queue system to complete simulat
 ### Amazon HPC only:
 * [AWS CLI version 2 on Windows](https://docs.aws.amazon.com/cli/latest/userguide/install-cliv2-windows.html).
 * [Set Up AWS credentials file](https://docs.aws.amazon.com/cli/latest/userguide/cli-configure-files.html) . 
-* Add your AWS username added to your computer environment variable as AWS_USERNAME. Should be something like firstname.lastname. Do this as you did the GIT_API_TOKEN above.
+* Add your AWS username added to your computer environment variable as BUILD_ENV_NAME. Should be something like firstname.lastname. Do this as you did the GIT_API_TOKEN above.
 * Add an AWS S3 bucket with a name same as your aws account id. This should be a 12 digit integer created in the ca-central region.
 
 
@@ -102,11 +102,11 @@ python ./bin/btap_batch.py build-environment -h
 
 However, to use the most recent stable versions openstudio-standards, btap_costing, and btap_batch, simply run this command to configure your system to run locally. Note: if you do not have an RSMeans licence you MUST disable costing.
 ```
-python ./bin/btap_batch.py build-environment --compute_environment local_docker --disable_costing
+python ./bin/btap_batch.py build-environment --compute_environment local --disable_costing
 ```
 and/or to configure Amazon Web Services..
 ```
-python ./bin/btap_batch.py build-environment --compute_environment aws_batch --disable_costing
+python ./bin/btap_batch.py build-environment --compute_environment local_managed_aws_workers --disable_costing
 ```
 Please note that if you wish to update your environment to the latest branches of development, you will have to run these commands again. This will rebuild your environment.
 
@@ -132,10 +132,10 @@ Also, you don't have to use all of the locations you define in your environment 
 You can create your own weather locations file using the 'btap_weather.yml' file as a template. If you would like to use your own file, rather than the standard 'btap_weather.yml' file, use the following command line argument when building your environment:
 
 ```
-python ./bin/btap_batch.py build-environment --compute_environment local_docker --disable_costing --weather_list C:\Users\ckirney\btap_batch\chris-weather-list.yml
+python ./bin/btap_batch.py build-environment --compute_environment local --disable_costing --weather_list C:\Users\ckirney\btap_batch\chris-weather-list.yml
 ```
 
-Replacing the example path above with the path to your own file. The command above also works for AWS analyses by replacing 'local_docker' with 'aws_batch' for the 'compute_environment' argument.
+Replacing the example path above with the path to your own file. The command above also works for AWS analyses by replacing 'local' with 'local_managed_aws_workers' for the 'compute_environment' argument.
 
 
 ### Parametric Analysis Local Machine
@@ -149,7 +149,7 @@ venv\Scripts\activate.bat
 
 You can run the analysis using the run-analysis-project. You can inspect the switches available for this comm
 ```
-python ./bin/btap_batch.py run-analysis-project --compute_environment local_docker --project_folder C:\Users\plopez\btap_batch\examples\parametric --reference_run
+python ./bin/btap_batch.py run-analysis-project --compute_environment local --project_folder C:\Users\plopez\btap_batch\examples\parametric --reference_run
 ```
 3. Simulation should start to run. A folder will be created in output folder with the variable name you set 
 ':analysis_name' in the yml file. In that folder you will see two folders, 'parametric' and 'reference'. 'reference' 
@@ -172,13 +172,13 @@ output files from OS/Energyplus.
 
 ## Using Amazon AWS for analysis
 1. Ensure you are not connected to a VPN and do not connect while running simulations.
-2. Change '-compute_environment' to aws_batch (note that ':compute_environment' is in example.yml analysis file in the 'example' folder).
+2. Change '-compute_environment' to local_managed_aws_workers (note that ':compute_environment' is in example.yml analysis file in the 'example' folder).
 3. Update your AWS credentials to ensure it is up to date through your AWS Account -> btap-dev -> Command line and programmatic Access. Copy the Text in 'Option 2'.
 4. Use your updated AWS credentials in '.aws/credentials' file in your user folder.
 *Note*:  Navigate to '.aws' folder in your user folder using windows powershell. Run the command: ```$ aws configure```. Set the default region name to ca-central-1, and output format to json. Then, open the generated credentials file in '.aws' folder in your user folder. Use your updated AWS credentials in the credentials file. Replace the first line that looks something like this [834599497928_PowerUser] to [default] and save the file.
 
 ```
-python ./bin/btap_batch.py run-analysis-project --compute_environment aws_batch --project_folder C:\Users\plopez\btap_batch\examples\parametric --run_reference
+python ./bin/btap_batch.py run-analysis-project --compute_environment local_managed_aws_workers --project_folder C:\Users\plopez\btap_batch\examples\parametric --run_reference
 ```
 
 The output of the runs is not stored all locally, but on the S3 Bucket,  the ':analysis_name' you chose and the analysis_id 
@@ -205,7 +205,7 @@ from a local parametric run. However most of the time the above variables would 
 To run the example simple point the --project_folder switch to the analysis input folder.
 
 ```
-python ./bin/btap_batch.py run-analysis-project --compute_environment <choose local_docker or aws_batch> --project_folder .\examples\optimization --reference_run
+python ./bin/btap_batch.py run-analysis-project --compute_environment <choose local or local_managed_aws_workers> --project_folder .\examples\optimization --reference_run
 ```
 
 ## Elimination Analysis

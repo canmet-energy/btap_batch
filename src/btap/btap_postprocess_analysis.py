@@ -76,7 +76,7 @@ class PostProcessResults():
                                    'hourly.csv',
                                    'run_dir/run/eplusout.sql'])
         self.save_excel_output()
-        if self.compute_environment == 'aws_batch':
+        if self.compute_environment == 'local_managed_aws_workers':
             self.save_dynamodb()
         self.operation_on_hourly_output()
         return self.btap_data_df
@@ -270,7 +270,7 @@ class PostProcessResults():
                     df_output.to_csv(output_file, index=False)
 
                     # Copy sum_hourly_res.csv to s3 for storage if run on AWS.
-                    if self.compute_environment == "aws_batch":
+                    if self.compute_environment == "local_managed_aws_workers":
                         sum_hourly_res_path = os.path.join(self.results_folder, 'hourly.csv', 'sum_hourly_res.csv')
                         target_path_on_aws = os.path.join(self.username,
                                                           "\\".join(sum_hourly_res_path.split("\\")[-5:])).replace('\\', '/')
@@ -418,7 +418,7 @@ class PostProcessResults():
 # PostProcessResults(baseline_results=None,
 #                    database_folder=r"C:\Users\plopez\btap_batch\output\parametric_example\parametric\results\database",
 #                    results_folder=r"C:\Users\plopez\btap_batch\output\parametric_example\parametric\results",
-#                    compute_environment="aws_batch",
+#                    compute_environment="local_managed_aws_workers",
 #                    output_variables=[],
 #                    username="phylroy_lopez")
 
@@ -426,5 +426,5 @@ class PostProcessResults():
 # PostProcessResults(baseline_results=None,
 #                    database_folder=r"/home/plopez/btap_batch/output/parametric_example/reference/results/database",
 #                    results_folder=r"/home/plopez/btap_batch/output/parametric_example/reference/results",
-#                    compute_environment ="local_docker",
+#                    compute_environment ="local",
 #                    output_variables=[], username="lowrise_apartment").run()

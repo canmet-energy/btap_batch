@@ -77,7 +77,7 @@ class AWSAnalysisJob():
                    "--project_folder",
                    self.cp.s3_btap_batch_container_input_path(),
                    "--compute_environment",
-                   "aws_batch"
+                   "local_managed_aws_workers"
                    ]
         #Add reference run if requested.
         if not self.reference_run:

@@ -16,18 +16,7 @@ CONTEXT_SETTINGS = dict(help_option_names=['-h', '--help'])
 
 
 def check_environment_vars_are_defined(compute_environment=None):
-    failed = False
-    if os.environ.get('AWS_USERNAME') is None and (
-            compute_environment == 'aws_batch' or compute_environment == 'aws_batch_analysis'):
-        print(
-            'Please set AWS_USERNAME environment variable to your aws username. See https://github.com/canmet-energy/btap_batch/blob/main/README.md#requirements to ensure all requirements are met before running. ')
-        failed = True
-    if os.environ.get('GIT_API_TOKEN') is None:
-        print(
-            'Please set GIT_API_TOKEN environment variable to your git token string. See https://github.com/canmet-energy/btap_batch/blob/main/README.md#requirements')
-        failed = True
-    if failed:
-        exit(1)
+    print("not checking env vars!")
 
 
 @click.group(context_settings=CONTEXT_SETTINGS)
@@ -62,8 +51,6 @@ def credits():
 
 
 @btap.command()
-@click.option('--compute_environment', '-c', default='local_docker',
-              help='local_docker for local computer, aws_batch to configure aws, or all. Default=local_docker.')
 @click.option('--build_config_path', '-p', default=os.path.join(CONFIG_FOLDER, 'build_config.yml'),
               help=f'location of Location of build_config.yml file.  Default location is {CONFIG_FOLDER}')
 
@@ -73,18 +60,11 @@ def build_environment(**kwargs):
     import jsonschema
     import yaml
     """
-    This command will build the supporting permissions, databases, on aws and local docker. This optionally will allow
-    you to choose experimental development branches to use.
-    For 'local_docker' as compute_environment, it will simply build the btap_cli image on your local computer. This
-    image is responsible for running openstudio/Energyplus.
 
-    For 'aws_batch' this will configure the correct IAM roles required to run BTAP on AWS. This includes
-    CloudBuildRole, BatchJobRole, and BatchServiceRole. These roles will appear with a suffix of your AWS_USERNAME that
-    you have provided in your system variables.
 
     It will also create an aws compute resource, an aws job description, a btap job queue and an analysis job queue..
 
-    Similarly to local_docker, it will create btap_cli image, but on the Amazon Container Registery. It will also build
+    Similarly to local, it will create btap_cli image, but on the Amazon Container Registery. It will also build
     the btap_batch image to run the analysis completely remotely.
 
     It will also create a dynamodb table to store results and status of running submitted analysis jobs and btap_cli
@@ -100,49 +80,14 @@ def build_environment(**kwargs):
 
     Examples:
 
-        python ./bin/btap_batch.py build-environment --compute_environment local_docker
+        python ./bin/btap_batch.py build-environment
 
-        python ./bin/btap_batch.py build-environment --compute_environment aws_batch
+        python ./bin/btap_batch.py build-environment 
 
     """
-    compute_environment = kwargs['compute_environment']
+
     build_config_path = kwargs['build_config_path']
-
-
-
-    config = None
-
-    try:
-        schema_file = os.path.join(SCHEMA_FOLDER, 'build_config_schema.yml')
-        with open(schema_file) as f:
-            schema = yaml.load(f, Loader=yaml.FullLoader)
-    except FileNotFoundError:
-        print(f'Error: The schema file does not exist {schema_file}')
-        exit(1)
-
-    try:
-        with open(build_config_path) as f:
-            config = yaml.load(f, Loader=yaml.FullLoader)
-        # Validate against schema
-    except FileNotFoundError:
-        print(f'The file does not exist. Creating a template at location {build_config_path}. Please edit it with your information.')
-        generate_build_config(build_config_path)
-        exit(1)
-
-    try:
-        jsonschema.validate(config, schema)
-    except yaml.parser.ParserError as e:
-        print(f"ERROR: {build_config_path} contains an invalid YAML format. Please check your YAML format.")
-        print(e.message)
-        exit(1)
-
-
-    except jsonschema.exceptions.ValidationError as e:
-        print(f"ERROR: {build_config_path} does not contain valid data. Please fix the error below and try again.")
-        print(e.message)
-        exit(1)
-
-
+    config = load_config(build_config_path)
 
     btap_batch_branch = config['btap_batch_branch']
     os_standards_branch = config['os_standards_branch']
@@ -152,8 +97,9 @@ def build_environment(**kwargs):
     weather_list = config['weather_list']
     build_btap_cli = config['build_btap_cli']
     build_btap_batch = config['build_btap_batch']
-    os.environ['AWS_USERNAME'] = config['build_env_name']
+    os.environ['BUILD_ENV_NAME'] = config['build_env_name']
     os.environ['GIT_API_TOKEN'] = config['git_api_token']
+    compute_environment = config['compute_environment']
 
 
     if disable_costing:
@@ -171,15 +117,48 @@ def build_environment(**kwargs):
                                        build_btap_cli=build_btap_cli)
 
 
+def load_config(build_config_path):
+    from src.btap.cli_helper_methods import generate_build_config
+    import jsonschema
+    import yaml
+    try:
+        schema_file = os.path.join(SCHEMA_FOLDER, 'build_config_schema.yml')
+        with open(schema_file) as f:
+            schema = yaml.load(f, Loader=yaml.FullLoader)
+    except FileNotFoundError:
+        print(f'Error: The schema file does not exist {schema_file}')
+        exit(1)
+    try:
+        with open(build_config_path) as f:
+            config = yaml.load(f, Loader=yaml.FullLoader)
+        # Validate against schema
+    except FileNotFoundError:
+        print(
+            f'The file does not exist. Creating a template at location {build_config_path}. Please edit it with your information.')
+        generate_build_config(build_config_path)
+        exit(1)
+    try:
+        jsonschema.validate(config, schema)
+    except yaml.parser.ParserError as e:
+        print(f"ERROR: {build_config_path} contains an invalid YAML format. Please check your YAML format.")
+        print(e.message)
+        exit(1)
+
+
+    except jsonschema.exceptions.ValidationError as e:
+        print(f"ERROR: {build_config_path} does not contain valid data. Please fix the error below and try again.")
+        print(e.message)
+        exit(1)
+    return config
+
+
 @btap.command()
-@click.option('--compute_environment', '-c', default='local_docker',
-              help='Environment to run analysis. Either local_docker, which runs on your computer, or aws_batch_analysis which runs completely on AWS. The default is local_docker')
 @click.option('--project_folder', '-p', default=os.path.join(EXAMPLE_FOLDER, 'optimization'),
               help='location of folder containing input.yml file and optionally support folders such as osm_folder folder for custom models. Default is the optimization example folder.')
-@click.option('--no_ref_run', is_flag=True,
-              help='Do not run the baseline references. This will effectively cancel baseline comparisons')
 @click.option('--output_folder', default=OUTPUT_FOLDER,
               help='Path to output results. Defaulted to this projects output folder ./btap_batch/output')
+@click.option('--build_config_path', '-c', default=os.path.join(CONFIG_FOLDER, 'build_config.yml'),
+              help=f'location of Location of build_config.yml file.  Default location is {CONFIG_FOLDER}')
 def run_analysis_project(**kwargs):
     from src.btap.cli_helper_methods import analysis
     """
@@ -189,19 +168,25 @@ def run_analysis_project(**kwargs):
 
     Examples.
 
-        python ./bin/btap_batch.py run-analysis-project --compute_environment local_docker  --project_folder examples\optimization --reference_run
+        python ./bin/btap_batch.py run-analysis-project --compute_environment local  --project_folder examples\optimization
 
-        python ./bin/btap_batch.py run-analysis-project --compute_environment aws_batch_analysis --project_folder examples\parametric --reference_run
+        python ./bin/btap_batch.py run-analysis-project --compute_environment aws --project_folder examples\parametric
     """
+
+    build_config_path = kwargs['build_config_path']
+
 
     # Input folder name
     analysis_project_folder = kwargs['project_folder']
-    compute_environment = kwargs['compute_environment']
-    reference_run = not kwargs['no_ref_run']
+    config = load_config(build_config_path)
     output_folder = kwargs['output_folder']
+    compute_environment = config['compute_environment']
+    os.environ['BUILD_ENV_NAME'] = config['build_env_name']
+    os.environ['GIT_API_TOKEN'] = config['git_api_token']
+
     # Function to run analysis.
     check_environment_vars_are_defined(compute_environment=compute_environment)
-    analysis(analysis_project_folder, compute_environment, reference_run, output_folder)
+    analysis(project_input_folder= analysis_project_folder, compute_environment=compute_environment, output_folder=output_folder)
 
 
 @btap.command()
@@ -236,7 +221,7 @@ def aws_db_dump(**kwargs):
     type = kwargs['type']
     folder_path = kwargs['folder_path']
     analysis_name = kwargs['analysis_name']
-    check_environment_vars_are_defined(compute_environment='aws_batch')
+    check_environment_vars_are_defined(compute_environment='local_managed_aws_workers')
     AWSResultsTable().dump_table(folder_path=folder_path, type=type, analysis_name=analysis_name)
 
 
@@ -251,7 +236,7 @@ def aws_db_analyses_status(**kwargs):
     """
     pandas.set_option('display.max_colwidth', None)
     pandas.set_option('display.max_columns', None)
-    check_environment_vars_are_defined(compute_environment='aws_batch')
+    check_environment_vars_are_defined(compute_environment='local_managed_aws_workers')
     print(AWSResultsTable().aws_db_analyses_status())
 
 
@@ -269,13 +254,13 @@ def aws_db_failures(**kwargs):
     """
     pandas.set_option('display.max_colwidth', None)
     pandas.set_option('display.max_columns', None)
-    check_environment_vars_are_defined(compute_environment='aws_batch')
+    check_environment_vars_are_defined(compute_environment='local_managed_aws_workers')
     print(AWSResultsTable().aws_db_failures(analysis_name=kwargs['analysis_name']))
 
 
 @btap.command(help="This will run all the analysis projects in the examples file. Locally or on AWS.")
-@click.option('--compute_environment', default='local_docker',
-              help='Environment to run analysis either local_docker, or aws_batch_analysis')
+@click.option('--compute_environment', default='local',
+              help='Environment to run analysis either local, or aws')
 def parallel_test_examples(**kwargs):
     import time
     from src.btap.cli_helper_methods import analysis
@@ -285,10 +270,10 @@ def parallel_test_examples(**kwargs):
     Example:
 
     # To run test locally....
-    python ./bin/btap_batch.py parallel_test_examples --compute_environment local_docker
+    python ./bin/btap_batch.py parallel_test_examples --compute_environment local
 
     # To run test on aws.
-    python ./bin/btap_batch.py parallel_test_examples --compute_environment aws_batch_analysis
+    python ./bin/btap_batch.py parallel_test_examples --compute_environment aws
 
     """
     check_environment_vars_are_defined(compute_environment=kwargs['compute_environment'])
@@ -314,8 +299,8 @@ def parallel_test_examples(**kwargs):
 
 
 @btap.command(help="This will run all the analysis projects in a given folder path. Locally or on AWS.")
-@click.option('--compute_environment','-c', default='local_docker',
-              help='Environment to run analysis either local_docker, or aws_batch_analysis')
+@click.option('--compute_environment','-c', default='local',
+              help='Environment to run analysis either local, or aws')
 @click.option('--analyses_folder_path', default=os.path.join(PROJECT_FOLDER, 'examples'),
               help='folder containing multiple project analysis folders to run.')
 @click.option('--output_folder', default=OUTPUT_FOLDER,
@@ -329,10 +314,10 @@ def batch_analyses(**kwargs):
     Example:
 
     # To run test locally....
-    python ./bin/btap_batch.py batch-analyses --compute_environment local_docker --analyses_folder_path
+    python ./bin/btap_batch.py batch-analyses --compute_environment local --analyses_folder_path
 
     # To run test on aws.
-    python ./bin/btap_batch.py batch-analyses --compute_environment aws_batch_analysis --analyses_folder_path
+    python ./bin/btap_batch.py batch-analyses --compute_environment aws --analyses_folder_path
 
     """
     check_environment_vars_are_defined(compute_environment=kwargs['compute_environment'])
@@ -350,15 +335,15 @@ def batch_analyses(**kwargs):
 
 @btap.command(
     help="This will run an NECB 2020 optimization solution set run on a given building type and location for all fueltypes. Will optimize for Total Energy and Net Present Value.")
-@click.option('--compute_environment', '-c', default='local_docker',
-              help='Environment to run analysis either local_docker, aws_batch or aws_batch_analysis')
+@click.option('--compute_environment', '-c', default='local',
+              help='Environment to run analysis either local, local_managed_aws_workers or aws')
 @click.option('--building_types', '-b', default=['SmallOffice'], multiple=True,
               help='NECB prototype building to use. Must be only Offices, Apartment/Condos and Schools types')
 @click.option('--epw_files', '-e',
               default=[
                   'CAN_BC_Vancouver.Intl.AP.718920_CWEC2016.epw'],
               multiple=True,
-              help='Environment to run analysis either local_docker, aws_batch or aws_batch_analysis')
+              help='Environment to run analysis either local, local_managed_aws_workers or aws')
 @click.option('--hvac_fuel_types_list', '-f',
               multiple=True,
               help='This is the FuelSet combination to use. ',
@@ -377,10 +362,10 @@ def optimized_solution_sets(**kwargs):
     Example:
 
     # To run locally.... This will create a solutions set folder with all the project yaml files, with the  the simulation and results with the given building type, locations, and FuelType 
-    python ./bin/btap_batch.py optimized-solution-sets -c local_docker -b SmallOffice -e CAN_QC_Montreal-Trudeau.Intl.AP.716270_CWEC2016.epw -f NECB_Default-NaturalGas -f NECB_Default-Electricity
+    python ./bin/btap_batch.py optimized-solution-sets -c local -b SmallOffice -e CAN_QC_Montreal-Trudeau.Intl.AP.716270_CWEC2016.epw -f NECB_Default-NaturalGas -f NECB_Default-Electricity
 
     # To run test on aws. This will run 
-    python ./bin/btap_batch.py optimized-solution-sets -c aws_batch_analysis 
+    python ./bin/btap_batch.py optimized-solution-sets -c aws 
 
     """
     check_environment_vars_are_defined(compute_environment=kwargs['compute_environment'])
@@ -394,7 +379,7 @@ def optimized_solution_sets(**kwargs):
 
 
     generate_solution_sets(
-        compute_environment=compute_environment,  # local_docker, aws_batch, aws_batch_analysis...
+        compute_environment=compute_environment,  # local, local_managed_aws_workers, aws...
         building_types_list=building_types,  # a list of the building_types to look at.
         epw_files=epw_files,  # a list of the epw files.
         hvac_fuel_types_list=hvac_fuel_types_list,
@@ -428,7 +413,7 @@ def post_process_solution_sets(**kwargs):
 
 
     post_process_analyses(solution_sets_raw_results_folder=kwargs["solution_sets_projects_results_folder"],
-                          # Only required if runs were done with local_docker. Must contain nsga results.
+                          # Only required if runs were done with local. Must contain nsga results.
                           aws_database=kwargs["aws_database"],  # use aws database will download all results nsga or not,
                           )
 

@@ -40,7 +40,7 @@ class DockerImageManager:
     def _get_image_build_args(self):
         build_args = self.build_args
         build_args['GIT_API_TOKEN'] = os.environ['GIT_API_TOKEN']
-        build_args['AWS_USERNAME'] = CommonPaths().get_username()
+        build_args['BUILD_ENV_NAME'] = CommonPaths().get_username()
         return build_args
 
     def get_image(self):

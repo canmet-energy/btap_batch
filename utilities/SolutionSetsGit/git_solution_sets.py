@@ -39,9 +39,9 @@ def git_solution_sets():
     ]
 
 
-    compute_environment = 'local_docker'
+    compute_environment = 'local'
 
-    if compute_environment != 'local_docker':
+    if compute_environment != 'local':
         print(f"Current Analysis Failures: {get_number_of_failures(job_queue_name='btap_batch')}")
         print(f"Current Worker Failures: {get_number_of_failures(job_queue_name='btap_cli')}")
 

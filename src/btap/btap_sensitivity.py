@@ -76,7 +76,7 @@ class BTAPSensitivity(BTAPParametric):
                                       output_folder=None,
                                       project_input_folder=None,
                                       df = None,
-                                      compute_environment='local_docker'):
+                                      compute_environment='local'):
         import pandas as pd
         import os
 
@@ -115,7 +115,7 @@ class BTAPSensitivity(BTAPParametric):
         analysis_config, analysis_input_folder, analyses_folder = BTAPAnalysis.load_analysis_input_file(
             analysis_config_file=os.path.join(project_input_folder, 'input.yml'))
 
-        if compute_environment == 'local_docker' or compute_environment == 'aws_batch':
+        if compute_environment == 'local' or compute_environment == 'local_managed_aws_workers':
             analysis_config[':compute_environment'] = compute_environment
 
         analysis_config[':algorithm_type'] = 'sensitivity_best_packages'

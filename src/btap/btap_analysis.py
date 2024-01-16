@@ -121,14 +121,14 @@ class BTAPAnalysis():
         # btap specific.
         self.output_variables = self.analysis_config[':output_variables']
         self.output_meters = self.analysis_config[':output_meters']
-        self.run_annual_simulation = self.analysis_config[':run_annual_simulation']
+        self.run_annual_simulation = True
 
-        if self.compute_environment == 'local_docker':
+        if self.compute_environment == 'local':
             print(f"running on {self.compute_environment}")
             self.image_manager = DockerImageManager(image_name=self.image_name)
 
 
-        elif self.compute_environment == 'aws_batch':
+        elif self.compute_environment == 'local_managed_aws_workers':
             print(f"running on {self.compute_environment}")
 
             self.image_manager = AWSImageManager(image_name=self.image_name,
@@ -256,7 +256,7 @@ class BTAPAnalysis():
         run_options[':compute_environment'] = self.compute_environment
         run_options[':algorithm_type'] = self.algorithm_type
         # BTAP specific.
-        run_options[':run_annual_simulation'] = self.run_annual_simulation
+        run_options[':run_annual_simulation'] = True
         run_options[':output_variables'] = self.output_variables
         run_options[':output_meters'] = self.output_meters
 
@@ -424,7 +424,7 @@ class BTAPAnalysis():
                    'eplusout.sql']
 
 
-        if self.compute_environment != 'local_docker':
+        if self.compute_environment != 'local':
             #Create Zip Files.
             for folder in folders:
                 print(f"Zipping {folder} to S3 results zipfile")
@@ -442,8 +442,8 @@ class BTAPAnalysis():
 
 
 
-        # If this is an aws_batch run, copy the excel file to s3 for storage.
-        if self.compute_environment == 'aws_batch':
+        # If this is an local_managed_aws_workers run, copy the excel file to s3 for storage.
+        if self.compute_environment == 'local_managed_aws_workers':
             self.credentials = AWSCredentials()
             message = "Uploading %s..." % self.cp.s3_analysis_excel_output_path()
             logging.info(message)

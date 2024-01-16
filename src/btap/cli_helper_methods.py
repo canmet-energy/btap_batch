@@ -155,7 +155,7 @@ def build_and_configure_docker_and_aws(btap_batch_branch=None,
                            'WEATHER_FILES': weather_locations}
     # build args for btap_batch container.
     build_args_btap_batch = {'BTAP_BATCH_BRANCH': btap_batch_branch}
-    if compute_environment == 'aws_batch' or compute_environment == 'all':
+    if compute_environment  in ['local_managed_aws_workers', 'aws']:
         # Tear down
         ace_worker = AWSComputeEnvironment(name='btap_cli')
         ace_manager = AWSComputeEnvironment(name='btap_batch')
@@ -223,7 +223,7 @@ def build_and_configure_docker_and_aws(btap_batch_branch=None,
         # Create AWS database for results if it does not already exist.
         AWSResultsTable().create_table()
 
-    if compute_environment == 'all' or compute_environment == 'local_docker':
+    if compute_environment in ['local']:
         # Build btap_cli image
         image_worker = DockerImageManager(image_name='btap_cli')
         if build_btap_cli:
@@ -233,11 +233,10 @@ def build_and_configure_docker_and_aws(btap_batch_branch=None,
 
 def analysis(project_input_folder=None,
              compute_environment=None,
-             reference_run=None,
              output_folder=None):
     ic(project_input_folder)
     ic(compute_environment)
-    ic(reference_run)
+
     ic(output_folder)
 
     if project_input_folder.startswith('s3:'):
@@ -265,11 +264,9 @@ def analysis(project_input_folder=None,
         exit(1)
     analysis_config, analysis_input_folder, analyses_folder = BTAPAnalysis.load_analysis_input_file(
         analysis_config_file=analysis_config_file)
-    # ic(analysis_config)
-    # ic(analysis_input_folder)
-    # ic(analyses_folder)
 
 
+    reference_run = analysis_config[':reference_run']
     # delete output from previous run if present locally
     project_folder = os.path.join(output_folder,analysis_config[':analysis_name'])
     ic(project_folder)
@@ -284,15 +281,15 @@ def analysis(project_input_folder=None,
             exit(1)
 
     # delete output from previous run if present on s3
-    if compute_environment == 'aws_batch':
+    if compute_environment == 'local_managed_aws_workers':
         bucket = AWSCredentials().account_id
-        user_name = os.environ.get('AWS_USERNAME').replace('.', '_')
+        user_name = os.environ.get('BUILD_ENV_NAME').replace('.', '_')
         prefix = os.path.join(user_name, analysis_config[':analysis_name'] + '/')
         print(f"Deleting old files in S3 folder {prefix}")
         S3().bulk_del_with_pbar(bucket=bucket, prefix=prefix)
 
 
-    if compute_environment == 'local_docker' or compute_environment == 'aws_batch':
+    if compute_environment == 'local' or compute_environment == 'local_managed_aws_workers':
         analysis_config[':compute_environment'] = compute_environment
 
         reference_run_df = None
@@ -364,7 +361,7 @@ def analysis(project_input_folder=None,
         print(f"Excel results file {ba.analysis_excel_results_path()}")
 
 
-    if compute_environment == 'aws_batch_analysis':
+    if compute_environment == 'aws':
         analysis_name = analysis_config[':analysis_name']
         analyses_folder = analysis_config[':analysis_name']
         # Set common paths singleton.
@@ -616,16 +613,19 @@ def generate_build_config(build_config_path = None):
     import yaml
 
     config = """
-# build_prefix
-build_env_name: phylroy_test
+# This is the name of the build environment. This will prefix all images, s3 folder, and resources created on aws. 
+build_env_name: null
 
 # Github Token
-git_api_token: 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
+git_api_token: null
 
-# Compute Environment used to run analyses.
-compute_environment: local_docker
+# Compute Environment used to build and run analyses. Options are
+#  local: Will run everything on your own computer. Recommended for running small analysis and testing ahead of using aws.
+#  aws: Run everything on Amazon infrastruture. You can turn off your computer after the analyses are all sent to Amazon. Recommended for large analyses.
+#  local_managed_aws_workers: Analysis is managed on your local computer but simulations are done on Amazon.. Used by the aws process above.
+compute_environment: aws
 
-# Branch of btap_batch to be used in aws_batch_analysis compute_environment runs on AWS.
+# Branch of btap_batch to be used in aws compute_environment runs on AWS.
 btap_batch_branch: build_change
 
 # Branch of btap_costing to build used in environment
@@ -637,16 +637,16 @@ os_standards_branch: nrcan
 # Branch of openstudio version to build into container environment. This by default will select the E+ version used with that version.
 openstudio_version: 3.6.1
 
-weather_list: [
-  'CAN_QC_Montreal-Trudeau.Intl.AP.716270_CWEC2016.epw',
-  'CAN_NS_Halifax.Dockyard.713280_CWEC2016.epw',
-  'CAN_AB_Edmonton.Intl.AP.711230_CWEC2016.epw',
-  'CAN_BC_Vancouver.Intl.AP.718920_CWEC2016.epw',
-  'CAN_AB_Calgary.Intl.AP.718770_CWEC2016.epw',
-  'CAN_ON_Toronto.Pearson.Intl.AP.716240_CWEC2016.epw',
-  'CAN_NT_Yellowknife.AP.719360_CWEC2016.epw',
-  'CAN_AB_Fort.McMurray.AP.716890_CWEC2016.epw'
-]
+#List of Weather files to build included in the build environment. Only .epw files , and <100 files.
+weather_list:
+  - CAN_QC_Montreal.Intl.AP.716270_CWEC2020.epw
+  - CAN_NS_Halifax.Dockyard.713280_CWEC2020.epw
+  - CAN_AB_Edmonton.Intl.AP.711230_CWEC2020.epw
+  - CAN_BC_Vancouver.Intl.AP.718920_CWEC2020.epw
+  - CAN_AB_Calgary.Intl.AP.718770_CWEC2020.epw
+  - CAN_ON_Toronto.Intl.AP.716240_CWEC2020.epw
+  - CAN_NT_Yellowknife.AP.719360_CWEC2020.epw
+  - CAN_AB_Fort.Mcmurray.AP.716890_CWEC2020.epw
 
 # If you do not have access RSMEANs data api. This should be false.
 disable_costing: False
@@ -656,6 +656,7 @@ build_btap_cli: True
 
 # Rebuild btap_batch image
 build_btap_batch: True
+
     """
 
     with open(build_config_path, "w") as file:

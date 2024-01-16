@@ -236,4 +236,4 @@
   unit: '*'
   variable: Zone Predicted Moisture Load to Dehumidifying Setpoint Moisture Transfer
     Rate
-:run_annual_simulation: true
+:reference_run: true

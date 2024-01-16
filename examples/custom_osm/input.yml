@@ -9,7 +9,7 @@
 :algorithm_lhs_n_samples: null
 :algorithm_lhs_type: null
 :algorithm_lhs_random_seed: null
-:run_annual_simulation: true
+:reference_run: true
 
 ###########################################     Hourly Data     #######################################################
   # Note: the 'operation' and 'unit' keys in :output_variables are for performing operations on hourly output.

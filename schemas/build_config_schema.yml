@@ -49,12 +49,12 @@ properties:
     type: boolean
 
   compute_environment:
-    description: Select which environment to build and where to run analyses. 'local_docker' will use docker on your local computer. 'aws_batch' will manage the analysis on a local computer and run the simulations on aws. 'aws_batch_analysis' will manage and run eveything on AWS. You can turn off your local computer.
+    description: Select which environment to build and where to run analyses. 'local' will use docker on your local computer. 'local_managed_aws_workers' will manage the analysis on a local computer and run the simulations on aws. 'aws' will manage and run eveything on AWS. You can turn off your local computer.
     type: string
     enum:
-      - local_docker
-      - aws_batch
-      - aws_batch_analysis
+      - local
+      - local_managed_aws_workers
+      - aws
 
 required:
   - btap_batch_branch

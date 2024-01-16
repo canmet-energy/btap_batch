@@ -1,11 +1,11 @@
 ---
-# aws_batch local_docker
+# aws_batch local
 :analysis_name: optimization_example
-
 :algorithm_lhs_n_samples: null
 :algorithm_lhs_type: null
 :algorithm_lhs_random_seed: null
-:run_annual_simulation: tru:algorithm_type: nsga2
+:reference_run: true
+:algorithm_type: nsga2
 :algorithm_nsga_population: 5
 :algorithm_nsga_n_generations: 2
 :algorithm_nsga_prob: 0.85
