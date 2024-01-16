@@ -113,14 +113,14 @@ Please note that if you wish to update your environment to the latest branches o
 ### Weather Locations
 
 Below are the default EnergyPlus weather files that btap_batch can use for analyses:
-- CAN_QC_Montreal-Trudeau.Intl.AP.716270_CWEC2016.epw
-- CAN_NS_Halifax.Dockyard.713280_CWEC2016.epw
-- CAN_AB_Edmonton.Intl.AP.711230_CWEC2016.epw
-- CAN_BC_Vancouver.Intl.AP.718920_CWEC2016.epw
-- CAN_AB_Calgary.Intl.AP.718770_CWEC2016.epw
-- CAN_ON_Toronto.Pearson.Intl.AP.716240_CWEC2016.epw
-- CAN_NT_Yellowknife.AP.719360_CWEC2016.epw
-- CAN_AB_Fort.McMurray.AP.716890_CWEC2016.epw
+- CAN_QC_Montreal.Intl.AP.716270_CWEC2020.epw
+- CAN_NS_Halifax.Dockyard.713280_CWEC2020.epw
+- CAN_AB_Edmonton.Intl.AP.711230_CWEC2020.epw
+- CAN_BC_Vancouver.Intl.AP.718920_CWEC2020.epw
+- CAN_AB_Calgary.Intl.AP.718770_CWEC2020.epw
+- CAN_ON_Toronto.Intl.AP.716240_CWEC2020.epw
+- CAN_NT_Yellowknife.AP.719360_CWEC2020.epw
+- CAN_AB_Fort.Mcmurray.AP.716890_CWEC2020.epw
 
 Other weather locations are available. However, you have to define the ones you want to use when creating your environment.  The other locations that you can use can be found in this repository:
 https://github.com/canmet-energy/btap_weather
