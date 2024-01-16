@@ -1,0 +1,70 @@
+
+type: object
+properties:
+  build_env_name:
+    description: Prefix used to identify images, folders and other items specific to a build environment. snake_case and <24 chars.
+    type: string
+    pattern: ^[a-z_\\s]*$
+    minLength: 1
+    maxLength: 24
+
+  git_api_token:
+    description: The authorization token required to access the private resmeans costing database.
+    type: string
+
+  btap_batch_branch:
+    description: Branch of btap_batch to use to build environment.
+    type: string
+
+  btap_costing_branch:
+    description: Branch of btap_costing to use to build environment.
+    type: string
+
+  os_standards_branch:
+    description: Branch of NREL's os_standards_branch to use to build environment.
+    type: string
+
+  openstudio_version:
+    description: Version of the OpenStudio SDK to build with.
+    type: string
+
+  weather_list:
+    description: List of epw files to load into build environment.
+    items:
+      type: string
+      pattern: ^.*\.epw$
+    minItems: 1
+    maxItems: 100
+
+  disable_costing:
+    description: If you do not have access RSMEANs data api. This should be false. Please contact NRCan is you wish to do costed simulaitons.
+    type: boolean
+
+  build_btap_cli:
+    description: Build most recent btap_cli always. Set to false to save time if standards and costing branches have not changed.
+    type: boolean
+
+  build_btap_batch:
+    description: Build most recent btap_batch always. Set to false to save time if standards and costing branches have not changed.
+    type: boolean
+
+  compute_environment:
+    description: Select which environment to build and where to run analyses. 'local_docker' will use docker on your local computer. 'aws_batch' will manage the analysis on a local computer and run the simulations on aws. 'aws_batch_analysis' will manage and run eveything on AWS. You can turn off your local computer.
+    type: string
+    enum:
+      - local_docker
+      - aws_batch
+      - aws_batch_analysis
+
+required:
+  - btap_batch_branch
+  - btap_costing_branch
+  - os_standards_branch
+  - openstudio_version
+  - weather_list
+  - build_btap_cli
+  - build_btap_batch
+  - disable_costing
+additionalProperties: false
+
+

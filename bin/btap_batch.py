@@ -10,6 +10,7 @@ sys.path.append(PROJECT_ROOT)
 PROJECT_FOLDER = os.path.join(Path(os.path.dirname(os.path.realpath(__file__))).parent.absolute())
 EXAMPLE_FOLDER = os.path.join(PROJECT_FOLDER, 'examples')
 OUTPUT_FOLDER = os.path.join(PROJECT_FOLDER, "output")
+SCHEMA_FOLDER = os.path.join(PROJECT_FOLDER, "schemas")
 CONFIG_FOLDER = os.path.join(PROJECT_FOLDER, 'config')
 CONTEXT_SETTINGS = dict(help_option_names=['-h', '--help'])
 
@@ -110,20 +111,26 @@ def build_environment(**kwargs):
 
 
     config = None
-    try:
 
+    try:
+        schema_file = os.path.join(SCHEMA_FOLDER, 'build_config_schema.yml')
+        with open(schema_file) as f:
+            schema = yaml.load(f, Loader=yaml.FullLoader)
+    except FileNotFoundError:
+        print(f'Error: The schema file does not exist {schema_file}')
+        exit(1)
+
+    try:
         with open(build_config_path) as f:
             config = yaml.load(f, Loader=yaml.FullLoader)
-        with open('/home/plopez/btap_batch/config/build_config_schema.yml') as f:
-            schema = yaml.load(f, Loader=yaml.FullLoader)
         # Validate against schema
-        jsonschema.validate(config, schema)
-
     except FileNotFoundError:
-            print(f'The file does not exist. Creating a template at location {build_config_path}. Please edit it with your information.')
-            generate_build_config(build_config_path)
-            exit(1)
+        print(f'The file does not exist. Creating a template at location {build_config_path}. Please edit it with your information.')
+        generate_build_config(build_config_path)
+        exit(1)
 
+    try:
+        jsonschema.validate(config, schema)
     except yaml.parser.ParserError as e:
         print(f"ERROR: {build_config_path} contains an invalid YAML format. Please check your YAML format.")
         print(e.message)
@@ -135,7 +142,7 @@ def build_environment(**kwargs):
         print(e.message)
         exit(1)
 
-    exit(1)
+
 
     btap_batch_branch = config['btap_batch_branch']
     os_standards_branch = config['os_standards_branch']
@@ -145,6 +152,9 @@ def build_environment(**kwargs):
     weather_list = config['weather_list']
     build_btap_cli = config['build_btap_cli']
     build_btap_batch = config['build_btap_batch']
+    os.environ['AWS_USERNAME'] = config['build_env_name']
+    os.environ['GIT_API_TOKEN'] = config['git_api_token']
+
 
     if disable_costing:
         # Setting the costing branch to an empty string will force the docker file to not use costing.

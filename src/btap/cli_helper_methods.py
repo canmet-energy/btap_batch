@@ -616,8 +616,14 @@ def generate_build_config(build_config_path = None):
     import yaml
 
     config = """
-# Compute Environment
-compute_environment: local_dockers
+# build_prefix
+build_env_name: phylroy_test
+
+# Github Token
+git_api_token: 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
+
+# Compute Environment used to run analyses.
+compute_environment: local_docker
 
 # Branch of btap_batch to be used in aws_batch_analysis compute_environment runs on AWS.
 btap_batch_branch: build_change
