@@ -1,7 +1,7 @@
 ---
 :analysis_name: parametric_example
 :algorithm_type: parametric
-:algorithm_nsga_population: null
+:algorithm_nsga_population: 50
 :algorithm_nsga_n_generations: null
 :algorithm_nsga_prob: null
 :algorithm_nsga_eta: null

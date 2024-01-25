@@ -1,0 +1,713 @@
+
+type: object
+properties:
+  :analysis_name:
+    description: Used to identify the analysis and name the parent folder.
+    type: string
+    pattern: ^[a-zA-Z0-9_\\s]*$
+    minLength: 1
+    maxLength: 64
+
+  :reference_run:
+    type: boolean
+    description: Optionally run the baseline/reference building. This will also provide comparison information from the baseline.
+
+  :algorithm_type:
+    description: "
+    This will select the analysis type to invoke. 
+    elimination:  Does an eliminations analysis by turning off aspects of the building to see how the building responds.
+    This is good for determining the theoretical maximum savings that the building can gain from certain measures. 
+    batch: This will run a set of btap_batch run_option.yml files in a given folder. 
+    nsga2: This invokes the optimization algortihm 
+    "
+    type: string
+    enum:
+      - elimination
+      - batch
+      - nsga2
+      - parametric
+      - reference
+      - sampling-lhs
+      - sensitivity
+
+  :algorithm_lhs_n_samples:
+    type: integer
+    minimum: 1
+    maximum: 5000
+
+
+  :algorithm_lhs_type:
+    type: string
+    enum:
+      - classic
+
+  :algorithm_lhs_random_seed:
+    type: number
+    minimum: 1
+    maximum: 100
+
+
+  :algorithm_nsga_population:
+    type: integer
+    minimum: 1
+    maximum: 100
+
+  :algorithm_nsga_n_generations:
+    type: integer
+    minimum: 1
+    maximum: 100
+
+  :algorithm_nsga_prob:
+    type: number
+    minimum: 0.0
+    maximum: 100.0
+
+  :algorithm_nsga_eta:
+    type: number
+    minimum: 0.0
+    maximum: 100.0
+
+  :algorithm_nsga_minimize_objectives:
+    items:
+      type: string
+
+  :output_variables:
+    items:
+      type: object
+      properties:
+        key:
+          type: string
+        variable:
+          type: string
+        frequency:
+          type: string
+        operation:
+          type: string
+        unit:
+          type: string
+
+  :output_meters:
+    items:
+      type: object
+      properties:
+        key:
+          type: string
+        variable:
+          type: string
+        frequency:
+          type: string
+        operation:
+          type: string
+        unit:
+          type: string
+
+  :options:
+    type: object
+    properties:
+      :building_type:
+        description: ""
+        items:
+          type: string
+          minLength: 1
+          maxLength: 24
+
+      :template:
+        description: ""
+        items:
+          type: string
+          enum:
+            - BTAPPRE1980
+            - BTAP1980TO2010
+            - NECB2011
+            - NECB2015
+            - NECB2017
+            - NECB2020
+
+      :epw_file:
+        description: ""
+        items:
+          type: string
+          pattern: ^.*\.epw$
+
+      :primary_heating_fuel:
+        description: ""
+        items:
+          type: string
+          enum:
+            - Electricity
+            - NaturalGas
+            - FuelOilNo2
+            - ElectricityHPElecBackup
+            - NaturalGas
+            - NaturalGasHPGasBackup
+            - ElectricityHPGasBackupMixed
+            - NaturalGasHPElecBackupMixed
+
+      :dcv_type:
+        description: ""
+        items:
+          type: string
+          enum:
+            - NECB_Default
+            - No_DCV
+            - Occupancy_based_DCV
+            - CO2_based_DCV
+
+
+      :lights_type:
+        description: ""
+        items:
+          type: string
+          enum:
+            - NECB_Default
+            - LED
+
+      :lights_scale:
+        description: ""
+        items:
+          anyOf:
+            - type: string
+              enum:
+                - NECB_Default
+            - type: number
+              minimum: 0.01
+              maximum: 100
+
+      :occupancy_loads_scale:
+        description: ""
+        items:
+          anyOf:
+            - type: string
+              enum:
+                - NECB_Default
+            - type: number
+              minimum: 0.01
+              maximum: 100
+
+      :electrical_loads_scale:
+        description: ""
+        items:
+          anyOf:
+            - type: string
+              enum:
+                - NECB_Default
+            - type: number
+              minimum: 0.01
+              maximum: 100
+      :oa_scale:
+        description: ""
+        items:
+          anyOf:
+            - type: string
+              enum:
+                - NECB_Default
+            - type: number
+              minimum: 0.01
+              maximum: 100
+      :infiltration_scale:
+        description: ""
+        items:
+          anyOf:
+            - type: string
+              enum:
+                - NECB_Default
+            - type: number
+              minimum: 0.01
+              maximum: 100
+
+      :daylighting_type:
+        description: ""
+        items:
+          anyOf:
+            - type: string
+              enum:
+                - NECB_Default
+                - add_daylighting_controls
+                - none
+
+      :ecm_system_name:
+        description: ""
+        items:
+          anyOf:
+            - type: string
+              enum:
+                - NECB_Default
+                - HS09_CCASHP_Baseboard
+                - HS08_CCASHP_VRF
+                - HS11_ASHP_PTHP
+                - HS12_ASHP_Baseboard
+                - HS13_ASHP_VRF
+                - HS14_CGSHP_FanCoils
+
+      :chiller_type:
+        description: ""
+        items:
+          anyOf:
+            - type: string
+              enum:
+                - NECB_Default
+                - VSD
+
+      :airloop_economizer_type:
+        description: ""
+        items:
+          anyOf:
+            - type: string
+              enum:
+                - NECB_Default
+                - DifferentialEnthalpy
+                - DifferentialDryBulb
+
+      :shw_scale:
+        description: ""
+        items:
+          anyOf:
+            - type: string
+              enum:
+                - NECB_Default
+            - type: number
+              minimum: 0.01
+              maximum: 100
+
+      :baseline_system_zones_map_option:
+        description: ""
+        items:
+          anyOf:
+            - type: string
+              enum:
+                - NECB_Default
+                - one_sys_per_bldg # Note: this option is the default  (i.e. 'NECB_Default')
+                - one_sys_per_dwelling_unit
+
+
+      :erv_package:
+        description: ""
+        items:
+          anyOf:
+            - type: string
+              enum:
+                - NECB_Default
+                - NECB_Default_All
+                - Plate-All
+                - Plate-Existing
+                - Rotary-All
+                - Rotary-Existing
+
+      :boiler_eff:
+        description: ""
+        items:
+          anyOf:
+            - type: string
+              enum:
+                - NECB_Default
+                - NECB 88% Efficient Condensing Boiler
+                - Viessmann Vitocrossal 300 CT3-17 96.2% Efficient Condensing Gas Boiler
+
+      :furnace_eff:
+        description: ""
+        items:
+          anyOf:
+            - type: string
+              enum:
+                - NECB_Default
+                - NECB 85% Efficient Condensing Gas Furnace
+
+      :shw_eff:
+        description: ""
+        items:
+          anyOf:
+            - type: string
+              enum:
+                - NECB_Default
+                - Natural Gas Power Vent with Electric Ignition
+                - Natural Gas Direct Vent with Electric Ignition
+
+      :ext_wall_cond:
+        description: ""
+        items:
+          anyOf:
+            - type: string
+              enum:
+                - NECB_Default
+            - type: number
+              enum:
+                - 0.314 # R18
+                - 0.278 # R20
+                - 0.247 # R22
+                - 0.210 # R27
+                - 0.183  #R31
+                  
+      :ext_roof_cond:
+        description: ""
+        items:
+          anyOf:
+            - type: string
+              enum:
+                - NECB_Default
+            - type: number
+              enum:
+                - 0.227
+                - 0.193
+                - 0.183
+                - 0.162
+                - 0.142
+                - 0.138
+                - 0.121
+                  
+      :ext_floor_cond:
+        description: ""
+        items:
+          anyOf:
+            - type: string
+              enum:
+                - NECB_Default
+            - type: number
+              enum:
+                - 0.227
+                - 0.183
+                - 0.162
+                - 0.142
+
+      :ground_wall_cond:
+        description: ""
+        items:
+          anyOf:
+            - type: string
+              enum:
+                - NECB_Default
+            - type: number
+              enum:
+                - 0.568
+                - 0.379
+                - 0.284
+                - 0.210
+                  
+      :ground_wall_roof:
+        description: ""
+        items:
+          anyOf:
+            - type: string
+              enum:
+                - NECB_Default
+            - type: number
+              enum:
+                - 0.568
+                - 0.379
+                - 0.284
+                - 0.210
+                
+      :ground_floor_cond:
+        description: ""
+        items:
+          anyOf:
+            - type: string
+              enum:
+                - NECB_Default
+            - type: number
+              enum:
+                - 0.758
+                - 0.379
+                
+                
+      :door_construction_cond:
+        description: ""
+        items:
+          anyOf:
+            - type: string
+              enum:
+                - NECB_Default
+            - type: number
+              enum:
+                - 2.4
+                - 2.2
+                - 1.6
+                  
+                  
+      :fixed_window_cond:
+        description: ""
+        items:
+          anyOf:
+            - type: string
+              enum:
+                - NECB_Default
+            - type: number
+              enum:
+                - 2.4
+                - 2.2
+                - 1.6
+      :glass_door_cond:
+        description: ""
+        items:
+          anyOf:
+            - type: string
+              enum:
+                - NECB_Default
+            - type: number
+              enum:
+                - 2.4
+                - 2.2
+                - 1.6
+      :overhead_door_cond:
+        description: ""
+        items:
+          anyOf:
+            - type: string
+              enum:
+                - NECB_Default
+            - type: number
+              enum:
+                - 2.4
+                - 2.2
+                - 1.6
+      :skylight_cond:
+        description: ""
+        items:
+          anyOf:
+            - type: string
+              enum:
+                - NECB_Default
+            - type: number
+              enum:
+                - 2.4
+                - 2.2
+                - 1.6
+                  
+      :glass_door_solar_trans:
+        description: ""
+        items:
+          anyOf:
+            - type: string
+              enum:
+                - NECB_Default
+            - type: number
+              minimum: 0.05
+              maximum: 0.95
+      :fixed_wind_solar_trans:
+        description: ""
+        items:
+          anyOf:
+            - type: string
+              enum:
+                - NECB_Default
+            - type: number
+              minimum: 0.05
+              maximum: 0.95
+      :skylight_solar_trans: 
+        description: ""
+        items:
+          anyOf:
+            - type: string
+              enum:
+                - NECB_Default
+            - type: number
+              minimum: 0.05
+              maximum: 0.95
+
+
+
+      :fdwr_set:
+        description: ""
+        items:
+          anyOf:
+            - type: string
+              enum:
+                - NECB_Default
+            - type: number
+              minimum: 0.001
+              maximum: 0.950
+      :srr_set:
+        description: ""
+        items:
+          anyOf:
+            - type: string
+              enum:
+                - NECB_Default
+            - type: number
+              minimum: 0.001
+              maximum: 0.950
+
+      :rotation_degrees:
+        description: ""
+        items:
+          anyOf:
+            - type: string
+              enum:
+                - NECB_Default
+            - type: number
+              minimum: 0.0
+              maximum: 359.0
+                
+      :scale_x:
+        description: ""
+        items:
+          anyOf:
+            - type: string
+              enum:
+                - NECB_Default
+            - type: number
+              minimum: 0.01
+              maximum: 100.0
+      :scale_y:
+        description: ""
+        items:
+          anyOf:
+            - type: string
+              enum:
+                - NECB_Default
+            - type: number
+              minimum: 0.01
+              maximum: 100.0
+      :scale_z:
+        description: ""
+        items:
+          anyOf:
+            - type: string
+              enum:
+                - NECB_Default
+            - type: number
+              minimum: 0.01
+              maximum: 100.0
+                
+      :pv_ground_type:
+        description: ""
+        items:
+          anyOf:
+            - type: string
+              enum:
+                - NECB_Default
+                - add_pv_ground
+                
+      :pv_ground_total_area_pv_panels_m2:
+        description: ""
+        items:
+          anyOf:
+            - type: string
+              enum:
+                - NECB_Default # No PV
+            - type: boolean
+              enum:
+                - false
+            - type: number
+              minimum: 1
+              maximum: 100000
+              
+      :pv_ground_azimuth_angle:
+        description: ""
+        items:
+          anyOf:
+            - type: string
+              enum:
+                - NECB_Default # South
+            - type: number
+              minimum: 0.0
+              maximum: 359.0
+              
+      :pv_ground_module_description:
+        description: ""
+        items:
+          anyOf:
+            - type: string
+              enum:
+                - NECB_Default
+                - Standard
+                - Premium 
+                - ThinFilm
+      # Advances DX units type.
+      :adv_dx_units:
+        description: ""
+        items:
+          anyOf:
+            - type: string
+              enum:
+                - NECB_Default
+                - Carrier WeatherExpert
+                - Lennox Model L Ultra High Efficiency
+
+      :nv_type:
+        description: ""
+        items:
+          anyOf:
+            - type: string
+              enum:
+                - NECB_Default
+                - add_nv
+      :nv_opening_fraction:
+        description: ""
+        items:
+          anyOf:
+            - type: string
+              enum:
+                - NECB_Default
+            - type: number
+              minimum: 0.01
+              maximum: 1.00
+
+      :nv_temp_out_min:
+        description: "Minimum outdoor air temperature (in Celsius) below which natural ventilation is shut down. Default
+         will be 13C from M.Tardif experience with QC schools.
+         NECB_Default: Will set this to 13.
+        "
+        items:
+          anyOf:
+            - type: string
+              enum:
+                - NECB_Default # Will set to 13
+            - type: number
+              minimum: 0.00
+              maximum: 100.00
+
+      :nv_delta_temp_in_out:
+        description: "Temperature difference (in Celsius) between the indoor and outdoor air temperatures below which 
+        ventilation is shut down Default is 1.0 from M.Tardif experience in QC.
+        Units: C
+        NECB_Default: Will set this to 1.0
+        "
+        items:
+          anyOf:
+            - type: string
+              enum:
+                - NECB_Default # Will set to 1.0
+            - type: number
+              minimum: 0.00
+              maximum: 100.00
+
+      :npv_start_year:
+        description: " 
+        An integer (year) larger than 2005 (first year of neb_end_use_prices.csv).
+        NECB_Default: Will set this to 2022
+        "
+        items:
+          anyOf:
+            - type: string
+              enum:
+                - NECB_Default
+            - type: number
+              minimum: 2005
+              maximum: 2049
+
+      :npv_end_year:
+        description: " 
+        An integer (year) less than 2051 (last year of neb_end_use_prices.csv).
+        NECB Default:  Will set this to 2041.
+        "
+        items:
+          anyOf:
+            - type: string
+              enum:
+                - NECB_Default # Will set to 2022
+            - type: number
+              minimum: 2005
+              maximum: 2050
+      :npv_discount_rate:
+        description: " 
+        An integer (year) less than 2051 (last year of neb_end_use_prices.csv).
+        NECB_Default: Will set it to 0.03.
+        "
+        items:
+          anyOf:
+            - type: string
+              enum:
+                - NECB_Default # default will set to 0.03
+            - type: number
+              minimum: 0.0
+              maximum: 1.0

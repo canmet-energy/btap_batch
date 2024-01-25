@@ -16,6 +16,7 @@ from src.btap.docker_image_manager import DockerImageManager
 from src.btap.aws_image_manager import AWSImageManager
 from src.btap.common_paths import CommonPaths
 from src.btap.aws_compute_environment import AWSComputeEnvironment
+import jsonschema
 from src.btap.aws_dynamodb import AWSResultsTable
 from icecream import ic
 
@@ -98,16 +99,16 @@ class BTAPAnalysis():
         self.analysis_id = str(uuid.uuid4())
         self.analysis_name = self.analysis_config[':analysis_name']
         self.algorithm_type = self.analysis_config[':algorithm_type']
-        self.algorithm_nsga_population = self.analysis_config[':algorithm_nsga_population']
-        self.algorithm_nsga_n_generations = self.analysis_config[':algorithm_nsga_n_generations']
-        self.algorithm_nsga_prob = self.analysis_config[':algorithm_nsga_prob']
-        self.algorithm_nsga_eta = self.analysis_config[':algorithm_nsga_eta']
-        self.algorithm_nsga_minimize_objectives = self.analysis_config[':algorithm_nsga_minimize_objectives']
-        self.algorithm_lhs_n_samples = self.analysis_config[':algorithm_lhs_n_samples']
-        self.algorithm_lhs_type = self.analysis_config[':algorithm_lhs_type']
-        self.algorithm_lhs_random_seed = self.analysis_config[':algorithm_lhs_random_seed']
-        self.compute_environment = self.analysis_config[':compute_environment']
-        self.options = self.analysis_config[':options']
+        self.algorithm_nsga_population = self.analysis_config.get(':algorithm_nsga_population')
+        self.algorithm_nsga_n_generations = self.analysis_config.get(':algorithm_nsga_n_generations')
+        self.algorithm_nsga_prob = self.analysis_config.get(':algorithm_nsga_prob')
+        self.algorithm_nsga_eta = self.analysis_config.get(':algorithm_nsga_eta')
+        self.algorithm_nsga_minimize_objectives = self.analysis_config.get(':algorithm_nsga_minimize_objectives')
+        self.algorithm_lhs_n_samples = self.analysis_config.get(':algorithm_lhs_n_samples')
+        self.algorithm_lhs_type = self.analysis_config.get(':algorithm_lhs_type')
+        self.algorithm_lhs_random_seed = self.analysis_config.get(':algorithm_lhs_random_seed')
+        self.compute_environment = self.analysis_config.get(':compute_environment')
+        self.options = self.analysis_config.get(':options')
 
         # Set common paths singleton.
         self.cp = CommonPaths()
@@ -224,6 +225,24 @@ class BTAPAnalysis():
             analysis_config = yaml.safe_load(stream)
         analyses_folder = os.path.dirname(os.path.realpath(analysis_config_file))
         analysis_input_folder = os.path.dirname(os.path.realpath(analysis_config_file))
+
+
+
+        try:
+            schema_file = os.path.join('/home/plopez/btap_batch/schemas/analysis_config_schema.yml')
+            with open(schema_file) as f:
+                schema = yaml.load(f, Loader=yaml.FullLoader)
+        except FileNotFoundError:
+            print(f'Error: The schema file does not exist {schema_file}')
+            exit(1)
+
+        try:
+            jsonschema.validate(analysis_config, schema)
+        except yaml.parser.ParserError as e:
+            print(f"ERROR: input.yml contains an invalid YAML format. Please check your YAML format.")
+            print(e.message)
+            exit(1)
+
         return analysis_config, analysis_input_folder, analyses_folder
 
     def get_num_of_runs_failed(self):

@@ -79,9 +79,6 @@ class AWSAnalysisJob():
                    "--compute_environment",
                    "local_managed_aws_workers"
                    ]
-        #Add reference run if requested.
-        if not self.reference_run:
-            command.append("--no_ref_run")
         return command
 
     def copy_files_to_run_location(self):

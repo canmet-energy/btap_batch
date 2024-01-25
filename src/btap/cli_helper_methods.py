@@ -63,34 +63,36 @@ def get_pareto_points(costs, return_mask=True):
 
 
 
-def get_weather_locations(weather_list=[]):
-    # Use the default weather file list if another list is not provided
-    if (weather_list == None) or not weather_list:
-        print("No weather locations were provided in the build_config.yml file. Cannot continue building image.")
+def get_weather_locations(weather_locations=[]):
+    default_weather_locations =  [
+        'CAN_QC_Montreal-Trudeau.Intl.AP.716270_CWEC2016.epw',
+        'CAN_NS_Halifax.Dockyard.713280_CWEC2016.epw',
+        'CAN_AB_Edmonton.Intl.AP.711230_CWEC2016.epw',
+        'CAN_BC_Vancouver.Intl.AP.718920_CWEC2016.epw',
+        'CAN_AB_Calgary.Intl.AP.718770_CWEC2016.epw',
+        'CAN_ON_Toronto.Pearson.Intl.AP.716240_CWEC2016.epw',
+        'CAN_NT_Yellowknife.AP.719360_CWEC2016.epw',
+        'CAN_AB_Fort.McMurray.AP.716890_CWEC2016.epw',
+        # 2020 versions
+        'CAN_QC_Montreal.Intl.AP.716270_CWEC2020.epw',
+        'CAN_NS_Halifax.Dockyard.713280_CWEC2020.epw',
+        'CAN_AB_Edmonton.Intl.AP.711230_CWEC2020.epw',
+        'CAN_BC_Vancouver.Intl.AP.718920_CWEC2020.epw',
+        'CAN_AB_Calgary.Intl.AP.718770_CWEC2020.epw',
+        'CAN_ON_Toronto.Intl.AP.716240_CWEC2020.epw',
+        'CAN_NT_Yellowknife.AP.719360_CWEC2020.epw',
+        'CAN_AB_Fort.Mcmurray.AP.716890_CWEC2020.epw'
+    ]
 
-    weather_files = weather_list
-    if len(weather_files) > 100:
-        raise("Too many weather files selected in the build environment. Please reorganize your analyses to use less than 100 weather files. ")
+    # Get list of historic and future weather files available from git repo. See definitions for URLs
+    hist_files = requests.get(HISTORIC_WEATHER_LIST, allow_redirects=True).json()
+    fut_files = requests.get(FUTURE_WEATHER_LIST, allow_redirects=True).json()
 
-    # Get the default weather file list location
-    default_weather_list = os.path.join(os.getcwd(), 'src', 'btap', 'default_weather_list.yml')
-
-    # Check if the default weather file list exists
-    if not os.path.isfile(default_weather_list):
-        print(f"Could not find the default weather list.  Please check if default_weather_list.yml is present in the /btap_batch/src/btap folder.  If is not present please get it from the btap_batch repository.")
-        exit(1)
-
-    # Get the default weather file list
-    default_weather_config, default_weather_input_folder, default_weather_folder = BTAPAnalysis.load_analysis_input_file(
-        analysis_config_file=default_weather_list)
-    default_weather_files = default_weather_config[':default_weather_locations']
-
+    import re
     # Check if any weather locations on the weather file list are not default weather locations
-    custom_weather_locs = []
-    for weather_loc in weather_files:
-        is_default_loc = weather_loc in default_weather_files
-        if not is_default_loc:
-            custom_weather_locs.append(weather_loc)
+    custom_weather_locs = [x for x in weather_locations if x not in default_weather_locations]
+    # Replace .epw for .zip as this is the basename used in the weatherfile repository.
+    custom_weather_locs = [re.sub(r'\.epw$', '.zip', loc) for loc in custom_weather_locs]
 
     # Create a string containing the non-default weather locations, where each non-default weather location is separated
     # by a space
@@ -101,10 +103,7 @@ def get_weather_locations(weather_list=[]):
     if custom_weather_locs:
         # Download the btap_weather repository weather file manifests and see if the ones the user wants to add are on
         # the list.
-        r = requests.get(HISTORIC_WEATHER_LIST, allow_redirects=True)
-        hist_files = r.json()
-        r = requests.get(FUTURE_WEATHER_LIST, allow_redirects=True)
-        fut_files = r.json()
+
         # Cycle through the weather files we want, check if they are on either btap_weather manifest and, if they are,
         # add them to the environment variable string.
         for custom_weather_loc in custom_weather_locs:
@@ -145,9 +144,12 @@ def build_and_configure_docker_and_aws(btap_batch_branch=None,
                                        build_btap_cli=None,
                                        build_btap_batch=None,
                                        weather_list=None):
+
+
+
     # Get the weather locations from the weather list
     weather_locations = get_weather_locations(weather_list)
-
+    ic(compute_environment)
     # build args for aws and btap_cli container.
     build_args_btap_cli = {'OPENSTUDIO_VERSION': openstudio_version,
                            'BTAP_COSTING_BRANCH': btap_costing_branch,
@@ -155,6 +157,9 @@ def build_and_configure_docker_and_aws(btap_batch_branch=None,
                            'WEATHER_FILES': weather_locations}
     # build args for btap_batch container.
     build_args_btap_batch = {'BTAP_BATCH_BRANCH': btap_batch_branch}
+
+
+
     if compute_environment  in ['local_managed_aws_workers', 'aws']:
         # Tear down
         ace_worker = AWSComputeEnvironment(name='btap_cli')
@@ -229,6 +234,8 @@ def build_and_configure_docker_and_aws(btap_batch_branch=None,
         if build_btap_cli:
             print('Building btap_cli image')
             image_worker.build_image(build_args=build_args_btap_cli)
+        else:
+            print("Skipping building btap_cli image at users request.")
 
 
 def analysis(project_input_folder=None,
@@ -236,7 +243,6 @@ def analysis(project_input_folder=None,
              output_folder=None):
     ic(project_input_folder)
     ic(compute_environment)
-
     ic(output_folder)
 
     if project_input_folder.startswith('s3:'):
@@ -264,6 +270,7 @@ def analysis(project_input_folder=None,
         exit(1)
     analysis_config, analysis_input_folder, analyses_folder = BTAPAnalysis.load_analysis_input_file(
         analysis_config_file=analysis_config_file)
+
 
 
     reference_run = analysis_config[':reference_run']

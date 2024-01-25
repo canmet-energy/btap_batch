@@ -1,15 +1,3 @@
-:algorithm_lhs_n_samples: null
-:algorithm_lhs_random_seed: null
-:algorithm_lhs_type: null
-:algorithm_nsga_eta: null
-:algorithm_nsga_minimize_objectives:
-- energy_eui_total_gj_per_m_sq
-- npv_total_per_m_sq
-:algorithm_nsga_n_generations: 10
-:algorithm_nsga_population: 50
-:algorithm_nsga_prob: 0.85
-:algorithm_type: nsga2
-:analysis_name: optimization_LowriseApartment_ElectricityHPElecBackup_Toronto
 :options:
   :adv_dx_units:
   - NECB_Default

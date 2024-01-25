@@ -4,7 +4,7 @@ properties:
   build_env_name:
     description: Prefix used to identify images, folders and other items specific to a build environment. snake_case and <24 chars.
     type: string
-    pattern: ^[a-z_\\s]*$
+    pattern: ^[a-z0-9_\\s]*$
     minLength: 1
     maxLength: 24
 

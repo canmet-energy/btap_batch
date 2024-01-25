@@ -186,6 +186,10 @@ def run_analysis_project(**kwargs):
 
     # Function to run analysis.
     check_environment_vars_are_defined(compute_environment=compute_environment)
+    #validate input.yml
+    #load
+
+
     analysis(project_input_folder= analysis_project_folder, compute_environment=compute_environment, output_folder=output_folder)
 
 
