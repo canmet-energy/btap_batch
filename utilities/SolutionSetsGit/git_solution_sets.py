@@ -63,23 +63,23 @@ def git_solution_sets():
         # ['CAN_NT_Yellowknife.AP.719360_CWEC2016.epw', 'YZF']  # CZ 8
 
         ['CAN_BC_Vancouver.Intl.AP.718920_CWEC2020.epw', 'YVR'],
-        ['CAN_AB_Calgary.Intl.AP.718770_CWEC2020.epw', 'YYC'],
-         ['CAN_SK_Regina.Intl.AP.715140_CWEC2020.epw', 'YQR'],
-         ['CAN_MB_Winnipeg.Intl.AP.718520_CWEC2020.epw', 'YWG'],
-         ['CAN_ON_Toronto.Intl.AP.716240_CWEC2020.epw', 'YYZ'],
-         ['CAN_QC_Montreal.Intl.AP.716270_CWEC2020.epw', 'YUL'],
-         ['CAN_NB_Fredericton.717000_CWEC2020.epw', 'YFC'],
-         ['CAN_NS_Halifax.Intl.AP.713950_CWEC2020.epw', 'YHZ'],
-         ['CAN_PE_Charlottetown.AP.717060_CWEC2020.epw', 'YYG'],
-         ['CAN_NL_St.Johns.Intl.AP.718010_CWEC2020.epw', 'YYT'],
-         ['CAN_YT_Whitehorse.AP.719640_CWEC2020.epw', 'YXY'],
-         ['CAN_NT_Yellowknife.AP.719360_CWEC2020.epw', 'YZF'],
-         ['CAN_NU_Iqaluit.AP.719090_CWEC2020.epw', 'YFB']
+        # ['CAN_AB_Calgary.Intl.AP.718770_CWEC2020.epw', 'YYC'],
+        #  ['CAN_SK_Regina.Intl.AP.715140_CWEC2020.epw', 'YQR'],
+        #  ['CAN_MB_Winnipeg.Intl.AP.718520_CWEC2020.epw', 'YWG'],
+        #  ['CAN_ON_Toronto.Intl.AP.716240_CWEC2020.epw', 'YYZ'],
+        #  ['CAN_QC_Montreal.Intl.AP.716270_CWEC2020.epw', 'YUL'],
+        #  ['CAN_NB_Fredericton.717000_CWEC2020.epw', 'YFC'],
+        #  ['CAN_NS_Halifax.Intl.AP.713950_CWEC2020.epw', 'YHZ'],
+        #  ['CAN_PE_Charlottetown.AP.717060_CWEC2020.epw', 'YYG'],
+        #  ['CAN_NL_St.Johns.Intl.AP.718010_CWEC2020.epw', 'YYT'],
+        #  ['CAN_YT_Whitehorse.AP.719640_CWEC2020.epw', 'YXY'],
+        #  ['CAN_NT_Yellowknife.AP.719360_CWEC2020.epw', 'YZF'],
+        #  ['CAN_NU_Iqaluit.AP.719090_CWEC2020.epw', 'YFB']
     ]
 
 
 
-    compute_environment = 'local_managed_aws_workers'
+    compute_environment = 'aws'
 
     if compute_environment != 'local':
         print(f"Current Analysis Failures: {get_number_of_failures(job_queue_name='btap_batch')}")

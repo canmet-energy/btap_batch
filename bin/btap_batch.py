@@ -159,6 +159,8 @@ def load_config(build_config_path):
               help='Path to output results. Defaulted to this projects output folder ./btap_batch/output')
 @click.option('--build_config_path', '-c', default=os.path.join(CONFIG_FOLDER, 'build_config.yml'),
               help=f'location of Location of build_config.yml file.  Default location is {CONFIG_FOLDER}')
+@click.option('--compute_environment', default=None,
+              help=f'location of Location of build_config.yml file.  Default location is {CONFIG_FOLDER}')
 def run_analysis_project(**kwargs):
     from src.btap.cli_helper_methods import analysis
     """
@@ -181,6 +183,8 @@ def run_analysis_project(**kwargs):
     config = load_config(build_config_path)
     output_folder = kwargs['output_folder']
     compute_environment = config['compute_environment']
+    if kwargs['compute_environment'] != None:
+        compute_environment = kwargs['compute_environment']
     os.environ['BUILD_ENV_NAME'] = config['build_env_name']
     os.environ['GIT_API_TOKEN'] = config['git_api_token']
 
