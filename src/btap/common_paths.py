@@ -2,7 +2,13 @@ import os
 from pathlib import Path
 from src.btap.aws_credentials import AWSCredentials
 
+PROJECT_ROOT = str(Path(os.path.dirname(os.path.realpath(__file__))).parent.absolute())
 DOCKERFILES_FOLDER = os.path.join(Path(os.path.dirname(os.path.realpath(__file__))).parent.absolute(), 'Dockerfiles')
+PROJECT_FOLDER = os.path.join(Path(os.path.dirname(os.path.realpath(__file__))).parent.parent.absolute())
+EXAMPLE_FOLDER = os.path.join(PROJECT_FOLDER, 'examples')
+OUTPUT_FOLDER = os.path.join(PROJECT_FOLDER, "output")
+SCHEMA_FOLDER = os.path.join(PROJECT_FOLDER, "schemas")
+CONFIG_FOLDER = os.path.join(PROJECT_FOLDER, 'config')
 
 
 class CommonPaths(object):
@@ -30,6 +36,9 @@ class CommonPaths(object):
 
     def get_project_name(self):
         return self._analysis_name
+
+    def schema_folder(self):
+        return
 
     def get_analysis_id(self):
         return self._analysis_id
@@ -161,4 +170,6 @@ class CommonPaths(object):
     def s3_job_url(self, job_id=None):
         bucket = AWSCredentials().account_id
         return f"https://s3.console.aws.amazon.com/s3/buckets/{bucket}?region=ca-central-1&prefix={self.s3_datapoint_output_folder(job_id=job_id)}/"
+
+
 

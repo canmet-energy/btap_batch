@@ -16,6 +16,7 @@ from src.btap.docker_image_manager import DockerImageManager
 from src.btap.aws_image_manager import AWSImageManager
 from src.btap.common_paths import CommonPaths
 from src.btap.aws_compute_environment import AWSComputeEnvironment
+from src.btap.common_paths  import SCHEMA_FOLDER
 import jsonschema
 from src.btap.aws_dynamodb import AWSResultsTable
 from icecream import ic
@@ -227,7 +228,7 @@ class BTAPAnalysis():
         analysis_input_folder = os.path.dirname(os.path.realpath(analysis_config_file))
 
         try:
-            schema_file = os.path.join('/home/plopez/btap_batch/schemas/analysis_config_schema.yml')
+            schema_file = os.path.join(f'{SCHEMA_FOLDER}/analysis_config_schema.yml')
             with open(schema_file) as f:
                 schema = yaml.load(f, Loader=yaml.FullLoader)
         except FileNotFoundError:

@@ -2,14 +2,6 @@
 # aws_batch local
 :analysis_name: elimination_example
 :algorithm_type: elimination
-:algorithm_nsga_population: null
-:algorithm_nsga_n_generations: null
-:algorithm_nsga_prob: null
-:algorithm_nsga_eta: null
-:algorithm_nsga_minimize_objectives: null
-:algorithm_lhs_n_samples: null
-:algorithm_lhs_type: null
-:algorithm_lhs_random_seed: null
 :reference_run: true
 
 ###########################################     Hourly Data     #######################################################

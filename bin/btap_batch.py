@@ -2,16 +2,12 @@ from pathlib import Path
 import click
 import os
 import sys
+from src.btap.common_paths import PROJECT_FOLDER, EXAMPLE_FOLDER, OUTPUT_FOLDER, SCHEMA_FOLDER , CONFIG_FOLDER
 
 
 # Avoid having to add PYTHONPATH to env.
 PROJECT_ROOT = str(Path(os.path.dirname(os.path.realpath(__file__))).parent.absolute())
 sys.path.append(PROJECT_ROOT)
-PROJECT_FOLDER = os.path.join(Path(os.path.dirname(os.path.realpath(__file__))).parent.absolute())
-EXAMPLE_FOLDER = os.path.join(PROJECT_FOLDER, 'examples')
-OUTPUT_FOLDER = os.path.join(PROJECT_FOLDER, "output")
-SCHEMA_FOLDER = os.path.join(PROJECT_FOLDER, "schemas")
-CONFIG_FOLDER = os.path.join(PROJECT_FOLDER, 'config')
 CONTEXT_SETTINGS = dict(help_option_names=['-h', '--help'])
 
 
