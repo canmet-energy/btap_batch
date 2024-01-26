@@ -226,8 +226,6 @@ class BTAPAnalysis():
         analyses_folder = os.path.dirname(os.path.realpath(analysis_config_file))
         analysis_input_folder = os.path.dirname(os.path.realpath(analysis_config_file))
 
-
-
         try:
             schema_file = os.path.join('/home/plopez/btap_batch/schemas/analysis_config_schema.yml')
             with open(schema_file) as f:

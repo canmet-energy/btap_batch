@@ -29,6 +29,8 @@ import numpy as np
 from icecream import ic
 from src.btap.aws_dynamodb import AWSResultsTable
 import math
+import yaml
+from cloudpathlib import CloudPath
 import pandas as pd
 from distutils.dir_util import copy_tree
 HISTORIC_WEATHER_LIST = "https://github.com/canmet-energy/btap_weather/raw/main/historic_weather_filenames.json"
@@ -239,12 +241,22 @@ def build_and_configure_docker_and_aws(btap_batch_branch=None,
 
 
 def analysis(project_input_folder=None,
-             compute_environment=None,
+             build_config=None,
              output_folder=None):
     ic(project_input_folder)
-    ic(compute_environment)
+    ic(build_config)
     ic(output_folder)
 
+    compute_environment = None
+    # If build_env is available in the build config use it.
+    if build_config != None:
+        if 'build_env_name' in build_config:
+            os.environ['BUILD_ENV_NAME'] = build_config['build_env_name']
+        if 'compute_environment' in build_config:
+            compute_environment = build_config['compute_environment']
+
+
+    # If project folder is on S3.  Download the folder to work on it locally.
     if project_input_folder.startswith('s3:'):
         # download project to local temp folder.
         local_dir = os.path.join(str(Path.home()), 'temp_analysis_folder')
@@ -259,6 +271,21 @@ def analysis(project_input_folder=None,
                 exit(1)
         S3().download_s3_folder(s3_folder=project_input_folder, local_dir=local_dir)
         project_input_folder = local_dir
+
+
+        # Set compute_environment to local_managed_aws_workers.
+        path_to_yml = os.path.join(project_input_folder, 'input.yml')
+        with Path(path_to_yml).open() as fp:
+            config = yaml.safe_load(fp)
+        # If this was taken from S3. Force it to be locally managed analysis.
+        config['compute_environment'] = 'local_managed_aws_workers'
+
+        with open(path_to_yml, 'w') as outfile:
+            yaml.dump(config, outfile, default_flow_style=False)
+
+
+
+
     # path of analysis input.yml
     analysis_config_file = os.path.join(project_input_folder, 'input.yml')
 
@@ -270,6 +297,17 @@ def analysis(project_input_folder=None,
         exit(1)
     analysis_config, analysis_input_folder, analyses_folder = BTAPAnalysis.load_analysis_input_file(
         analysis_config_file=analysis_config_file)
+
+    if 'build_env_name' in analysis_config: # input.yml has priority.
+        os.environ['BUILD_ENV_NAME'] = config['build_env_name']
+
+    # Set compute Environment
+    if 'compute_environment' in analysis_config:
+        compute_environment = analysis_config['compute_environment']
+
+    if compute_environment == None:
+        raise("Computer environment was not defined")
+
 
 
 
@@ -288,7 +326,7 @@ def analysis(project_input_folder=None,
             exit(1)
 
     # delete output from previous run if present on s3
-    if compute_environment == 'local_managed_aws_workers':
+    if compute_environment == 'local_managed_aws_workers' or compute_environment == 'aws':
         bucket = AWSCredentials().account_id
         user_name = os.environ.get('BUILD_ENV_NAME').replace('.', '_')
         prefix = os.path.join(user_name, analysis_config[':analysis_name'] + '/')
@@ -368,9 +406,8 @@ def analysis(project_input_folder=None,
         print(f"Excel results file {ba.analysis_excel_results_path()}")
 
 
-    if compute_environment == 'aws':
+    elif compute_environment == 'aws':
         analysis_name = analysis_config[':analysis_name']
-        analyses_folder = analysis_config[':analysis_name']
         # Set common paths singleton.
         cp = CommonPaths()
         # Setting paths to current context.

@@ -163,6 +163,8 @@ def load_config(build_config_path):
               help=f'location of Location of build_config.yml file.  Default location is {CONFIG_FOLDER}')
 def run_analysis_project(**kwargs):
     from src.btap.cli_helper_methods import analysis
+    from cloudpathlib import CloudPath
+    import yaml
     """
     This command will invoke an analysis, a set of simulations based on the input.yml contained in your project_folder.
     Please see the 'examples' folder for examples of how to run different types of analyses. Note: The build_environment
@@ -177,24 +179,32 @@ def run_analysis_project(**kwargs):
 
     build_config_path = kwargs['build_config_path']
 
+    if kwargs['compute_environment'] != None:
+        compute_environment = kwargs['compute_environment']
 
     # Input folder name
     analysis_project_folder = kwargs['project_folder']
-    config = load_config(build_config_path)
+
+    build_config = None
+
+
+    if  os.path.exists(build_config_path):
+        build_config = load_config(build_config_path)
+        print(f"Using build_env_name from build_config.yml: {build_config['build_env_name']}")
+    else:
+        raise("Could not determine build_env to use")
+
     output_folder = kwargs['output_folder']
-    compute_environment = config['compute_environment']
-    if kwargs['compute_environment'] != None:
-        compute_environment = kwargs['compute_environment']
-    os.environ['BUILD_ENV_NAME'] = config['build_env_name']
-    os.environ['GIT_API_TOKEN'] = config['git_api_token']
+    compute_environment = build_config['compute_environment']
+    build_env_name = build_config['build_env_name']
 
     # Function to run analysis.
     check_environment_vars_are_defined(compute_environment=compute_environment)
-    #validate input.yml
-    #load
 
 
-    analysis(project_input_folder= analysis_project_folder, compute_environment=compute_environment, output_folder=output_folder)
+    analysis(project_input_folder= analysis_project_folder,
+             build_config=build_config,
+             output_folder=output_folder)
 
 
 @btap.command()

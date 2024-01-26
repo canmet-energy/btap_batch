@@ -11,10 +11,22 @@ from typing import Callable, Optional, Tuple
 from queue import PriorityQueue
 import boto3
 from tqdm import tqdm
-
+import yaml
 
 # Blob Storage operations
 class S3:
+
+    def save_yml(self, s3_path = None, data = None):
+        with CloudPath(s3_path).open("w+") as f:
+            yaml.safe_dump(data, f, indent=4, default_flow_style=False)
+
+    def load_yml(self, s3_path = None):
+        with CloudPath(s3_path).open("r") as f:
+            return  yaml.safe_load(f)
+
+
+
+
     # Constructor
     def __init__(self):
         # Create the s3 client.

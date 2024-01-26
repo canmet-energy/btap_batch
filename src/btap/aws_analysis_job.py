@@ -1,3 +1,5 @@
+import os
+
 from src.btap.aws_s3 import S3
 import sys
 import time
@@ -39,6 +41,14 @@ class AWSAnalysisJob():
         self.cloud_job_id = submitJobResponse['jobId']
         message = f"Submitted Analysis {self.job_id} , job name {self.aws_job_name()} to the job queue {self.batch.job_queue_name}"
         logging.info(message)
+        # Modify compute_environment and build_env_name and build_env_name
+        input_yml_path = f"s3://{self.s3_bucket}/{self.target}/input.yml"
+        data = S3.load_yml(input_yml_path)
+        data['compute_environment'] = 'local_managed_aws_workers'
+        if not 'build_env' in data:
+            data['build_env_name'] = os.environ['BUILD_ENV_NAME']
+        S3.save_yml(input_yml_path,data=data)
+
 
     def job_wrapper(self, n=0):
         # ic(self.aws_job_name())
