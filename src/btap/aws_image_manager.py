@@ -161,7 +161,6 @@ class AWSImageManager(DockerImageManager):
     def get_image(self, image_name=None, image_tag='latest'):
         image = None
         ecr = AWSCredentials().ecr_client
-        # Check if image exists.. if not it will create an image from the latest git hub reps.
         # Get list of tags for image name on aws.
         available_tags = sum(
             [d.get('imageTags', [None]) for d in

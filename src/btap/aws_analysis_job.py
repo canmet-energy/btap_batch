@@ -43,11 +43,11 @@ class AWSAnalysisJob():
         logging.info(message)
         # Modify compute_environment and build_env_name and build_env_name
         input_yml_path = f"s3://{self.s3_bucket}/{self.target}/input.yml"
-        data = S3.load_yml(input_yml_path)
+        data = S3().load_yml(s3_path=input_yml_path)
         data['compute_environment'] = 'local_managed_aws_workers'
         if not 'build_env' in data:
             data['build_env_name'] = os.environ['BUILD_ENV_NAME']
-        S3.save_yml(input_yml_path,data=data)
+        S3().save_yml(s3_path=input_yml_path,data=data)
 
 
     def job_wrapper(self, n=0):

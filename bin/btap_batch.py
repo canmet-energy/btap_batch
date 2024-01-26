@@ -192,14 +192,12 @@ def run_analysis_project(**kwargs):
         build_config = load_config(build_config_path)
         print(f"Using build_env_name from build_config.yml: {build_config['build_env_name']}")
     else:
-        raise("Could not determine build_env to use")
+        print(f"No build_config.yml found in {build_config_path}, trying to continue.")
 
     output_folder = kwargs['output_folder']
-    compute_environment = build_config['compute_environment']
-    build_env_name = build_config['build_env_name']
 
-    # Function to run analysis.
-    check_environment_vars_are_defined(compute_environment=compute_environment)
+
+
 
 
     analysis(project_input_folder= analysis_project_folder,
