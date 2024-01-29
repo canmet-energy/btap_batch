@@ -2,12 +2,13 @@ from pathlib import Path
 import click
 import os
 import sys
-from src.btap.common_paths import PROJECT_FOLDER, EXAMPLE_FOLDER, OUTPUT_FOLDER, SCHEMA_FOLDER , CONFIG_FOLDER
+
 
 
 # Avoid having to add PYTHONPATH to env.
 PROJECT_ROOT = str(Path(os.path.dirname(os.path.realpath(__file__))).parent.absolute())
 sys.path.append(PROJECT_ROOT)
+from src.btap.common_paths import PROJECT_FOLDER, EXAMPLE_FOLDER, OUTPUT_FOLDER, SCHEMA_FOLDER , CONFIG_FOLDER
 CONTEXT_SETTINGS = dict(help_option_names=['-h', '--help'])
 
 
@@ -51,10 +52,8 @@ def credits():
               help=f'location of Location of build_config.yml file.  Default location is {CONFIG_FOLDER}')
 
 def build_environment(**kwargs):
-    from src.btap.cli_helper_methods import build_and_configure_docker_and_aws
-    from src.btap.cli_helper_methods import generate_build_config
-    import jsonschema
-    import yaml
+    from src.btap.cli_helper_methods import build_and_configure_docker_and_aws, load_config
+
     """
 
 
@@ -158,7 +157,7 @@ def load_config(build_config_path):
 @click.option('--compute_environment', default=None,
               help=f'location of Location of build_config.yml file.  Default location is {CONFIG_FOLDER}')
 def run_analysis_project(**kwargs):
-    from src.btap.cli_helper_methods import analysis
+    from src.btap.cli_helper_methods import analysis, load_config
     from cloudpathlib import CloudPath
     import yaml
     """

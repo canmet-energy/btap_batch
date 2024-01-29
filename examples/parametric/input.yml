@@ -2,80 +2,22 @@
 :analysis_name: parametric_example
 :algorithm_type: parametric
 :reference_run: false
-:output_meters:
-  - frequency: hourly
-    name: NaturalGas:Facility
-  - frequency: hourly
-    name: Electricity:Facility
-  - frequency: hourly
-    name: FuelOilNo2:Facility
-  - frequency: hourly
-    name: InteriorLights:Electricity
-  - frequency: hourly
-    name: Heating:Electricity
-  - frequency: hourly
-    name: Heating:NaturalGas
-  - frequency: hourly
-    name: Heating:FuelOilNo2
-  - frequency: hourly
-    name: Heating:DistrictHeating
-  - frequency: hourly
-    name: Cooling:Electricity
-  - frequency: hourly
-    name: Heating:DistrictCooling
-  - frequency: hourly
-    name: Fans:Electricity
-  - frequency: hourly
-    name: Pumps:Electricity
-  - frequency: hourly
-    name: InteriorEquipment:Electricity
-  - frequency: hourly
-    name: WaterSystems:Electricity
-  - frequency: hourly
-    name: WaterSystems:NaturalGas
-:output_variables:
-  - frequency: hourly
-    key: '*'
-    operation: '*'
-    unit: '*'
-    variable: Zone Predicted Sensible Load to Setpoint Heat Transfer Rate
-  - frequency: hourly
-    key: '*'
-    operation: '*'
-    unit: '*'
-    variable: Zone Predicted Sensible Load to Heating Setpoint Heat Transfer Rate
-  - frequency: hourly
-    key: '*'
-    operation: '*'
-    unit: '*'
-    variable: Zone Predicted Sensible Load to Cooling Setpoint Heat Transfer Rate
-  - frequency: hourly
-    key: '*'
-    operation: '*'
-    unit: '*'
-    variable: Zone Predicted Moisture Load Moisture Transfer Rate
-  - frequency: hourly
-    key: '*'
-    operation: '*'
-    unit: '*'
-    variable: Zone Predicted Moisture Load to Humidifying Setpoint Moisture Transfer Rate
-  - frequency: hourly
-    key: '*'
-    operation: '*'
-    unit: '*'
-    variable: Zone Predicted Moisture Load to Dehumidifying Setpoint Moisture Transfer Rate
+:output_variables: []
+:output_meters: []
 :options:
   :building_type:
-    - FullServiceRestaurant
+    - LowriseApartment
   :template:
+    - BTAP1980TO2010
+    - BTAPPRE1980
+    - NECB2011
+    - NECB2015
+    - NECB2017
     - NECB2020
   :epw_file:
-    - CAN_QC_Montreal-Trudeau.Intl.AP.716270_CWEC2016.epw
+    - CAN_QC_Montreal.Intl.AP.716270_CWEC2020.epw
   :primary_heating_fuel:
     - Electricity
-    - NaturalGas
-    - NaturalGasHPGasBackup
-    - ElectricityHPElecBackup
   :dcv_type:
     - NECB_Default
   :lights_type:

@@ -2,34 +2,35 @@ import copy
 import os
 import yaml
 import pathlib
-from src.btap.cli_helper_methods import analysis
+from src.btap.cli_helper_methods import analysis, load_config
 from src.btap.cli_helper_methods import get_number_of_failures
+from src.btap.common_paths import CONFIG_FOLDER
 
 def git_solution_sets():
 
-    os.environ['BUILD_ENV_NAME'] = 'reference_runs_370'
 
-    # 2710 runs per building (6)  per location (6)  is 97,000 simulations.
-    VINTAGE_RUNS = False  # 4 runs (1)
-    REFERENCE_RUNS = True  # 16 Runs (1)
-    SENSITIVITY_RUNS = False  # 190 runs (2)
-    OPTIMIZATION_RUNS = False  # 500 runs. (1)
+    build_config = load_config(os.path.join(CONFIG_FOLDER, 'build_config.yml'))
+    os.environ['BUILD_ENV_NAME'] =build_config['build_env_name']
+
+
+    VINTAGE_RUNS = False
+    REFERENCE_RUNS = False
+    SENSITIVITY_RUNS = False
+
+    # Optimization
+    OPTIMIZATION_RUNS = False
+    algorithm_nsga_population = 5
+    algorithm_nsga_n_generations = 2
+    algorithm_nsga_minimize_objectives = [
+        'energy_eui_total_gj_per_m_sq',
+        'npv_total_per_m_sq'
+    ]
+
+    # LHS
     LHS_RUNS = False  # 2000 runs (1)
-
-    # So 6*6*6 = 216 Analyses for solution sets.
+    algorithm_lhs_n_samples = 10
 
     building_types = [
-         'LowriseApartment',
-         # 'MidriseApartment',
-         # 'HighriseApartment',
-         # 'SmallOffice',
-         # 'MediumOffice',
-         # 'LargeOffice',
-         # 'RetailStandalone',
-         # 'PrimarySchool',
-         # 'SecondarySchool'
-
-
         # "SecondarySchool",
         # "PrimarySchool",
         # "SmallOffice",
@@ -41,7 +42,7 @@ def git_solution_sets():
         # "RetailStandalone",
         # "RetailStripmall",
         # "QuickServiceRestaurant",
-        # "FullServiceRestaurant",
+        "FullServiceRestaurant",
         # "MidriseApartment",
         # "HighriseApartment",
         # "LowriseApartment",
@@ -56,46 +57,17 @@ def git_solution_sets():
 # Using airport codes to identify the locations.  Much easier if sometimes slightly inaccurate.
     epw_files = [
         # ['CAN_BC_Vancouver.Intl.AP.718920_CWEC2016.epw', 'YVR'],  # CZ 4
-        # ['CAN_ON_Toronto.Pearson.Intl.AP.716240_CWEC2016.epw', 'YYZ'],  # CZ 5
+        ['CAN_ON_Toronto.Pearson.Intl.AP.716240_CWEC2016.epw', 'YYZ'],  # CZ 5
         # ['CAN_QC_Montreal-Trudeau.Intl.AP.716270_CWEC2016.epw', 'YUL'],  # CZ 6
         # ['CAN_AB_Edmonton.Intl.AP.711230_CWEC2016.epw', 'YEG'],  # CZ 7A
         # ['CAN_AB_Fort.McMurray.AP.716890_CWEC2016.epw', 'YMM'],  # CZ 7B
         # ['CAN_NT_Yellowknife.AP.719360_CWEC2016.epw', 'YZF']  # CZ 8
-
-        ['CAN_BC_Vancouver.Intl.AP.718920_CWEC2020.epw', 'YVR'],
-        # ['CAN_AB_Calgary.Intl.AP.718770_CWEC2020.epw', 'YYC'],
-        #  ['CAN_SK_Regina.Intl.AP.715140_CWEC2020.epw', 'YQR'],
-        #  ['CAN_MB_Winnipeg.Intl.AP.718520_CWEC2020.epw', 'YWG'],
-        #  ['CAN_ON_Toronto.Intl.AP.716240_CWEC2020.epw', 'YYZ'],
-        #  ['CAN_QC_Montreal.Intl.AP.716270_CWEC2020.epw', 'YUL'],
-        #  ['CAN_NB_Fredericton.717000_CWEC2020.epw', 'YFC'],
-        #  ['CAN_NS_Halifax.Intl.AP.713950_CWEC2020.epw', 'YHZ'],
-        #  ['CAN_PE_Charlottetown.AP.717060_CWEC2020.epw', 'YYG'],
-        #  ['CAN_NL_St.Johns.Intl.AP.718010_CWEC2020.epw', 'YYT'],
-        #  ['CAN_YT_Whitehorse.AP.719640_CWEC2020.epw', 'YXY'],
-        #  ['CAN_NT_Yellowknife.AP.719360_CWEC2020.epw', 'YZF'],
-        #  ['CAN_NU_Iqaluit.AP.719090_CWEC2020.epw', 'YFB']
     ]
 
-
-
-    compute_environment = 'aws'
-
-    if compute_environment != 'local':
+    if build_config['compute_environment'] != 'local':
         print(f"Current Analysis Failures: {get_number_of_failures(job_queue_name='btap_batch')}")
         print(f"Current Worker Failures: {get_number_of_failures(job_queue_name='btap_cli')}")
 
-
-        # LHS constants
-    algorithm_lhs_n_samples = 2000
-
-    # Optimization
-    algorithm_nsga_population = 50
-    algorithm_nsga_n_generations = 10
-    algorithm_nsga_minimize_objectives = [
-        'energy_eui_total_gj_per_m_sq',
-        'npv_total_per_m_sq'
-    ]
 
     output_meters = [
         # Utility
@@ -163,7 +135,7 @@ def git_solution_sets():
             if REFERENCE_RUNS:
                 analysis_configuration = copy.deepcopy(sensitivity_template)
                 analysis_configuration[':algorithm_type'] = 'reference'
-                analysis_configuration[':reference_run'] = True
+                analysis_configuration[':reference_run'] = False
                 analysis_configuration[':options'][':building_type'] = [building_type]
                 analysis_configuration[':options'][':epw_file'] = [epw_file[0]]
                 analysis_configuration[':output_meters'] = output_meters
@@ -174,13 +146,7 @@ def git_solution_sets():
                     # 'NaturalGasHPGasBackup'
                 ]
                 analysis_configuration[':template'] = [
-                    'BTAP1980TO2010',
-                    'BTAPPRE1980',
-                    # 'NECB2011',
-                    'NECB2015',
-                    # 'NECB2017',
-                    # 'NECB2020'
-                    #
+                    'NECB2020'
                     ]
 
                 analysis_configuration[':analysis_name'] = f"{building_type}_{epw_file[1]}_ref"
@@ -191,7 +157,7 @@ def git_solution_sets():
                 # Submit analysis
                 print(f"Running  {analysis_configuration[':analysis_name']}")
                 analysis(project_input_folder=analysis_folder,
-                         compute_environment=compute_environment,
+                         build_config=build_config,
                          output_folder=output_folder)
 
             # Vintage Runs
@@ -204,11 +170,12 @@ def git_solution_sets():
                 analysis_configuration[':output_meters'] = output_meters
                 analysis_configuration[':options'][':primary_heating_fuel'] = [
                     'Electricity',
-                    'NaturalGas',
+                    # 'NaturalGas',
                 ]
                 analysis_configuration[':template'] = [
                     'BTAP1980TO2010',
-                    'BTAPPRE1980']
+                    # 'BTAPPRE1980'
+                ]
 
                 analysis_configuration[':analysis_name'] = f"{building_type}_{epw_file[1]}_vin"
                 analysis_folder = os.path.join(projects_folder, analysis_configuration[':analysis_name'])
@@ -218,12 +185,15 @@ def git_solution_sets():
                 # Submit analysis
                 print(f"Running  {analysis_configuration[':analysis_name']}")
                 analysis(project_input_folder=analysis_folder,
-                         compute_environment=compute_environment,
+                         build_config=build_config,
                          output_folder=output_folder)
 
             if SENSITIVITY_RUNS:
                 # Sensitivity Analysis
-                for primary_heating_fuel in ['Electricity', 'NaturalGas']:
+                for primary_heating_fuel in [
+                                                'Electricity',
+                #                                'NaturalGas'
+                ]:
                     analysis_configuration = copy.deepcopy(sensitivity_template)
                     analysis_configuration[':options'][':building_type'] = [building_type]
                     analysis_configuration[':options'][':primary_heating_fuel'] = [primary_heating_fuel]
@@ -241,7 +211,7 @@ def git_solution_sets():
                     # Submit analysis
                     print(f"Running {analysis_configuration[':analysis_name']}")
                     analysis(project_input_folder=analysis_folder,
-                             compute_environment=compute_environment,
+                             build_config=build_config,
                              output_folder=output_folder)
 
             if LHS_RUNS:
@@ -273,7 +243,7 @@ def git_solution_sets():
                 # Submit analysis
                 print(f"Running {analysis_configuration[':analysis_name']}")
                 analysis(project_input_folder=analysis_folder,
-                         compute_environment=compute_environment,
+                         build_config=build_config,
                          output_folder=output_folder)
 
             # General Optimization
@@ -305,7 +275,7 @@ def git_solution_sets():
                 # Submit analysis
                 print(f"Running  {analysis_configuration[':analysis_name']}")
                 analysis(project_input_folder=analysis_folder,
-                         compute_environment=compute_environment,
+                         build_config=build_config,
                          output_folder=output_folder)
 
 git_solution_sets()

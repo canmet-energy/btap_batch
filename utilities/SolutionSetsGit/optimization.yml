@@ -34,10 +34,9 @@
   - HS11_ASHP_PTHP
   - HS12_ASHP_Baseboard
   - HS13_ASHP_VRF
-  - HS14_CGSHP_FanCoils
   :electrical_loads_scale:
   - NECB_Default
-  - '0.50'
+  - 0.5
   :epw_file:
   - CAN_QC_Montreal-Trudeau.Intl.AP.716270_CWEC2016.epw
   :erv_package:
@@ -50,31 +49,31 @@
   :ext_floor_cond:
   - NECB_Default
   :ext_roof_cond:
-  - '0.227'
-  - '0.193'
-  - '0.183'
-  - '0.162'
-  - '0.142'
-  - '0.138'
-  - '0.121'
+  - 0.227
+  - 0.193
+  - 0.183
+  - 0.162
+  - 0.142
+  - 0.138
+  - 0.121
   :ext_wall_cond:
-  - '0.314'
-  - '0.278'
-  - '0.247'
-  - '0.210'
-  - '0.183'
+  - 0.314
+  - 0.278
+  - 0.247
+  - 0.21
+  - 0.183
   :fdwr_set:
   - NECB_Default
   :fixed_wind_solar_trans:
-  - '0.2'
-  - '0.3'
-  - '0.4'
-  - '0.5'
-  - '0.6'
+  - 0.2
+  - 0.3
+  - 0.4
+  - 0.5
+  - 0.6
   :fixed_window_cond:
-  - '2.4'
-  - '2.2'
-  - '1.6'
+  - 2.4
+  - 2.2
+  - 1.6
   :furnace_eff:
   - NECB_Default
   :glass_door_cond:
@@ -82,18 +81,18 @@
   :glass_door_solar_trans:
   - NECB_Default
   :ground_floor_cond:
-  - '0.758'
-  - '0.379'
+  - 0.758
+  - 0.379
   :ground_roof_cond:
   - NECB_Default
   :ground_wall_cond:
   - NECB_Default
   :infiltration_scale:
   - NECB_Default
-  - '0.50'
+  - 0.5
   :lights_scale:
-  - '1.0'
-  - '0.50'
+  - 1.0
+  - 0.5
   :lights_type:
   - NECB_Default
   :npv_discount_rate:
@@ -142,7 +141,7 @@
   - Natural Gas Power Vent with Electric Ignition
   :shw_scale:
   - NECB_Default
-  - '0.25'
+  - 0.25
   :skylight_cond:
   - NECB_Default
   :skylight_solar_trans:

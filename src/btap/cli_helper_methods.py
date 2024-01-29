@@ -17,7 +17,7 @@ from src.btap.btap_lhs import BTAPSamplingLHS
 from src.btap.btap_sensitivity import BTAPSensitivity
 from src.btap.btap_batch_analysis import BTAPBatchAnalysis
 from src.btap.aws_s3 import S3
-from src.btap.common_paths import CommonPaths
+from src.btap.common_paths import CommonPaths, SCHEMA_FOLDER
 import requests
 import shutil
 import time
@@ -37,6 +37,44 @@ HISTORIC_WEATHER_LIST = "https://github.com/canmet-energy/btap_weather/raw/main/
 FUTURE_WEATHER_LIST = "https://github.com/canmet-energy/btap_weather/raw/main/future_weather_filenames.json"
 HISTORIC_WEATHER_REPO = "https://github.com/canmet-energy/btap_weather/raw/main/historic/"
 FUTURE_WEATHER_REPO = "https://github.com/canmet-energy/btap_weather/raw/main/future/"
+
+
+
+def load_config(build_config_path):
+    from src.btap.cli_helper_methods import generate_build_config
+    import jsonschema
+    import yaml
+    try:
+        schema_file = os.path.join(SCHEMA_FOLDER, 'build_config_schema.yml')
+        with open(schema_file) as f:
+            schema = yaml.load(f, Loader=yaml.FullLoader)
+    except FileNotFoundError:
+        print(f'Error: The schema file does not exist {schema_file}')
+        exit(1)
+    try:
+        with open(build_config_path) as f:
+            config = yaml.load(f, Loader=yaml.FullLoader)
+        # Validate against schema
+    except FileNotFoundError:
+        print(
+            f'The file does not exist. Creating a template at location {build_config_path}. Please edit it with your information.')
+        generate_build_config(build_config_path)
+        exit(1)
+    try:
+        jsonschema.validate(config, schema)
+    except yaml.parser.ParserError as e:
+        print(f"ERROR: {build_config_path} contains an invalid YAML format. Please check your YAML format.")
+        print(e.message)
+        exit(1)
+
+
+    except jsonschema.exceptions.ValidationError as e:
+        print(f"ERROR: {build_config_path} does not contain valid data. Please fix the error below and try again.")
+        print(e.message)
+        exit(1)
+    return config
+
+
 
 def get_pareto_points(costs, return_mask=True):
     """
@@ -336,6 +374,10 @@ def analysis(project_input_folder=None,
 
     if compute_environment == 'local' or compute_environment == 'local_managed_aws_workers':
         analysis_config[':compute_environment'] = compute_environment
+
+        # Don't run a reference run on a reference analysis
+        if analysis_config[':algorithm_type'] == 'reference':
+            reference_run = False
 
         reference_run_df = None
         if reference_run == True:

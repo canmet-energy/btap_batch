@@ -3,23 +3,6 @@
 :analysis_name: batch_example
 :algorithm_type: batch
 :reference_run: False
-:algorithm_nsga_population: null
-:algorithm_nsga_n_generations: null
-:algorithm_nsga_prob: null
-:algorithm_nsga_eta: null
-:algorithm_nsga_minimize_objectives: null
-:algorithm_lhs_n_samples: null
-:algorithm_lhs_type: null
-:algorithm_lhs_random_seed: null
-:reference_run: true
-###########################################     Hourly Data     #######################################################
-  # Note: the 'operation' and 'unit' keys in :output_variables are for performing operations on hourly output.
-  # For now, allowed operation type is 'sum'; allowed units are 'GJ' and 'kWh'.
-:output_variables: [
-    { key: '*',     variable: 'Zone Air Temperature',     frequency: 'hourly',     operation: '*',     unit: '*' },
-    { key: '*',     variable: 'Lights Total Heating Energy',     frequency: 'hourly',     operation: 'sum',     unit: 'GJ' }
-  ]
+:output_variables: []
 :output_meters: []
-
-:options: null
 
