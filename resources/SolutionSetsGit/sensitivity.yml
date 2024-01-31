@@ -15,13 +15,10 @@
   - Lennox Model L Ultra High Efficiency
   :airloop_economizer_type:
   - NECB_Default
-  - DifferentialEnthalpy
-  - DifferentialDryBulb
   :baseline_system_zones_map_option:
   - NECB_Default
   :boiler_eff:
   - NECB_Default
-  - Viessmann Vitocrossal 300 CT3-17 96.2% Efficient Condensing Gas Boiler
   :building_type:
   - LowriseApartment
   :chiller_type:
@@ -32,7 +29,6 @@
   - add_daylighting_controls
   - none
   :dcv_type:
-  - NECB_Default
   - No_DCV
   - Occupancy_based_DCV
   - CO2_based_DCV
@@ -48,20 +44,15 @@
   - HS14_CGSHP_FanCoils
   :electrical_loads_scale:
   - NECB_Default
+  - '0.75'
   - '0.50'
   :epw_file:
   - CAN_QC_Montreal-Trudeau.Intl.AP.716270_CWEC2016.epw
   :erv_package:
   - NECB_Default
-  - NECB_Default_All
-  - Plate-All
-  - Plate-Existing
-  - Rotary-All
-  - Rotary-Existing
   :ext_floor_cond:
   - NECB_Default
   :ext_roof_cond:
-  - NECB_Default
   - '0.227'
   - '0.193'
   - '0.183'
@@ -70,7 +61,6 @@
   - '0.138'
   - '0.121'
   :ext_wall_cond:
-  - NECB_Default
   - '0.314'
   - '0.278'
   - '0.247'
@@ -79,14 +69,12 @@
   :fdwr_set:
   - NECB_Default
   :fixed_wind_solar_trans:
-  - NECB_Default
   - '0.2'
   - '0.3'
   - '0.4'
   - '0.5'
   - '0.6'
   :fixed_window_cond:
-  - NECB_Default
   - '2.4'
   - '2.2'
   - '1.6'
@@ -97,7 +85,6 @@
   :glass_door_solar_trans:
   - NECB_Default
   :ground_floor_cond:
-  - NECB_Default
   - '0.758'
   - '0.379'
   :ground_roof_cond:
@@ -106,9 +93,11 @@
   - NECB_Default
   :infiltration_scale:
   - NECB_Default
+  - '0.75'
   - '0.50'
   :lights_scale:
   - '1.0'
+  - '0.75'
   - '0.50'
   :lights_type:
   - NECB_Default
@@ -134,10 +123,7 @@
   :overhead_door_cond:
   - NECB_Default
   :primary_heating_fuel:
-  - NaturalGas
   - Electricity
-  - NaturalGasHPGasBackup
-  - ElectricityHPElecBackup
   :pv_ground_azimuth_angle:
   - NECB_Default
   :pv_ground_module_description:
@@ -158,7 +144,6 @@
   - NECB_Default
   :shw_eff:
   - NECB_Default
-  - Natural Gas Power Vent with Electric Ignition
   :shw_scale:
   - NECB_Default
   - '0.75'
