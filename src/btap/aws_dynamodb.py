@@ -14,7 +14,7 @@ from src.btap.aws_credentials import AWSCredentials
 class AWSResultsTable():
     def __init__(self):
         self.table = None
-        self.table_name = f"{CommonPaths().get_username()}_results"
+        self.table_name = f"{CommonPaths().get_build_env_name()}_results"
         self.key_schema = [
             {'AttributeName': ':datapoint_id', 'KeyType': 'HASH'},  # Partition key
             {'AttributeName': ':analysis_name', 'KeyType': 'RANGE'}  # Sort key

@@ -29,11 +29,12 @@
   - NECB_Default
   :ecm_system_name:
   - NECB_Default
-  - HS09_CCASHP_Baseboard
   - HS08_CCASHP_VRF
+  - HS09_CCASHP_Baseboard
   - HS11_ASHP_PTHP
   - HS12_ASHP_Baseboard
   - HS13_ASHP_VRF
+  - HS14_CGSHP_FanCoils
   :electrical_loads_scale:
   - NECB_Default
   - 0.5
@@ -63,7 +64,7 @@
   - 0.21
   - 0.183
   :fdwr_set:
-  - NECB_Default
+  - 0.4
   :fixed_wind_solar_trans:
   - 0.2
   - 0.3

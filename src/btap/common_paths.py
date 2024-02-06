@@ -1,6 +1,5 @@
 import os
 from pathlib import Path
-from src.btap.aws_credentials import AWSCredentials
 
 PROJECT_ROOT = str(Path(os.path.dirname(os.path.realpath(__file__))).parent.absolute())
 DOCKERFILES_FOLDER = os.path.join(Path(os.path.dirname(os.path.realpath(__file__))).parent.absolute(), 'Dockerfiles')
@@ -8,7 +7,12 @@ PROJECT_FOLDER = os.path.join(Path(os.path.dirname(os.path.realpath(__file__))).
 EXAMPLE_FOLDER = os.path.join(PROJECT_FOLDER, 'examples')
 OUTPUT_FOLDER = os.path.join(PROJECT_FOLDER, "output")
 SCHEMA_FOLDER = os.path.join(PROJECT_FOLDER, "schemas")
-CONFIG_FOLDER = os.path.join(PROJECT_FOLDER, 'config')
+CONFIG_FOLDER = os.path.join(os.environ['HOME'], '.btap','config')
+HISTORIC_WEATHER_LIST = "https://github.com/canmet-energy/btap_weather/raw/main/historic_weather_filenames.json"
+FUTURE_WEATHER_LIST = "https://github.com/canmet-energy/btap_weather/raw/main/future_weather_filenames.json"
+HISTORIC_WEATHER_REPO = "https://github.com/canmet-energy/btap_weather/raw/main/historic/"
+FUTURE_WEATHER_REPO = "https://github.com/canmet-energy/btap_weather/raw/main/future/"
+AWS_BUCKET = '834599497928'
 
 
 class CommonPaths(object):
@@ -25,7 +29,8 @@ class CommonPaths(object):
                           analysis_id=None,
                           local_output_folder=None,
                           project_input_folder=None,
-                          algorithm_type=None):
+                          algorithm_type=None,
+                          aws_bucket='834599497928'):
         self.local_output_folder = local_output_folder
         self._analysis_name = analysis_name
         self._analysis_id = analysis_id
@@ -43,7 +48,7 @@ class CommonPaths(object):
     def get_analysis_id(self):
         return self._analysis_id
 
-    def get_username(self):
+    def get_build_env_name(self):
         if os.environ.get('BUILD_ENV_NAME') is None:
             print('Please set BUILD_ENV_NAME environment variable to your aws username.')
             exit(1)
@@ -116,13 +121,13 @@ class CommonPaths(object):
     # S3 paths
 
     def s3_url_prefix(self,path):
-        bucket = AWSCredentials().account_id
+        bucket = AWS_BUCKET
         return f"s3://{bucket}/{path}"
 
 
     # /BUILD_ENV_NAME/analysis_name
     def s3_analysis_name_folder(self,url=False):
-        return os.path.join(self.get_username(), self.get_project_name()).replace('\\', '/')
+        return os.path.join(self.get_build_env_name(), self.get_project_name()).replace('\\', '/')
 
 
     # /BUILD_ENV_NAME/analysis_name/algorithm_type
@@ -153,22 +158,22 @@ class CommonPaths(object):
 
     # s3://bucket/BUILD_ENV_NAME/analysis_name
     def s3_btap_batch_container_input_path(self):
-        bucket = AWSCredentials().account_id
+        bucket = AWS_BUCKET
         return f"s3://{bucket}/{self.s3_analysis_name_folder()}".replace('\\', '/')
 
 
     # s3://bucket//BUILD_ENV_NAME/analysis_name/algorithm_type/job_id
     def s3_btap_cli_container_input_path(self, job_id=None):
-        bucket = AWSCredentials().account_id
+        bucket = AWS_BUCKET
         return f"s3://{bucket}/{self.s3_datapoint_input_folder(job_id=job_id)}".replace('\\', '/')
 
     #s3://bucket//BUILD_ENV_NAME/analysis_name/algorithm_type/run
     def s3_btap_cli_container_output_path(self):
-        bucket = AWSCredentials().account_id
+        bucket = AWS_BUCKET
         return f"s3://{bucket}/{self.s3_output_folder()}/run".replace('\\', '/')
 
     def s3_job_url(self, job_id=None):
-        bucket = AWSCredentials().account_id
+        bucket = AWS_BUCKET
         return f"https://s3.console.aws.amazon.com/s3/buckets/{bucket}?region=ca-central-1&prefix={self.s3_datapoint_output_folder(job_id=job_id)}/"
 
 

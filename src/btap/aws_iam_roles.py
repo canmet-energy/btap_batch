@@ -5,7 +5,7 @@ from src.btap.aws_credentials import AWSCredentials
 from src.btap.common_paths import CommonPaths
 
 class IAMRoles():
-    def __init__(self):
+    def __init__(self, build_env_name = None):
         self.credentials = self.get_credentials()
         self.path = '/service-role/'
         self.role_name = ""
@@ -13,6 +13,7 @@ class IAMRoles():
         self.assume_role_policy = {}
         self.managed_policies = []
         self.description = ''
+        self.build_env_name = build_env_name
 
     def arn(self):
         iam_res = AWSCredentials().iam_resource
@@ -21,7 +22,10 @@ class IAMRoles():
         return role.arn
 
     def full_role_name(self):
-        return f"{CommonPaths().get_username().replace('.', '-')}-{self.role_name}"
+        if self.build_env_name is None:
+            return f"{CommonPaths().get_build_env_name().replace('.', '-')}-{self.role_name}"
+        else:
+            return f"{self.build_env_name.replace('.', '-')}-{self.role_name}"
 
     def create_role(self):
         # delete if it already exists.
@@ -64,7 +68,8 @@ class IAMRoles():
         return credentials
 
 class IAMCodeBuildRole(IAMRoles):
-    def __init__(self):
+    def __init__(self, build_env_name = None):
+        self.build_env_name = build_env_name
         self.credentials = self.get_credentials()
         self.path = '/service-role/'
         self.role_name = "code_build"
@@ -90,7 +95,8 @@ class IAMCodeBuildRole(IAMRoles):
                                   'PolicyName': 'AmazonS3FullAccess'}]
 
 class IAMBatchJobRole(IAMRoles):
-    def __init__(self):
+    def __init__(self, build_env_name = None):
+        self.build_env_name = build_env_name
         self.credentials = self.get_credentials()
         self.path = '/service-role/'
         self.role_name = "batch_job_role"
@@ -126,7 +132,8 @@ class IAMBatchJobRole(IAMRoles):
 
 
 class IAMBatchServiceRole(IAMRoles):
-    def __init__(self):
+    def __init__(self, build_env_name = None):
+        self.build_env_name = build_env_name
         self.credentials = self.get_credentials()
         self.path = '/service-role/'
         self.role_name = "batch_service_role"

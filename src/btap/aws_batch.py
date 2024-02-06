@@ -20,14 +20,16 @@ BATCH_SERVICE_ROLE = 'arn:aws:iam::834599497928:role/service-role/AWSBatchServic
 class AWSBatch:
 
     def __init__(self,
+                 build_env_name = None,
                  image_manager=None,
                  compute_environment=None
                  ):
+        self.build_env_name = build_env_name
         self.image_manager = image_manager
         self.compute_environment_name = compute_environment.get_compute_environment_name()
-        self.launch_template_name = f'{self._username()}_storage_template'
-        self.job_queue_name = f'{self._username()}_{image_manager.image_name}_job_queue'
-        self.job_def_name = f'{self._username()}_{image_manager.image_name}_job_def'
+        self.launch_template_name = f'{self._build_env_name()}_storage_template'
+        self.job_queue_name = f'{self._build_env_name()}_{image_manager.image_name}_job_queue'
+        self.job_def_name = f'{self._build_env_name()}_{image_manager.image_name}_job_def'
 
 
     def setup(self, container_vcpu = None, container_memory = None):
@@ -43,8 +45,12 @@ class AWSBatch:
     def __aws_credentials(self):
         return AWSCredentials()
 
-    def _username(self):
-        return CommonPaths().get_username().replace('.', '_')
+    def _build_env_name(self):
+        if self.build_env_name is None:
+            return CommonPaths().get_build_env_name().replace('.', '_')
+        else:
+            return self.build_env_name
+
 
 
     def __describe_job_queues(self, job_queue_name, n=0):

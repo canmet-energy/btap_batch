@@ -5,15 +5,17 @@ import sys
 
 
 
+
 # Avoid having to add PYTHONPATH to env.
 PROJECT_ROOT = str(Path(os.path.dirname(os.path.realpath(__file__))).parent.absolute())
 sys.path.append(PROJECT_ROOT)
-from src.btap.common_paths import PROJECT_FOLDER, EXAMPLE_FOLDER, OUTPUT_FOLDER, SCHEMA_FOLDER , CONFIG_FOLDER
+from src.btap.cli_helper_methods import build_and_configure_docker_and_aws, load_config
+from src.btap.common_paths import PROJECT_FOLDER, EXAMPLE_FOLDER, OUTPUT_FOLDER, CONFIG_FOLDER
 CONTEXT_SETTINGS = dict(help_option_names=['-h', '--help'])
 
 
 def check_environment_vars_are_defined(compute_environment=None):
-    print("not checking env vars!")
+    print("")
 
 
 @click.group(context_settings=CONTEXT_SETTINGS)
@@ -47,12 +49,12 @@ def credits():
         print(random.choice(colors) + pyfiglet.figlet_format(x) + Fore.RESET)
 
 
-@btap.command()
+@btap.command(help=f"This will build the environment required to run an analysis. If running for the first time. A template configuration will be placed in your home folder here:{CONFIG_FOLDER} ")
 @click.option('--build_config_path', '-p', default=os.path.join(CONFIG_FOLDER, 'build_config.yml'),
               help=f'location of Location of build_config.yml file.  Default location is {CONFIG_FOLDER}')
 
 def build_environment(**kwargs):
-    from src.btap.cli_helper_methods import build_and_configure_docker_and_aws, load_config
+
 
     """
 
@@ -101,7 +103,6 @@ def build_environment(**kwargs):
         # Setting the costing branch to an empty string will force the docker file to not use costing.
         btap_costing_branch = ''
 
-    check_environment_vars_are_defined(compute_environment=compute_environment)
     build_and_configure_docker_and_aws(btap_batch_branch=btap_batch_branch,
                                        btap_costing_branch=btap_costing_branch,
                                        compute_environment=compute_environment,
@@ -112,39 +113,7 @@ def build_environment(**kwargs):
                                        build_btap_cli=build_btap_cli)
 
 
-def load_config(build_config_path):
-    from src.btap.cli_helper_methods import generate_build_config
-    import jsonschema
-    import yaml
-    try:
-        schema_file = os.path.join(SCHEMA_FOLDER, 'build_config_schema.yml')
-        with open(schema_file) as f:
-            schema = yaml.load(f, Loader=yaml.FullLoader)
-    except FileNotFoundError:
-        print(f'Error: The schema file does not exist {schema_file}')
-        exit(1)
-    try:
-        with open(build_config_path) as f:
-            config = yaml.load(f, Loader=yaml.FullLoader)
-        # Validate against schema
-    except FileNotFoundError:
-        print(
-            f'The file does not exist. Creating a template at location {build_config_path}. Please edit it with your information.')
-        generate_build_config(build_config_path)
-        exit(1)
-    try:
-        jsonschema.validate(config, schema)
-    except yaml.parser.ParserError as e:
-        print(f"ERROR: {build_config_path} contains an invalid YAML format. Please check your YAML format.")
-        print(e.message)
-        exit(1)
 
-
-    except jsonschema.exceptions.ValidationError as e:
-        print(f"ERROR: {build_config_path} does not contain valid data. Please fix the error below and try again.")
-        print(e.message)
-        exit(1)
-    return config
 
 
 @btap.command()
@@ -200,74 +169,37 @@ def run_analysis_project(**kwargs):
              output_folder=output_folder)
 
 
-@btap.command()
-def aws_db_reset(**kwargs):
-    from src.btap.aws_dynamodb import AWSResultsTable
-    """
-    This command will clear all data contained in the AWS DynamoDB database.
 
-    Example:
-
-       python ./bin/btap_batch.py aws-db-reset
-
-    """
-    AWSResultsTable().delete_table()
-    AWSResultsTable().create_table()
-
-
-@btap.command()
-@click.option('--type', default="csv", help='format type to dump entire results information. Choices are pickle or csv')
-@click.option('--folder_path', default=OUTPUT_FOLDER,
-              help='folder path to save database file dump. Defaults to projects output folder. ')
-@click.option('--analysis_name', default=None, help='Filter by analysis name given. Default shows all.')
-def aws_db_dump(**kwargs):
-    from src.btap.aws_dynamodb import AWSResultsTable
-    """
-    This command will dump all data contained in the AWS (DynamoDB) database to a local file.
-
-        Example:
-
-        python ./bin/btap_batch.py aws_db_dump --folder_path C:/output_folder/
-    """
-    type = kwargs['type']
-    folder_path = kwargs['folder_path']
-    analysis_name = kwargs['analysis_name']
-    check_environment_vars_are_defined(compute_environment='local_managed_aws_workers')
-    AWSResultsTable().dump_table(folder_path=folder_path, type=type, analysis_name=analysis_name)
+# @btap.command()
+# def aws_db_analyses_status(**kwargs):
+#     import pandas
+#     from src.btap.aws_dynamodb import AWSResultsTable
+#     """
+#     This command will show the state of each analysis that has been, and that is currently running.
+#         Example:
+#         python ./bin/btap_batch.py aws_db_analyses_status
+#     """
+#     pandas.set_option('display.max_colwidth', None)
+#     pandas.set_option('display.max_columns', None)
+#     print(AWSResultsTable().aws_db_analyses_status())
 
 
-@btap.command()
-def aws_db_analyses_status(**kwargs):
-    import pandas
-    from src.btap.aws_dynamodb import AWSResultsTable
-    """
-    This command will show the state of each analysis that has been, and that is currently running.
-        Example:
-        python ./bin/btap_batch.py aws_db_analyses_status
-    """
-    pandas.set_option('display.max_colwidth', None)
-    pandas.set_option('display.max_columns', None)
-    check_environment_vars_are_defined(compute_environment='local_managed_aws_workers')
-    print(AWSResultsTable().aws_db_analyses_status())
-
-
-@btap.command()
-@click.option('--analysis_name', default=None, help='Filter by analysis name given. Default shows all.')
-def aws_db_failures(**kwargs):
-    from src.btap.aws_dynamodb import AWSResultsTable
-    import pandas
-    """
-    This will print a dataframe of all the failed runs, if any. You may filter this by the --analysis_name switch. It will provide
-    The analysis name, datapoint_id,container_error if available, and the url to the failed run on s3.
-
-    Example:
-        python ./bin/btap_batch.py aws_db_failures
-    """
-    pandas.set_option('display.max_colwidth', None)
-    pandas.set_option('display.max_columns', None)
-    check_environment_vars_are_defined(compute_environment='local_managed_aws_workers')
-    print(AWSResultsTable().aws_db_failures(analysis_name=kwargs['analysis_name']))
-
+# @btap.command()
+# @click.option('--analysis_name', default=None, help='Filter by analysis name given. Default shows all.')
+# def aws_db_failures(**kwargs):
+#     from src.btap.aws_dynamodb import AWSResultsTable
+#     import pandas
+#     """
+#     This will print a dataframe of all the failed runs, if any. You may filter this by the --analysis_name switch. It will provide
+#     The analysis name, datapoint_id,container_error if available, and the url to the failed run on s3.
+#
+#     Example:
+#         python ./bin/btap_batch.py aws_db_failures
+#     """
+#     pandas.set_option('display.max_colwidth', None)
+#     pandas.set_option('display.max_columns', None)
+#     print(AWSResultsTable().aws_db_failures(analysis_name=kwargs['analysis_name']))
+#
 
 @btap.command(help="This will run all the analysis projects in the examples file. Locally or on AWS.")
 @click.option('--compute_environment', default='local',
@@ -287,7 +219,6 @@ def parallel_test_examples(**kwargs):
     python ./bin/btap_batch.py parallel_test_examples --compute_environment aws
 
     """
-    check_environment_vars_are_defined(compute_environment=kwargs['compute_environment'])
     start = time.time()
     examples_folder = os.path.join(PROJECT_FOLDER, 'examples')
     example_folders = [
@@ -331,7 +262,6 @@ def batch_analyses(**kwargs):
     python ./bin/btap_batch.py batch-analyses --compute_environment aws --analyses_folder_path
 
     """
-    check_environment_vars_are_defined(compute_environment=kwargs['compute_environment'])
     start = time.time()
     analyses_folder_path = kwargs['analyses_folder_path']
     folders = [os.path.abspath(os.path.join(analyses_folder_path,name)) for name in os.listdir(analyses_folder_path) if os.path.isdir(os.path.join(analyses_folder_path,name))]
@@ -379,7 +309,6 @@ def optimized_solution_sets(**kwargs):
     python ./bin/btap_batch.py optimized-solution-sets -c aws 
 
     """
-    check_environment_vars_are_defined(compute_environment=kwargs['compute_environment'])
     working_folder = kwargs['working_folder']
     hvac_fuel_types_list = kwargs['hvac_fuel_types_list']
     compute_environment = kwargs['compute_environment']
@@ -430,8 +359,15 @@ def post_process_solution_sets(**kwargs):
 
 @btap.command(
     help="This will terminate all aws analyses. It will not delete anything fron S3.")
+@click.option('--build_config_path', '-c', default=os.path.join(CONFIG_FOLDER, 'build_config.yml'),
+              help=f'location of Location of build_config.yml file.  Default location is {CONFIG_FOLDER}')
 def terminate_aws_analyses(**kwargs):
+    from src.btap.cli_helper_methods import load_config
     from src.btap.cli_helper_methods import terminate_aws_analyses
+
+    config = load_config(build_config_path=kwargs["build_config_path"])
+    os.environ['BUILD_ENV_NAME'] = config['build_env_name']
+
     terminate_aws_analyses()
 
 @btap.command(help="This will list active analyses")
@@ -457,7 +393,41 @@ def sensitivity_report(**kwargs):
     BTAPSensitivity.generate_pdf_report( df=df,
                                          pdf_output=os.path.join(kwargs['pdf_output_file'], 'results.pdf'))
 
+@btap.command(
+    help="This delete all resources on aws for the given build_env_name")
+@click.option('--build_env_name', '-n',  help='name of aws build_environment to delete')
+def del_aws_build_env(**kwargs):
+    from src.btap.cli_helper_methods import delete_aws_build_env
+    delete_aws_build_env(build_env_name=kwargs['build_env_name'])
 
+
+@btap.command(
+    help="Download results from 1 or more analyses performed on Amazon's S3 bucket.")
+@click.option('--s3_bucket',   help='Bucket where build environment exists and analyses were run. ', show_default=True, default='834599497928')
+@click.option('--build_env_name',  help='name of aws build_environment simulation was run with.',show_default = True, default='solution_sets')
+@click.option('--analysis_name',  help='name of analysis or you can use regex to get any or all analyses performed under a build environment name', show_default=True, default='LowriseApartment.*$')
+@click.option('--output_path',  help='Path to save downloaded data to.', show_default = True, default=f'{os.environ["HOME"]}/btap_batch/downloads')
+@click.option('--download',   help='By default, will not download and just show the folders it finds on S3. This is used to make sure your regex is working as intended before you add this flag to set to true. ', is_flag = True, show_default=True, default=False)
+@click.option('--osm',   help='Download OSM files', is_flag = True, show_default=True, default=False)
+@click.option('--hourly',   help='Download Hourly data', is_flag = True, show_default=True, default=False)
+@click.option('--eplussql',   help='Download EnergyPlus SQLite output data', is_flag = True, show_default=True, default=False)
+@click.option('--eplushtm',   help='Download EnergyPlus HTM output data', is_flag = True, show_default=True, default=False)
+
+
+def aws_download_analyses(**kwargs):
+    from src.btap.cli_helper_methods import download_analyses
+    download_analyses(bucket='834599497928',
+                      build_env_name=kwargs['build_env_name']+'/',  # S3 prefix MUST have a trailing /
+                      analysis_name=kwargs['analysis_name'],
+                      output_path= kwargs['output_path'],
+                      hourly_csv=kwargs['hourly'],
+                      in_osm=kwargs['osm'],
+                      eplusout_sql=kwargs['eplussql'],
+                      eplustbl_htm=kwargs['eplushtm'],
+                      concat_excel_files=True,  # concat all output.xlsx files to a master.csv and parquet file
+                      unzip_and_delete=False,  # This will unzip the zip files of all the above into a folder and delete the original zip file.
+                      dry_run=not kwargs['download']  # If set to true.. will do a dry run and not download anything. This is used to make sure your regex is working as intended.
+                      )
 
 
 if __name__ == '__main__':

@@ -17,7 +17,14 @@ from src.btap.btap_lhs import BTAPSamplingLHS
 from src.btap.btap_sensitivity import BTAPSensitivity
 from src.btap.btap_batch_analysis import BTAPBatchAnalysis
 from src.btap.aws_s3 import S3
-from src.btap.common_paths import CommonPaths, SCHEMA_FOLDER
+from src.btap.common_paths import CommonPaths, SCHEMA_FOLDER, HISTORIC_WEATHER_LIST,FUTURE_WEATHER_LIST,HISTORIC_WEATHER_REPO,FUTURE_WEATHER_REPO
+import os
+import pandas as pd
+from src.btap.aws_s3 import S3
+import zipfile
+import pathlib
+import re
+
 import requests
 import shutil
 import time
@@ -30,13 +37,7 @@ from icecream import ic
 from src.btap.aws_dynamodb import AWSResultsTable
 import math
 import yaml
-from cloudpathlib import CloudPath
-import pandas as pd
-from distutils.dir_util import copy_tree
-HISTORIC_WEATHER_LIST = "https://github.com/canmet-energy/btap_weather/raw/main/historic_weather_filenames.json"
-FUTURE_WEATHER_LIST = "https://github.com/canmet-energy/btap_weather/raw/main/future_weather_filenames.json"
-HISTORIC_WEATHER_REPO = "https://github.com/canmet-energy/btap_weather/raw/main/historic/"
-FUTURE_WEATHER_REPO = "https://github.com/canmet-energy/btap_weather/raw/main/future/"
+
 
 
 
@@ -201,30 +202,13 @@ def build_and_configure_docker_and_aws(btap_batch_branch=None,
 
 
     if compute_environment  in ['local_managed_aws_workers', 'aws']:
-        # Tear down
+        delete_aws_build_env()
+
+        # # Create new
         ace_worker = AWSComputeEnvironment(name='btap_cli')
         ace_manager = AWSComputeEnvironment(name='btap_batch')
         image_worker = AWSImageManager(image_name='btap_cli')
-        image_btap_batch = AWSImageManager(image_name='btap_batch', compute_environment=ace_worker)
-
-        # tear down aws_btap_cli batch framework.
-        batch_cli = AWSBatch(image_manager=image_worker, compute_environment=ace_worker)
-        batch_cli.tear_down()
-
-        # tear down aws_btap_batch batch framework.
-        batch_manager = AWSBatch(image_manager=image_btap_batch, compute_environment=ace_manager)
-        batch_manager.tear_down()
-
-        # tear down compute resources.
-        ace_worker.tear_down()
-        ace_manager.tear_down()
-
-        # Delete user role permissions.
-        IAMBatchJobRole().delete()
-        IAMCodeBuildRole().delete()
-        IAMBatchServiceRole().delete()
-
-        # # Create new
+        image_manager = AWSImageManager(image_name='btap_batch', compute_environment=ace_worker)
         IAMBatchJobRole().create_role()
         IAMCodeBuildRole().create_role()
         IAMBatchServiceRole().create_role()
@@ -234,8 +218,7 @@ def build_and_configure_docker_and_aws(btap_batch_branch=None,
         ace_worker = AWSComputeEnvironment(name='btap_cli')
         ace_worker.setup(maxvCpus=math.floor(MAX_AWS_VCPUS * 0.95))
 
-        # Build Image for worker
-        image_worker = AWSImageManager(image_name='btap_cli')
+
 
         if build_btap_cli:
             print('Building btap_cli on aws..')
@@ -249,11 +232,10 @@ def build_and_configure_docker_and_aws(btap_batch_branch=None,
                         container_memory=WORKER_CONTAINER_MEMORY)
 
         # Create compute environment for analysis managers, which is a 10% of MAXVCPU
-        ace_manager = AWSComputeEnvironment(name='btap_batch')
+
         ace_manager.setup(maxvCpus=math.floor(MAX_AWS_VCPUS * 0.05))
 
         # Build image for btap_batch manager
-        image_manager = AWSImageManager(image_name='btap_batch')
         if build_btap_batch:
             print('Building AWS batch manager image')
             image_manager.build_image(build_args=build_args_btap_batch)
@@ -276,6 +258,29 @@ def build_and_configure_docker_and_aws(btap_batch_branch=None,
             image_worker.build_image(build_args=build_args_btap_cli)
         else:
             print("Skipping building btap_cli image at users request.")
+
+
+def delete_aws_build_env(build_env_name = None):
+    # Tear down
+    ace_worker = AWSComputeEnvironment(build_env_name=build_env_name, name='btap_cli')
+    ace_manager = AWSComputeEnvironment(build_env_name=build_env_name,name='btap_batch')
+    image_worker = AWSImageManager(build_env_name=build_env_name, image_name='btap_cli')
+    image_manager = AWSImageManager(build_env_name=build_env_name, image_name='btap_batch', compute_environment=ace_worker)
+    # tear down aws_btap_cli batch framework.
+    batch_cli = AWSBatch(build_env_name=build_env_name, image_manager=image_worker, compute_environment=ace_worker)
+    batch_cli.tear_down()
+    # tear down aws_btap_batch batch framework.
+    batch_manager = AWSBatch(build_env_name=build_env_name, image_manager=image_manager, compute_environment=ace_manager)
+    batch_manager.tear_down()
+    # tear down compute resources.
+    ace_worker.tear_down()
+    ace_manager.tear_down()
+    # Delete user role permissions.
+    IAMBatchJobRole(build_env_name=build_env_name).delete()
+    IAMCodeBuildRole(build_env_name=build_env_name).delete()
+    IAMBatchServiceRole(build_env_name=build_env_name).delete()
+
+
 
 
 def analysis(project_input_folder=None,
@@ -391,8 +396,6 @@ def analysis(project_input_folder=None,
 
                 br.run()
                 reference_run_df = br.btap_data_df
-
-        # ic(reference_run_data_path)
 
         # BTAP analysis placeholder.
         ba = None
@@ -698,18 +701,18 @@ def get_number_of_failures(job_queue_name='btap_cli'):
 def generate_build_config(build_config_path = None):
     import yaml
 
-    config = """
+    config = f"""
 # This is the name of the build environment. This will prefix all images, s3 folder, and resources created on aws. 
-build_env_name: null
+build_env_name: {os.environ['USER']}
 
-# Github Token
+# Github Token. This must be set to use the costing module. Permissions to access are given by NRCan staff. 
 git_api_token: null
 
 # Compute Environment used to build and run analyses. Options are
 #  local: Will run everything on your own computer. Recommended for running small analysis and testing ahead of using aws.
-#  aws: Run everything on Amazon infrastruture. You can turn off your computer after the analyses are all sent to Amazon. Recommended for large analyses.
+#  aws: Run everything on Amazon infrastructure. You can turn off your computer after the analyses are all sent to Amazon. Recommended for large analyses.
 #  local_managed_aws_workers: Analysis is managed on your local computer but simulations are done on Amazon.. Used by the aws process above.
-compute_environment: aws
+compute_environment: local
 
 # Branch of btap_batch to be used in aws compute_environment runs on AWS.
 btap_batch_branch: build_change
@@ -721,7 +724,7 @@ btap_costing_branch: master
 os_standards_branch: nrcan
 
 # Branch of openstudio version to build into container environment. This by default will select the E+ version used with that version.
-openstudio_version: 3.6.1
+openstudio_version: 3.7.0
 
 #List of Weather files to build included in the build environment. Only .epw files , and <100 files.
 weather_list:
@@ -745,7 +748,145 @@ build_btap_batch: True
 
     """
 
-    with open(build_config_path, "w") as file:
-        file.write(config)
+    output_file = Path(build_config_path)
+    output_file.parent.mkdir(exist_ok=True, parents=True)
+    output_file.write_text(config)
 
 
+# This method will a single analysis present in a given S3 path. It will only download the zips and output
+# excel files.  It will rename the files with the analysis_name/parent folder name.
+# bucket is the s3 bucket.
+# prefix is the s3 analysis folder to parse. Note the trailing / is important. It denoted that it is a folder to S3.
+# target path is the path on this machine where the files will be stored.
+# hourly_csv, eplusout_sql, in_osm, eplustbl_htm are bools that indicate to download those zipfiles. It will always download
+# the output.xlsx file.
+def download_analysis(key='phylroy_lopez_1/parametric_example/',
+                      bucket='834599497928',
+                      target_path='/home/plopez/btap_batch/downloads',
+                      hourly_csv=False,
+                      in_osm=False,
+                      eplusout_sql=False,
+                      eplustbl_htm=False,
+                      unzip_and_delete=True,
+                      ):
+    filetype = 'output.xlsx'
+    source_zip_file = os.path.join(key, 'results', filetype).replace('\\', '/')
+    target_zip_basename = os.path.join(target_path, os.path.basename(os.path.dirname(key)) + "_" + filetype)
+    S3().download_file(s3_file=source_zip_file, bucket_name=bucket, target_path=target_zip_basename)
+
+    if hourly_csv:
+        filetype = 'hourly.csv.zip'
+        source_zip_file = os.path.join(key, 'results', 'zips', filetype).replace('\\', '/')
+        target_zip_basename = os.path.join(target_path, os.path.basename(os.path.dirname(key)) + "_" + filetype)
+        is_downloaded = S3().download_file(s3_file=source_zip_file, bucket_name=bucket, target_path=target_zip_basename)
+        if unzip_and_delete and is_downloaded:
+            extraction_folder_suffix = 'hourly.csv'
+            extraction_folder = os.path.join(target_path, extraction_folder_suffix)
+            pathlib.Path(extraction_folder).mkdir(parents=True, exist_ok=True)
+            with zipfile.ZipFile(target_zip_basename, 'r') as zip_ref:
+                zip_ref.extractall(extraction_folder)
+            pathlib.Path(target_zip_basename).unlink(missing_ok=True)
+
+    if in_osm:
+        filetype = 'in.osm.zip'
+        source_zip_file = os.path.join(key, 'results', 'zips', filetype).replace('\\', '/')
+        target_zip_basename = os.path.join(target_path, os.path.basename(os.path.dirname(key)) + "_" + filetype)
+        is_downloaded = S3().download_file(s3_file=source_zip_file, bucket_name=bucket, target_path=target_zip_basename)
+        if unzip_and_delete and is_downloaded:
+            extraction_folder_suffix = 'in.osm'
+            extraction_folder = os.path.join(target_path, extraction_folder_suffix)
+            pathlib.Path(extraction_folder).mkdir(parents=True, exist_ok=True)
+            with zipfile.ZipFile(target_zip_basename, 'r') as zip_ref:
+                zip_ref.extractall(extraction_folder)
+            pathlib.Path(target_zip_basename).unlink(missing_ok=True)
+
+    if eplusout_sql:
+        filetype = 'eplusout.sql.zip'
+        source_zip_file = os.path.join(key, 'results', 'zips', filetype).replace('\\', '/')
+        target_zip_basename = os.path.join(target_path, os.path.basename(os.path.dirname(key)) + "_" + filetype)
+        is_downloaded = S3().download_file(s3_file=source_zip_file, bucket_name=bucket, target_path=target_zip_basename)
+        if unzip_and_delete and is_downloaded:
+            extraction_folder_suffix = 'eplusout.sql'
+            extraction_folder = os.path.join(target_path, extraction_folder_suffix)
+            pathlib.Path(extraction_folder).mkdir(parents=True, exist_ok=True)
+            with zipfile.ZipFile(target_zip_basename, 'r') as zip_ref:
+                zip_ref.extractall(extraction_folder)
+            pathlib.Path(target_zip_basename).unlink(missing_ok=True)
+
+    if eplustbl_htm:
+        filetype = 'eplustbl.htm.zip'
+        source_zip_file = os.path.join(key, 'results', 'zips', filetype).replace('\\', '/')
+        target_zip_basename = os.path.join(target_path, os.path.basename(os.path.dirname(key)) + "_" + filetype)
+        is_downloaded = S3().download_file(s3_file=source_zip_file, bucket_name=bucket, target_path=target_zip_basename)
+        if unzip_and_delete and is_downloaded:
+            extraction_folder_suffix = 'eplustbl.htm'
+            extraction_folder = os.path.join(target_path, extraction_folder_suffix)
+            pathlib.Path(extraction_folder).mkdir(parents=True, exist_ok=True)
+            with zipfile.ZipFile(target_zip_basename, 'r') as zip_ref:
+                zip_ref.extractall(extraction_folder)
+            pathlib.Path(target_zip_basename).unlink(missing_ok=True)
+
+
+# This method will download all the analysis present in a given S3 path. It will only download the zips and output
+# excel files.  It will rename the files with the analysis_name/parent folder name.
+# bucket is the s3 bucket.
+# prefix is the s3 folder to parse. Note the trailing / is important. It denoted that it is a folder to S3.
+# target path is the path on this machine where the files will be stored.
+
+def download_analyses(bucket='834599497928',
+                      build_env_name='solution_sets/',
+                      output_path='/home/plopez/btap_batch/downloads',
+                      hourly_csv=True,
+                      in_osm=True,
+                      eplusout_sql=True,
+                      eplustbl_htm=True,
+                      concat_excel_files=True,
+                      analysis_name='vin.*YUL.*',
+                      unzip_and_delete=True,
+                      dry_run=True
+                      ):
+    folders = S3().s3_get_list_of_folders_in_folder(bucket=bucket, prefix=build_env_name)
+    if build_env_name + 'btap_cli/' in folders:
+        folders.remove(build_env_name + 'btap_cli/')
+
+    if build_env_name + 'btap_batch/' in folders:
+        folders.remove(build_env_name + 'btap_batch/')
+
+    for folder in folders:
+
+        if re.search(analysis_name, folder) != None:
+            print(f"Processing {folder}")
+        if re.search(analysis_name, folder) and not dry_run:
+            download_analysis(key=folder,
+                              bucket=bucket,
+                              target_path=output_path,
+                              hourly_csv=hourly_csv,
+                              in_osm=in_osm,
+                              eplusout_sql=eplusout_sql,
+                              eplustbl_htm=eplustbl_htm,
+                              unzip_and_delete=unzip_and_delete
+                              )
+    if concat_excel_files and not dry_run:
+        print(f"Creating master csv and parquet results file.")
+        all_files = os.listdir(output_path)
+        xlsx_files = [f for f in all_files if f.endswith('.xlsx')]
+        df_list = []
+        for xlsx in xlsx_files:
+            try:
+                df = pd.read_excel(os.path.join(output_path, xlsx))
+                print(f"Appending {xlsx} to master csv file.")
+                df_list.append(df)
+            except Exception as e:
+                print(f"Could not read file {xlsx} because of error: {e}")
+        # Concatenate all data into one DataFrame
+        big_df = pd.concat(df_list, ignore_index=True)
+
+        # Save the final result to a new CSV file
+        master_csv_path = os.path.join(output_path, 'master.csv')
+        big_df.to_csv(master_csv_path, index=False)
+
+        # Create parquet file.
+        master_parquet_file = os.path.join(output_path, 'master.parquet')
+        # Horrible workaround to deal with non-uniform datatypes in columns.
+        big_df = pd.read_csv(master_csv_path, dtype='unicode')
+        big_df.to_parquet(master_parquet_file)

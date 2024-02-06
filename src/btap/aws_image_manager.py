@@ -16,20 +16,18 @@ class AWSImageManager(DockerImageManager):
         return AWSCredentials()
 
     def __init__(self,
+                 build_env_name=None,
                  image_name=None,
                  compute_environment=None
-
-
                  ):
         super().__init__(image_name=image_name)
+        self.build_env_name = build_env_name
         self.credentials = self.__aws_credentials()
         self.bucket = self.credentials.account_id
         self.region = self.credentials.region_name
         self.compute_environment = compute_environment
         self.image_tag = 'latest'
 
-    def _get_image_tag(self):
-        return ''
 
     def get_image_uri(self):
         return f"{self.credentials.account_id}.dkr.ecr.{self.credentials.region_name}.amazonaws.com/{self.get_full_image_name()}:{self.image_tag}"
@@ -64,8 +62,8 @@ class AWSImageManager(DockerImageManager):
 
         source_folder = CommonPaths().get_dockerfile_folder_path(image_name=self.image_name)
 
-        s3.copy_folder_to_s3(self.bucket, source_folder, self.get_username() + '/' + self.image_name)
-        s3_location = 's3://' + self.bucket + '/' + self.get_username() + '/' + self.image_name
+        s3.copy_folder_to_s3(self.bucket, source_folder, self.get_build_env_name() + '/' + self.image_name)
+        s3_location = 's3://' + self.bucket + '/' + self.get_build_env_name() + '/' + self.image_name
         message = f"Copied build configuration files:\n\t from {source_folder}\n to \n\t {s3_location}"
         logging.info(message)
         print(message)
@@ -95,7 +93,7 @@ class AWSImageManager(DockerImageManager):
             description='string',
             source={
                 'type': 'S3',
-                'location': self.bucket + '/' + self.get_username() + '/' + self.image_name + '/'
+                'location': self.bucket + '/' + self.get_build_env_name() + '/' + self.image_name + '/'
             },
             artifacts={
                 'type': 'NO_ARTIFACTS',
@@ -116,7 +114,7 @@ class AWSImageManager(DockerImageManager):
         message = f'Building Image {self.get_full_image_name()} on {url}, will take ~10m'
         print(message)
         logging.info(message)
-        source_location = self.bucket + '/' + self.get_username() + '/' + self.image_name + '/'
+        source_location = self.bucket + '/' + self.get_build_env_name() + '/' + self.image_name + '/'
         message = f'Code build image env overrides {environment_vars}'
         logging.info(message)
 
@@ -156,6 +154,18 @@ class AWSImageManager(DockerImageManager):
             ecr.create_repository(repositoryName=repository_name)
         else:
             message = f"Repository {repository_name} already exists. Using existing."
+            logging.info(message)
+
+
+    def _delete_image_repository(self, repository_name=None):
+        ecr = AWSCredentials().ecr_client
+        repositories = ecr.describe_repositories()['repositories']
+        if not next((item for item in repositories if item["repositoryName"] == repository_name), None) == None:
+            message = f"Deleting repository {repository_name}"
+            logging.info(message)
+            ecr.delete_repository(repositoryName=repository_name)
+        else:
+            message = f"Repository {repository_name} does not exists. Not Deleting it."
             logging.info(message)
 
     def get_image(self, image_name=None, image_tag='latest'):

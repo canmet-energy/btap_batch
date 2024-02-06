@@ -432,7 +432,7 @@ class BTAPAnalysis():
                                  results_folder=self.cp.analysis_results_folder(),
                                  compute_environment=self.compute_environment,
                                  output_variables=self.output_variables,
-                                 username=self.cp.get_username())
+                                 username=self.cp.get_build_env_name())
         # Store post process run into analysis object. Will need it later.
         self.btap_data_df = ppr.run()
 

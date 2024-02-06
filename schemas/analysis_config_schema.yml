@@ -136,9 +136,7 @@ properties:
           enum:
             - Electricity
             - NaturalGas
-            - FuelOilNo2
             - ElectricityHPElecBackup
-            - NaturalGas
             - NaturalGasHPGasBackup
             - ElectricityHPGasBackupMixed
             - NaturalGasHPElecBackupMixed

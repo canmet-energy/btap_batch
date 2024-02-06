@@ -11,12 +11,14 @@ from icecream import ic
 
 class DockerImageManager:
 
-    def get_username(self):
-        return CommonPaths().get_username()
+    def get_build_env_name(self):
+        return CommonPaths().get_build_env_name()
 
     def __init__(self,
+                 build_env_name = None,
                  image_name=None,
                  compute_environement=None):
+        self.build_env_name = build_env_name
         self.cli_run_command = "docker run --rm"
         self.cli_build_command = "docker build"
         self.image_name = image_name
@@ -40,7 +42,7 @@ class DockerImageManager:
     def _get_image_build_args(self):
         build_args = self.build_args
         build_args['GIT_API_TOKEN'] = os.environ['GIT_API_TOKEN']
-        build_args['BUILD_ENV_NAME'] = CommonPaths().get_username()
+        build_args['BUILD_ENV_NAME'] = CommonPaths().get_build_env_name()
         return build_args
 
     def get_image(self):
@@ -53,7 +55,11 @@ class DockerImageManager:
 
     # Common
     def get_full_image_name(self):
-        return f"{self.get_username()}_{self.image_name}"
+        if self.build_env_name is None:
+            return f"{self.get_build_env_name()}_{self.image_name}"
+        else:
+            return f"{self.get_build_env_name()}_{self.image_name}"
+
 
     # Common
     def get_image_build_cli(self):
