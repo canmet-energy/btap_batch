@@ -110,7 +110,7 @@ def build(**kwargs):
 @click.option('--build_config_path', '-c', default=os.path.join(CONFIG_FOLDER, 'build_config.yml'),
               help=f'location of Location of build_config.yml file.  Default location is {CONFIG_FOLDER}')
 @click.option('--compute_environment', default=None,
-              help=f'location of Location of build_config.yml file.  Default location is {CONFIG_FOLDER}')
+              help=f'Computer environment to use.')
 def run(**kwargs):
     from src.btap.cli_helper_methods import analysis, load_config
     """

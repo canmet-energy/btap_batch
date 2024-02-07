@@ -83,7 +83,7 @@ class AWSAnalysisJob():
     def container_command(self):
         command = ["python3",
                    "/btap_batch/bin/btap_batch.py",
-                   "run-analysis-project",
+                   "run",
                    "--project_folder",
                    self.cp.s3_btap_batch_container_input_path(),
                    "--compute_environment",

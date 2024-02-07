@@ -22,7 +22,7 @@ def git_solution_sets():
         'NaturalGasHPGasBackup',
         'ElectricityHPGasBackupMixed',
         'NaturalGasHPElecBackupMixed']
-    OPTIMIZATION_RUNS = True
+    OPTIMIZATION_RUNS = False
     OPTIMIZATION_PRIMARY_FUELS_PIVOT = [
         'Electricity',
         'NaturalGas',
@@ -36,7 +36,7 @@ def git_solution_sets():
         'energy_eui_total_gj_per_m_sq',
         'npv_total_per_m_sq'
     ]
-    LHS_RUNS = True  # 2000 runs (1)
+    LHS_RUNS = False  # 2000 runs (1)
     LHS_PRIMARY_FUELS =[
         'Electricity',
         'ElectricityHPElecBackup',
