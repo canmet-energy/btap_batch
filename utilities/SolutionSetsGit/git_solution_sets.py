@@ -67,14 +67,14 @@ def git_solution_sets():
         # "Outpatient"
         # 'LEEPMidriseApartment',
         # 'LEEPMultiTower',
-        'LEEPPointTower',
-        #'LEEPTownHouse'
+        # 'LEEPPointTower',
+        # 'LEEPTownHouse'
     ]
 
 # Using airport codes to identify the locations.  Much easier if sometimes slightly inaccurate.
     epw_files = [
         # ['CAN_BC_Vancouver.Intl.AP.718920_CWEC2016.epw', 'YVR'],  # CZ 4
-        ['CAN_ON_Toronto.Pearson.Intl.AP.716240_CWEC2016.epw', 'YYZ'],  # CZ 5
+        # ['CAN_ON_Toronto.Pearson.Intl.AP.716240_CWEC2016.epw', 'YYZ'],  # CZ 5
         # ['CAN_QC_Montreal-Trudeau.Intl.AP.716270_CWEC2016.epw', 'YUL'],  # CZ 6
         # ['CAN_AB_Edmonton.Intl.AP.711230_CWEC2016.epw', 'YEG'],  # CZ 7A
         # ['CAN_AB_Fort.McMurray.AP.716890_CWEC2016.epw', 'YMM'],  # CZ 7B
@@ -151,6 +151,17 @@ def git_solution_sets():
 
     #LEEP Custom Options Overides
     if LEEP:
+        building_types = [
+            'LEEPMidriseApartment',
+            # 'LEEPMultiTower',
+            'LEEPPointTower',
+            'LEEPTownHouse'
+        ]
+
+        epw_files = [
+            ['CAN_ON_Toronto.Pearson.Intl.AP.716240_CWEC2016.epw', 'YYZ'],  # CZ 5
+        ]
+
         # LHS
         lhs_template[':options'][':fdwr_set'] = [0.40, 0.20, 0.60, 0.80]
         lhs_template[':options'][':primary_heating_fuel'] = LHS_PRIMARY_FUELS
@@ -161,6 +172,9 @@ def git_solution_sets():
             'HS14_CGSHP_FanCoils'
         ]
         # Sensitivity
+        SENSITIVITY_PRIMARY_FUELS_PIVOT = [
+            'NaturalGas'
+            ]
         sensitivity_template[':options'][':fdwr_set'] = [0.40, 0.20, 0.60, 0.80] # Order is important..First value is base case.
         sensitivity_template[':options'][':ecm_system_name'] = [
             'NECB_Default',
@@ -170,10 +184,10 @@ def git_solution_sets():
         ]
         # Optimization
         OPTIMIZATION_PRIMARY_FUELS_PIVOT = [
-        'Electricity',
-        'NaturalGas',
-        'ElectricityHPElecBackup',
-        'ElectricityHPGasBackupMixed'
+            'Electricity',
+            'NaturalGas',
+            'ElectricityHPElecBackup',
+            'ElectricityHPGasBackupMixed'
         ]
         optimization_template[':options'][':fdwr_set']  = [0.40]
         optimization_template[':options'][':ecm_system_name'] = [

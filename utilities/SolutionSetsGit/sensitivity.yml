@@ -32,7 +32,6 @@
   - NECB_Default
   - HS09_CCASHP_Baseboard
   - HS11_ASHP_PTHP
-  - HS12_ASHP_Baseboard
   - HS14_CGSHP_FanCoils
   :electrical_loads_scale:
   - NECB_Default
@@ -65,9 +64,8 @@
   - 0.21
   - 0.183
   :fdwr_set:
-  - NECB_Default
-  - 0.2
   - 0.4
+  - 0.2
   - 0.6
   - 0.8
   :fixed_wind_solar_trans:
@@ -164,67 +162,5 @@
   - NECB_Default
   :template:
   - NECB2020
-:output_meters:
-- frequency: hourly
-  name: NaturalGas:Facility
-- frequency: hourly
-  name: Electricity:Facility
-- frequency: hourly
-  name: FuelOilNo2:Facility
-- frequency: hourly
-  name: InteriorLights:Electricity
-- frequency: hourly
-  name: Heating:Electricity
-- frequency: hourly
-  name: Heating:NaturalGas
-- frequency: hourly
-  name: Heating:FuelOilNo2
-- frequency: hourly
-  name: Heating:DistrictHeating
-- frequency: hourly
-  name: Cooling:Electricity
-- frequency: hourly
-  name: Heating:DistrictCooling
-- frequency: hourly
-  name: Fans:Electricity
-- frequency: hourly
-  name: Pumps:Electricity
-- frequency: hourly
-  name: InteriorEquipment:Electricity
-- frequency: hourly
-  name: WaterSystems:Electricity
-- frequency: hourly
-  name: WaterSystems:NaturalGas
-:output_variables:
-- frequency: hourly
-  key: '*'
-  operation: '*'
-  unit: '*'
-  variable: Zone Predicted Sensible Load to Setpoint Heat Transfer Rate
-- frequency: hourly
-  key: '*'
-  operation: '*'
-  unit: '*'
-  variable: Zone Predicted Sensible Load to Heating Setpoint Heat Transfer Rate
-- frequency: hourly
-  key: '*'
-  operation: '*'
-  unit: '*'
-  variable: Zone Predicted Sensible Load to Cooling Setpoint Heat Transfer Rate
-- frequency: hourly
-  key: '*'
-  operation: '*'
-  unit: '*'
-  variable: Zone Predicted Moisture Load Moisture Transfer Rate
-- frequency: hourly
-  key: '*'
-  operation: '*'
-  unit: '*'
-  variable: Zone Predicted Moisture Load to Humidifying Setpoint Moisture Transfer
-    Rate
-- frequency: hourly
-  key: '*'
-  operation: '*'
-  unit: '*'
-  variable: Zone Predicted Moisture Load to Dehumidifying Setpoint Moisture Transfer
-    Rate
+:output_meters: []
+:output_variables: []

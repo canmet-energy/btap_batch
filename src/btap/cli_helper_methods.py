@@ -16,6 +16,7 @@ from src.btap.btap_elimination import BTAPElimination
 from src.btap.btap_lhs import BTAPSamplingLHS
 from src.btap.btap_sensitivity import BTAPSensitivity
 from src.btap.btap_batch_analysis import BTAPBatchAnalysis
+from src.btap.reports import generate_btap_reports
 from src.btap.aws_s3 import S3
 from src.btap.common_paths import CommonPaths, SCHEMA_FOLDER, HISTORIC_WEATHER_LIST,FUTURE_WEATHER_LIST,HISTORIC_WEATHER_REPO,FUTURE_WEATHER_REPO
 import os
@@ -491,7 +492,7 @@ def terminate_aws_analyses():
     batch_cli.clear_queue()
 
 
-def sensitivity_chart(excel_file=None, pdf_output_folder="./"):
+def sensitivity_chart(data_file='/home/plopez/btap_batch/downloads/master.parquet', pdf_output_folder=r"/home/plopez/btap_batch/test"):
     import pandas as pd
     import numpy as np
     import seaborn as sns
@@ -501,23 +502,33 @@ def sensitivity_chart(excel_file=None, pdf_output_folder="./"):
     import dataframe_image as dfi
 
     import time
-    # Location of Excel file used from sensitivity.
-    OUTPUT_XLSX = excel_file
-    # Load data into memory as a dataframe.
-    df = pd.read_excel(open(OUTPUT_XLSX, 'rb'), sheet_name='btap_data')
+
+
+    # Get the file extension
+    ext = os.path.splitext(data_file)[1]
+
+    if ext == '.csv':
+        df = pd.read_csv(data_file)
+    elif ext == '.xlsx':
+        df = pd.read_excel(data_file)
+    elif ext == '.parquet':
+        df = pd.read_parquet(data_file)
+    else:
+        raise RuntimeError('File extension not recognized')
+
     # Gets all unique values in the scenario column.
     scenarios = df[':scenario'].unique()
     analysis_names = df[':analysis_name'].unique()
 
     for analysis_name in analysis_names:
-        pdf_output_folder = os.path.join(pdf_output_folder, analysis_name + ".pdf")
+        pdf_output_file = os.path.join(pdf_output_folder, analysis_name + ".pdf")
         filtered_df = df.loc[df[':analysis_name'] == 'analysis_name']
         algorithm_type = df[':algorithm_type'].unique()[0]
 
         if algorithm_type == 'sensitivity':
 
             # This is a pdf writer.. This will save all our charts to a PDF.
-            with PdfPages(pdf_output_folder) as pdf:
+            with PdfPages(pdf_output_file) as pdf:
                 # Order Measures that had the biggest impact.
                 # https: // stackoverflow.com / questions / 32791911 / fast - calculation - of - pareto - front - in -python
                 ranked_df = df.copy()
@@ -637,27 +648,28 @@ def sensitivity_chart(excel_file=None, pdf_output_folder="./"):
                         ax.bar_label(c, labels=labels, label_type='center')
                     pdf.savefig()
                     plt.close()
+                    pdf.output()
 
         elif algorithm_type == "nsga2":
-
-            # https: // stackoverflow.com / questions / 32791911 / fast - calculation - of - pareto - front - in -python
-
-            # 'baseline_necb_tier','cost_equipment_total_cost_per_m_sq'
-            optimization_column_names = ['baseline_energy_percent_better', 'cost_equipment_total_cost_per_m_sq']
-            # Add column to dataframe to indicate optimal datapoints.
-            df['is_on_pareto'] = get_pareto_points(np.array(df[optimization_column_names].values.tolist()))
-
-            # Filter by pareto curve.
-            pareto_df = df.loc[df['is_on_pareto'] == True].reset_index()
-            bins = [-100, 0, 25, 50, 60, 1000]
-            labels = ["Non-Compliant", "Tier-1", "Tier-2", "Tier-3", "Tier-4"]
-            pareto_df['binned'] = pd.cut(pareto_df['baseline_energy_percent_better'], bins=bins, labels=labels)
-            sns.scatterplot(x="baseline_energy_percent_better",
-                            y="cost_equipment_total_cost_per_m_sq",
-                            hue="binned",
-                            data=pareto_df)
-
-            plt.show()
+            print("No charting support for optimization yet.")
+            # # https: // stackoverflow.com / questions / 32791911 / fast - calculation - of - pareto - front - in -python
+            #
+            # # 'baseline_necb_tier','cost_equipment_total_cost_per_m_sq'
+            # optimization_column_names = ['baseline_energy_percent_better', 'cost_equipment_total_cost_per_m_sq']
+            # # Add column to dataframe to indicate optimal datapoints.
+            # df['is_on_pareto'] = get_pareto_points(np.array(df[optimization_column_names].values.tolist()))
+            #
+            # # Filter by pareto curve.
+            # pareto_df = df.loc[df['is_on_pareto'] == True].reset_index()
+            # bins = [-100, 0, 25, 50, 60, 1000]
+            # labels = ["Non-Compliant", "Tier-1", "Tier-2", "Tier-3", "Tier-4"]
+            # pareto_df['binned'] = pd.cut(pareto_df['baseline_energy_percent_better'], bins=bins, labels=labels)
+            # sns.scatterplot(x="baseline_energy_percent_better",
+            #                 y="cost_equipment_total_cost_per_m_sq",
+            #                 hue="binned",
+            #                 data=pareto_df)
+            #
+            # plt.show()
 
         elif algorithm_type == "elimination":
             print("No charting support for Elimination yet.")
@@ -674,7 +686,7 @@ def sensitivity_chart(excel_file=None, pdf_output_folder="./"):
         else:
             print(f"Unsupported analysis type {algorithm_type}")
 
-        print(pdf_output_folder)
+        ic(pdf_output_file)
 
 def get_number_of_failures(job_queue_name='btap_cli'):
     # Gets an AWSBatch analyses object.
@@ -887,6 +899,9 @@ def download_analyses(bucket='834599497928',
 
         # Create parquet file.
         master_parquet_file = os.path.join(output_path, 'master.parquet')
+
         # Horrible workaround to deal with non-uniform datatypes in columns.
         big_df = pd.read_csv(master_csv_path, dtype='unicode')
         big_df.to_parquet(master_parquet_file)
+        generate_btap_reports(data_file=master_csv_path,
+                              pdf_output_folder=os.path.join(output_path,'pdf'))

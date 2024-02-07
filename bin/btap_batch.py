@@ -387,6 +387,7 @@ def list_active_analyses():
 @click.option('--pdf_output_file', '-p', default="./", help='location to output pdf charts')
 def sensitivity_report(**kwargs):
     from src.btap.btap_sensitivity import BTAPSensitivity
+    from src.btap.cli_helper_methods import sensitivity_chart
     import pandas as pd
     # Generate PDF
     df = pd.read_excel(kwargs['excel_file'], index_col=0)

@@ -44,12 +44,12 @@ class PostProcessResults():
         btap_data_df = pd.concat(map(pd.read_csv, filepaths))
         btap_data_df.reset_index()
 
-        # the primary fuel type should be set to the correct baseline if a HP is set in the :ecm_system_name
+        # the primary fuel type should be set to the correct baseline if a HP is set in the :ecm_system_name. The exception in sensitivity.
         def primary_fuel(row):
             if isinstance(row[':ecm_system_name'],str):
-                if row[':primary_heating_fuel'] == "NaturalGas" and 'HP' in row[':ecm_system_name'] :
+                if row[':primary_heating_fuel'] == "NaturalGas" and 'HP' in row[':ecm_system_name'] and row[':algorithm_type'] != 'sensitivity':
                     return 'NaturalGasHPGasBackup'
-                if row[':primary_heating_fuel'] == "Electricity" and 'HP' in row[':ecm_system_name'] :
+                if row[':primary_heating_fuel'] == "Electricity" and 'HP' in row[':ecm_system_name'] and row[':algorithm_type'] != 'sensitivity':
                     return 'ElectricityHPElecBackup'
             return row[':primary_heating_fuel']
         btap_data_df['orig_fuel_type'] = btap_data_df[':primary_heating_fuel']
