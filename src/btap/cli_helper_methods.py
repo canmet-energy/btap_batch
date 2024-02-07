@@ -450,6 +450,8 @@ def analysis(project_input_folder=None,
 
         ba.run()
         print(f"Excel results file {ba.analysis_excel_results_path()}")
+        if compute_environment == 'local':
+            generate_btap_reports(data_file=ba.analysis_excel_results_path(), pdf_output_folder=ba.analysis_results_folder())
 
 
     elif compute_environment == 'aws':

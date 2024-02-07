@@ -78,7 +78,7 @@ def nsga2_report(df=None,
     import pathlib
     pathlib.Path(pdf_output).parent.mkdir(parents=True, exist_ok=True)
     # Filter by sensitivity type.
-    df = df.query("`:algorithm_type` == 'nsga2'").copy().reset_index(drop=True)
+    df = df.copy().reset_index(drop=True)
 
     # Set up FPDF Object.
     pdf = FPDF()
@@ -291,6 +291,3 @@ def sensitivity_report(df=None,
         plt.close('all')
     pdf.output(pdf_output)
 
-
-
-generate_btap_reports(data_file=r'/home/plopez/btap_batch/downloads/master.csv', pdf_output_folder=r'/home/plopez/btap_batch/downloads/pdf')
