@@ -126,32 +126,25 @@ def run(**kwargs):
     """
 
     build_config_path = kwargs['build_config_path']
-
-    if kwargs['compute_environment'] != None:
-        compute_environment = kwargs['compute_environment']
-
-    # Input folder name
     analysis_project_folder = kwargs['project_folder']
-
-    build_config = None
-
-
-    if  os.path.exists(build_config_path):
-        build_config = load_config(build_config_path)
-        print(f"Using build_env_name from build_config.yml: {build_config['build_env_name']}")
-    else:
-        print(f"No build_config.yml found in {build_config_path}, trying to continue.")
-
     output_folder = kwargs['output_folder']
 
-
-
-
+    #load run information from build_config if possible.
+    build_config = get_build_config(build_config_path)
 
     analysis(project_input_folder= analysis_project_folder,
              build_config=build_config,
              output_folder=output_folder)
 
+
+def get_build_config(build_config_path):
+    build_config = None
+    if os.path.exists(build_config_path):
+        build_config = load_config(build_config_path)
+        print(f"Using build_env_name from build_config.yml: {build_config['build_env_name']}")
+    else:
+        print(f"No build_config.yml found in {build_config_path}, trying to continue.")
+    return build_config
 
 
 # @btap.command()
@@ -186,8 +179,10 @@ def run(**kwargs):
 #
 
 @btap.command(help="This will run all the analysis projects in the examples file. Locally or on AWS.")
-@click.option('--compute_environment', default='local',
-              help='Environment to run analysis either local, or aws')
+@click.option('--build_config_path', '-c', default=os.path.join(CONFIG_FOLDER, 'build_config.yml'),
+              help=f'location of Location of build_config.yml file.  Default location is {CONFIG_FOLDER}')
+@click.option('--output_folder', default=OUTPUT_FOLDER,
+              help='Path to output results. Defaulted to this projects output folder ./btap_batch/output')
 def run_examples(**kwargs):
     import time
     from src.btap.cli_helper_methods import analysis
@@ -211,15 +206,15 @@ def run_examples(**kwargs):
         'optimization',
         'parametric',
         'sample-lhs',
-        'sensitivity',
-        'reference_only'
+        'sensitivity'
     ]
 
     for folder in example_folders:
-        project_input_folder = os.path.join(examples_folder, folder)
-        print(project_input_folder)
-        analysis(project_input_folder=project_input_folder, compute_environment=kwargs['compute_environment'],
-                 reference_run=True, output_folder=OUTPUT_FOLDER)
+        analysis_project_folder = os.path.join(examples_folder, folder)
+        print(analysis_project_folder)
+        analysis(project_input_folder=analysis_project_folder,
+                 build_config=get_build_config(kwargs["build_config_path"]),
+                 output_folder=kwargs["output_folder"])
     end = time.time()
     print(f"Time elapsed: {end - start}")
 

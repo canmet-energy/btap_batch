@@ -233,7 +233,7 @@ properties:
                 - HS09_CCASHP_Baseboard
                 - HS08_CCASHP_VRF
                 - HS11_ASHP_PTHP
-                - HS12_ASHP_Baseboard
+#                - HS12_ASHP_Baseboard Not supported in 3.6.1
                 - HS13_ASHP_VRF
                 - HS14_CGSHP_FanCoils
 
@@ -628,7 +628,7 @@ properties:
             - type: string
               enum:
                 - NECB_Default
-                - add_nv
+#                - add_nv
       :nv_opening_fraction:
         description: ""
         items:
@@ -636,9 +636,9 @@ properties:
             - type: string
               enum:
                 - NECB_Default
-            - type: number
-              minimum: 0.01
-              maximum: 1.00
+#            - type: number
+#              minimum: 0.01
+#              maximum: 1.00
 
       :nv_temp_out_min:
         description: "Minimum outdoor air temperature (in Celsius) below which natural ventilation is shut down. Default
@@ -650,9 +650,9 @@ properties:
             - type: string
               enum:
                 - NECB_Default # Will set to 13
-            - type: number
-              minimum: 0.00
-              maximum: 100.00
+#            - type: number
+#              minimum: 0.00
+#              maximum: 100.00
 
       :nv_delta_temp_in_out:
         description: "Temperature difference (in Celsius) between the indoor and outdoor air temperatures below which 
@@ -666,8 +666,8 @@ properties:
               enum:
                 - NECB_Default # Will set to 1.0
             - type: number
-              minimum: 0.00
-              maximum: 100.00
+#              minimum: 0.00
+#              maximum: 100.00
 
       :npv_start_year:
         description: " 

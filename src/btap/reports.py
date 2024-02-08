@@ -52,7 +52,9 @@ def generate_btap_reports(data_file=None, pdf_output_folder=None):
                   'cost_equipment_envelope_total_cost_per_m_sq'
                   ]
     for col in float_cols:
-        df[col] = df[col].astype('float64')
+        # Make sure the col exists before casting to float.
+        if col in df.columns:
+            df[col] = df[col].astype('float64')
 
     # Gets all unique values in the scenario column.
     analysis_names = df[':analysis_name'].unique()

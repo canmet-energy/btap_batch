@@ -1,22 +1,22 @@
 import os
 BTAP_BATCH_VERSION = '1.0.005'
 
-# Maximum AWS CPUS that AWS will allocate for the run.
+# Maximum simulataneous simulations per analyses
+MAX_SIMULATIONS_PER_ANALYSIS = 500
+# Maximum AWS CPUS that AWS will allocate for the compute Environment.
 MAX_AWS_VCPUS = 3000
-# Number of VCPUs that AWSBatch will initialize with.
-# DESIRED_AWS_VCPUS = 50 # Not used currently
 # Minimum number of CPU should be set to zero.
 MIN_AWS_VCPUS = 0
 # Container allocated VCPU for AWS Batch
-WORKER_CONTAINER_VCPU = 2
+WORKER_CONTAINER_VCPU = 1
 # Container allocated Memory (MB) for AWS Batch
-WORKER_CONTAINER_MEMORY = 8000
+WORKER_CONTAINER_MEMORY = 4000
 # Container Storage (GB)
 INSTANCE_STORAGE_SIZE_GB = 1000
 # Container allocated VCPU for AWS Batch
-MANAGER_CONTAINER_VCPU = 16
+MANAGER_CONTAINER_VCPU = 8
 # Container allocated Memory (MB) for AWS Batch
-MANAGER_CONTAINER_MEMORY = 64000
+MANAGER_CONTAINER_MEMORY = 32000
 
 # Volume Type
 AWS_VOLUME_TYPE = 'io2' # could be gp2,gp3,io1,io2

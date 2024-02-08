@@ -1,5 +1,5 @@
 from src.btap.aws_credentials import AWSCredentials
-from src.btap.constants import MAX_AWS_VCPUS
+from src.btap.constants import MAX_AWS_VCPUS, MAX_SIMULATIONS_PER_ANALYSIS
 from src.btap.docker_image_manager import DockerImageManager
 from src.btap.aws_s3 import S3
 from src.btap.aws_iam_roles import IAMCodeBuildRole
@@ -33,8 +33,8 @@ class AWSImageManager(DockerImageManager):
         return f"{self.credentials.account_id}.dkr.ecr.{self.credentials.region_name}.amazonaws.com/{self.get_full_image_name()}:{self.image_tag}"
 
     def get_threads(self):
-        if MAX_AWS_VCPUS > 500:
-            return 500
+        if MAX_AWS_VCPUS > MAX_SIMULATIONS_PER_ANALYSIS:
+            return MAX_SIMULATIONS_PER_ANALYSIS
         else:
             return MAX_AWS_VCPUS
 

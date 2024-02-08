@@ -1,5 +1,5 @@
 ---
-:analysis_name: sens-LowriseApartment-QC_Montreal
+:analysis_name: sensitivity_example
 :algorithm_type: sensitivity
 :reference_run: true
 :output_variables: []
