@@ -7,7 +7,7 @@ import sys
 PROJECT_ROOT = str(Path(os.path.dirname(os.path.realpath(__file__))).parent.absolute())
 sys.path.append(PROJECT_ROOT)
 from src.btap.cli_helper_methods import build_and_configure_docker_and_aws, load_config
-from src.btap.common_paths import PROJECT_FOLDER, EXAMPLE_FOLDER, OUTPUT_FOLDER, CONFIG_FOLDER
+from src.btap.common_paths import PROJECT_FOLDER, EXAMPLE_FOLDER, OUTPUT_FOLDER, CONFIG_FOLDER,HOME
 CONTEXT_SETTINGS = dict(help_option_names=['-h', '--help'])
 
 @click.group(context_settings=CONTEXT_SETTINGS)
@@ -362,7 +362,7 @@ def aws_rm_build(**kwargs):
 @click.option('--s3_bucket',   help='Bucket where build environment exists and analyses were run. ', show_default=True, default='834599497928')
 @click.option('--build_env_name',  help='name of aws build_environment simulation was run with.',show_default = True, default='solution_sets')
 @click.option('--analysis_name',  help='name of analysis or you can use regex to get any or all analyses performed under a build environment name', show_default=True, default='LowriseApartment.*$')
-@click.option('--output_path',  help='Path to save downloaded data to.', show_default = True, default=f'{os.environ["HOME"]}/btap_batch/downloads')
+@click.option('--output_path',  help='Path to save downloaded data to.', show_default = True, default=f'{HOME}/btap_batch/downloads')
 @click.option('--download',   help='By default, will not download and just show the folders it finds on S3. This is used to make sure your regex is working as intended before you add this flag to set to true. ', is_flag = True, show_default=True, default=False)
 @click.option('--osm',   help='Download OSM files', is_flag = True, show_default=True, default=False)
 @click.option('--hourly',   help='Download Hourly data', is_flag = True, show_default=True, default=False)

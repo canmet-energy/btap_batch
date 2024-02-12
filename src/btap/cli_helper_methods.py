@@ -18,7 +18,7 @@ from src.btap.btap_sensitivity import BTAPSensitivity
 from src.btap.btap_batch_analysis import BTAPBatchAnalysis
 from src.btap.reports import generate_btap_reports
 from src.btap.aws_s3 import S3
-from src.btap.common_paths import CommonPaths, SCHEMA_FOLDER, HISTORIC_WEATHER_LIST,FUTURE_WEATHER_LIST,HISTORIC_WEATHER_REPO,FUTURE_WEATHER_REPO
+from src.btap.common_paths import CommonPaths, SCHEMA_FOLDER, HISTORIC_WEATHER_LIST,FUTURE_WEATHER_LIST,HISTORIC_WEATHER_REPO,FUTURE_WEATHER_REPO,USER
 import os
 import pandas as pd
 from src.btap.aws_s3 import S3
@@ -716,8 +716,8 @@ def generate_build_config(build_config_path = None):
     import yaml
 
     config = f"""
-# This is the name of the build environment. This will prefix all images, s3 folder, and resources created on aws. 
-build_env_name: {os.environ['USER']}
+# This is the name of the build environment. This will prefix all images, s3 folder, and resources created on aws. Please ensure that it is 24 chars and only snake_case. 
+build_env_name: {USER}
 
 # Github Token. This must be set to use the costing module. Permissions to access are given by NRCan staff. 
 git_api_token: null
