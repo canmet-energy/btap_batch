@@ -738,7 +738,7 @@ btap_costing_branch: master
 os_standards_branch: nrcan
 
 # Branch of openstudio version to build into container environment. This by default will select the E+ version used with that version.
-openstudio_version: 3.7.0
+openstudio_version: 3.6.1
 
 #List of Weather files to build included in the build environment. Only .epw files , and <100 files.
 weather_list:
