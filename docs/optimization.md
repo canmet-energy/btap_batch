@@ -1,17 +1,33 @@
 ## Optimization 
-To perform an optimization run you can review the example contained in examples/optimiztion. The .yml file contains all the 
+To perform an optimization run you can review the example contained in examples/optimization. The .yml file contains all the 
 options for the analysis. 
 
-* The :analysis_configuration->:algorithm->:type should be set to nsga2.
-* The :analysis_configuration->:algorithm->:population should be set to the number of threads that you have available on your system. 
-* The :analysis_configuration->:algorithm->:n_generations determine how many generations to run. This defines how long your simulation will take n* time to run a single simulaiton. 
-* The :analysis_configuration->:algorithm->:prob is set to 0.85. Please see pymoo docs if you wish to change this. 
-* The :analysis_configuration->:algorithm->:eta is set to 3.0. Please see pymoo docs if you wish to change this.  
-* The :analysis_configuration->:algorithm->:minimize_objectives: is set to  [ "energy_eui_total_gj_per_m_sq","cost_equipment_total_cost_per_m_sq"] for most optimization problems. The :minimized_objectives can be anything in the btap_data.json file. You can view the output of a btap_data.json file 
-from a local parametric run. However most of the time the above variables would be sufficient to optimize building designs.
+Key aspects that must be set for optimization. The first is the optimization parameters. 
 
+* algorithm_type: must be set to 'nsga2' and will run the nsga2 as described in the [pymoo](https://pymoo.org/algorithms/moo/nsga2.html)
+* reference_run: If set to true, this will run the NECB reference building for the given template and fuel types. This will allow comparisons to the reference building to be included in the results.  
+* algorithm_nsga_population: This is population that is used in the NSGAII. Should be set to less than the number of threads/cores that you have available on your system.
+* algorithm_nsga_n_generations: This is the number of generation the algorithm will explore. 
+* algorithm_nsga_prob: Don't change this unless you understand the NSGA
+* algorithm_nsga_eta: Don't change this unless you understand the NSGA. 
+* algorithm_nsga_minimize_objectives: Contains a list of the outputs from btap that you would like to optimize to. Pro tip. Run a senstivity analysis and examine the output.xlsx in the results folder to find a outpum column you wish to minimize. 
+
+
+Here is a snippet of the example that runs a pop of 5 for 2 generations resulting in 10 simulations total. 
+
+```angular2html
+:algorithm_type: nsga2 # This will run the nsgaII optimization algorithm
+:reference_run: true # This will run the NECB reference building for the given template and fuel types.  If false 
+:algorithm_nsga_population: 5
+:algorithm_nsga_n_generations: 2
+:algorithm_nsga_prob: 0.85 
+:algorithm_nsga_eta: 3.0
+:algorithm_nsga_minimize_objectives: [ 'energy_eui_total_gj_per_m_sq','cost_equipment_total_cost_per_m_sq']
+```
 To run the example simple point the --project_folder switch to the analysis input folder.
+```
+python ./bin/btap_batch.py run  --project_folder .\examples\optimization
+```
+[Monitoring and Killing Analysis](monitoring.md)
 
-```
-python ./bin/btap_batch.py run-analysis-project --compute_environment <choose local or local_managed_aws_workers> --project_folder .\examples\optimization --reference_run
-```
+[Downloading and Examining Output](download_examine.md)
