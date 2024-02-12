@@ -6,8 +6,8 @@
 :output_meters: []
 :options:
   :building_type:
-    - test1
-    - test2
+    - custom_1
+    - custom_2
   :template:
     - NECB2020
   :epw_file:

@@ -10,7 +10,7 @@ properties:
 
   :reference_run:
     type: boolean
-    description: Optionally run the baseline/reference building. This will also provide comparison information from the baseline.
+    description: Optionally run the baseline/reference building. This will also provide comparison information from the baseline. If omitted it will assume to run the reference simulations.
 
   :algorithm_type:
     description: "

@@ -740,7 +740,8 @@ os_standards_branch: nrcan
 # Branch of openstudio version to build into container environment. This by default will select the E+ version used with that version.
 openstudio_version: 3.6.1
 
-#List of Weather files to build included in the build environment. Only .epw files , and <100 files.
+#List of Weather files to build included in the build environment. Only .epw files , and <100 files. Other weather locations are available. However, you have to define the ones you want to use when creating your environment.  The other locations that you can use can be found in this repository:
+https://github.com/canmet-energy/btap_weather
 weather_list:
   - CAN_QC_Montreal.Intl.AP.716270_CWEC2020.epw
   - CAN_NS_Halifax.Dockyard.713280_CWEC2020.epw
@@ -750,6 +751,7 @@ weather_list:
   - CAN_ON_Toronto.Intl.AP.716240_CWEC2020.epw
   - CAN_NT_Yellowknife.AP.719360_CWEC2020.epw
   - CAN_AB_Fort.Mcmurray.AP.716890_CWEC2020.epw
+  
 
 # If you do not have access RSMEANs data api. This should be false.
 disable_costing: False
