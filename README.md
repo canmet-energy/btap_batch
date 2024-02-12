@@ -19,7 +19,7 @@ Some items that BTAP costs are:
 Some examples of items it will not cost are:
 * Internal walls, doors, toilets, structural beams, furniture, etc.   
 
-For costing, BTAP uses the National Energy Board Utility rates. These are averaged costs per GJ and do not have block or tiered surcharges. Equipment and materials costing requires a licence for RSMeans. Please contact RSMeans for a licence if you wish to use their data. We are currently using RSMean 2020 data in btap. 
+For costing, BTAP uses the National Energy Board Utility [rates](resources/ceb_fuel_end_use_prices.csv). These are averaged costs per GJ and do not have block or tiered surcharges. Equipment and materials costing requires a licence for RSMeans. Please contact RSMeans for a licence if you wish to use their data. We are currently using RSMean 2020 data in btap. 
 
 
 ## Requirements
