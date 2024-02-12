@@ -8,7 +8,7 @@ The most common used cases for BTAP is to:
 * examine design pathways to high performance buildings.
 * aid the development of machine learning models.
 
-## Costing
+# Costing
 BTAP will automatically cost materials, equipment and labour. BTAP Costing will only cost items that have energy impact. It will for example cost the wall construction layers, but not the structural components. 
 Some items that BTAP costs are:
 * Labour, Overhead
@@ -22,16 +22,16 @@ Some examples of items it will not cost are:
 For costing, BTAP uses the National Energy Board Utility rates. These are averaged costs per GJ and do not have block or tiered surcharges. Equipment and materials costing requires a licence for RSMeans. Please contact RSMeans for a licence if you wish to use their data. We are currently using RSMean 2020 data in btap. 
 
 
-## Requirements
+# Requirements
 Software requirements for running btap_batch can be found [here](docs/requirements.md)
 
-## Configuring your Computer
+# Configuring your Computer
 Instructions for configuring your computer and creating a build environment can be found [here](docs/configure.md)
 
-## Geometry Library
+# Geometry Library
 BTAP contains a library of building geometries. You can review the list of the geometries [here](docs/geometry_library.md)
 
-## Custom Geometry
+# Custom Geometry
 There are times that the library will not suffice, and you will require a custom geometry. Guidelines for creating custom geometries are [here](docs/custom_osm.md)
 
 # Analysis Workflow Examples
@@ -43,12 +43,12 @@ There are times that the library will not suffice, and you will require a custom
  * [Packages](docs/packages.md): When you wish to simply run a set of packages solution sets for comparison.
 
 
-## Monitoring the Analysis
+# Monitoring the Analysis
 
-### Local
+## Local
 While the program will output items to the console, there are a few other ways to monitor the results if you wish. The high level output is contained in the results/database folder. Failures are collected in the results/failures folder.  
 
-### AWS
+## AWS
 If you are running on aws. You can monitor the simulation in the AWS Batch Dashboard and the compute resources 
 being used in the EC2 dashboard. 
 
