@@ -5,10 +5,8 @@ options for the optimization analysis. You must first customize that file to sui
 # 0. Download and Configure BTAP
 Ensure that you have [downloaded btap_batch and installed/updated python requirements](download.md) and [configured](configure.md) with the correct compute environment and branches.
 
-# 1. Edit the input.yml file
+# 1. Optimization Options
 The input.yml file in the project folder contains the options for the selected analysis/algorithm type, the options hourly outputs and the building charecteristics that you wish to examine. 
-
-## Optimization options
 
 Key aspects that must be set for optimization. The first is the optimization parameters. 
 
