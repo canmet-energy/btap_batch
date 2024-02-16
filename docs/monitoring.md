@@ -1,9 +1,8 @@
-# Monitoring Analysis
+## Monitoring the Analysis
 
-## Local 
-Monitoring runs on a local machine is rather easy. The progress will appear on the console where you invoked the run command. You will also see the results start to appear in the output folder. 
+### Local Run
+While the program will output a progress to the console. To cancel the analysis you may halt the application using a Ctrl-C keystroke. 
 
-
-
-
-
+### AWS
+If you are running on aws. You can monitor the simulation in the AWS Batch Dashboard and the compute resources 
+being used in the EC2 dashboard. 

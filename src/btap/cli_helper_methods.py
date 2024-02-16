@@ -191,7 +191,6 @@ def build_and_configure_docker_and_aws(btap_batch_branch=None,
 
     # Get the weather locations from the weather list
     weather_locations = get_weather_locations(weather_list)
-    ic(compute_environment)
     # build args for aws and btap_cli container.
     build_args_btap_cli = {'OPENSTUDIO_VERSION': openstudio_version,
                            'BTAP_COSTING_BRANCH': btap_costing_branch,
@@ -287,9 +286,6 @@ def delete_aws_build_env(build_env_name = None):
 def analysis(project_input_folder=None,
              build_config=None,
              output_folder=None):
-    ic(project_input_folder)
-    ic(build_config)
-    ic(output_folder)
 
     compute_environment = None
     # If build_env is available in the build config use it.
@@ -358,7 +354,6 @@ def analysis(project_input_folder=None,
     reference_run = analysis_config[':reference_run']
     # delete output from previous run if present locally
     project_folder = os.path.join(output_folder,analysis_config[':analysis_name'])
-    ic(project_folder)
     # Check if folder exists
     if os.path.isdir(project_folder):
         # Remove old folder
@@ -688,7 +683,6 @@ def sensitivity_chart(data_file='/home/plopez/btap_batch/downloads/master.parque
         else:
             print(f"Unsupported analysis type {algorithm_type}")
 
-        ic(pdf_output_file)
 
 def get_number_of_failures(job_queue_name='btap_cli'):
     # Gets an AWSBatch analyses object.

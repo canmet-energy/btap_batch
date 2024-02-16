@@ -105,11 +105,11 @@ def build(**kwargs):
 @btap.command(help="This will run an analysis project. You must specify a project folder.")
 @click.option('--project_folder', '-p', default=os.path.join(EXAMPLE_FOLDER, 'optimization'),
               help='location of folder containing input.yml file and optionally support folders such as osm_folder folder for custom models. Default is the optimization example folder.')
-@click.option('--output_folder', default=OUTPUT_FOLDER,
+@click.option('--output_folder','-o', default=OUTPUT_FOLDER,
               help='Path to output results. Defaulted to this projects output folder ./btap_batch/output')
-@click.option('--build_config_path', '-c', default=os.path.join(CONFIG_FOLDER, 'build_config.yml'),
+@click.option('--build_config_path', '-b', default=os.path.join(CONFIG_FOLDER, 'build_config.yml'),
               help=f'location of Location of build_config.yml file.  Default location is {CONFIG_FOLDER}')
-@click.option('--compute_environment', default=None,
+@click.option('--compute_environment', '-c', default=None,
               help=f'Computer environment to use.')
 def run(**kwargs):
     from src.btap.cli_helper_methods import analysis, load_config

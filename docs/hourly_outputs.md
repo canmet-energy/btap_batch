@@ -45,8 +45,8 @@ There are some situation that you will require hourly outputs to be produced by 
 ```
 
 ## Variables
-Similarly Your can also define output variables using E+ output format. Here is an example of outputting zonal hourly information.
-```angular2html
+Similarly, you can also define output variables using E+ output format. Here is an example of outputting zonal hourly information.
+```yaml
 :output_variables:
   - key: '*'
     variable: Zone Predicted Moisture Load to Dehumidifying Setpoint Moisture Transfer Rate

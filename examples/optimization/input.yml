@@ -17,7 +17,7 @@
   :epw_file:
     - CAN_QC_Montreal-Trudeau.Intl.AP.716270_CWEC2016.epw
   :building_type:
-    - LowriseApartment
+    - FullServiceRestaurant
   :adv_dx_units:
   - NECB_Default
   - Carrier WeatherExpert
@@ -50,7 +50,6 @@
   - HS09_CCASHP_Baseboard
   - HS08_CCASHP_VRF
   - HS11_ASHP_PTHP
-  - HS12_ASHP_Baseboard
   - HS13_ASHP_VRF
   - HS14_CGSHP_FanCoils
   :electrical_loads_scale:
@@ -131,7 +130,6 @@
   - NECB_Default
   :nv_type:
   - NECB_Default
-  - add_nv
   :oa_scale:
   - NECB_Default
   :occupancy_loads_scale:

@@ -22,7 +22,7 @@ Key aspects that must be set for optimization. The first is the optimization par
 
 Here is a snippet of the example that runs a pop of 5 for 2 generations resulting in 10 simulations total and will minimize the total EUI and capital equipment cost. 
 
-```angular2html
+```yaml
 :algorithm_type: nsga2 # This will run the nsgaII optimization algorithm
 :reference_run: true # This will run the NECB reference building for the given template and fuel types.  If false 
 :algorithm_nsga_population: 5
@@ -38,8 +38,8 @@ Here is a snippet of the example that runs a pop of 5 for 2 generations resultin
 
 ## 3. [Select Building Options](building_options.md)
 
-## 4. [Run the Analysis](run.md)
+## 4. [Run / Cancel the Analysis](run_cancel.md)
 
-## 5. [Monitor/Cancel Analysis](monitoring.md)
+## 5. [Examine Output](output.md) 
 
-## 6. [Examine Output](download_examine.md) 
+## 6. Clean Up Todo

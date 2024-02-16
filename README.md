@@ -8,7 +8,7 @@ The most common used cases for BTAP is to:
 * examine design pathways to high performance buildings.
 * aid the development of machine learning models.
 
-BTAP Data can be used to generate dashboards. For example [dashboard](https://public.tableau.com/app/profile/sara.gilani/viz/Solutions_NPV_PercentBetter/DB_Solutions_NPV_PercentBetter) was developed doing a series of BTAP Batch analyses.
+BTAP Data can be used to generate dashboards. For example this [dashboard](https://public.tableau.com/app/profile/sara.gilani/viz/Solutions_NPV_PercentBetter/DB_Solutions_NPV_PercentBetter) was developed doing a series of BTAP Batch analyses.
 ![image info](docs/images/solutions_npv_percentbetter.png)
 
 ## Costing
@@ -33,8 +33,6 @@ Instructions for downloading btap_batch from github and installing supporting Py
 ## Configuring BTAP Batch
 Instructions for configuring your btap_batch and creating a build environment can be found [here](docs/configure.md)
 
-
-
 ## Analysis Workflow Examples
  * [Parametric](docs/parametric.md): Run all possible combinations in input file.
  * [Optimization](docs/optimization.md): Run a genetic optimization for a fixed number of runs and generations based.  
@@ -43,15 +41,6 @@ Instructions for configuring your btap_batch and creating a build environment ca
  * [Latin-Hypercube-Sampling](docs/latin_hypercube_sampling.md): Sample the solution space with a given number of simulations
  * [Packages](docs/packages.md): When you wish to simply run a set of packages solution sets for comparison.
 
-
-## Monitoring the Analysis
-
-### Local
-While the program will output items to the console, there are a few other ways to monitor the results if you wish. The high level output is contained in the results/database folder. Failures are collected in the results/failures folder.  
-
-### AWS
-If you are running on aws. You can monitor the simulation in the AWS Batch Dashboard and the compute resources 
-being used in the EC2 dashboard. 
 
 # Troubleshooting / FAQ
  [Troubleshooting/FAQ](docs/troubleshooting.md)
