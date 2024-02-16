@@ -2,10 +2,6 @@
 
 A parametric, or full-factorial analysis is simply going through all options in a giving input file. 
 
-
-
-
-
 1. To run a parametric analysis, go to the example.yml analysis file in the 'examples/parametric' folder. Each 
 parameter is explained in that file. Ensure that parametric analysis is a reasonable size for your system (i.e. Do not 
 run millions of simulations on your 2 core laptop). Ensure that the ':compute_environment' variable is set to local.  

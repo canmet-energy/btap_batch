@@ -1,8 +1,9 @@
 # Configuration of Build Environment
-You need to configure your computer by first creating a **build_config.yml** file. This file will tell btap how to:
-* build the simulation environment  
-* where to build and do the analysis (**Local** or for really large analysis on the cloud at **Amazon**)
-* What weather files to include in the build environment
+
+You need to configure your computer by first creating a **build_config.yml** file. This file will tell btap:
+* how to build the simulation environment  
+* where to build and do the simulation analysis (**Local** or for really large analysis on the cloud at **Amazon**)
+* what weather files to include in the build environment for your analyses.
 
 The build command is one of several commands you have at your disposal in btap_batch.  You can use the -h switch to reveal all the commands. Here is an example of the help output.
 ```angular2html

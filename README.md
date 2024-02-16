@@ -4,9 +4,12 @@
 BTAP allows you to quickly generate archetype buildings based on Canadian codes and data and apply common energy conservation measures to explore possible technology packages. BTAP calculates energy, NECB Tier performance,  operational carbon and relative capital costs for all scenarios where possible. 
 
 The most common used cases for BTAP is to:
-* examine the cost-effective performance of codes and standards across Canada.
+* examine the performance of the National Energy Code for buildings
 * examine design pathways to high performance buildings.
 * aid the development of machine learning models.
+
+BTAP Data can be used to generate dashboards. For example [dashboard](https://public.tableau.com/app/profile/sara.gilani/viz/Solutions_NPV_PercentBetter/DB_Solutions_NPV_PercentBetter) was developed doing a series of BTAP Batch analyses.
+![image info](docs/images/solutions_npv_percentbetter.png)
 
 ## Costing
 BTAP will automatically cost materials, equipment and labour. BTAP Costing will only cost items that have energy impact. It will for example cost the wall construction layers, but not the structural components. 
@@ -21,18 +24,16 @@ Some examples of items it will not cost are:
 
 For costing, BTAP uses the National Energy Board Utility [rates](resources/ceb_fuel_end_use_prices.csv). These are averaged costs per GJ and do not have block or tiered surcharges. Equipment and materials costing requires a licence for RSMeans. Please contact RSMeans for a licence if you wish to use their data. We are currently using RSMean 2020 data in btap. 
 
-
 ## Requirements
 Software requirements for running btap_batch can be found [here](docs/requirements.md)
 
-## Configuring your Computer
-Instructions for configuring your computer and creating a build environment can be found [here](docs/configure.md)
+## Download/Update Source Code and Python Packages
+Instructions for downloading btap_batch from github and installing supporting Python packages are [here](docs/download.md)
 
-## Geometry Library
-BTAP contains a library of building geometries. You can review the list of the geometries [here](docs/geometry_library.md)
+## Configuring BTAP Batch
+Instructions for configuring your btap_batch and creating a build environment can be found [here](docs/configure.md)
 
-## Custom Geometry
-There are times that the library will not suffice, and you will require a custom geometry. Guidelines for creating custom geometries are [here](docs/custom_osm.md)
+
 
 ## Analysis Workflow Examples
  * [Parametric](docs/parametric.md): Run all possible combinations in input file.
