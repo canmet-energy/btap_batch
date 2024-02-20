@@ -24,10 +24,17 @@ The input.yml is a file in the project folder that contains the options for the 
 options hourly outputs and the building characteristics that you wish to examine. 
 
 To run this type of analysis,  set the ``:algorithm_type`` to 'sample-lhs' in the input.yml file.
+The other parameters that must be set include:
 
+* ***algorithm_lhs_n_samples***: This is the number of simulations that will be preformed in the analysis
+* ***algorithm_lhs_type***: This should be set to classic.. However other options are available in the scikit 
+documentation listed above. 
+* ***algorithm_lhs_random_seed**: This is the random seed that will be used to drive the LHS random function. Change 
+this to another number to alter the output from the same run. 
+* ***reference_run***: Set this to true to run the reference models and output comparitive results.
 
 ```yaml
-:algorithm_type: sampling-lhs
+:algorithm_type: sampling-lhs 
 :algorithm_lhs_n_samples: 10
 :algorithm_lhs_type: classic
 :algorithm_lhs_random_seed: 1
