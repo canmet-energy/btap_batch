@@ -25,9 +25,7 @@ Some examples of items it will not cost are:
 For costing, BTAP uses the National Energy Board Utility [rates](resources/ceb_fuel_end_use_prices.csv). These are averaged costs per GJ and do not have block or tiered surcharges. Equipment and materials costing requires a licence for RSMeans. Please contact RSMeans for a licence if you wish to use their data. We are currently using RSMean 2020 data in btap. 
 
 ## Interface
-BTAP Batch has a command line interface.  There is currenly no GUI and the commands can be listed using the help (-h) switch. 
-The build command is one of several commands you have at your disposal in btap_batch.  You can use the -h switch to 
-reveal all the commands. Here is an example of the help output.
+BTAP Batch has a command line interface.  You can use the (help) -h switch to reveal all the commands. Here is an example of the help output.
 ```bash
 (venv) PS C:\btap_batch> python ./bin/btap_batch.py -h    
 Usage: btap_batch.py [OPTIONS] COMMAND [ARGS]...
