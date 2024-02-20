@@ -1,5 +1,5 @@
 # Optional Hourly Outputs
-## Meters (Optional)
+## Meters
 There are some situation that you will require hourly outputs to be produced by the E+ engine. BTAP passes the same I/O variable names for output variables and meters. Below is an example of some common hourly output requests you can add to your input.yml file.
 ```yaml
 :output_meters:
@@ -45,7 +45,8 @@ There are some situation that you will require hourly outputs to be produced by 
 ```
 
 ## Variables
-Similarly, you can also define output variables using E+ output format. Here is an example of outputting zonal hourly information.
+Similarly, you can also define output variables using E+ output format. Here is an example of outputting zonal hourly 
+information.
 ```yaml
 :output_variables:
   - key: '*'
@@ -54,3 +55,6 @@ Similarly, you can also define output variables using E+ output format. Here is 
     operation: '*'
     unit: '*'
 ```
+
+Please be careful selecting hourly outputs.  If you do try to report too many variables with too many runs. You can 
+quickly fill up your hard disk space. This is a common error making your analyses crash. 

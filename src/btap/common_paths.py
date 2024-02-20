@@ -12,7 +12,7 @@ if os.name == 'nt':
     USER = os.environ['USERNAME']
 else:
     HOME = os.path.join(os.environ['HOME'])
-    USER = os.environ['USER']
+    USER = os.getenv('USER', 'no_user')
 
 CONFIG_FOLDER = os.path.join(HOME, '.btap', 'config')
 HISTORIC_WEATHER_LIST = "https://github.com/canmet-energy/btap_weather/raw/main/historic_weather_filenames.json"

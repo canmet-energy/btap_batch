@@ -12,7 +12,7 @@ BTAP Data can be used to generate dashboards. For example this [dashboard](https
 ![image info](docs/images/solutions_npv_percentbetter.png)
 
 ## Costing
-BTAP will automatically cost materials, equipment and labour. BTAP Costing will only cost items that have energy impact. It will for example cost the wall construction layers, but not the structural components. 
+BTAP will automatically cost most relevant materials, equipment and labour. BTAP Costing will only cost items that have energy impact. It will for example cost the wall construction layers, but not the structural components. 
 Some items that BTAP costs are:
 * Labour, Overhead
 * Layer Materials in Constructions and fenestration.
@@ -34,8 +34,8 @@ Instructions for downloading btap_batch from github and installing supporting Py
 Instructions for configuring your btap_batch and creating a build environment can be found [here](docs/configure.md)
 
 ## Analysis Workflow Examples
+ * [Optimization](docs/optimization.md): Run a genetic optimization for a fixed number of runs and generations based. 
  * [Parametric](docs/parametric.md): Run all possible combinations in input file.
- * [Optimization](docs/optimization.md): Run a genetic optimization for a fixed number of runs and generations based.  
  * [Elimination](docs/elimination.md): Examine theoretical maximum energy savings from each domain for a given model. 
  * [Sensitivity](docs/sensitivity.md): Examine the energy and cost effect from each measure selected. (~100 measures) 
  * [Latin-Hypercube-Sampling](docs/latin_hypercube_sampling.md): Sample the solution space with a given number of simulations

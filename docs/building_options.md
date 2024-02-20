@@ -17,7 +17,7 @@ for solutions for the FullSerivice restaurant and ignore the HighriseApartment a
 always be cheaper. Simlarly **epw_file** and **fdwr_set** are items you will not want more than one item for when using optimization. 
 
 
-Here is a snippet of the input.yml file that will examine the NECB default as well as other conductance values for the 
+Here is a snippet example of the input.yml file that will examine the NECB default as well as other conductance values for the 
 exterior walls in the model. 
 ```yaml
   :ext_wall_cond:
@@ -29,7 +29,7 @@ exterior walls in the model.
   - 0.183
 ```
 
-You can find full examples in the examples folder. 
+You can find full examples in the **examples** folder. 
 
 
 
