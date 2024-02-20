@@ -141,7 +141,7 @@ def get_weather_locations(weather_locations=[]):
         print(f"Could not find the weather files {non_existant_files} in the btap_batch repository from your build_conf.yml file.  Please check if it is spelled correctly and check if it is in the repository (https://github.com/canmet-energy/btap_weather)." )
         exit(1)
 
-    # prefix custom_weather with correct URL
+    # prefix custom_weather with correct URL for fut or hist.  Already filtered for one or the other above.. so the else works implicitly for future.
     custom_weather_string = [HISTORIC_WEATHER_REPO + loc if loc in hist_files else FUTURE_WEATHER_REPO + loc  for loc in custom_weather_locs]
 
     # Return a single string from the list separated by a space.
