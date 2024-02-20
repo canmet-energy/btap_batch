@@ -125,58 +125,27 @@ def get_weather_locations(weather_locations=[]):
         'CAN_NT_Yellowknife.AP.719360_CWEC2020.epw',
         'CAN_AB_Fort.Mcmurray.AP.716890_CWEC2020.epw'
     ]
-
     # Get list of historic and future weather files available from git repo. See definitions for URLs
     hist_files = requests.get(HISTORIC_WEATHER_LIST, allow_redirects=True).json()
     fut_files = requests.get(FUTURE_WEATHER_LIST, allow_redirects=True).json()
 
-    import re
     # Check if any weather locations on the weather file list are not default weather locations
     custom_weather_locs = [x for x in weather_locations if x not in default_weather_locations]
+
     # Replace .epw for .zip as this is the basename used in the weatherfile repository.
     custom_weather_locs = [re.sub(r'\.epw$', '.zip', loc) for loc in custom_weather_locs]
 
-    # Create a string containing the non-default weather locations, where each non-default weather location is separated
-    # by a space
-    custom_weather_string = ""
-    weather_downloads = []
-    # Check if the weather file is in the btap_weather repository and, if it is, add it to the weather_download
-    # environment variable used to create the btap_cli image.
-    if custom_weather_locs:
-        # Download the btap_weather repository weather file manifests and see if the ones the user wants to add are on
-        # the list.
+    # Check if any of the weather files are not part of historical or future files.
+    non_existant_files = list(set(custom_weather_locs) - set(hist_files + fut_files))
+    if len(non_existant_files) > 0:
+        print(f"Could not find the weather files {non_existant_files} in the btap_batch repository from your build_conf.yml file.  Please check if it is spelled correctly and check if it is in the repository (https://github.com/canmet-energy/btap_weather)." )
+        exit(1)
 
-        # Cycle through the weather files we want, check if they are on either btap_weather manifest and, if they are,
-        # add them to the environment variable string.
-        for custom_weather_loc in custom_weather_locs:
-            # Remove the extension from the file name since the zip file contains many files with different extensions but
-            # the same initial name.
-            ext_ind = custom_weather_loc.rindex('.')
-            custom_weather_pre = custom_weather_loc[0:ext_ind]
-            # Add the .zip extension and check if they are in the historical weather files or future weather files
-            weather_file = custom_weather_pre + (".zip")
-            is_existing = weather_file in hist_files
-            is_future = weather_file in fut_files
-            # Add the appropriate url prefix to the file depending on if it is a future weather file or historical
-            # weather file and then add them to the list of weather file urls.
-            if is_existing:
-                download_string = HISTORIC_WEATHER_REPO + weather_file
-                weather_downloads.append(download_string)
-            elif is_future:
-                download_string = FUTURE_WEATHER_REPO + weather_file
-                weather_downloads.append(download_string)
-            else:
-                print(f"Could not find the weather file {weather_file} in the btap_batch repository.  Please check if it is spelled correctly and check if it is in the repasitory (https://github.com/canmet-energy/btap_weather).")
-                exit(1)
-        # Create a string containing the non-default weather urls, where each non-default weather location is separated
-        # by a space.
-        for download_loc in weather_downloads:
-            if custom_weather_string == "":
-                custom_weather_string = str(download_loc)
-            else:
-                custom_weather_string = custom_weather_string + str(" ") + str(download_loc)
-    # return the non-default weather location string
-    return custom_weather_string
+    # prefix custom_weather with correct URL
+    custom_weather_string = [HISTORIC_WEATHER_REPO + loc if loc in hist_files else FUTURE_WEATHER_REPO + loc  for loc in custom_weather_locs]
+
+    # Return a single string from the list separated by a space.
+    return  " ".join(custom_weather_string)
 
 def build_and_configure_docker_and_aws(btap_batch_branch=None,
                                        btap_costing_branch=None,
