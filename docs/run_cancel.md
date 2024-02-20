@@ -19,6 +19,7 @@ To specify an output folder, you can optionally use the '-o' switch with the ful
 python ./bin/btap_batch.py run -p ./example/optimization -o C:\MyOutputFolder
 ```
 
+## Local
 If running **local**. You should see output like this.
 ```
 (venv) PS C:\Users\plopez\PycharmProjects\btap_batch> python ./bin/btap_batch.py run -p C:\Users\plopez\PycharmProjects\btap_batch\examples\optimization
@@ -33,6 +34,8 @@ Using 46 threads.
 Failed:0: Progress Bar:   0%|                                                                                                                                    | 0/4 [00:00<?, ?it/s]
 ```
 
+## AWS
+
 if compute_environment is set to **aws** you should see a job submission to aws. You can observe the progress using the
 AWS Batch web console. This will delete any data on the S3 folder if you ran this previously with the same 
 :analysis_name and build_env_name. See the AWS section in [output](output.md) for more details.
@@ -45,6 +48,21 @@ Deleting...plopez\optimization_example/ from bucket 834599497928 on S3
 Submitted optimization_example to aws job queue plopez_btap_batch_job_queue
 
 ```
+
+You can see the progress of the analyses and simulations on AWS batch. Since you can send multiple analyses to aws 
+simulatneously. You will see two queues with your build_env_name prefixed. 
+
+One will be the analysis queue. It is called ``<build_env_name>btap_batch``. The other queue will just run the simulations
+themselves. This queue is call ``<build_env_name>btap_cli``. 
+
+In this example the build_env name was **plopez** and it produces these queues you can observe the analyses progress. 
+
+![image info](images/btap_batch_queue.png)
+
+
+
+
+
 
 # Kill Analysis
 We are all human and make mistakes. Sometimes we need to kill the analysis to prevent from wasting time and money. 

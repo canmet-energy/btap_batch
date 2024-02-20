@@ -88,3 +88,15 @@ switch, it will simply output the folder names on S3 that it will download. If y
 it will really download what you are asking for. This has an added feature that it will also create a master.csv and 
 master.parquet file. These files contained all the output.xlsx files contcatenates. This is useful keep all analysis results 
 for example multiple optimization runs for different building types, in a single file. 
+
+## PDF Charts 
+Some analyses will generate PDF reports automatically. If run locally with will be present in the results folder with the 
+name <analysis_name>.pdf. 
+
+If run on AWS, the **aws-download** command will generate the PDF for all the analyses selected to be downloaded. This report 
+is not meant to be exhaustive, but just a demonstration of the data produced. 
+
+The algorithm types that currently generate charts are: 
+* optimization (nsga2)
+* sample-lhs
+* sensitivity

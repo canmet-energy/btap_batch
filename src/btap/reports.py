@@ -68,7 +68,7 @@ def generate_btap_reports(data_file=None, pdf_output_folder=None):
         if algorithm_type == 'nsga2':
             print(f"Generating BTAP report: {pdf_output_file}")
             nsga2_report(df=df, pdf_output=pdf_output_file)
-        if algorithm_type == 'lhs':
+        if algorithm_type == 'sample-lhs':
             print(f"Generating BTAP report: {pdf_output_file}")
             nsga2_report(df=df, pdf_output=pdf_output_file)
 

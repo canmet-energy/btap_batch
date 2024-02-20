@@ -2,14 +2,29 @@
 An optimization analysis will conduction a series of simulations with the goal to minimize 1-2 outputs. For example you 
 can try to minimize overall building capital costs and energy use intensity. 
 
-To perform an optimization run you can review the example contained in **examples/optimization** folder as a staring point. The input.yml file contains all the 
+To perform an optimization run you can review the example contained in **examples/optimization** project folder as a staring point. The input.yml file contains all the 
 options for the optimization analysis. You must first customize that file to suit your analysis. 
 
 # 0. Download and Configure BTAP
 Before running btap_batch, ensure that you have [downloaded btap_batch and installed/updated python requirements](download.md) and [configured](configure.md) with the correct compute environment and branches.
 
+Also ensure that you are in btap_batch folder. 
+
+If you do not see the '(venv)' prefix in your command prompt. Something like this.  
+
+```bash
+(venv)C:\btap_batch> 
+```
+
+You are not in your python virtual environment (venv). You can fix this by running 
+
+```bash
+venv\Scripts\activate.bat
+````
+
+
 # 1. Configure Optimization Options
-The input.yml file in the project folder contains the options for the selected analysis/algorithm type, the options hourly outputs and the building charecteristics that you wish to examine. 
+The input.yml is a file in the project folder that contains the options for the selected analysis/algorithm type, the options hourly outputs and the building charecteristics that you wish to examine. 
 
 Key aspects that must be set for optimization. The first is the optimization parameters. 
 

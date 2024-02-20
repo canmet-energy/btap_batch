@@ -704,7 +704,7 @@ os_standards_branch: nrcan
 openstudio_version: 3.6.1
 
 #List of Weather files to build included in the build environment. Only .epw files , and <100 files. Other weather locations are available. However, you have to define the ones you want to use when creating your environment.  The other locations that you can use can be found in this repository:
-https://github.com/canmet-energy/btap_weather
+# https://github.com/canmet-energy/btap_weather
 weather_list:
   - CAN_QC_Montreal.Intl.AP.716270_CWEC2020.epw
   - CAN_NS_Halifax.Dockyard.713280_CWEC2020.epw
@@ -716,7 +716,8 @@ weather_list:
   - CAN_AB_Fort.Mcmurray.AP.716890_CWEC2020.epw
   
 
-# If you do not have access RSMEANs data api. This should be false.
+# If you do not have access RSMEANs data api from NRCan. This should be set to true, otherwise it will not build. If you 
+# are NRCan staff please request access by providing your GitHub username to chris.kirney@rncan-nrcan.gc.ca
 disable_costing: False
 
 # Rebuild btap_cli image

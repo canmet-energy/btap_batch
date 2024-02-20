@@ -1,54 +1,51 @@
-# Parametric Analysis Local Machine
+# Parametric analysis 
+A paremetric analysis will run a full-factorial of all possible combinations indicated in the projects input.yml file. See 
+[Select Building Options](building_options.md) below. 
 
-A parametric, or full-factorial analysis is simply going through all options in a giving input file. 
+To perform a parametric run you can review the example contained in **examples/parametric** project folder as a staring 
+point. The input.yml file contains all the options for the parametric analysis. You must first customize that file to 
+suit your analysis. 
 
-1. To run a parametric analysis, go to the example.yml analysis file in the 'examples/parametric' folder. Each 
-parameter is explained in that file. Ensure that parametric analysis is a reasonable size for your system (i.e. Do not 
-run millions of simulations on your 2 core laptop). Ensure that the ':compute_environment' variable is set to local.  
-2. Please ensure that the btap_batch python venv environment is active. If it is not, run the following from the project folder. 
+Note: You can run astronomically large analyses depending on your selections. It is up to you to ensure that you do a 
+reasonable amount of runs and manage and cost overruns on Amazon. You can spend a lot of money very fast with this 
+algorithm. 
+
+# 0. Download and Configure BTAP
+Before running btap_batch, ensure that you have [downloaded btap_batch and installed/updated python requirements](download.md) and [configured](configure.md) with the correct compute environment and branches.
+
+Also ensure that you are in btap_batch folder. 
+
+If you do not see the '(venv)' prefix in your command prompt. Something like this.  
+
+```bash
+(venv)C:\btap_batch> 
 ```
+
+You are not in your python virtual environment (venv). You can fix this by running 
+
+```bash
 venv\Scripts\activate.bat
+````
+
+
+# 1. Configure Parametric Options
+The input.yml is a file in the project folder that contains the options for the selected analysis/algorithm type, the 
+options hourly outputs and the building characteristics that you wish to examine. 
+
+To run this type of analysis,  set the ``:algorithm_type`` to 'parametric' in the input.yml file.
+
+* ***algorithm_type***: must be set to 'parametric'
+* ***reference_run***: If set to true, this will run the NECB reference building for the given template and fuel types. This will allow comparisons to the reference building to be included in the results.  
+
+```yaml
+:algorithm_type: parametric # This will run a parametric analysis
+:reference_run: true # This will run the NECB reference building for the given template and fuel types.  If false
 ```
 
-You can run the analysis using the run-analysis-project. You can inspect the switches available for this comm
-```
-python ./bin/btap_batch.py run-analysis-project --compute_environment local --project_folder C:\Users\plopez\btap_batch\examples\parametric --reference_run
-```
-3. Simulation should start to run. A folder will be created in output folder with the variable name you set 
-':analysis_name' in the yml file. In that folder you will see two folders, 'parametric' and 'reference'. 'reference' 
-contains the reference run analysis. This is the information use to compare the 'parametric' runs against. both of these folders
-contain a 'runs' folder and 'results' folder.  
+## 2. [Enable Hourly Output (optional)](hourly_outputs.md)
 
+## 3. [Select Building Options](building_options.md)
 
-### Output
-* The runs folder contains folders with uuids for all the simulations that you are running. It contains the 
-run_options.yml file. This contains the selections created for that particular run. This contains all the input and 
-output files from OS/Energyplus.
+## 4. [Run / Cancel the Analysis](run_cancel.md)
 
-* The results folder contains the summary results of all the simulations. 
-    * The database folder contains all the csv outputs from each run.
-    * The eplustbl.htm folder contains the energyplus html output for each run. 
-    * The failures folder contain the input files that did not simulation correctly. 
-    * The hourly.csv folder contains the hourly data requested for each simulation. 
-    * The in.osm contains the OpenStudio osm file used for each simulation. 
-    * The output.xlsx is an excel file that contains the results from all the simulations.  
-
-## Using Amazon AWS for analysis
-1. Ensure you are not connected to a VPN and do not connect while running simulations.
-2. Change '-compute_environment' to local_managed_aws_workers (note that ':compute_environment' is in example.yml analysis file in the 'example' folder).
-3. Update your AWS credentials to ensure it is up to date through your AWS Account -> btap-dev -> Command line and programmatic Access. Copy the Text in 'Option 2'.
-4. Use your updated AWS credentials in '.aws/credentials' file in your user folder.
-*Note*:  Navigate to '.aws' folder in your user folder using windows powershell. Run the command: ```$ aws configure```. Set the default region name to ca-central-1, and output format to json. Then, open the generated credentials file in '.aws' folder in your user folder. Use your updated AWS credentials in the credentials file. Replace the first line that looks something like this [834599497928_PowerUser] to [default] and save the file.
-
-```
-python ./bin/btap_batch.py run-analysis-project --compute_environment local_managed_aws_workers --project_folder C:\Users\plopez\btap_batch\examples\parametric --run_reference
-```
-
-The output of the runs is not stored all locally, but on the S3 Bucket,  the ':analysis_name' you chose and the analysis_id 
-generated by the script. For example, if you ran the analysis with the analysis_name: set to 'example_analysis', the default 
-:s3_bucket is '834599497928' for the nrcan account, and your aws username is 'phylroy.lopez'. The runs would be kept on S3 in a path like
-```
-s3://<:s3_bucket_name>/<your_user_name>/<:analysis_name>/
-```
-*Note*: This script will not delete anything from S3. So you must delete your S3 folders yourself.
-
+## 5. [Examine Output](output.md)
