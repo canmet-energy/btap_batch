@@ -24,6 +24,31 @@ Some examples of items it will not cost are:
 
 For costing, BTAP uses the National Energy Board Utility [rates](resources/ceb_fuel_end_use_prices.csv). These are averaged costs per GJ and do not have block or tiered surcharges. Equipment and materials costing requires a licence for RSMeans. Please contact RSMeans for a licence if you wish to use their data. We are currently using RSMean 2020 data in btap. 
 
+## Interface
+BTAP Batch has a command line interface.  There is currenly no GUI and the commands can be listed using the help (-h) switch. 
+The build command is one of several commands you have at your disposal in btap_batch.  You can use the -h switch to 
+reveal all the commands. Here is an example of the help output.
+```bash
+(venv) PS C:\btap_batch> python ./bin/btap_batch.py -h    
+Usage: btap_batch.py [OPTIONS] COMMAND [ARGS]...
+
+Options:
+  --version   Show the version and exit.
+  -h, --help  Show this message and exit.
+
+Commands:
+  aws-download  Download results from 1 or more analyses performed on...
+  aws-kill      This will terminate all aws analyses.
+  aws-rm-build  This delete all resources on aws for the given...
+  batch         This will run all the analysis projects in a given folder...
+  build         This will build the environment required to run an analysis.
+  credits
+  run           This will run an analysis project.
+  run-examples  This will run all the analysis projects in the examples...
+```
+
+These commands will be made more clear in the workflow examples below. 
+
 ## Requirements
 Software requirements for running btap_batch can be found [here](docs/requirements.md)
 

@@ -5,26 +5,9 @@ You need to configure your computer by first creating a **build_config.yml** fil
 * where to build and do the simulation analysis (**Local** or for really large analysis on the cloud at **Amazon**)
 * what weather files to include in the build environment for your analyses.
 
-The build command is one of several commands you have at your disposal in btap_batch.  You can use the -h switch to reveal all the commands. Here is an example of the help output.
-```bash
-(venv) PS C:\Users\plopez\PycharmProjects\btap_batch> python ./bin/btap_batch.py -h    
-Usage: btap_batch.py [OPTIONS] COMMAND [ARGS]...
 
-Options:
-  --version   Show the version and exit.
-  -h, --help  Show this message and exit.
-
-Commands:
-  aws-download  Download results from 1 or more analyses performed on...
-  aws-kill      This will terminate all aws analyses.
-  aws-rm-build  This delete all resources on aws for the given...
-  batch         This will run all the analysis projects in a given folder...
-  build         This will build the environment required to run an analysis.
-  credits
-  run           This will run an analysis project.
-  run-examples  This will run all the analysis projects in the examples...
-```
-For now we will focus on the **build** command. Here are is the help for that specific command
+You can create an sandbox build environment that will have all dependancies automatically install with specific versions
+of OpenStudio and EnergyPlus.  You can accomplish this by editing your build_conf.yml file and running the **build** command. 
 
 ```bash
 (venv) PS C:\Users\plopez\PycharmProjects\btap_batch> python ./bin/btap_batch.py build -h
