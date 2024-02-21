@@ -368,6 +368,7 @@ def aws_rm_build(**kwargs):
 @click.option('--hourly',   help='Download Hourly data', is_flag = True, show_default=True, default=False)
 @click.option('--eplussql',   help='Download EnergyPlus SQLite output data', is_flag = True, show_default=True, default=False)
 @click.option('--eplushtm',   help='Download EnergyPlus HTM output data', is_flag = True, show_default=True, default=False)
+@click.option('--unzip',   help='Unzip all files', is_flag = True, show_default=True, default=False)
 
 
 def aws_download(**kwargs):
@@ -381,7 +382,7 @@ def aws_download(**kwargs):
                       eplusout_sql=kwargs['eplussql'],
                       eplustbl_htm=kwargs['eplushtm'],
                       concat_excel_files=True,  # concat all output.xlsx files to a master.csv and parquet file
-                      unzip_and_delete=False,  # This will unzip the zip files of all the above into a folder and delete the original zip file.
+                      unzip_and_delete=kwargs['unzip'],  # This will unzip the zip files of all the above into a folder and delete the original zip file.
                       dry_run=not kwargs['download']  # If set to true.. will do a dry run and not download anything. This is used to make sure your regex is working as intended.
                       )
 
