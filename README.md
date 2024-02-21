@@ -68,7 +68,7 @@ Instructions for configuring your btap_batch and creating a build environment ca
 ## Building Type Geometries
 BTAP has a array of pre-developed building geometries for building types. These models already have full geometries and 
 space types assigned to spaces. So you can use these immediately for analysis. However, you can also create your own 
-building type geometry and space type assignments.  More inforation on geometries is [here](docs/geometry_library.md)
+building type geometry and space type assignments.  More information on geometries is [here](docs/custom_osm.md)
 
 ## Analysis Workflow Examples
  * [Optimization](docs/optimization.md): Run a genetic optimization for a fixed number of runs and generations based. 
