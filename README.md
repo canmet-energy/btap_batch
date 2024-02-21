@@ -4,9 +4,9 @@
 BTAP allows you to quickly generate archetype buildings based on Canadian codes and data and apply common energy conservation measures to explore possible technology packages. BTAP calculates energy, NECB Tier performance,  operational carbon and relative capital costs for all scenarios where possible. 
 
 The most common used cases for BTAP is to:
-* examine the performance of the National Energy Code for buildings
-* examine design pathways to high performance buildings.
-* aid the development of machine learning models.
+* quickly generate NECB archetypes for 2011 through 2020 for any building type and location.
+* examine the cost/performance of the National Energy Code for buildings in all location in Canada.
+* examine cost-effective design pathways to high performance buildings.
 
 BTAP Data can be used to generate dashboards. For example this [dashboard](https://public.tableau.com/app/profile/sara.gilani/viz/Solutions_NPV_PercentBetter/DB_Solutions_NPV_PercentBetter) was developed doing a series of BTAP Batch analyses.
 ![image info](docs/images/solutions_npv_percentbetter.png)
@@ -55,6 +55,11 @@ Instructions for downloading btap_batch from github and installing supporting Py
 
 ## Configuring BTAP Batch
 Instructions for configuring your btap_batch and creating a build environment can be found [here](docs/configure.md)
+
+## Building Type Geometries
+BTAP has a array of pre-developed building geometries for building types. These models already have full geometries and 
+space types assigned to spaces. So you can use these immediately for analysis. However, you can also create your own 
+building type geometry and space type assignments.  More inforation on geometries is [here](docs/geometry_library.md)
 
 ## Analysis Workflow Examples
  * [Optimization](docs/optimization.md): Run a genetic optimization for a fixed number of runs and generations based. 
