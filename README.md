@@ -1,12 +1,12 @@
 # BTAP
 
 ## Background
-BTAP allows you to quickly generate archetype buildings based on Canadian codes and data and apply common energy 
-conservation measures to explore possible technology packages. BTAP calculates energy, NECB Tier performance,  
+BTAP allows you to quickly generate archetype buildings based on Canadian codes, and apply common energy 
+conservation measures to explore design package performance. BTAP calculates energy, NECB Tier performance,  
 operational carbon and relative capital costs for all scenarios where possible. 
 
 Some unique features of BTAP:
-* NECB Rulesets are built in to allow quick generation of NECB models for all locations and NaturalGas, Electricity and HP baseline systems.
+* NECB Rulesets allow quick generation of NECB models for all locations and NaturalGas, Electricity and HP baseline systems.
 * Dynamic Costing that automatically accounts for load/sizing change costs for heating and cooling equipment.  Using RSMeans 2020 data. 
 * Operational GHG accounting using rate from [Portolio Manager 2020](https://github.com/NREL/openstudio-standards/blob/master/lib/openstudio-standards/standards/necb/common/btap_data.rb#L1899)
 * Utility Costs using Canada Energy Board 2021 [rates](https://github.com/NREL/openstudio-standards/blob/master/lib/openstudio-standards/standards/necb/common/neb_end_use_prices.csv).
@@ -16,11 +16,14 @@ The most common used cases for BTAP is to:
 * examine the cost/performance of the National Energy Code for buildings in all location in Canada.
 * examine cost-effective design pathways to high performance buildings.
 
-BTAP Data can be used to generate dashboards. For example this [dashboard](https://public.tableau.com/app/profile/sara.gilani/viz/Solutions_NPV_PercentBetter/DB_Solutions_NPV_PercentBetter) was developed doing a series of BTAP Batch analyses.
+BTAP data can also be used to generate beautiful dashboards. For example this 
+[dashboard](https://public.tableau.com/app/profile/sara.gilani/viz/Solutions_NPV_PercentBetter/DB_Solutions_NPV_PercentBetter) was developed doing a series of BTAP Batch analyses.
 ![image info](docs/images/solutions_npv_percentbetter.png)
 
-## Costing
-BTAP will automatically cost most relevant materials, equipment and labour. BTAP Costing will only cost items that have energy impact. It will for example cost the wall construction layers, but not the structural components. 
+
+## Costing Support
+BTAP will automatically cost most relevant materials, equipment and labour. BTAP Costing will only cost items 
+that have energy impact. It will, for example, cost the wall construction layers, but not the structural components. 
 Some items that BTAP costs are:
 * Labour, Overhead
 * Layer Materials in Constructions and fenestration.
@@ -29,8 +32,6 @@ Some items that BTAP costs are:
 
 Some examples of items it will not cost are:
 * Internal walls, doors, toilets, structural beams, furniture, etc.   
-
-For costing, BTAP uses the National Energy Board Utility [rates](resources/ceb_fuel_end_use_prices.csv). These are averaged costs per GJ and do not have block or tiered surcharges. Equipment and materials costing requires a licence for RSMeans. Please contact RSMeans for a licence if you wish to use their data. We are currently using RSMean 2020 data in btap. 
 
 ## Interface
 BTAP Batch has a command line interface.  You can use the (help) -h switch to reveal all the commands. Here is an example of the help output.
