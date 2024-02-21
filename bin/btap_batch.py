@@ -16,7 +16,7 @@ def btap():
     pass
 
 
-@btap.command()
+@btap.command(help=f"People that worked on this.")
 def credits():
     from colorama import Fore, Style
     import pyfiglet
