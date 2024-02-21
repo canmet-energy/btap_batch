@@ -1,5 +1,4 @@
 ---
-# local_managed_aws_workers local
 :analysis_name: batch_example
 :algorithm_type: batch
 :reference_run: False

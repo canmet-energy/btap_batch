@@ -3,3 +3,105 @@
 :template: NECB2020
 :datapoint_name: Montreal
 :epw_file: CAN_QC_Montreal.Intl.AP.716270_CWEC2020.epw
+:primary_heating_fuel:
+  - Electricity
+:dcv_type:
+  - NECB_Default
+:lights_type:
+  - NECB_Default
+:lights_scale:
+  - NECB_Default
+:daylighting_type:
+  - NECB_Default
+:ecm_system_name:
+  - NECB_Default
+:erv_package:
+  - NECB_Default
+:boiler_eff:
+  - NECB_Default
+:furnace_eff:
+  - NECB_Default
+:shw_eff:
+  - NECB_Default
+:ext_wall_cond:
+  - NECB_Default
+:ext_floor_cond:
+  - NECB_Default
+:ext_roof_cond:
+  - NECB_Default
+:ground_wall_cond:
+  - NECB_Default
+:ground_floor_cond:
+  - NECB_Default
+:ground_roof_cond:
+  - NECB_Default
+:door_construction_cond:
+  - NECB_Default
+:fixed_window_cond:
+  - NECB_Default
+:glass_door_cond:
+  - NECB_Default
+:overhead_door_cond:
+  - NECB_Default
+:skylight_cond:
+  - NECB_Default
+:glass_door_solar_trans:
+  - NECB_Default
+:fixed_wind_solar_trans:
+  - NECB_Default
+:skylight_solar_trans:
+  - NECB_Default
+:fdwr_set:
+  - NECB_Default
+:srr_set:
+  - NECB_Default
+:rotation_degrees:
+  - NECB_Default
+:scale_x:
+  - NECB_Default
+:scale_y:
+  - NECB_Default
+:scale_z:
+  - NECB_Default
+:pv_ground_type:
+  - NECB_Default
+:pv_ground_total_area_pv_panels_m2:
+  - NECB_Default
+:pv_ground_tilt_angle:
+  - NECB_Default
+:pv_ground_azimuth_angle:
+  - NECB_Default
+:pv_ground_module_description:
+  - NECB_Default
+:adv_dx_units:
+  - NECB_Default
+:nv_type:
+  - NECB_Default
+:nv_opening_fraction:
+  - NECB_Default
+:nv_temp_out_min:
+  - NECB_Default
+:nv_delta_temp_in_out:
+  - NECB_Default
+:occupancy_loads_scale:
+  - NECB_Default
+:electrical_loads_scale:
+  - NECB_Default
+:oa_scale:
+  - NECB_Default
+:infiltration_scale:
+  - NECB_Default
+:chiller_type:
+  - NECB_Default
+:airloop_economizer_type:
+  - NECB_Default
+:shw_scale:
+  - NECB_Default
+:baseline_system_zones_map_option:
+  - NECB_Default
+:npv_start_year:
+  - NECB_Default
+:npv_end_year:
+  - NECB_Default
+:npv_discount_rate:
+  - NECB_Default

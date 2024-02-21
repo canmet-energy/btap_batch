@@ -75,7 +75,7 @@ building type geometry and space type assignments.  More inforation on geometrie
  * [Elimination](docs/elimination.md): Examine theoretical maximum energy savings from each domain for a given model. 
  * [Sensitivity](docs/sensitivity.md): Examine the energy and cost effect from each measure selected. (~100 measures) 
  * [Latin-Hypercube-Sampling](docs/latin_hypercube_sampling.md): Sample the solution space with a given number of simulations
- * [Batch](docs/packages.md): When you wish to simply run a set of packages solution sets for comparison.
+ * [Batch](docs/packages.md): When you wish to simply run a few specific building scenarios for comparison.
 
 
 # Troubleshooting / FAQ
