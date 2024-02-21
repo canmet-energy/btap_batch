@@ -47,9 +47,9 @@ class PostProcessResults():
         # the primary fuel type should be set to the correct baseline if a HP is set in the :ecm_system_name. The exception in sensitivity.
         def primary_fuel(row):
             if isinstance(row[':ecm_system_name'],str):
-                if row[':primary_heating_fuel'] == "NaturalGas" and 'HP' in row[':ecm_system_name'] and row[':algorithm_type'] != 'sensitivity':
+                if row[':primary_heating_fuel'] == "NaturalGas" and 'HP' in row[':ecm_system_name'] and not row[':algorithm_type'] in ['sensitivity','batch']:
                     return 'NaturalGasHPGasBackup'
-                if row[':primary_heating_fuel'] == "Electricity" and 'HP' in row[':ecm_system_name'] and row[':algorithm_type'] != 'sensitivity':
+                if row[':primary_heating_fuel'] == "Electricity" and 'HP' in row[':ecm_system_name'] and not row[':algorithm_type'] in ['sensitivity','batch']:
                     return 'ElectricityHPElecBackup'
             return row[':primary_heating_fuel']
         btap_data_df['orig_fuel_type'] = btap_data_df[':primary_heating_fuel']
