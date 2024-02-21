@@ -679,10 +679,10 @@ def generate_build_config(build_config_path = None):
     import yaml
 
     config = f"""
-# This is the name of the build environment. This will prefix all images, s3 folder, and resources created on aws. Please ensure that it is 24 chars and only snake_case. 
+# This is the name of the build environment. This will prefix all images, s3 folders, and resources created on aws. Please ensure that it is 24 characters long or less, only uses numbers and lowercase letters, and includes no spaces or special characters aside from underscore. Use the underscore character instead of spaces.
 build_env_name: {USER}
 
-# Github Token. This must be set to use the costing module. Permissions to access are given by NRCan staff. 
+# Github Token. This must be set to build and run analyses. See the disable_costing section below if you are NRCan staff and would to access costing. 
 git_api_token: null
 
 # Compute Environment used to build and run analyses. Options are
@@ -700,10 +700,10 @@ btap_costing_branch: master
 # Branch of openstudio-standards used in environment
 os_standards_branch: nrcan
 
-# Branch of openstudio version to build into container environment. This by default will select the E+ version used with that version.
+# OpenStudio version used by analyses and built into the container environment. The E+ version used for simulations is determined by the OpenStudio version.
 openstudio_version: 3.6.1
 
-#List of Weather files to build included in the build environment. Only .epw files , and <100 files. Other weather locations are available. However, you have to define the ones you want to use when creating your environment.  The other locations that you can use can be found in this repository:
+# List of Weather files to build included in the build environment. Only .epw files , and <100 files. Other weather locations are available. However, you have to define the ones you want to use when creating your environment.  The other locations that you can use can be found in this repository:
 # https://github.com/canmet-energy/btap_weather
 weather_list:
   - CAN_QC_Montreal.Intl.AP.716270_CWEC2020.epw
@@ -716,9 +716,11 @@ weather_list:
   - CAN_AB_Fort.Mcmurray.AP.716890_CWEC2020.epw
   
 
-# If you do not have access RSMEANs data api from NRCan. This should be set to true, otherwise it will not build. If you 
-# are NRCan staff please request access by providing your GitHub username to chris.kirney@rncan-nrcan.gc.ca
-disable_costing: False
+# If you do not have access to the NRCan btap_costing repository this should be set to True. Setting this to True
+# without access will cause the build to fail. If you are NRCan staff, please request access by providing your GitHub
+# username to chris.kirney@rncan-nrcan.gc.ca.  Once you have permission to access the repository, you can set this to
+# False.
+disable_costing: True
 
 # Rebuild btap_cli image
 build_btap_cli: True

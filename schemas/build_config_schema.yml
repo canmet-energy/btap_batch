@@ -2,14 +2,14 @@
 type: object
 properties:
   build_env_name:
-    description: Prefix used to identify images, folders and other items specific to a build environment. snake_case and <24 chars.
+    description: Prefix used to identify images, folders and other items specific to a build environment. Snake_case and <24 chars.
     type: string
     pattern: ^[a-z0-9_\\s]*$
     minLength: 1
     maxLength: 24
 
   git_api_token:
-    description: The authorization token required to access the private resmeans costing database.
+    description: The authorization token required to access the private RSMeans costing database.
     type: string
 
   btap_batch_branch:
