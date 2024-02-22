@@ -43,7 +43,7 @@ def credits():
 
 @btap.command(help=f"This will build the environment required to run an analysis. If running for the first time. A template configuration will be placed in your home folder here:{CONFIG_FOLDER} ")
 @click.option('--build_config_path', '-p', default=os.path.join(CONFIG_FOLDER, 'build_config.yml'),
-              help=f'location of Location of build_config.yml file.  Default location is {CONFIG_FOLDER}')
+              help=f'For advanced users. Define location of the build_config.yml file.  Default location is {CONFIG_FOLDER}')
 
 def build(**kwargs):
     """
