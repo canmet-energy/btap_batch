@@ -108,9 +108,9 @@ def build(**kwargs):
 @click.option('--output_folder','-o', default=OUTPUT_FOLDER,
               help='Path to output results. Defaulted to this projects output folder ./btap_batch/output')
 @click.option('--build_config_path', '-b', default=os.path.join(CONFIG_FOLDER, 'build_config.yml'),
-              help=f'For advanced users. Location of the build_config.yml file.  Default location is {CONFIG_FOLDER}')
+              help=f'For advanced users. Define location of the build_config.yml file.  Default location is {CONFIG_FOLDER}')
 @click.option('--compute_environment', '-c', default=None,
-              help=f'For advanced users. Overide the computer environment in the build_config.yml.')
+              help=f'For advanced users. Override the computer environment in the build_config.yml.')
 def run(**kwargs):
     from src.btap.cli_helper_methods import analysis, load_config
     """
@@ -180,7 +180,7 @@ def get_build_config(build_config_path):
 
 @btap.command(help="This will run all the analysis projects in the examples file. Locally or on AWS.")
 @click.option('--build_config_path', '-c', default=os.path.join(CONFIG_FOLDER, 'build_config.yml'),
-              help=f'For advanced users.  Location of the build_config.yml file.  Default location is {CONFIG_FOLDER}')
+              help=f'For advanced users.  Define location of the build_config.yml file.  Default location is {CONFIG_FOLDER}')
 @click.option('--output_folder', default=OUTPUT_FOLDER,
               help='Path to output results. Defaulted to this projects output folder ./btap_batch/output')
 def run_examples(**kwargs):
