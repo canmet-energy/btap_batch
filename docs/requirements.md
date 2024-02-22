@@ -1,7 +1,7 @@
 ## Requirements
 * Windows 10 Professional version 1909 or greater 
 * [Docker](https://docs.docker.com/desktop/install/windows-install/) running on your computer. Ensure that you complete creating the docker-users group on your system.
-* [Python 3.9](https://www.python.org/ftp/python/3.9.13/python-3.9.13-amd64.exe) and Pip installed. 
+* [Python 3.9](https://www.python.org/ftp/python/3.9.13/python-3.9.13-amd64.exe) and Pip installed.  Ensure you check to install python in your PATH!
 * [Git client](https://git-scm.com/downloads)
 * A high speed internet connection.
 * A github account and [git-token](https://docs.github.com/en/github/authenticating-to-github/creating-a-personal-access-token)
