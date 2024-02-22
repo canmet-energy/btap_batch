@@ -680,7 +680,7 @@ def generate_build_config(build_config_path = None):
 
     config = f"""
 # This is the name of the build environment. This will prefix all images, s3 folders, and resources created on aws. Please ensure that it is 24 characters long or less, only uses numbers and lowercase letters, and includes no spaces or special characters aside from underscore. Use the underscore character instead of spaces.
-build_env_name: {USER}
+build_env_name: {USER.lower()}
 
 # Github Token. This must be set to build and run analyses. See the disable_costing section below if you are NRCan staff and would to access costing. 
 git_api_token: null
