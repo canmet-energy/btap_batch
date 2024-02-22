@@ -12,11 +12,11 @@ them with the help '-h' switch.
 To run a project 'example/optimization' analysis for example, on the compute environment indicated in your build_config.yml 
 file, and have the results go to the default output folder. Execute this command. 
 ```
-python ./bin/btap_batch.py run -p ./example/optimization 
+python ./bin/btap_batch.py run -p ./examples/optimization 
 ```
 To specify an output folder, you can optionally use the '-o' switch with the full path where you wish to save the output. 
 ```
-python ./bin/btap_batch.py run -p ./example/optimization -o C:\MyOutputFolder
+python ./bin/btap_batch.py run -p ./examples/optimization -o C:\MyOutputFolder
 ```
 
 ## Local
