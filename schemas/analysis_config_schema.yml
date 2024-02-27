@@ -1,8 +1,9 @@
-
+title: BTAP Analysis Run Options
 type: object
 properties:
   :analysis_name:
-    description: Used to identify the analysis and name the parent folder.
+    description: "Used to identify the analysis and name the parent folder. Must be less than 64 charecters and only 
+    letters numbers and underscores."
     type: string
     pattern: ^[a-zA-Z0-9_\\s]*$
     minLength: 1
@@ -10,15 +11,18 @@ properties:
 
   :reference_run:
     type: boolean
-    description: Optionally run the baseline/reference building. This will also provide comparison information from the baseline. If omitted it will assume to run the reference simulations.
+    description: "Optionally run the baseline/reference building. This will also provide comparison information from 
+    the baseline. If omitted it will assume to be true and run the reference simulations."
 
   :algorithm_type:
     description: "
-    This will select the analysis type to invoke. 
-    elimination:  Does an eliminations analysis by turning off aspects of the building to see how the building responds.
-    This is good for determining the theoretical maximum savings that the building can gain from certain measures. 
-    batch: This will run a set of btap_batch run_option.yml files in a given folder. 
-    nsga2: This invokes the optimization algortihm 
+    This will select the algorithm to use in the analysis. \n\n
+ * [Optimization](optimization.md): Run a genetic optimization for a fixed number of runs and generations based. \n\n
+ * [Parametric](parametric.md): Run all possible combinations in input file.\n\n
+ * [Elimination](elimination.md): Examine theoretical maximum energy savings from each domain for a given model. \n\n
+ * [Sensitivity](sensitivity.md): Examine the energy and cost effect from each measure selected. (~100 measures) \n\n
+ * [Latin-Hypercube-Sampling](latin_hypercube_sampling.md): Sample the solution space with a given number of simulations\n\n
+ * [Batch](packages.md): When you wish to simply run a few specific building scenarios for comparison.\n\n
     "
     type: string
     enum:
@@ -233,7 +237,7 @@ properties:
                 - HS09_CCASHP_Baseboard
                 - HS08_CCASHP_VRF
                 - HS11_ASHP_PTHP
-#                - HS12_ASHP_Baseboard Not supported in 3.6.1
+                #                - HS12_ASHP_Baseboard Not supported in 3.6.1
                 - HS13_ASHP_VRF
                 - HS14_CGSHP_FanCoils
 
@@ -334,7 +338,7 @@ properties:
                 - 0.247 # R22
                 - 0.210 # R27
                 - 0.183  #R31
-                  
+
       :ext_roof_cond:
         description: ""
         items:
@@ -351,7 +355,7 @@ properties:
                 - 0.142
                 - 0.138
                 - 0.121
-                  
+
       :ext_floor_cond:
         description: ""
         items:
@@ -379,7 +383,7 @@ properties:
                 - 0.379
                 - 0.284
                 - 0.210
-                  
+
       :ground_wall_roof:
         description: ""
         items:
@@ -393,7 +397,7 @@ properties:
                 - 0.379
                 - 0.284
                 - 0.210
-                
+
       :ground_floor_cond:
         description: ""
         items:
@@ -405,8 +409,8 @@ properties:
               enum:
                 - 0.758
                 - 0.379
-                
-                
+
+
       :door_construction_cond:
         description: ""
         items:
@@ -419,8 +423,8 @@ properties:
                 - 2.4
                 - 2.2
                 - 1.6
-                  
-                  
+
+
       :fixed_window_cond:
         description: ""
         items:
@@ -469,7 +473,7 @@ properties:
                 - 2.4
                 - 2.2
                 - 1.6
-                  
+
       :glass_door_solar_trans:
         description: ""
         items:
@@ -490,7 +494,7 @@ properties:
             - type: number
               minimum: 0.05
               maximum: 0.95
-      :skylight_solar_trans: 
+      :skylight_solar_trans:
         description: ""
         items:
           anyOf:
@@ -534,7 +538,7 @@ properties:
             - type: number
               minimum: 0.0
               maximum: 359.0
-                
+
       :scale_x:
         description: ""
         items:
@@ -565,7 +569,7 @@ properties:
             - type: number
               minimum: 0.01
               maximum: 100.0
-                
+
       :pv_ground_type:
         description: ""
         items:
@@ -574,7 +578,7 @@ properties:
               enum:
                 - NECB_Default
                 - add_pv_ground
-                
+
       :pv_ground_total_area_pv_panels_m2:
         description: ""
         items:
@@ -588,7 +592,7 @@ properties:
             - type: number
               minimum: 1
               maximum: 100000
-              
+
       :pv_ground_azimuth_angle:
         description: ""
         items:
@@ -599,7 +603,7 @@ properties:
             - type: number
               minimum: 0.0
               maximum: 359.0
-              
+
       :pv_ground_module_description:
         description: ""
         items:
@@ -608,7 +612,7 @@ properties:
               enum:
                 - NECB_Default
                 - Standard
-                - Premium 
+                - Premium
                 - ThinFilm
       # Advances DX units type.
       :adv_dx_units:

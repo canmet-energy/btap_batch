@@ -28,7 +28,6 @@ class AWSImageManager(DockerImageManager):
         self.compute_environment = compute_environment
         self.image_tag = 'latest'
 
-
     def get_image_uri(self):
         return f"{self.credentials.account_id}.dkr.ecr.{self.credentials.region_name}.amazonaws.com/{self.get_full_image_name()}:{self.image_tag}"
 
@@ -87,7 +86,6 @@ class AWSImageManager(DockerImageManager):
         if codebuild_project_name in codebuild.list_projects()['projects']:
             codebuild.delete_project(name=codebuild_project_name)
 
-
         codebuild.create_project(
             name=codebuild_project_name,
             description='string',
@@ -145,6 +143,14 @@ class AWSImageManager(DockerImageManager):
             # Check status every 5 secs.
             time.sleep(5)
 
+
+    def delete_image(self):
+        self._delete_image_repository(repository_name=self._image_repo_name())
+
+
+
+
+
     def _create_image_repository(self, repository_name=None):
         ecr = AWSCredentials().ecr_client
         repositories = ecr.describe_repositories()['repositories']
@@ -156,6 +162,33 @@ class AWSImageManager(DockerImageManager):
             message = f"Repository {repository_name} already exists. Using existing."
             logging.info(message)
 
+    @staticmethod
+    def list_repositories():
+        import boto3
+        import botocore
+        import src.btap.constants
+        aws_config = botocore.client.Config(
+            region_name='ca-central-1',
+            max_pool_connections=MAX_AWS_VCPUS,
+            retries={'max_attempts': 60,
+                     'mode': 'standard'})
+        ecr = boto3.client('ecr', config=aws_config)
+        # Initialize the object count
+        object_count = 0
+        ecr = AWSCredentials().ecr_client
+
+        repositories = []
+        describe_repo_paginator = ecr.get_paginator('describe_repositories')
+        for response_listrepopaginator in describe_repo_paginator.paginate():
+            for repo in response_listrepopaginator['repositories']:
+                    repositories.append(repo['repositoryName'])
+
+        return repositories
+    @staticmethod
+    def get_existing_build_env_names():
+        build_env_names = [k for k in AWSImageManager().list_repositories() if 'btap_cli' in k]
+        build_env_names = [x.removesuffix('_btap_cli') for x in build_env_names]
+        return build_env_names
 
     def _delete_image_repository(self, repository_name=None):
         ecr = AWSCredentials().ecr_client
@@ -163,10 +196,12 @@ class AWSImageManager(DockerImageManager):
         if not next((item for item in repositories if item["repositoryName"] == repository_name), None) == None:
             message = f"Deleting repository {repository_name}"
             logging.info(message)
-            ecr.delete_repository(repositoryName=repository_name)
+            print(message)
+            ecr.delete_repository(repositoryName=repository_name, force=True)
         else:
             message = f"Repository {repository_name} does not exists. Not Deleting it."
             logging.info(message)
+            print(message)
 
     def get_image(self, image_name=None, image_tag='latest'):
         image = None
@@ -186,3 +221,4 @@ class AWSImageManager(DockerImageManager):
         return AWSBatch(image_manager=self,
                         compute_environment=self.compute_environment
                         )
+

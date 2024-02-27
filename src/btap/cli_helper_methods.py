@@ -171,7 +171,7 @@ def build_and_configure_docker_and_aws(btap_batch_branch=None,
 
 
     if compute_environment  in ['local_managed_aws_workers', 'aws']:
-        delete_aws_build_env()
+        delete_aws_build_env(os.environ['BUILD_ENV_NAME'])
 
         # # Create new
         ace_worker = AWSComputeEnvironment(name='btap_cli')
@@ -230,6 +230,7 @@ def build_and_configure_docker_and_aws(btap_batch_branch=None,
 
 
 def delete_aws_build_env(build_env_name = None):
+    os.environ['BUILD_ENV_NAME'] = build_env_name
     # Tear down
     ace_worker = AWSComputeEnvironment(build_env_name=build_env_name, name='btap_cli')
     ace_manager = AWSComputeEnvironment(build_env_name=build_env_name,name='btap_batch')
@@ -248,6 +249,9 @@ def delete_aws_build_env(build_env_name = None):
     IAMBatchJobRole(build_env_name=build_env_name).delete()
     IAMCodeBuildRole(build_env_name=build_env_name).delete()
     IAMBatchServiceRole(build_env_name=build_env_name).delete()
+    # Delete repositories/images from AWS
+    image_manager.delete_image()
+    image_worker.delete_image()
 
 
 
@@ -337,6 +341,10 @@ def analysis(project_input_folder=None,
     if compute_environment == 'local_managed_aws_workers' or compute_environment == 'aws':
         bucket = AWSCredentials().account_id
         user_name = os.environ.get('BUILD_ENV_NAME').replace('.', '_')
+        # Check if aws build_env_name exists
+        if not user_name in AWSImageManager.get_existing_build_env_names():
+            print(f"build_env_name '{user_name}' does not exist on aws. Have you built it using the build command yet?")
+
         prefix = os.path.join(user_name, analysis_config[':analysis_name'] + '/')
         print(f"Deleting old files in S3 folder {prefix}")
         S3().bulk_del_with_pbar(bucket=bucket, prefix=prefix)

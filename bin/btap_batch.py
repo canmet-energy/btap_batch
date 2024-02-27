@@ -351,10 +351,18 @@ def aws_kill(**kwargs):
 
 @btap.command(
     help="This delete all resources on aws for the given build_env_name")
-@click.option('--build_env_name', '-n',  help='name of aws build_environment to delete')
+@click.option('--build_config_path', '-c', default=os.path.join(CONFIG_FOLDER, 'build_config.yml'),
+              help=f'location of Location of build_config.yml file.  Default location is {CONFIG_FOLDER}')
+@click.option('--build_env_name', '-n',  help='name of aws build_environment to delete, if not set, it will use the '
+                                              'build_env_name in your build_cofig.yml file', default='none')
 def aws_rm_build(**kwargs):
     from src.btap.cli_helper_methods import delete_aws_build_env
-    delete_aws_build_env(build_env_name=kwargs['build_env_name'])
+    if kwargs['build_env_name'] == 'none':
+        config = load_config(build_config_path=kwargs["build_config_path"])
+        name = config['build_env_name']
+    else:
+        name = kwargs['build_env_name']
+    delete_aws_build_env(build_env_name=name)
 
 
 @btap.command(
