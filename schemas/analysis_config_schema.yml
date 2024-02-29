@@ -101,7 +101,7 @@ properties:
 
 
   :output_variables:
-    description: "This enables EnergyPlus optional outputs. Details are contained in the (documentation)[docs/output.md]"
+    description: "This enables EnergyPlus optional outputs. Details are contained in the [documentation](docs/output.md)"
     items:
       type: object
       properties:
@@ -117,7 +117,7 @@ properties:
           type: string
 
   :output_meters:
-    description: "This enables EnergyPlus optional outputs. Details are contained in the (documentation)[docs/output.md]"
+    description: "This enables EnergyPlus optional outputs. Details are contained in the [documentation](docs/output.md)"
     items:
       type: object
       properties:
@@ -147,13 +147,13 @@ properties:
           for solutions for the FullSerivice restaurant and ignore the HighriseApartment as a solution since the restaurant will
           always be cheaper.
           "
-#        examples: [
-#            :building_type:
-#              [
-#                  "FullServiceRestaurant",
-#                  "HighriseApartment"
-#              ]
-#        ]
+        examples: [
+        ":building_type":
+          [
+          "FullServiceRestaurant",
+            "HighriseApartment"
+          ]
+        ]
 
         items:
           type: string
@@ -188,7 +188,16 @@ properties:
           pattern: ^.*\.epw$
 
       :primary_heating_fuel:
-        description: ""
+        description: "These are fuels that are used primarily for space heating and hot water needs.\n\n
+        | Primary Heating Fuel            | Hot Water             | Primary                 | Backup             |\n   
+        | --------                        | -------               | -------                 | -------            |\n
+        | **Electricity**                 | Electric Resistance   | Electric Resistance     | Electric Resistance|\n 
+        | **NaturalGas**                  | Natural Gas           | Natural Gas             | Natural Gas        |\n 
+        | **ElectricityHPElecBackup**     | Electric Resistance   | Heat Pump               | Electric Resistance|\n
+        | **NaturalGasHPGasBackup**       | Natural Gas           | Heat Pump               | Natural Gas        |\n 
+        | **ElectricityHPGasBackupMixed** | Electric Resistance   | Heat Pump               | Natural Gas        |\n 
+        | **NaturalGasHPElecBackupMixed** | Natural Gas           | Heat Pump               | Electric Resistance|\n 
+        "
         items:
           type: string
           enum:
