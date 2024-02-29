@@ -16,7 +16,7 @@ properties:
 
   :algorithm_type:
     description: "
-    This will select the algorithm to use in the analysis. \n\n
+    This will select the algorithm to use in the analysis. For information on the
  * [Optimization](optimization.md): Run a genetic optimization for a fixed number of runs and generations based. \n\n
  * [Parametric](parametric.md): Run all possible combinations in input file.\n\n
  * [Elimination](elimination.md): Examine theoretical maximum energy savings from each domain for a given model. \n\n
@@ -35,47 +35,73 @@ properties:
       - sensitivity
 
   :algorithm_lhs_n_samples:
+    description: "This is the number of simulations that will be preformed in the analysis. See
+    [Scipy implementation](https://scikit-optimize.github.io/stable/auto_examples/sampler/initial-sampling-method.html)"
     type: integer
     minimum: 1
     maximum: 5000
 
 
   :algorithm_lhs_type:
+    description: "This should be set to classic.. However other options are available in the scikit documentation listed
+    above. See [Scipy implementation](https://scikit-optimize.github.io/stable/auto_examples/sampler/initial-sampling-method.html)"
     type: string
     enum:
       - classic
 
   :algorithm_lhs_random_seed:
+    description: "algorithm_lhs_random_seed This is the random seed that will be used to drive the LHS random function.
+    Change this to another number to alter the output from the same run. See
+    [Scipy implementation](https://scikit-optimize.github.io/stable/auto_examples/sampler/initial-sampling-method.html)"
     type: number
     minimum: 1
     maximum: 100
 
 
   :algorithm_nsga_population:
+    description: "This is population size that is used in the NSGAII. Should be set to multiples
+    than the number of threads/cores that you have available on your system to get best performance. Described in the
+    [pymoo](https://pymoo.org/algorithms/moo/nsga2.html)"
     type: integer
     minimum: 1
     maximum: 100
 
   :algorithm_nsga_n_generations:
+    description: "This is the number of generations that are used in the NSGAII. Described in the
+    [pymoo](https://pymoo.org/algorithms/moo/nsga2.html)"
     type: integer
     minimum: 1
     maximum: 100
 
   :algorithm_nsga_prob:
+    description: "Used to configure crossover. See documentation
+    [pymoo](https://pymoo.org/operators/crossover.html)"
     type: number
     minimum: 0.0
     maximum: 100.0
 
   :algorithm_nsga_eta:
+    description: "Used to configure crossover. See documentation
+    [pymoo](https://pymoo.org/operators/crossover.html)"
     type: number
     minimum: 0.0
     maximum: 100.0
 
   :algorithm_nsga_minimize_objectives:
+    description: "Contains a list of the outputs from btap that you would like to optimize to. Pro tip. Run a
+    senstivity analysis and examine the output.xlsx in the results folder to find a outpum column you wish to minimize."
     items:
       type: string
+#    examples: [
+#      :algorithm_nsga_minimize_objectives: [
+#        "energy_eui_total_gj_per_m_sq",
+#        "cost_equipment_total_cost_per_m_sq"
+#      ]
+#    ]
+
 
   :output_variables:
+    description: "This enables EnergyPlus optional outputs. Details are contained in the (documentation)[docs/output.md]"
     items:
       type: object
       properties:
@@ -91,6 +117,7 @@ properties:
           type: string
 
   :output_meters:
+    description: "This enables EnergyPlus optional outputs. Details are contained in the (documentation)[docs/output.md]"
     items:
       type: object
       properties:
@@ -109,14 +136,40 @@ properties:
     type: object
     properties:
       :building_type:
-        description: ""
+
+        description: "This allows you to select either a pre-configured geometry in our library, or a custom geometry developed by a user.\n\n
+         The Geometry files are OpenStudio OSM files that have geometry and spacetypes defined as per NECB2011, but nothing else as BTAP will poplate the rest based
+          on the template and options selected. A full list of built-in models are available. They are listed
+          (here)[https://github.com/NREL/openstudio-standards/tree/nrcan/lib/openstudio-standards/standards/necb/NECB2011/data/geometry]
+          You would add the geometry name without the '.osm' extension. \n\n
+          Please note that the context is important.  Having two or more building types makes perfect sense for a parametric or sample_lhs analysis.
+          But for for sensitvity and nsga2, it will not work as expected. If you minimize cost and energy. The optimizer will look
+          for solutions for the FullSerivice restaurant and ignore the HighriseApartment as a solution since the restaurant will
+          always be cheaper.
+          "
+#        examples: [
+#            :building_type:
+#              [
+#                  "FullServiceRestaurant",
+#                  "HighriseApartment"
+#              ]
+#        ]
+
         items:
           type: string
           minLength: 1
           maxLength: 24
 
       :template:
-        description: ""
+        description: "
+        This field will designate which baseline building templates to use. Currently BTAP supports the **National Energy
+        Building Code**
+        (NECB)[https://nrc.canada.ca/en/certifications-evaluations-standards/codes-canada/codes-canada-publications/national-energy-code-canada-buildings-2020]
+        The vintages that are availble are the NECB2011 to 2020. BTAP will use all the performance requirements of the
+        selected codes in the analysis. It will determine what the `NECB_Default` will be used in other options as
+        selected. While you could use this field with many templates to optimize. It is not recommended as it will probably
+        optimize to the lastest code.
+        "
         items:
           type: string
           enum:
@@ -128,7 +181,8 @@ properties:
             - NECB2020
 
       :epw_file:
-        description: ""
+        description: "#List of Weather files to use in the analysis.  These weather files should be a subset of the
+        weather files defined in your build_config.yml file.   The other locations that you can use can be found in this repository"
         items:
           type: string
           pattern: ^.*\.epw$
