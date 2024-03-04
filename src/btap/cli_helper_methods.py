@@ -709,7 +709,7 @@ btap_costing_branch: master
 os_standards_branch: nrcan
 
 # OpenStudio version used by analyses and built into the container environment. The E+ version used for simulations is determined by the OpenStudio version.
-openstudio_version: 3.6.1
+openstudio_version: 3.7.0
 
 # List of Weather files to build included in the build environment. Only .epw files , and <100 files. Other weather locations are available. However, you have to define the ones you want to use when creating your environment.  The other locations that you can use can be found in this repository:
 # https://github.com/canmet-energy/btap_weather
