@@ -10,8 +10,8 @@ import pandas as pd
 import pathlib
 from icecream import ic
 
-
-def generate_btap_reports(data_file=None, pdf_output_folder=None):
+from concurrent.futures import ProcessPoolExecutor
+def generate_btap_reports(data_file=None, pdf_output_folder=None, max_workers=1):
     ext = os.path.splitext(data_file)[1]
     if ext == '.csv':
         df = pd.read_csv(data_file)
@@ -58,21 +58,37 @@ def generate_btap_reports(data_file=None, pdf_output_folder=None):
 
     # Gets all unique values in the scenario column.
     analysis_names = df[':analysis_name'].unique()
+    dfcopy = df.copy()
+
     for analysis_name in analysis_names:
-        pdf_output_file = os.path.join(pdf_output_folder, analysis_name + ".pdf")
-        filtered_df = df.loc[df[':analysis_name'] == analysis_name]
-        algorithm_type = filtered_df[':algorithm_type'].unique()[0]
-        if algorithm_type == 'sensitivity':
-            print(f"Generating BTAP report: {pdf_output_file}")
-            sensitivity_report(df=filtered_df, pdf_output = pdf_output_file)
-        if algorithm_type == 'nsga2':
-            print(f"Generating BTAP report: {pdf_output_file}")
-            nsga2_report(df=df, pdf_output=pdf_output_file)
-        if algorithm_type == 'sample-lhs':
-            print(f"Generating BTAP report: {pdf_output_file}")
-            nsga2_report(df=df, pdf_output=pdf_output_file)
+        print(analysis_name)
+        generate_pdf(analysis_name, dfcopy, pdf_output_folder)
 
 
+    # with ProcessPoolExecutor(max_workers=max_workers) as exe:
+    #     for analysis_name in analysis_names:
+    #         print(analysis_name)
+    #         exe.submit(generate_pdf,analysis_name, dfcopy, pdf_output_folder)
+
+
+
+
+def generate_pdf(analysis_name, dfcopy, pdf_output_folder):
+
+    pdf_output_file = os.path.join(pdf_output_folder, analysis_name + ".pdf")
+    filtered_df = dfcopy.loc[dfcopy[':analysis_name'] == analysis_name]
+    algorithm_type = filtered_df[':algorithm_type'].unique()[0]
+
+    if 'sensitivity' in filtered_df[':algorithm_type'].unique():
+        ic(analysis_name)
+        print(f"Generating BTAP report: {pdf_output_file}")
+        sensitivity_report(df=filtered_df, pdf_output=pdf_output_file)
+    if algorithm_type == 'nsga2':
+        print(f"Generating BTAP report: {pdf_output_file}")
+        nsga2_report(df=filtered_df, pdf_output=pdf_output_file)
+    if algorithm_type == 'sample-lhs':
+        print(f"Generating BTAP report: {pdf_output_file}")
+        nsga2_report(df=filtered_df, pdf_output=pdf_output_file)
 
 
 def nsga2_report(df=None,
@@ -88,17 +104,23 @@ def nsga2_report(df=None,
     # Add Page
     pdf.add_page()
     # First Section
-    pdf.start_section(name="Optimization Scatterplot", level=0, strict=True)
-    # Scatter plot
-    sns.scatterplot(
-        x="baseline_energy_percent_better",
-        y="baseline_difference_cost_equipment_total_cost_per_m_sq",
-        data=df).set(title=pathlib.Path(pdf_output).stem)
-    img_buf = BytesIO()  # Create image object
-    plt.savefig(img_buf, format="svg")
-    pdf.image(img_buf, w=pdf.epw)
-    img_buf.close()
-    plt.close('all')
+    # Iterate through all scenarios.
+    for scenario in df[':scenario'].unique():
+        ic(scenario)
+        pdf.start_section(name=f"Appendix A: ECM {scenario}", level=0, strict=True)
+        # Scatter plot
+        sns.scatterplot(
+            x="baseline_energy_percent_better",
+            y="baseline_difference_cost_equipment_total_cost_per_m_sq",
+            data=df,
+            hue=scenario,
+        ).set(title=pathlib.Path(pdf_output).stem)
+        img_buf = BytesIO()  # Create image object
+        plt.savefig(img_buf, format="svg")
+        plt.legend(loc='best', frameon=False)
+        pdf.image(img_buf, w=pdf.epw)
+        img_buf.close()
+        plt.close('all')
     pdf.output(pdf_output)
 
 
@@ -186,6 +208,10 @@ def sensitivity_report(df=None,
 
     # Remove other columns not to be considered.
     headers = [x for x in headers if x not in columns_removed]
+
+    # Remove headers if columns does not exist
+    headers = [x for x in headers if x in styled_df.columns]
+
     styled_df.bar(subset=headers, color=['red', 'lightgreen'])
     img_buf = BytesIO()  # Create image object
     dfi.export(styled_df, img_buf, dpi=200)
@@ -194,17 +220,20 @@ def sensitivity_report(df=None,
 
     # Iterate through all scenarios.
     for scenario in df[':scenario'].unique():
+        ic(scenario)
         pdf.start_section(name=f"Appendix A: ECM {scenario}", level=0, strict=True)
-        # Scatter plot
-        sns.scatterplot(
+        #Scatter plot
+        g= sns.scatterplot(
             x="baseline_energy_percent_better",
             y="cost_equipment_total_cost_per_m_sq",
             hue=scenario,
             data=df.loc[df[':scenario'] == scenario].reset_index())
+        g.legend(loc='best')
+
 
         img_buf = BytesIO()  # Create image object
         plt.savefig(img_buf, format="svg")
-        pdf.image(img_buf, w=pdf.epw / 2)
+        pdf.image(img_buf, w=pdf.epw)
         img_buf.close()
         plt.close('all')
 
@@ -239,6 +268,7 @@ def sensitivity_report(df=None,
             rot=0,
             xlabel=scenario,  # Use the column name as the X label.
             ylabel='GJ/M2')
+        ax.legend(loc='best')
         # Have the amount for each stack in chart.
         for c in ax.containers:
             # if the segment is small or 0, do not report zero.remove the labels parameter if it's not needed for customized labels
@@ -247,7 +277,7 @@ def sensitivity_report(df=None,
 
         img_buf = BytesIO()  # Create image object
         plt.savefig(img_buf, format="svg")
-        pdf.image(img_buf, w=pdf.epw / 2)
+        pdf.image(img_buf, w=pdf.epw)
         img_buf.close()
         plt.close('all')
 
@@ -281,6 +311,7 @@ def sensitivity_report(df=None,
             rot=0,
             xlabel=scenario,
             ylabel='$/M2')
+        ax.legend(loc='best')
         # Have the amount for each stack in chart.
         for c in ax.containers:
             # if the segment is small or 0, do not report zero.remove the labels parameter if it's not needed for customized labels
@@ -288,8 +319,9 @@ def sensitivity_report(df=None,
             ax.bar_label(c, labels=labels, label_type='center')
         img_buf = BytesIO()  # Create image object
         plt.savefig(img_buf, format="svg")
-        pdf.image(img_buf, w=pdf.epw / 2)
+        pdf.image(img_buf, w=pdf.epw)
         img_buf.close()
         plt.close('all')
     pdf.output(pdf_output)
 
+#generate_btap_reports(data_file=r'/home/plopez/btap_batch/downloads/SmallOffice_NaturalGas_YZF_sens_output.xlsx', pdf_output_folder=r'/home/plopez/btap_batch/downloads/pdf')

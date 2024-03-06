@@ -32,6 +32,7 @@
   - HS09_CCASHP_Baseboard
   - HS08_CCASHP_VRF
   - HS11_ASHP_PTHP
+  - HS12_ASHP_Baseboard
   - HS13_ASHP_VRF
   - HS14_CGSHP_FanCoils
   :electrical_loads_scale:

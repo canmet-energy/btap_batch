@@ -12,8 +12,8 @@ def git_solution_sets():
     build_config = load_config(os.path.join(CONFIG_FOLDER, 'build_config.yml'))
     os.environ['BUILD_ENV_NAME'] =build_config['build_env_name']
 
-    LEEP = True
-    HOURLY = False
+    LEEP = False
+    HOURLY = True
     SENSITIVITY_RUNS = True
     SENSITIVITY_PRIMARY_FUELS_PIVOT = [
         'Electricity',
@@ -21,15 +21,17 @@ def git_solution_sets():
         'ElectricityHPElecBackup',
         'NaturalGasHPGasBackup',
         'ElectricityHPGasBackupMixed',
-        'NaturalGasHPElecBackupMixed']
-    OPTIMIZATION_RUNS = False
+        'NaturalGasHPElecBackupMixed'
+        ]
+    OPTIMIZATION_RUNS = True
     OPTIMIZATION_PRIMARY_FUELS_PIVOT = [
         'Electricity',
         'NaturalGas',
         'ElectricityHPElecBackup',
         'NaturalGasHPGasBackup',
         'ElectricityHPGasBackupMixed',
-        'NaturalGasHPElecBackupMixed']
+        'NaturalGasHPElecBackupMixed'
+    ]
     algorithm_nsga_population = 50
     algorithm_nsga_n_generations = 5
     algorithm_nsga_minimize_objectives = [
@@ -61,7 +63,7 @@ def git_solution_sets():
         # "QuickServiceRestaurant",
         # "FullServiceRestaurant",
         # "MidriseApartment",
-        # "HighriseApartment",
+        "HighriseApartment",
         # "LowriseApartment",
         # "Hospital",
         # "Outpatient"
@@ -73,12 +75,12 @@ def git_solution_sets():
 
 # Using airport codes to identify the locations.  Much easier if sometimes slightly inaccurate.
     epw_files = [
-        # ['CAN_BC_Vancouver.Intl.AP.718920_CWEC2016.epw', 'YVR'],  # CZ 4
-        # ['CAN_ON_Toronto.Pearson.Intl.AP.716240_CWEC2016.epw', 'YYZ'],  # CZ 5
-        # ['CAN_QC_Montreal-Trudeau.Intl.AP.716270_CWEC2016.epw', 'YUL'],  # CZ 6
-        # ['CAN_AB_Edmonton.Intl.AP.711230_CWEC2016.epw', 'YEG'],  # CZ 7A
-        # ['CAN_AB_Fort.McMurray.AP.716890_CWEC2016.epw', 'YMM'],  # CZ 7B
-        # ['CAN_NT_Yellowknife.AP.719360_CWEC2016.epw', 'YZF']  # CZ 8
+         ['CAN_BC_Vancouver.Intl.AP.718920_CWEC2016.epw', 'YVR'],  # CZ 4
+         ['CAN_ON_Toronto.Pearson.Intl.AP.716240_CWEC2016.epw', 'YYZ'],  # CZ 5
+         ['CAN_QC_Montreal-Trudeau.Intl.AP.716270_CWEC2016.epw', 'YUL'],  # CZ 6
+         ['CAN_AB_Edmonton.Intl.AP.711230_CWEC2016.epw', 'YEG'],  # CZ 7A
+         ['CAN_AB_Fort.McMurray.AP.716890_CWEC2016.epw', 'YMM'],  # CZ 7B
+         ['CAN_NT_Yellowknife.AP.719360_CWEC2016.epw', 'YZF']  # CZ 8
     ]
 
     if build_config['compute_environment'] != 'local':
@@ -138,9 +140,9 @@ def git_solution_sets():
 
     if HOURLY:
         optimization_template[':output_meters'] = HOURLY_OUTPUT_METERS
-        optimization_template[':output_variables'] = HOURLY_OUTPUT_VARIABLES
+        #optimization_template[':output_variables'] = HOURLY_OUTPUT_VARIABLES
         sensitivity_template[':output_meters'] = HOURLY_OUTPUT_METERS
-        sensitivity_template[':output_variables'] = HOURLY_OUTPUT_VARIABLES
+        #sensitivity_template[':output_variables'] = HOURLY_OUTPUT_VARIABLES
     else: # turn off hourly output. Faster runs.
         optimization_template[':output_meters'] = []
         optimization_template[':output_variables'] = []
