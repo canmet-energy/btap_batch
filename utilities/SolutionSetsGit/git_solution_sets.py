@@ -38,7 +38,7 @@ def git_solution_sets():
         'energy_eui_total_gj_per_m_sq',
         'npv_total_per_m_sq'
     ]
-    LHS_RUNS = False  # 2000 runs (1)
+    LHS_RUNS = True  # 2000 runs (1)
     LHS_PRIMARY_FUELS =[
         'Electricity',
         'ElectricityHPElecBackup',
@@ -62,8 +62,8 @@ def git_solution_sets():
         # "RetailStripmall",
         # "QuickServiceRestaurant",
         # "FullServiceRestaurant",
-        # "MidriseApartment",
-        "HighriseApartment",
+        #  "MidriseApartment",
+        # "HighriseApartment",
         # "LowriseApartment",
         # "Hospital",
         # "Outpatient"
