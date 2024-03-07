@@ -1,0 +1,976 @@
+title: analysis_options
+type: object
+properties:
+  :analysis_name:
+    description: "Used to identify the analysis and name the parent folder. Must be less than 64 charecters and only 
+    letters numbers and underscores."
+    type: string
+    pattern: ^[a-zA-Z0-9_\\s]*$
+    minLength: 1
+    maxLength: 64
+
+  :reference_run:
+    type: boolean
+    description: "Optionally run the baseline/reference building. This will also provide comparison information from 
+    the baseline. If omitted it will assume to be true and run the reference simulations."
+
+  :algorithm_type:
+    description: "
+This will select the algorithm to use in the analysis. \n\n
+* [Optimization](optimization.md): Run a genetic optimization for a fixed number of runs and generations based. \n\n
+* [Parametric](parametric.md): Run all possible combinations in input file.\n\n
+* [Elimination](elimination.md): Examine theoretical maximum energy savings from each domain for a given model. \n\n
+* [Sensitivity](sensitivity.md): Examine the energy and cost effect from each measure selected. (~100 measures) \n\n
+* [Latin-Hypercube-Sampling](latin_hypercube_sampling.md): Sample the solution space with a given number of simulations\n\n
+* [Batch](packages.md): When you wish to simply run a few specific building scenarios for comparison.\n\n
+    "
+    type: string
+    enum:
+      - elimination
+      - batch
+      - nsga2
+      - parametric
+      - reference
+      - sampling-lhs
+      - sensitivity
+
+  :algorithm_lhs_n_samples:
+    description: "This is the number of simulations that will be preformed in the analysis. See
+    [Scipy implementation](https://scikit-optimize.github.io/stable/auto_examples/sampler/initial-sampling-method.html)"
+    type: integer
+    minimum: 1
+    maximum: 5000
+
+
+  :algorithm_lhs_type:
+    description: "This should be set to classic.. However other options are available in the scikit documentation listed
+    above. See [Scipy implementation](https://scikit-optimize.github.io/stable/auto_examples/sampler/initial-sampling-method.html)"
+    type: string
+    enum:
+      - classic
+
+  :algorithm_lhs_random_seed:
+    description: "algorithm_lhs_random_seed This is the random seed that will be used to drive the LHS random function.
+    Change this to another number to alter the output from the same run. See
+    [Scipy implementation](https://scikit-optimize.github.io/stable/auto_examples/sampler/initial-sampling-method.html)"
+    type: number
+    minimum: 1
+    maximum: 100
+
+
+  :algorithm_nsga_population:
+    description: "This is population size that is used in the NSGAII. Should be set to multiples
+    than the number of threads/cores that you have available on your system to get best performance. Described in the
+    [pymoo](https://pymoo.org/algorithms/moo/nsga2.html)"
+    type: integer
+    minimum: 1
+    maximum: 100
+
+  :algorithm_nsga_n_generations:
+    description: "This is the number of generations that are used in the NSGAII. Described in the
+    [pymoo](https://pymoo.org/algorithms/moo/nsga2.html)"
+    type: integer
+    minimum: 1
+    maximum: 100
+
+  :algorithm_nsga_prob:
+    description: "Used to configure crossover. See documentation
+    [pymoo](https://pymoo.org/operators/crossover.html)"
+    type: number
+    minimum: 0.0
+    maximum: 100.0
+
+  :algorithm_nsga_eta:
+    description: "Used to configure crossover. See documentation
+    [pymoo](https://pymoo.org/operators/crossover.html)"
+    type: number
+    minimum: 0.0
+    maximum: 100.0
+
+  :algorithm_nsga_minimize_objectives:
+    description: "Contains a list of the outputs from btap that you would like to optimize to. Pro tip. Run a
+    senstivity analysis and examine the output.xlsx in the results folder to find a outpum column you wish to minimize."
+    items:
+      type: string
+#    examples: [
+#      :algorithm_nsga_minimize_objectives: [
+#        "energy_eui_total_gj_per_m_sq",
+#        "cost_equipment_total_cost_per_m_sq"
+#      ]
+#    ]
+
+
+  :output_variables:
+    description: "This enables EnergyPlus optional outputs. Details are contained in the [documentation](docs/output.md)"
+    items:
+      type: object
+      properties:
+        key:
+          type: string
+        variable:
+          type: string
+        frequency:
+          type: string
+        operation:
+          type: string
+        unit:
+          type: string
+
+  :output_meters:
+    description: "This enables EnergyPlus optional outputs. Details are contained in the [documentation](docs/output.md)"
+    items:
+      type: object
+      properties:
+        key:
+          type: string
+        variable:
+          type: string
+        frequency:
+          type: string
+        operation:
+          type: string
+        unit:
+          type: string
+
+  :options:
+    type: object
+    properties:
+      :building_type:
+
+        description: "This allows you to select either a pre-configured geometry in our library, or a custom geometry developed by a user.\n\n
+         The Geometry files are OpenStudio OSM files that have geometry and spacetypes defined as per NECB2011, but nothing else as BTAP will poplate the rest based
+          on the template and options selected. A full list of built-in models are available. They are listed
+          (here)[https://github.com/NREL/openstudio-standards/tree/nrcan/lib/openstudio-standards/standards/necb/NECB2011/data/geometry]
+          You would add the geometry name without the '.osm' extension. \n\n
+          Please note that the context is important.  Having two or more building types makes perfect sense for a parametric or sample_lhs analysis.
+          But for for sensitvity and nsga2, it will not work as expected. If you minimize cost and energy. The optimizer will look
+          for solutions for the FullSerivice restaurant and ignore the HighriseApartment as a solution since the restaurant will
+          always be cheaper.
+          "
+        examples: [
+        ":building_type":
+          [
+          "FullServiceRestaurant",
+            "HighriseApartment"
+          ]
+        ]
+
+        items:
+          type: string
+          minLength: 1
+          maxLength: 24
+
+      :template:
+        description: "
+        This field will designate which baseline building templates to use. Currently BTAP supports the **National Energy
+        Building Code**
+        (NECB)[https://nrc.canada.ca/en/certifications-evaluations-standards/codes-canada/codes-canada-publications/national-energy-code-canada-buildings-2020]
+        The vintages that are availble are the NECB2011 to 2020. BTAP will use all the performance requirements of the
+        selected codes in the analysis. It will determine what the `NECB_Default` will be used in other options as
+        selected. While you could use this field with many templates to optimize. It is not recommended as it will probably
+        optimize to the lastest code.
+        "
+        items:
+          type: string
+          enum:
+            - BTAPPRE1980
+            - BTAP1980TO2010
+            - NECB2011
+            - NECB2015
+            - NECB2017
+            - NECB2020
+
+      :epw_file:
+        description: "#List of Weather files to use in the analysis.  These weather files should be a subset of the
+        weather files defined in your build_config.yml file.   The other locations that you can use can be found in this repository"
+        items:
+          type: string
+          pattern: ^.*\.epw$
+
+      :primary_heating_fuel:
+        description: "These are fuels that are used primarily for space heating and hot water needs.\n\n
+        | Primary Heating Fuel            | Hot Water             | Primary                 | Backup             |\n   
+        | --------                        | -------               | -------                 | -------            |\n
+        | **Electricity**                 | Electric Resistance   | Electric Resistance     | Electric Resistance|\n 
+        | **NaturalGas**                  | Natural Gas           | Natural Gas             | Natural Gas        |\n 
+        | **ElectricityHPElecBackup**     | Electric Resistance   | Heat Pump               | Electric Resistance|\n
+        | **NaturalGasHPGasBackup**       | Natural Gas           | Heat Pump               | Natural Gas        |\n 
+        | **ElectricityHPGasBackupMixed** | Electric Resistance   | Heat Pump               | Natural Gas        |\n 
+        | **NaturalGasHPElecBackupMixed** | Natural Gas           | Heat Pump               | Electric Resistance|\n 
+        "
+        items:
+          type: string
+          enum:
+            - Electricity
+            - NaturalGas
+            - ElectricityHPElecBackup
+            - NaturalGasHPGasBackup
+            - ElectricityHPGasBackupMixed
+            - NaturalGasHPElecBackupMixed
+
+      :dcv_type:
+        description: "
+        * **NECB_Default**	No Strategy (Same as No_DCV)\n\n
+        * **Occupancy_based_DCV** 	Uses Occupancy Sensors to determine ventilation\n\n
+        * **CO2_based_DCV**	Uses CO2 Sensors to detect ventilation needs\n\n
+        * **No_DCV**	No Strategy (Same as NECB_Default)\n\n
+        See [documentation](https://github.com/NREL/openstudio-standards/blob/nrcan/lib/openstudio-standards/standards/necb/NECB2011/demand_controlled_ventilation.md)
+        for more information.
+"
+        items:
+          type: string
+          enum:
+            - NECB_Default
+            - No_DCV
+            - Occupancy_based_DCV
+            - CO2_based_DCV
+
+
+      :lights_type:
+        description: "
+        Sets the light type for the building. CFLs are the default for NECB 2011 to 2017. NECB2020 uses LEDs.
+        * **NECB_Default**:	Uses 240V wiring and Compact Florescent Tubes\n\n
+        * **LED**:	Uses 120V wiring and LED Lights.\n\n
+        LED Documentation is [here](https://github.com/NREL/openstudio-standards/blob/nrcan/lib/openstudio-standards/standards/necb/NECB2011/led_lighting.md)
+        "
+        items:
+          type: string
+          enum:
+            - NECB_Default
+            - LED
+
+      :lights_scale:
+        description: "
+        Scales the lighting power density by this factor\n\n
+        * **NECB_Default**	Will do nothing.\n\n
+        * **Float/Number**	Scale factor 0.0 to 2.0\n\n
+        "
+        items:
+          anyOf:
+            - type: string
+              enum:
+                - NECB_Default
+            - type: number
+              minimum: 0.01
+              maximum: 2
+
+      :occupancy_loads_scale:
+        description: "
+        Will scale the default NECB occupancy density by number provided.\n\n
+        * **NECB_Default**	Will do nothing.\n\n
+        * **Float/Number**	Scale factor 0.01 to 2.0\n\n
+        "
+        items:
+          anyOf:
+            - type: string
+              enum:
+                - NECB_Default
+            - type: number
+              minimum: 0.01
+              maximum: 2.0
+
+      :electrical_loads_scale:
+        description: "
+        Will scale the default NECB electrical plug load density by number provided.\n\n
+        * **NECB_Default**	Will do nothing.\n\n
+        * **Float/Number**	Scale factor 0.01 to 2.0\n\n
+        "
+        items:
+          anyOf:
+            - type: string
+              enum:
+                - NECB_Default
+            - type: number
+              minimum: 0.01
+              maximum: 2
+      :oa_scale:
+        description: "
+        Will scale the outdoor air requirements for the entire building\n\n
+        * **NECB_Default**	Will do nothing\n\n
+        * **Float/Number**	Scale factor 0.01 to 2.0\n\n
+        "
+        items:
+          anyOf:
+            - type: string
+              enum:
+                - NECB_Default
+            - type: number
+              minimum: 0.01
+              maximum: 2
+      :infiltration_scale:
+        description: "
+        Will scale the infiltration rate for the entire building\n\n
+        * **NECB_Default**	Will do nothing\n\n
+        * **Float/Number**	Scale factor 0.01 to 2.0\n\n
+        "
+        items:
+          anyOf:
+            - type: string
+              enum:
+                - NECB_Default
+            - type: number
+              minimum: 0.01
+              maximum: 2
+
+      :daylighting_type:
+        description: "
+        Set the daylight control type to make use of natural daylighting where possible.\n\n
+        * **NECB_Default**	Add daylighting sensors for light control in the spaces that must have as per NECB's requirements\n\n
+        * **add_daylighting_controls**	Adds daylight sensors for light control in each space regardless of  NECB's requirements\n\n
+        * **none**	Do no add daylighting sensors. \n\n
+        "
+        items:
+          anyOf:
+            - type: string
+              enum:
+                - NECB_Default
+                - add_daylighting_controls
+                - none
+
+      :ecm_system_name:
+        description: "
+        Changes the dominant HVAC system type used in the building.\n\n
+
+        | ecm_system_name       |  Description                                                                                                                                                                                                 | Modellers Notes                                                                                                                                                                                                                                                                                                                                                                                                                                         |\n
+        |-----------------------|--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|\n
+        | NECB_Default          |                                                                                                                                                                                                              | Sets the   default system based on spacetypes and vintage                                                                                                                                                                                                                                                                                                                                                                                               |\n
+        | HS09_CCASHP_Baseboard | NECB air system modified to use a Cold Climate Air-Source HeatPump with electric   backup. Electric baseboards in the zones.                                                                                 | In this measure the NECB air system heating and cooling components are replaced with   a Cold-Climate Air-Source Heat Pump with electric backup. The performance   data for the CCASHP is based on data from Mitsubishi for VRF technology for   cold climate. Electric baseboards are installed in the zones. All other NECB   HVAC assumptions are maintained.                                                                                        |\n
+        | HS08_CCASHP_VRF       | Use a Cold Climate Air-Source HeatPump with electric backup in a dedicated-outdoor air system.  Zonal terminal VRF units are linked to an outdoor VRF unit. Electric baseboards used as backup in the zones. | In this measure a dedicated-outside air unit is used with a Cold-Climate   Air-Source Heat pump with electric backup. Zonal Terminal VRF units are   installed in the zones and are served by an outdoor VRF unit. Electric baseboards are used as backup in the zones. The performance data for the   CCASHP and VRF system are based on data from Mitsubishi for VRF technology   for cold climates. All other NECB HVAC system assumptions are used. |\n
+        | HS11_ASHP_PTHP        | Use an Air-Source Heat Pump with electric backup in a dedicated-oudoor air system. Packaged-Terminal Heat-Pumps with electric backup are used in the zones.                                                  | In this measure a dedicated-outside air system with an ASHP is used. The performance curves and COP for the ASHP is based on NECB data for DX cooling and heating.   Packaged-Terminal Heat Pumps with electric backup are installed in the zones. The performance curves are from NECB (DX cooling and heating). All other NECB   HVAC system assumptions are maintained.                                                                              |\n
+        | HS12_ASHP_Baseboard   | NECB air system modifed to use an Air-Source Heat Pump with electric backup. Electric   baseboards are installed in the zones.                                                                               | In this measure the NECB air system heating and cooling components are replaced with an ASHP with electric backup. The performance data for the ASHP is based on   NECB data for DX cooling and heating. All other NECB HVAC system assumptions are maintained.                                                                                                                                                                                         |\n
+        | HS14_CGSHP_FanCoils   | Use a dedicated-outdoor air system with four-pipe fan coils in the zones. The heating and cooling coils of the air system and the zones are served by a central ground source heat pump and chiller plant.   | The central-ground source heat pump (size = 40% of peak heating load) and boiler (size = 60% of peak heating load) are used to meet the heating demand. The cooling demand is met using a water-cooled chiller (size = 40% of peak   cooling load) and a air-cooled chiller (size = 60% of peak cooling load). The heat pump and water-cooled chiller are connected to a ground-loop heat exchanger.                                                    |\n
+        | HS13_ASHP_VRF         |    | |\n\n
+        "
+        items:
+          anyOf:
+            - type: string
+              enum:
+                - NECB_Default
+                - HS09_CCASHP_Baseboard
+                - HS08_CCASHP_VRF
+                - HS11_ASHP_PTHP
+                - HS12_ASHP_Baseboard
+                - HS13_ASHP_VRF
+                - HS14_CGSHP_FanCoils
+
+      :chiller_type:
+        description: "
+        Replace existing chillers with advanced chillers if present.\n\n
+        * **NECB_Default**:	Will do nothing\n\n
+        * **VSD**:	Will apply a variable speed drive to any existing chiller in the model that has a capacity of larger than 0.001 W\n\n
+        "
+        items:
+          anyOf:
+            - type: string
+              enum:
+                - NECB_Default
+                - VSD
+
+      :airloop_economizer_type:
+        description: ""
+        items:
+          anyOf:
+            - type: string
+              enum:
+                - NECB_Default
+                - DifferentialEnthalpy
+                - DifferentialDryBulb
+
+      :shw_scale:
+        description: ""
+        items:
+          anyOf:
+            - type: string
+              enum:
+                - NECB_Default
+            - type: number
+              minimum: 0.01
+              maximum: 100
+
+      :baseline_system_zones_map_option:
+        description: "
+        Will choose between in-suite and central DOAS\n\n
+        * **NECB_Default**	Will use central DOAS
+        * **one_sys_per_bldg**	Will use central DOAS
+        * **one_sys_per_dwelling_unit**  Will use in-suite DOAS **NOTE** This option will not produce costing correctly!!
+        "
+        items:
+          anyOf:
+            - type: string
+              enum:
+                - NECB_Default
+                - one_sys_per_bldg
+                - one_sys_per_dwelling_unit
+
+
+      :erv_package:
+        description: "
+        Selects the Energy Recovery Ventilator (ERV) Strategy used in the building.\n\n
+
+        Note: Costs for ERV systems are comparably the same according to RSMeans there is no cost increment for
+        different types of ERVs. They will all be costed very similarly.\n\n
+
+        | :erv_package     | Description                                                          |\n
+        |------------------|----------------------------------------------------------------------|\n
+        | NECB_Default     | Provides a standard ERV to air_loops required by vintage ruleset.    |\n
+        | NECB_Default-All | Provides standard ERV to all air loops in the building               |\n
+        | Plate-Existing   | Provides a plate ERV to air_loops required by vintage ruleset.       |\n
+        | Plate-All        | Provides a plate ERV to all air loops in the building.               |\n
+        | Rotary-Existing  | Provides a rotary ERV to air_loops required by vintage ruleset.      |\n
+        | Rotary-All       | Provides a rotary ERV to all air loops                               |\n
+        "
+        items:
+          anyOf:
+            - type: string
+              enum:
+                - NECB_Default
+                - NECB_Default_All
+                - Plate-All
+                - Plate-Existing
+                - Rotary-All
+                - Rotary-Existing
+
+      :boiler_eff:
+        description: "
+        Selects the Boiler efficiency type\n\n
+        | :boiler_eff                                                              | Description                                                              | Modeller Notes                                                                                                                                                                                                                                                                                                                                                                                     |\n
+        |--------------------------------------------------------------------------|--------------------------------------------------------------------------|----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|\n
+        | NECB_Default                                                             | Uses the NECB :template value                                            |                                                                                                                                                                                                                                                                                                                                                                                                    |\n
+        | NECB 88% Efficient Condensing   Boiler                                   | Uses an 88% efficient boiler   with the NECB condensing part load curve. | This is an example of a generic   condensing gas boiler.  This uses NECB   condensing part load curves.  Gas   boilers 82.7% efficienct or more are considered condensing.  Higher efficiency oil boilers are costed   the same as regular boilers.                                                                                                                                                |\n
+        | Viessmann Vitocrossal 300   CT3-17 96.2% Efficient Condensing Gas Boiler | Exapmle of a 96.2 efficient   boiler with a custom part load curve.      | This is a specific brand of high   efficiency gas boiler which includes a custom part load curve.  Gas boilers that are 90% or more efficient   are considered to be pulse boilers which involve different costs than condensing   boilers.  Costing is not yet   implemented for oil pulse boilers.  Oil   boilers with efficiencies greater than 90% are cost the same way as regular   boilers. |\n
+        "
+        items:
+          anyOf:
+            - type: string
+              enum:
+                - NECB_Default
+                - NECB 88% Efficient Condensing Boiler
+                - Viessmann Vitocrossal 300 CT3-17 96.2% Efficient Condensing Gas Boiler
+
+      :furnace_eff:
+        description: "
+        Set the default furnace efficiency to use. Currently this measure only DOWNGRADES the effeciency. This is to be
+        used only for older vintage analysis. For this reason. That measure is not costed.\n\n
+        |                                             | Description                                                                              | Costed | Modellers Notes                                                                                                                                                                                                                                                                                                                                    |\n
+        |---------------------------------------------|------------------------------------------------------------------------------------------|--------|----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|\n
+        | NECB_Default                                | Uses default furnance efficiency   from :template including the default part load curve. | TRUE   | All furnaces are costed the same way without regard for efficiency or type.    Most basic NECB compliant small furnaces (which are the kind use in   all basic BTAP archetypes) are already very efficient (>90%).                                                                                                                               |\n
+        | NECB 85% Efficient Condensing   Gas Furnace | Uses 85.5% efficient furnace   with an NECB condensing part load curve.                  | FALSE  | This option applies an 85.5%   efficient gas furnace which includes a condensing part load curve.  Since the basic NECB gas furnace is already   >90% efficient it was assumed that no one would select this option so costing   was not implemented.  If this option is   selected the furnace is costed as though it were a regular gas furnace. |\n
+        "
+        items:
+          anyOf:
+            - type: string
+              enum:
+                - NECB_Default
+                - NECB 85% Efficient Condensing Gas Furnace
+
+      :shw_eff:
+        description: "
+        Changes the Service Hot Water (SHW) type of tank used. \n\n
+
+        |                                                  | Description                              | Costed | Modellers Notes                                                                                                                                                           |\n
+        |--------------------------------------------------|------------------------------------------|--------|---------------------------------------------------------------------------------------------------------------------------------------------------------------------------|\n
+        | NECB_Default                                     | Uses default SHW based on   :template    | TRUE   | Default costing                                                                                                                                                           |\n
+        | Natural Gas Power Vent with   Electric Ignition  | 94% efficient condensing gas SHW   tank. | TRUE   | Applies a 94% efficient gas SHW   tank.  Tanks which are 85% or more   efficint are considered condensing and are generally somewhat more expensive   than regular tanks. |\n
+        | Natural Gas Direct Vent with   Electric Ignition | 91% efficient condensing gas SHW   tank. | TRUE   | Applies a 91% efficient gas SHW   tank.  Same costing as for the option   above but somewhat higher performance.                                                          |\n
+
+        "
+        items:
+          anyOf:
+            - type: string
+              enum:
+                - NECB_Default
+                - Natural Gas Power Vent with Electric Ignition
+                - Natural Gas Direct Vent with Electric Ignition
+
+      :ext_wall_cond:
+        description: "
+        The thermal conductance W/(m2*k) of the external walls\n\n
+        | ext_wall_cond | R-Value |\n
+        |---------------|---------|\n
+        | 0.314         | R18     |\n
+        | 0.278         | R20     |\n
+        | 0.247         | R22     |\n
+        | 0.21          | R27     |\n
+        | 0.183         | R31     |\n
+        "
+        items:
+          anyOf:
+            - type: string
+              enum:
+                - NECB_Default
+            - type: number
+              enum:
+                - 0.314 # R18
+                - 0.278 # R20
+                - 0.247 # R22
+                - 0.210 # R27
+                - 0.183  #R31
+
+      :ext_roof_cond:
+        description: "
+        The thermal conductance W/(m2*k) of the external roofs\n\n
+        | ext_wall_cond |\n
+        |---------------|\n
+        | 0.227         |\n
+        | 0.193         |\n
+        | 0.183         |\n
+        | 0.162         |\n
+        | 0.142         |\n
+        | 0.138         |\n
+        | 0.121         |\n
+        "
+        items:
+          anyOf:
+            - type: string
+              enum:
+                - NECB_Default
+            - type: number
+              enum:
+                - 0.227
+                - 0.193
+                - 0.183
+                - 0.162
+                - 0.142
+                - 0.138
+                - 0.121
+
+      :ext_floor_cond:
+        description: "
+        The thermal conductance W/(m2*k) of the external floors\n\n
+        | ext_wall_cond |\n
+        |---------------|\n
+        | 0.227         |\n
+        | 0.183         |\n
+        | 0.162         |\n
+        | 0.142         |\n
+        "
+        items:
+          anyOf:
+            - type: string
+              enum:
+                - NECB_Default
+            - type: number
+              enum:
+                - 0.227
+                - 0.183
+                - 0.162
+                - 0.142
+
+      :ground_wall_cond:
+        description: "
+        The thermal conductance W/(m2*k) of basement walls\n\n
+        | ext_wall_cond |\n
+        |---------------|\n
+        | 0.568         |\n
+        | 0.379         |\n
+        | 0.284         |\n
+        | 0.210         |\n
+        "
+        items:
+          anyOf:
+            - type: string
+              enum:
+                - NECB_Default
+            - type: number
+              enum:
+                - 0.568
+                - 0.379
+                - 0.284
+                - 0.210
+
+      :ground_wall_roof:
+        description: "
+        The thermal conductance W/(m2*k) of ground roofs\n\n
+        | ext_wall_cond |\n
+        |---------------|\n
+        | 0.568         |\n
+        | 0.379         |\n
+        | 0.284         |\n
+        | 0.210         |\n
+        "
+        items:
+          anyOf:
+            - type: string
+              enum:
+                - NECB_Default
+            - type: number
+              enum:
+                - 0.568
+                - 0.379
+                - 0.284
+                - 0.210
+
+      :ground_floor_cond:
+        description: "
+        The thermal conductance W/(m2*k) of ground contact floors\n\n
+        | ext_wall_cond |\n
+        |---------------|\n
+        | 0.758         |\n
+        | 0.379         |\n
+        "
+        items:
+          anyOf:
+            - type: string
+              enum:
+                - NECB_Default
+            - type: number
+              enum:
+                - 0.758
+                - 0.379
+
+
+      :door_construction_cond:
+        description:  "
+        The thermal conductance W/(m2*k) of Doors\n\n
+        | ext_wall_cond |\n
+        |---------------|\n
+        | 2.4         |\n
+        | 2.2         |\n
+        | 2.6         |\n
+        "
+        items:
+          anyOf:
+            - type: string
+              enum:
+                - NECB_Default
+            - type: number
+              enum:
+                - 2.4
+                - 2.2
+                - 1.6
+
+
+      :fixed_window_cond:
+        description: "
+        The thermal conductance W/(m2*k) of fixed windows\n\n
+        | ext_wall_cond |\n
+        |---------------|\n
+        | 2.4         |\n
+        | 2.2         |\n
+        | 2.6         |\n
+        "
+        items:
+          anyOf:
+            - type: string
+              enum:
+                - NECB_Default
+            - type: number
+              enum:
+                - 2.4
+                - 2.2
+                - 1.6
+      :glass_door_cond:
+        description:  "
+        The thermal conductance W/(m2*k) of glass doors\n\n
+        | ext_wall_cond |\n
+        |---------------|\n
+        | 2.4         |\n
+        | 2.2         |\n
+        | 2.6         |\n
+        "
+        items:
+          anyOf:
+            - type: string
+              enum:
+                - NECB_Default
+            - type: number
+              enum:
+                - 2.4
+                - 2.2
+                - 1.6
+      :overhead_door_cond:
+        description:   "
+        The thermal conductance W/(m2*k) of overhead doors\n\n
+        | ext_wall_cond |\n
+        |---------------|\n
+        | 2.4         |\n
+        | 2.2         |\n
+        | 2.6         |\n
+        "
+        items:
+          anyOf:
+            - type: string
+              enum:
+                - NECB_Default
+            - type: number
+              enum:
+                - 2.4
+                - 2.2
+                - 1.6
+      :skylight_cond:
+        description:   "
+        The thermal conductance W/(m2*k) of skylights\n\n
+        | ext_wall_cond |\n
+        |---------------|\n
+        | 2.4         |\n
+        | 2.2         |\n
+        | 2.6         |\n
+        "
+        items:
+          anyOf:
+            - type: string
+              enum:
+                - NECB_Default
+            - type: number
+              enum:
+                - 2.4
+                - 2.2
+                - 1.6
+
+      :glass_door_solar_trans:
+        description: "
+        SHGC W/(m2*k) of glass doors\n\n
+        Valid values are from 0.05 to 0.95.
+        "
+        items:
+          anyOf:
+            - type: string
+              enum:
+                - NECB_Default
+            - type: number
+              minimum: 0.05
+              maximum: 0.95
+      :fixed_wind_solar_trans:
+        description:  "
+        SHGC W/(m2*k) of windows\n\n
+        Valid values are from 0.05 to 0.95.
+        "
+        items:
+          anyOf:
+            - type: string
+              enum:
+                - NECB_Default
+            - type: number
+              minimum: 0.05
+              maximum: 0.95
+      :skylight_solar_trans:
+        description:   "
+        SHGC W/(m2*k) of skylights\n\n
+        Valid values are from 0.05 to 0.95.
+        "
+        items:
+          anyOf:
+            - type: string
+              enum:
+                - NECB_Default
+            - type: number
+              minimum: 0.05
+              maximum: 0.95
+
+
+
+      :fdwr_set:
+        description: "
+        * **NECB_Default** remove all windows and doors and create new bands of windows to match the maximum allowed by the NECB\n\n\n\n
+        * **>1**: do nothing\n\n
+        * **0.0-1.0**: remove all windows and doors and create new bands of windows to match the fdwr entered\n\n
+        * **-1**: remove all windows and doors and create new bands of windows to match the maximum allowed by the NECB\n\n
+        * **-2**: don't change anything\n\n
+        * **-3**: if necessary, shrink existing windows so that they match the maximum NECB FDWR\n\n
+        * **<-3.1**: Remove all windows and doors\n\n
+        Note, windows are only applied to above grade exterior walls that contain conditioned spaces\n\n
+        "
+        items:
+          anyOf:
+            - type: string
+              enum:
+                - NECB_Default
+            - type: number
+              minimum: 0.001
+              maximum: 0.950
+      :srr_set:
+        description: ""
+        items:
+          anyOf:
+            - type: string
+              enum:
+                - NECB_Default
+            - type: number
+              minimum: 0.001
+              maximum: 0.950
+
+      :rotation_degrees:
+        description: ""
+        items:
+          anyOf:
+            - type: string
+              enum:
+                - NECB_Default
+            - type: number
+              minimum: 0.0
+              maximum: 359.0
+
+      :scale_x:
+        description: ""
+        items:
+          anyOf:
+            - type: string
+              enum:
+                - NECB_Default
+            - type: number
+              minimum: 0.01
+              maximum: 100.0
+      :scale_y:
+        description: ""
+        items:
+          anyOf:
+            - type: string
+              enum:
+                - NECB_Default
+            - type: number
+              minimum: 0.01
+              maximum: 100.0
+      :scale_z:
+        description: ""
+        items:
+          anyOf:
+            - type: string
+              enum:
+                - NECB_Default
+            - type: number
+              minimum: 0.01
+              maximum: 100.0
+
+      :pv_ground_type:
+        description: ""
+        items:
+          anyOf:
+            - type: string
+              enum:
+                - NECB_Default
+                - add_pv_ground
+
+      :pv_ground_total_area_pv_panels_m2:
+        description: ""
+        items:
+          anyOf:
+            - type: string
+              enum:
+                - NECB_Default # No PV
+            - type: boolean
+              enum:
+                - false
+            - type: number
+              minimum: 1
+              maximum: 100000
+
+      :pv_ground_azimuth_angle:
+        description: ""
+        items:
+          anyOf:
+            - type: string
+              enum:
+                - NECB_Default # South
+            - type: number
+              minimum: 0.0
+              maximum: 359.0
+
+      :pv_ground_module_description:
+        description: ""
+        items:
+          anyOf:
+            - type: string
+              enum:
+                - NECB_Default
+                - Standard
+                - Premium
+                - ThinFilm
+      # Advances DX units type.
+      :adv_dx_units:
+        description: ""
+        items:
+          anyOf:
+            - type: string
+              enum:
+                - NECB_Default
+                - Carrier WeatherExpert
+                - Lennox Model L Ultra High Efficiency
+
+      :nv_type:
+        description: ""
+        items:
+          anyOf:
+            - type: string
+              enum:
+                - NECB_Default
+                - add_nv
+      :nv_opening_fraction:
+        description: ""
+        items:
+          anyOf:
+            - type: string
+              enum:
+                - NECB_Default
+            - type: number
+              minimum: 0.01
+              maximum: 1.00
+
+      :nv_temp_out_min:
+        description: "Minimum outdoor air temperature (in Celsius) below which natural ventilation is shut down. Default
+         will be 13C from M.Tardif experience with QC schools.
+         NECB_Default: Will set this to 13.
+        "
+        items:
+          anyOf:
+            - type: string
+              enum:
+                - NECB_Default # Will set to 13
+            - type: number
+              minimum: 0.00
+              maximum: 100.00
+
+      :nv_delta_temp_in_out:
+        description: "Temperature difference (in Celsius) between the indoor and outdoor air temperatures below which 
+        ventilation is shut down Default is 1.0 from M.Tardif experience in QC.
+        Units: C
+        NECB_Default: Will set this to 1.0
+        "
+        items:
+          anyOf:
+            - type: string
+              enum:
+                - NECB_Default # Will set to 1.0
+            - type: number
+              minimum: 0.00
+              maximum: 100.00
+
+      :npv_start_year:
+        description: " 
+        An integer (year) larger than 2005 (first year of neb_end_use_prices.csv).
+        NECB_Default: Will set this to 2022
+        "
+        items:
+          anyOf:
+            - type: string
+              enum:
+                - NECB_Default
+            - type: number
+              minimum: 2005
+              maximum: 2049
+
+      :npv_end_year:
+        description: " 
+        An integer (year) less than 2051 (last year of neb_end_use_prices.csv).
+        NECB Default:  Will set this to 2041.
+        "
+        items:
+          anyOf:
+            - type: string
+              enum:
+                - NECB_Default # Will set to 2022
+            - type: number
+              minimum: 2005
+              maximum: 2050
+      :npv_discount_rate:
+        description: " 
+        An integer (year) less than 2051 (last year of neb_end_use_prices.csv).
+        NECB_Default: Will set it to 0.03.
+        "
+        items:
+          anyOf:
+            - type: string
+              enum:
+                - NECB_Default # default will set to 0.03
+            - type: number
+              minimum: 0.0
+              maximum: 1.0

@@ -1,15 +1,3 @@
-:algorithm_lhs_n_samples: null
-:algorithm_lhs_random_seed: null
-:algorithm_lhs_type: null
-:algorithm_nsga_eta: null
-:algorithm_nsga_minimize_objectives:
-- energy_eui_total_gj_per_m_sq
-- npv_total_per_m_sq
-:algorithm_nsga_n_generations: 10
-:algorithm_nsga_population: 50
-:algorithm_nsga_prob: 0.85
-:algorithm_type: nsga2
-:analysis_name: optimization_LowriseApartment_ElectricityHPElecBackup_Toronto
 :options:
   :adv_dx_units:
   - NECB_Default
@@ -34,6 +22,7 @@
   - add_daylighting_controls
   - none
   :dcv_type:
+  - NECB_Default
   - No_DCV
   - Occupancy_based_DCV
   - CO2_based_DCV
@@ -49,7 +38,7 @@
   - HS14_CGSHP_FanCoils
   :electrical_loads_scale:
   - NECB_Default
-  - '0.50'
+  - 0.5
   :epw_file:
   - CAN_QC_Montreal-Trudeau.Intl.AP.716270_CWEC2016.epw
   :erv_package:
@@ -62,31 +51,38 @@
   :ext_floor_cond:
   - NECB_Default
   :ext_roof_cond:
-  - '0.227'
-  - '0.193'
-  - '0.183'
-  - '0.162'
-  - '0.142'
-  - '0.138'
-  - '0.121'
-  :ext_wall_cond:
-  - '0.314'
-  - '0.278'
-  - '0.247'
-  - '0.210'
-  - '0.183'
-  :fdwr_set:
   - NECB_Default
+  - 0.227
+  - 0.193
+  - 0.183
+  - 0.162
+  - 0.142
+  - 0.138
+  - 0.121
+  :ext_wall_cond:
+  - NECB_Default
+  - 0.314
+  - 0.278
+  - 0.247
+  - 0.21
+  - 0.183
+  :fdwr_set:
+  - 0.4
+  - 0.2
+  - 0.6
+  - 0.8
   :fixed_wind_solar_trans:
-  - '0.2'
-  - '0.3'
-  - '0.4'
-  - '0.5'
-  - '0.6'
+  - NECB_Default
+  - 0.2
+  - 0.3
+  - 0.4
+  - 0.5
+  - 0.6
   :fixed_window_cond:
-  - '2.4'
-  - '2.2'
-  - '1.6'
+  - NECB_Default
+  - 2.4
+  - 2.2
+  - 1.6
   :furnace_eff:
   - NECB_Default
   :glass_door_cond:
@@ -94,18 +90,19 @@
   :glass_door_solar_trans:
   - NECB_Default
   :ground_floor_cond:
-  - '0.758'
-  - '0.379'
+  - NECB_Default
+  - 0.758
+  - 0.379
   :ground_roof_cond:
   - NECB_Default
   :ground_wall_cond:
   - NECB_Default
   :infiltration_scale:
   - NECB_Default
-  - '0.50'
+  - 0.5
   :lights_scale:
-  - '1.0'
-  - '0.50'
+  - 1.0
+  - 0.5
   :lights_type:
   - NECB_Default
   :npv_discount_rate:
@@ -122,7 +119,6 @@
   - NECB_Default
   :nv_type:
   - NECB_Default
-  - add_nv
   :oa_scale:
   - NECB_Default
   :occupancy_loads_scale:
@@ -130,7 +126,10 @@
   :overhead_door_cond:
   - NECB_Default
   :primary_heating_fuel:
+  - NaturalGas
   - Electricity
+  - NaturalGasHPGasBackup
+  - ElectricityHPElecBackup
   :pv_ground_azimuth_angle:
   - NECB_Default
   :pv_ground_module_description:
@@ -154,7 +153,9 @@
   - Natural Gas Power Vent with Electric Ignition
   :shw_scale:
   - NECB_Default
-  - '0.25'
+  - 0.75
+  - 0.5
+  - 0.25
   :skylight_cond:
   - NECB_Default
   :skylight_solar_trans:
@@ -227,4 +228,3 @@
   unit: '*'
   variable: Zone Predicted Moisture Load to Dehumidifying Setpoint Moisture Transfer
     Rate
-:run_annual_simulation: true

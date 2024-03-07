@@ -1,5 +1,5 @@
 from src.btap.aws_credentials import AWSCredentials
-from src.btap.constants import MAX_AWS_VCPUS
+from src.btap.constants import MAX_AWS_VCPUS, MAX_SIMULATIONS_PER_ANALYSIS
 from src.btap.docker_image_manager import DockerImageManager
 from src.btap.aws_s3 import S3
 from src.btap.aws_iam_roles import IAMCodeBuildRole
@@ -16,27 +16,24 @@ class AWSImageManager(DockerImageManager):
         return AWSCredentials()
 
     def __init__(self,
+                 build_env_name=None,
                  image_name=None,
                  compute_environment=None
-
-
                  ):
         super().__init__(image_name=image_name)
+        self.build_env_name = build_env_name
         self.credentials = self.__aws_credentials()
         self.bucket = self.credentials.account_id
         self.region = self.credentials.region_name
         self.compute_environment = compute_environment
         self.image_tag = 'latest'
 
-    def _get_image_tag(self):
-        return ''
-
     def get_image_uri(self):
         return f"{self.credentials.account_id}.dkr.ecr.{self.credentials.region_name}.amazonaws.com/{self.get_full_image_name()}:{self.image_tag}"
 
     def get_threads(self):
-        if MAX_AWS_VCPUS > 500:
-            return 500
+        if MAX_AWS_VCPUS > MAX_SIMULATIONS_PER_ANALYSIS:
+            return MAX_SIMULATIONS_PER_ANALYSIS
         else:
             return MAX_AWS_VCPUS
 
@@ -64,8 +61,8 @@ class AWSImageManager(DockerImageManager):
 
         source_folder = CommonPaths().get_dockerfile_folder_path(image_name=self.image_name)
 
-        s3.copy_folder_to_s3(self.bucket, source_folder, self.get_username() + '/' + self.image_name)
-        s3_location = 's3://' + self.bucket + '/' + self.get_username() + '/' + self.image_name
+        s3.copy_folder_to_s3(self.bucket, source_folder, self.get_build_env_name() + '/' + self.image_name)
+        s3_location = 's3://' + self.bucket + '/' + self.get_build_env_name() + '/' + self.image_name
         message = f"Copied build configuration files:\n\t from {source_folder}\n to \n\t {s3_location}"
         logging.info(message)
         print(message)
@@ -89,13 +86,12 @@ class AWSImageManager(DockerImageManager):
         if codebuild_project_name in codebuild.list_projects()['projects']:
             codebuild.delete_project(name=codebuild_project_name)
 
-
         codebuild.create_project(
             name=codebuild_project_name,
             description='string',
             source={
                 'type': 'S3',
-                'location': self.bucket + '/' + self.get_username() + '/' + self.image_name + '/'
+                'location': self.bucket + '/' + self.get_build_env_name() + '/' + self.image_name + '/'
             },
             artifacts={
                 'type': 'NO_ARTIFACTS',
@@ -116,7 +112,7 @@ class AWSImageManager(DockerImageManager):
         message = f'Building Image {self.get_full_image_name()} on {url}, will take ~10m'
         print(message)
         logging.info(message)
-        source_location = self.bucket + '/' + self.get_username() + '/' + self.image_name + '/'
+        source_location = self.bucket + '/' + self.get_build_env_name() + '/' + self.image_name + '/'
         message = f'Code build image env overrides {environment_vars}'
         logging.info(message)
 
@@ -147,6 +143,14 @@ class AWSImageManager(DockerImageManager):
             # Check status every 5 secs.
             time.sleep(5)
 
+
+    def delete_image(self):
+        self._delete_image_repository(repository_name=self._image_repo_name())
+
+
+
+
+
     def _create_image_repository(self, repository_name=None):
         ecr = AWSCredentials().ecr_client
         repositories = ecr.describe_repositories()['repositories']
@@ -158,10 +162,50 @@ class AWSImageManager(DockerImageManager):
             message = f"Repository {repository_name} already exists. Using existing."
             logging.info(message)
 
+    @staticmethod
+    def list_repositories():
+        import boto3
+        import botocore
+        import src.btap.constants
+        aws_config = botocore.client.Config(
+            region_name='ca-central-1',
+            max_pool_connections=MAX_AWS_VCPUS,
+            retries={'max_attempts': 60,
+                     'mode': 'standard'})
+        ecr = boto3.client('ecr', config=aws_config)
+        # Initialize the object count
+        object_count = 0
+        ecr = AWSCredentials().ecr_client
+
+        repositories = []
+        describe_repo_paginator = ecr.get_paginator('describe_repositories')
+        for response_listrepopaginator in describe_repo_paginator.paginate():
+            for repo in response_listrepopaginator['repositories']:
+                    repositories.append(repo['repositoryName'])
+
+        return repositories
+    @staticmethod
+    def get_existing_build_env_names():
+        build_env_names = [k for k in AWSImageManager().list_repositories() if 'btap_cli' in k]
+        build_env_names = [x.removesuffix('_btap_cli') for x in build_env_names]
+        return build_env_names
+
+    def _delete_image_repository(self, repository_name=None):
+        ecr = AWSCredentials().ecr_client
+        repositories = ecr.describe_repositories()['repositories']
+        if not next((item for item in repositories if item["repositoryName"] == repository_name), None) == None:
+            message = f"Deleting repository {repository_name}"
+            logging.info(message)
+            print(message)
+            ecr.delete_repository(repositoryName=repository_name, force=True)
+        else:
+            message = f"Repository {repository_name} does not exists. Not Deleting it."
+            logging.info(message)
+            print(message)
+
     def get_image(self, image_name=None, image_tag='latest'):
         image = None
         ecr = AWSCredentials().ecr_client
-        # Check if image exists.. if not it will create an image from the latest git hub reps.
         # Get list of tags for image name on aws.
         available_tags = sum(
             [d.get('imageTags', [None]) for d in
@@ -177,3 +221,4 @@ class AWSImageManager(DockerImageManager):
         return AWSBatch(image_manager=self,
                         compute_environment=self.compute_environment
                         )
+

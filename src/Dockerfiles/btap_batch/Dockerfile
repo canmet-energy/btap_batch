@@ -1,9 +1,9 @@
 FROM public.ecr.aws/amazonlinux/amazonlinux:2022
 ARG BTAP_BATCH_BRANCH
 ARG GIT_API_TOKEN
-ARG AWS_USERNAME
+ARG BUILD_ENV_NAME
 
-ENV AWS_USERNAME=$AWS_USERNAME
+ENV BUILD_ENV_NAME=$BUILD_ENV_NAME
 ENV GIT_API_TOKEN=$GIT_API_TOKEN
 ENV BTAP_BATCH_BRANCH=$BTAP_BATCH_BRANCH
 ENV PYTHONPATH=/btap_batch
@@ -35,7 +35,7 @@ CMD ["/bin/bash"]
 
 #Sample invocation commands
 # aws ecr get-login-password --region ca-central-1 | docker login --username AWS --password-stdin 834599497928.dkr.ecr.ca-central-1.amazonaws.com
-# docker build -t --no-cache --build-arg GIT_API_TOKEN=$GIT_API_TOKEN --build-arg AWS_USERNAME=$AWS_USERNAME --build-arg  BTAP_BATCH_BRANCH=$BTAP_BATCH_BRANCH .
+# docker build -t --no-cache --build-arg GIT_API_TOKEN=$GIT_API_TOKEN --build-arg BUILD_ENV_NAME=$BUILD_ENV_NAME --build-arg  BTAP_BATCH_BRANCH=$BTAP_BATCH_BRANCH .
 # Test locally.
 # docker run -it --rm -v "//var/run/docker.sock:/var/run/docker.sock" -v "//c/Users/plopez/.aws:/root/.aws"  btap_batch /bin/bash
 # PYTHONPATH=/btap_batch python3 /btap_batch/examples/optimization/new_run.py

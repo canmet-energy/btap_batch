@@ -16,8 +16,16 @@ from src.btap.btap_elimination import BTAPElimination
 from src.btap.btap_lhs import BTAPSamplingLHS
 from src.btap.btap_sensitivity import BTAPSensitivity
 from src.btap.btap_batch_analysis import BTAPBatchAnalysis
+from src.btap.reports import generate_btap_reports
 from src.btap.aws_s3 import S3
-from src.btap.common_paths import CommonPaths
+from src.btap.common_paths import CommonPaths, SCHEMA_FOLDER, HISTORIC_WEATHER_LIST,FUTURE_WEATHER_LIST,HISTORIC_WEATHER_REPO,FUTURE_WEATHER_REPO,USER
+import os
+import pandas as pd
+from src.btap.aws_s3 import S3
+import zipfile
+import pathlib
+import re
+
 import requests
 import shutil
 import time
@@ -29,13 +37,46 @@ import numpy as np
 from icecream import ic
 from src.btap.aws_dynamodb import AWSResultsTable
 import math
-import pandas as pd
-from distutils.dir_util import copy_tree
+import yaml
 
-HISTORIC_WEATHER_LIST = "https://github.com/canmet-energy/btap_weather/raw/main/historic_weather_filenames.json"
-FUTURE_WEATHER_LIST = "https://github.com/canmet-energy/btap_weather/raw/main/future_weather_filenames.json"
-HISTORIC_WEATHER_REPO = "https://github.com/canmet-energy/btap_weather/raw/main/historic/"
-FUTURE_WEATHER_REPO = "https://github.com/canmet-energy/btap_weather/raw/main/future/"
+
+
+
+def load_config(build_config_path):
+    from src.btap.cli_helper_methods import generate_build_config
+    import jsonschema
+    import yaml
+    try:
+        schema_file = os.path.join(SCHEMA_FOLDER, 'build_config_schema.yml')
+        with open(schema_file) as f:
+            schema = yaml.load(f, Loader=yaml.FullLoader)
+    except FileNotFoundError:
+        print(f'Error: The schema file does not exist {schema_file}')
+        exit(1)
+    try:
+        with open(build_config_path) as f:
+            config = yaml.load(f, Loader=yaml.FullLoader)
+        # Validate against schema
+    except FileNotFoundError:
+        print(
+            f'The file does not exist. Creating a template at location {build_config_path}. Please edit it with your information.')
+        generate_build_config(build_config_path)
+        exit(1)
+    try:
+        jsonschema.validate(config, schema)
+    except yaml.parser.ParserError as e:
+        print(f"ERROR: {build_config_path} contains an invalid YAML format. Please check your YAML format.")
+        print(e.message)
+        exit(1)
+
+
+    except jsonschema.exceptions.ValidationError as e:
+        print(f"ERROR: {build_config_path} does not contain valid data. Please fix the error below and try again.")
+        print(e.message)
+        exit(1)
+    return config
+
+
 
 def get_pareto_points(costs, return_mask=True):
     """
@@ -64,99 +105,61 @@ def get_pareto_points(costs, return_mask=True):
 
 
 
-def get_weather_locations(weather_list=None):
-    # Use the default weather file list if another list is not provided
-    if (weather_list == None) or (weather_list == ''):
-        weather_list = os.path.join(os.getcwd(), 'examples', 'weather_list.yml')
-
-    # Check if the weather file list exists
-    if not os.path.isfile(weather_list):
-        print(f"{weather_list} file does not exist.")
-        exit(1)
-
-    # Read the list
-    weather_config, weather_input_folder, weather_folder = BTAPAnalysis.load_analysis_input_file(
-        analysis_config_file=weather_list)
-    weather_files = weather_config[':weather_locations']
-    if len(weather_files) > 100:
-        raise("Too many weather files selected in the build environment. Please reorganize your analyses to use less than 100 weather files. ")
-
-    # Get the default weather file list location
-    default_weather_list = os.path.join(os.getcwd(), 'src', 'btap', 'default_weather_list.yml')
-
-    # Check if the default weather file list exists
-    if not os.path.isfile(default_weather_list):
-        print(f"Could not find the default weather list.  Please check if default_weather_list.yml is present in the /btap_batch/src/btap folder.  If is not present please get it from the btap_batch repository.")
-        exit(1)
-
-    # Get the default weather file list
-    default_weather_config, default_weather_input_folder, default_weather_folder = BTAPAnalysis.load_analysis_input_file(
-        analysis_config_file=default_weather_list)
-    default_weather_files = default_weather_config[':default_weather_locations']
+def get_weather_locations(weather_locations=[]):
+    default_weather_locations =  [
+        'CAN_QC_Montreal-Trudeau.Intl.AP.716270_CWEC2016.epw',
+        'CAN_NS_Halifax.Dockyard.713280_CWEC2016.epw',
+        'CAN_AB_Edmonton.Intl.AP.711230_CWEC2016.epw',
+        'CAN_BC_Vancouver.Intl.AP.718920_CWEC2016.epw',
+        'CAN_AB_Calgary.Intl.AP.718770_CWEC2016.epw',
+        'CAN_ON_Toronto.Pearson.Intl.AP.716240_CWEC2016.epw',
+        'CAN_NT_Yellowknife.AP.719360_CWEC2016.epw',
+        'CAN_AB_Fort.McMurray.AP.716890_CWEC2016.epw',
+        # 2020 versions
+        'CAN_QC_Montreal.Intl.AP.716270_CWEC2020.epw',
+        'CAN_NS_Halifax.Dockyard.713280_CWEC2020.epw',
+        'CAN_AB_Edmonton.Intl.AP.711230_CWEC2020.epw',
+        'CAN_BC_Vancouver.Intl.AP.718920_CWEC2020.epw',
+        'CAN_AB_Calgary.Intl.AP.718770_CWEC2020.epw',
+        'CAN_ON_Toronto.Intl.AP.716240_CWEC2020.epw',
+        'CAN_NT_Yellowknife.AP.719360_CWEC2020.epw',
+        'CAN_AB_Fort.Mcmurray.AP.716890_CWEC2020.epw'
+    ]
+    # Get list of historic and future weather files available from git repo. See definitions for URLs
+    hist_files = requests.get(HISTORIC_WEATHER_LIST, allow_redirects=True).json()
+    fut_files = requests.get(FUTURE_WEATHER_LIST, allow_redirects=True).json()
 
     # Check if any weather locations on the weather file list are not default weather locations
-    custom_weather_locs = []
-    for weather_loc in weather_files:
-        is_default_loc = weather_loc in default_weather_files
-        if not is_default_loc:
-            custom_weather_locs.append(weather_loc)
+    custom_weather_locs = [x for x in weather_locations if x not in default_weather_locations]
 
-    # Create a string containing the non-default weather locations, where each non-default weather location is separated
-    # by a space
-    custom_weather_string = ""
-    weather_downloads = []
-    # Check if the weather file is in the btap_weather repository and, if it is, add it to the weather_download
-    # environment variable used to create the btap_cli image.
-    if custom_weather_locs:
-        # Download the btap_weather repository weather file manifests and see if the ones the user wants to add are on
-        # the list.
-        r = requests.get(HISTORIC_WEATHER_LIST, allow_redirects=True)
-        hist_files = r.json()
-        r = requests.get(FUTURE_WEATHER_LIST, allow_redirects=True)
-        fut_files = r.json()
-        # Cycle through the weather files we want, check if they are on either btap_weather manifest and, if they are,
-        # add them to the environment variable string.
-        for custom_weather_loc in custom_weather_locs:
-            # Remove the extension from the file name since the zip file contains many files with different extensions but
-            # the same initial name.
-            ext_ind = custom_weather_loc.rindex('.')
-            custom_weather_pre = custom_weather_loc[0:ext_ind]
-            # Add the .zip extension and check if they are in the historical weather files or future weather files
-            weather_file = custom_weather_pre + (".zip")
-            is_existing = weather_file in hist_files
-            is_future = weather_file in fut_files
-            # Add the appropriate url prefix to the file depending on if it is a future weather file or historical
-            # weather file and then add them to the list of weather file urls.
-            if is_existing:
-                download_string = HISTORIC_WEATHER_REPO + weather_file
-                weather_downloads.append(download_string)
-            elif is_future:
-                download_string = FUTURE_WEATHER_REPO + weather_file
-                weather_downloads.append(download_string)
-            else:
-                print(f"Could not find the weather file {weather_file} in the btap_batch repository.  Please check if it is spelled correctly and check if it is in the repasitory (https://github.com/canmet-energy/btap_weather).")
-                exit(1)
-        # Create a string containing the non-default weather urls, where each non-default weather location is separated
-        # by a space.
-        for download_loc in weather_downloads:
-            if custom_weather_string == "":
-                custom_weather_string = str(download_loc)
-            else:
-                custom_weather_string = custom_weather_string + str(" ") + str(download_loc)
-    # return the non-default weather location string
-    return custom_weather_string
+    # Replace .epw for .zip as this is the basename used in the weatherfile repository.
+    custom_weather_locs = [re.sub(r'\.epw$', '.zip', loc) for loc in custom_weather_locs]
+
+    # Check if any of the weather files are not part of historical or future files.
+    non_existant_files = list(set(custom_weather_locs) - set(hist_files + fut_files))
+    if len(non_existant_files) > 0:
+        print(f"Could not find the weather files {non_existant_files} in the btap_batch repository from your build_conf.yml file.  Please check if it is spelled correctly and check if it is in the repository (https://github.com/canmet-energy/btap_weather)." )
+        exit(1)
+
+    # prefix custom_weather with correct URL for fut or hist.  Already filtered for one or the other above.. so the else works implicitly for future.
+    custom_weather_string = [HISTORIC_WEATHER_REPO + loc if loc in hist_files else FUTURE_WEATHER_REPO + loc  for loc in custom_weather_locs]
+
+    # Return a single string from the list separated by a space.
+    return  " ".join(custom_weather_string)
 
 def build_and_configure_docker_and_aws(btap_batch_branch=None,
                                        btap_costing_branch=None,
                                        compute_environment=None,
                                        openstudio_version=None,
                                        os_standards_branch=None,
-                                       build_btap_cli=True,
-                                       build_btap_batch=True,
+                                       build_btap_cli=None,
+                                       build_btap_batch=None,
                                        weather_list=None):
+
+
+
     # Get the weather locations from the weather list
     weather_locations = get_weather_locations(weather_list)
-
     # build args for aws and btap_cli container.
     build_args_btap_cli = {'OPENSTUDIO_VERSION': openstudio_version,
                            'BTAP_COSTING_BRANCH': btap_costing_branch,
@@ -164,31 +167,17 @@ def build_and_configure_docker_and_aws(btap_batch_branch=None,
                            'WEATHER_FILES': weather_locations}
     # build args for btap_batch container.
     build_args_btap_batch = {'BTAP_BATCH_BRANCH': btap_batch_branch}
-    if compute_environment == 'aws_batch' or compute_environment == 'all':
-        # Tear down
+
+
+
+    if compute_environment  in ['local_managed_aws_workers', 'aws']:
+        delete_aws_build_env(os.environ['BUILD_ENV_NAME'])
+
+        # # Create new
         ace_worker = AWSComputeEnvironment(name='btap_cli')
         ace_manager = AWSComputeEnvironment(name='btap_batch')
         image_worker = AWSImageManager(image_name='btap_cli')
-        image_btap_batch = AWSImageManager(image_name='btap_batch', compute_environment=ace_worker)
-
-        # tear down aws_btap_cli batch framework.
-        batch_cli = AWSBatch(image_manager=image_worker, compute_environment=ace_worker)
-        batch_cli.tear_down()
-
-        # tear down aws_btap_batch batch framework.
-        batch_manager = AWSBatch(image_manager=image_btap_batch, compute_environment=ace_manager)
-        batch_manager.tear_down()
-
-        # tear down compute resources.
-        ace_worker.tear_down()
-        ace_manager.tear_down()
-
-        # Delete user role permissions.
-        IAMBatchJobRole().delete()
-        IAMCodeBuildRole().delete()
-        IAMBatchServiceRole().delete()
-
-        # # Create new
+        image_manager = AWSImageManager(image_name='btap_batch', compute_environment=ace_worker)
         IAMBatchJobRole().create_role()
         IAMCodeBuildRole().create_role()
         IAMBatchServiceRole().create_role()
@@ -198,10 +187,10 @@ def build_and_configure_docker_and_aws(btap_batch_branch=None,
         ace_worker = AWSComputeEnvironment(name='btap_cli')
         ace_worker.setup(maxvCpus=math.floor(MAX_AWS_VCPUS * 0.95))
 
-        # Build Image for worker
-        image_worker = AWSImageManager(image_name='btap_cli')
-        print('Building worker image')
+
+
         if build_btap_cli:
+            print('Building btap_cli on aws..')
             image_worker.build_image(build_args=build_args_btap_cli)
 
         # Create Job description and queues for workers.
@@ -212,11 +201,10 @@ def build_and_configure_docker_and_aws(btap_batch_branch=None,
                         container_memory=WORKER_CONTAINER_MEMORY)
 
         # Create compute environment for analysis managers, which is a 10% of MAXVCPU
-        ace_manager = AWSComputeEnvironment(name='btap_batch')
+
         ace_manager.setup(maxvCpus=math.floor(MAX_AWS_VCPUS * 0.05))
 
         # Build image for btap_batch manager
-        image_manager = AWSImageManager(image_name='btap_batch')
         if build_btap_batch:
             print('Building AWS batch manager image')
             image_manager.build_image(build_args=build_args_btap_batch)
@@ -231,22 +219,57 @@ def build_and_configure_docker_and_aws(btap_batch_branch=None,
         # Create AWS database for results if it does not already exist.
         AWSResultsTable().create_table()
 
-    if compute_environment == 'all' or compute_environment == 'local_docker':
+    if compute_environment in ['local']:
         # Build btap_cli image
         image_worker = DockerImageManager(image_name='btap_cli')
-        print('Building btap_cli image')
-        image_worker.build_image(build_args=build_args_btap_cli)
+        if build_btap_cli:
+            print('Building btap_cli image')
+            image_worker.build_image(build_args=build_args_btap_cli)
+        else:
+            print("Skipping building btap_cli image at users request.")
+
+
+def delete_aws_build_env(build_env_name = None):
+    os.environ['BUILD_ENV_NAME'] = build_env_name
+    # Tear down
+    ace_worker = AWSComputeEnvironment(build_env_name=build_env_name, name='btap_cli')
+    ace_manager = AWSComputeEnvironment(build_env_name=build_env_name,name='btap_batch')
+    image_worker = AWSImageManager(build_env_name=build_env_name, image_name='btap_cli')
+    image_manager = AWSImageManager(build_env_name=build_env_name, image_name='btap_batch', compute_environment=ace_worker)
+    # tear down aws_btap_cli batch framework.
+    batch_cli = AWSBatch(build_env_name=build_env_name, image_manager=image_worker, compute_environment=ace_worker)
+    batch_cli.tear_down()
+    # tear down aws_btap_batch batch framework.
+    batch_manager = AWSBatch(build_env_name=build_env_name, image_manager=image_manager, compute_environment=ace_manager)
+    batch_manager.tear_down()
+    # tear down compute resources.
+    ace_worker.tear_down()
+    ace_manager.tear_down()
+    # Delete user role permissions.
+    IAMBatchJobRole(build_env_name=build_env_name).delete()
+    IAMCodeBuildRole(build_env_name=build_env_name).delete()
+    IAMBatchServiceRole(build_env_name=build_env_name).delete()
+    # Delete repositories/images from AWS
+    image_manager.delete_image()
+    image_worker.delete_image()
+
+
 
 
 def analysis(project_input_folder=None,
-             compute_environment=None,
-             reference_run=None,
+             build_config=None,
              output_folder=None):
-    ic(project_input_folder)
-    ic(compute_environment)
-    ic(reference_run)
-    ic(output_folder)
 
+    compute_environment = None
+    # If build_env is available in the build config use it.
+    if build_config != None:
+        if 'build_env_name' in build_config:
+            os.environ['BUILD_ENV_NAME'] = build_config['build_env_name']
+        if 'compute_environment' in build_config:
+            compute_environment = build_config['compute_environment']
+
+
+    # If project folder is on S3.  Download the folder to work on it locally.
     if project_input_folder.startswith('s3:'):
         # download project to local temp folder.
         local_dir = os.path.join(str(Path.home()), 'temp_analysis_folder')
@@ -261,6 +284,21 @@ def analysis(project_input_folder=None,
                 exit(1)
         S3().download_s3_folder(s3_folder=project_input_folder, local_dir=local_dir)
         project_input_folder = local_dir
+
+
+        # Set compute_environment to local_managed_aws_workers.
+        path_to_yml = os.path.join(project_input_folder, 'input.yml')
+        with Path(path_to_yml).open() as fp:
+            config = yaml.safe_load(fp)
+        # If this was taken from S3. Force it to be locally managed analysis.
+        config['compute_environment'] = 'local_managed_aws_workers'
+
+        with open(path_to_yml, 'w') as outfile:
+            yaml.dump(config, outfile, default_flow_style=False)
+
+
+
+
     # path of analysis input.yml
     analysis_config_file = os.path.join(project_input_folder, 'input.yml')
 
@@ -272,14 +310,23 @@ def analysis(project_input_folder=None,
         exit(1)
     analysis_config, analysis_input_folder, analyses_folder = BTAPAnalysis.load_analysis_input_file(
         analysis_config_file=analysis_config_file)
-    # ic(analysis_config)
-    # ic(analysis_input_folder)
-    # ic(analyses_folder)
+
+    if 'build_env_name' in analysis_config: # input.yml has priority.
+        os.environ['BUILD_ENV_NAME'] = config['build_env_name']
+
+    # Set compute Environment
+    if 'compute_environment' in analysis_config:
+        compute_environment = analysis_config['compute_environment']
+
+    if compute_environment == None:
+        raise("Computer environment was not defined")
 
 
+
+
+    reference_run = analysis_config[':reference_run']
     # delete output from previous run if present locally
     project_folder = os.path.join(output_folder,analysis_config[':analysis_name'])
-    ic(project_folder)
     # Check if folder exists
     if os.path.isdir(project_folder):
         # Remove old folder
@@ -291,16 +338,24 @@ def analysis(project_input_folder=None,
             exit(1)
 
     # delete output from previous run if present on s3
-    if compute_environment == 'aws_batch':
+    if compute_environment == 'local_managed_aws_workers' or compute_environment == 'aws':
         bucket = AWSCredentials().account_id
-        user_name = os.environ.get('AWS_USERNAME').replace('.', '_')
+        user_name = os.environ.get('BUILD_ENV_NAME').replace('.', '_')
+        # Check if aws build_env_name exists
+        if not user_name in AWSImageManager.get_existing_build_env_names():
+            print(f"build_env_name '{user_name}' does not exist on aws. Have you built it using the build command yet?")
+
         prefix = os.path.join(user_name, analysis_config[':analysis_name'] + '/')
         print(f"Deleting old files in S3 folder {prefix}")
         S3().bulk_del_with_pbar(bucket=bucket, prefix=prefix)
 
 
-    if compute_environment == 'local_docker' or compute_environment == 'aws_batch':
+    if compute_environment == 'local' or compute_environment == 'local_managed_aws_workers':
         analysis_config[':compute_environment'] = compute_environment
+
+        # Don't run a reference run on a reference analysis
+        if analysis_config[':algorithm_type'] == 'reference':
+            reference_run = False
 
         reference_run_df = None
         if reference_run == True:
@@ -314,8 +369,6 @@ def analysis(project_input_folder=None,
 
                 br.run()
                 reference_run_df = br.btap_data_df
-
-        # ic(reference_run_data_path)
 
         # BTAP analysis placeholder.
         ba = None
@@ -369,11 +422,12 @@ def analysis(project_input_folder=None,
 
         ba.run()
         print(f"Excel results file {ba.analysis_excel_results_path()}")
+        if compute_environment == 'local':
+            generate_btap_reports(data_file=ba.analysis_excel_results_path(), pdf_output_folder=ba.analysis_results_folder())
 
 
-    if compute_environment == 'aws_batch_analysis':
+    elif compute_environment == 'aws':
         analysis_name = analysis_config[':analysis_name']
-        analyses_folder = analysis_config[':analysis_name']
         # Set common paths singleton.
         cp = CommonPaths()
         # Setting paths to current context.
@@ -412,7 +466,7 @@ def terminate_aws_analyses():
     batch_cli.clear_queue()
 
 
-def sensitivity_chart(excel_file=None, pdf_output_folder="./"):
+def sensitivity_chart(data_file='/home/plopez/btap_batch/downloads/master.parquet', pdf_output_folder=r"/home/plopez/btap_batch/test"):
     import pandas as pd
     import numpy as np
     import seaborn as sns
@@ -422,23 +476,33 @@ def sensitivity_chart(excel_file=None, pdf_output_folder="./"):
     import dataframe_image as dfi
 
     import time
-    # Location of Excel file used from sensitivity.
-    OUTPUT_XLSX = excel_file
-    # Load data into memory as a dataframe.
-    df = pd.read_excel(open(OUTPUT_XLSX, 'rb'), sheet_name='btap_data')
+
+
+    # Get the file extension
+    ext = os.path.splitext(data_file)[1]
+
+    if ext == '.csv':
+        df = pd.read_csv(data_file)
+    elif ext == '.xlsx':
+        df = pd.read_excel(data_file)
+    elif ext == '.parquet':
+        df = pd.read_parquet(data_file)
+    else:
+        raise RuntimeError('File extension not recognized')
+
     # Gets all unique values in the scenario column.
     scenarios = df[':scenario'].unique()
     analysis_names = df[':analysis_name'].unique()
 
     for analysis_name in analysis_names:
-        pdf_output_folder = os.path.join(pdf_output_folder, analysis_name + ".pdf")
+        pdf_output_file = os.path.join(pdf_output_folder, analysis_name + ".pdf")
         filtered_df = df.loc[df[':analysis_name'] == 'analysis_name']
         algorithm_type = df[':algorithm_type'].unique()[0]
 
         if algorithm_type == 'sensitivity':
 
             # This is a pdf writer.. This will save all our charts to a PDF.
-            with PdfPages(pdf_output_folder) as pdf:
+            with PdfPages(pdf_output_file) as pdf:
                 # Order Measures that had the biggest impact.
                 # https: // stackoverflow.com / questions / 32791911 / fast - calculation - of - pareto - front - in -python
                 ranked_df = df.copy()
@@ -558,27 +622,28 @@ def sensitivity_chart(excel_file=None, pdf_output_folder="./"):
                         ax.bar_label(c, labels=labels, label_type='center')
                     pdf.savefig()
                     plt.close()
+                    pdf.output()
 
         elif algorithm_type == "nsga2":
-
-            # https: // stackoverflow.com / questions / 32791911 / fast - calculation - of - pareto - front - in -python
-
-            # 'baseline_necb_tier','cost_equipment_total_cost_per_m_sq'
-            optimization_column_names = ['baseline_energy_percent_better', 'cost_equipment_total_cost_per_m_sq']
-            # Add column to dataframe to indicate optimal datapoints.
-            df['is_on_pareto'] = get_pareto_points(np.array(df[optimization_column_names].values.tolist()))
-
-            # Filter by pareto curve.
-            pareto_df = df.loc[df['is_on_pareto'] == True].reset_index()
-            bins = [-100, 0, 25, 50, 60, 1000]
-            labels = ["Non-Compliant", "Tier-1", "Tier-2", "Tier-3", "Tier-4"]
-            pareto_df['binned'] = pd.cut(pareto_df['baseline_energy_percent_better'], bins=bins, labels=labels)
-            sns.scatterplot(x="baseline_energy_percent_better",
-                            y="cost_equipment_total_cost_per_m_sq",
-                            hue="binned",
-                            data=pareto_df)
-
-            plt.show()
+            print("No charting support for optimization yet.")
+            # # https: // stackoverflow.com / questions / 32791911 / fast - calculation - of - pareto - front - in -python
+            #
+            # # 'baseline_necb_tier','cost_equipment_total_cost_per_m_sq'
+            # optimization_column_names = ['baseline_energy_percent_better', 'cost_equipment_total_cost_per_m_sq']
+            # # Add column to dataframe to indicate optimal datapoints.
+            # df['is_on_pareto'] = get_pareto_points(np.array(df[optimization_column_names].values.tolist()))
+            #
+            # # Filter by pareto curve.
+            # pareto_df = df.loc[df['is_on_pareto'] == True].reset_index()
+            # bins = [-100, 0, 25, 50, 60, 1000]
+            # labels = ["Non-Compliant", "Tier-1", "Tier-2", "Tier-3", "Tier-4"]
+            # pareto_df['binned'] = pd.cut(pareto_df['baseline_energy_percent_better'], bins=bins, labels=labels)
+            # sns.scatterplot(x="baseline_energy_percent_better",
+            #                 y="cost_equipment_total_cost_per_m_sq",
+            #                 hue="binned",
+            #                 data=pareto_df)
+            #
+            # plt.show()
 
         elif algorithm_type == "elimination":
             print("No charting support for Elimination yet.")
@@ -595,7 +660,6 @@ def sensitivity_chart(excel_file=None, pdf_output_folder="./"):
         else:
             print(f"Unsupported analysis type {algorithm_type}")
 
-        print(pdf_output_folder)
 
 def get_number_of_failures(job_queue_name='btap_cli'):
     # Gets an AWSBatch analyses object.
@@ -619,3 +683,203 @@ def get_number_of_failures(job_queue_name='btap_cli'):
             object_count += len(response['jobSummaryList'])
     return object_count
 
+def generate_build_config(build_config_path = None):
+    import yaml
+
+    config = f"""
+# This is the name of the build environment. This will prefix all images, s3 folders, and resources created on aws. Please ensure that it is 24 characters long or less, only uses numbers and lowercase letters, and includes no spaces or special characters aside from underscore. Use the underscore character instead of spaces.
+build_env_name: {USER.lower()}
+
+# Github Token. This must be set to build and run analyses. See the disable_costing section below if you are NRCan staff and would to access costing. 
+git_api_token: null
+
+# Compute Environment used to build and run analyses. Options are
+#  local: Will run everything on your own computer. Recommended for running small analysis and testing ahead of using aws.
+#  aws: Run everything on Amazon infrastructure. You can turn off your computer after the analyses are all sent to Amazon. Recommended for large analyses.
+#  local_managed_aws_workers: Analysis is managed on your local computer but simulations are done on Amazon.. Used by the aws process above.
+compute_environment: local
+
+# Branch of btap_batch to be used in aws compute_environment runs on AWS.
+btap_batch_branch: dev
+
+# Branch of btap_costing to build used in environment
+btap_costing_branch: master
+
+# Branch of openstudio-standards used in environment
+os_standards_branch: nrcan
+
+# OpenStudio version used by analyses and built into the container environment. The E+ version used for simulations is determined by the OpenStudio version.
+openstudio_version: 3.7.0
+
+# List of Weather files to build included in the build environment. Only .epw files , and <100 files. Other weather locations are available. However, you have to define the ones you want to use when creating your environment.  The other locations that you can use can be found in this repository:
+# https://github.com/canmet-energy/btap_weather
+weather_list:
+  - CAN_QC_Montreal.Intl.AP.716270_CWEC2020.epw
+  - CAN_NS_Halifax.Dockyard.713280_CWEC2020.epw
+  - CAN_AB_Edmonton.Intl.AP.711230_CWEC2020.epw
+  - CAN_BC_Vancouver.Intl.AP.718920_CWEC2020.epw
+  - CAN_AB_Calgary.Intl.AP.718770_CWEC2020.epw
+  - CAN_ON_Toronto.Intl.AP.716240_CWEC2020.epw
+  - CAN_NT_Yellowknife.AP.719360_CWEC2020.epw
+  - CAN_AB_Fort.Mcmurray.AP.716890_CWEC2020.epw
+  
+
+# If you do not have access to the NRCan btap_costing repository this should be set to True. Setting this to True
+# without access will cause the build to fail. If you are NRCan staff, please request access by providing your GitHub
+# username to chris.kirney@rncan-nrcan.gc.ca.  Once you have permission to access the repository, you can set this to
+# False.
+disable_costing: True
+
+# Rebuild btap_cli image
+build_btap_cli: True
+
+# Rebuild btap_batch image
+build_btap_batch: True
+
+    """
+
+    output_file = Path(build_config_path)
+    output_file.parent.mkdir(exist_ok=True, parents=True)
+    output_file.write_text(config)
+
+
+# This method will a single analysis present in a given S3 path. It will only download the zips and output
+# excel files.  It will rename the files with the analysis_name/parent folder name.
+# bucket is the s3 bucket.
+# prefix is the s3 analysis folder to parse. Note the trailing / is important. It denoted that it is a folder to S3.
+# target path is the path on this machine where the files will be stored.
+# hourly_csv, eplusout_sql, in_osm, eplustbl_htm are bools that indicate to download those zipfiles. It will always download
+# the output.xlsx file.
+def download_analysis(key='phylroy_lopez_1/parametric_example/',
+                      bucket='834599497928',
+                      target_path='/home/plopez/btap_batch/downloads',
+                      hourly_csv=False,
+                      in_osm=False,
+                      eplusout_sql=False,
+                      eplustbl_htm=False,
+                      unzip_and_delete=True,
+                      ):
+    filetype = 'output.xlsx'
+    source_zip_file = os.path.join(key, 'results', filetype).replace('\\', '/')
+    target_zip_basename = os.path.join(target_path, os.path.basename(os.path.dirname(key)) + "_" + filetype)
+    S3().download_file(s3_file=source_zip_file, bucket_name=bucket, target_path=target_zip_basename)
+
+    if hourly_csv:
+        filetype = 'hourly.csv.zip'
+        source_zip_file = os.path.join(key, 'results', 'zips', filetype).replace('\\', '/')
+        target_zip_basename = os.path.join(target_path, os.path.basename(os.path.dirname(key)) + "_" + filetype)
+        is_downloaded = S3().download_file(s3_file=source_zip_file, bucket_name=bucket, target_path=target_zip_basename)
+        if unzip_and_delete and is_downloaded:
+            extraction_folder_suffix = 'hourly.csv'
+            extraction_folder = os.path.join(target_path, extraction_folder_suffix)
+            pathlib.Path(extraction_folder).mkdir(parents=True, exist_ok=True)
+            with zipfile.ZipFile(target_zip_basename, 'r') as zip_ref:
+                zip_ref.extractall(extraction_folder)
+            pathlib.Path(target_zip_basename).unlink(missing_ok=True)
+
+    if in_osm:
+        filetype = 'in.osm.zip'
+        source_zip_file = os.path.join(key, 'results', 'zips', filetype).replace('\\', '/')
+        target_zip_basename = os.path.join(target_path, os.path.basename(os.path.dirname(key)) + "_" + filetype)
+        is_downloaded = S3().download_file(s3_file=source_zip_file, bucket_name=bucket, target_path=target_zip_basename)
+        if unzip_and_delete and is_downloaded:
+            extraction_folder_suffix = 'in.osm'
+            extraction_folder = os.path.join(target_path, extraction_folder_suffix)
+            pathlib.Path(extraction_folder).mkdir(parents=True, exist_ok=True)
+            with zipfile.ZipFile(target_zip_basename, 'r') as zip_ref:
+                zip_ref.extractall(extraction_folder)
+            pathlib.Path(target_zip_basename).unlink(missing_ok=True)
+
+    if eplusout_sql:
+        filetype = 'eplusout.sql.zip'
+        source_zip_file = os.path.join(key, 'results', 'zips', filetype).replace('\\', '/')
+        target_zip_basename = os.path.join(target_path, os.path.basename(os.path.dirname(key)) + "_" + filetype)
+        is_downloaded = S3().download_file(s3_file=source_zip_file, bucket_name=bucket, target_path=target_zip_basename)
+        if unzip_and_delete and is_downloaded:
+            extraction_folder_suffix = 'eplusout.sql'
+            extraction_folder = os.path.join(target_path, extraction_folder_suffix)
+            pathlib.Path(extraction_folder).mkdir(parents=True, exist_ok=True)
+            with zipfile.ZipFile(target_zip_basename, 'r') as zip_ref:
+                zip_ref.extractall(extraction_folder)
+            pathlib.Path(target_zip_basename).unlink(missing_ok=True)
+
+    if eplustbl_htm:
+        filetype = 'eplustbl.htm.zip'
+        source_zip_file = os.path.join(key, 'results', 'zips', filetype).replace('\\', '/')
+        target_zip_basename = os.path.join(target_path, os.path.basename(os.path.dirname(key)) + "_" + filetype)
+        is_downloaded = S3().download_file(s3_file=source_zip_file, bucket_name=bucket, target_path=target_zip_basename)
+        if unzip_and_delete and is_downloaded:
+            extraction_folder_suffix = 'eplustbl.htm'
+            extraction_folder = os.path.join(target_path, extraction_folder_suffix)
+            pathlib.Path(extraction_folder).mkdir(parents=True, exist_ok=True)
+            with zipfile.ZipFile(target_zip_basename, 'r') as zip_ref:
+                zip_ref.extractall(extraction_folder)
+            pathlib.Path(target_zip_basename).unlink(missing_ok=True)
+
+
+# This method will download all the analysis present in a given S3 path. It will only download the zips and output
+# excel files.  It will rename the files with the analysis_name/parent folder name.
+# bucket is the s3 bucket.
+# prefix is the s3 folder to parse. Note the trailing / is important. It denoted that it is a folder to S3.
+# target path is the path on this machine where the files will be stored.
+
+def download_analyses(bucket='834599497928',
+                      build_env_name='solution_sets/',
+                      output_path='/home/plopez/btap_batch/downloads',
+                      hourly_csv=True,
+                      in_osm=True,
+                      eplusout_sql=True,
+                      eplustbl_htm=True,
+                      concat_excel_files=True,
+                      analysis_name='vin.*YUL.*',
+                      unzip_and_delete=True,
+                      dry_run=True
+                      ):
+    folders = S3().s3_get_list_of_folders_in_folder(bucket=bucket, prefix=build_env_name)
+    if build_env_name + 'btap_cli/' in folders:
+        folders.remove(build_env_name + 'btap_cli/')
+
+    if build_env_name + 'btap_batch/' in folders:
+        folders.remove(build_env_name + 'btap_batch/')
+
+    for folder in folders:
+
+        if re.search(analysis_name, folder) != None:
+            print(f"Processing {folder}")
+        if re.search(analysis_name, folder) and not dry_run:
+            download_analysis(key=folder,
+                              bucket=bucket,
+                              target_path=output_path,
+                              hourly_csv=hourly_csv,
+                              in_osm=in_osm,
+                              eplusout_sql=eplusout_sql,
+                              eplustbl_htm=eplustbl_htm,
+                              unzip_and_delete=unzip_and_delete
+                              )
+    if concat_excel_files and not dry_run:
+        print(f"Creating master csv and parquet results file.")
+        all_files = os.listdir(output_path)
+        xlsx_files = [f for f in all_files if f.endswith('.xlsx')]
+        df_list = []
+        for xlsx in xlsx_files:
+            try:
+                df = pd.read_excel(os.path.join(output_path, xlsx))
+                print(f"Appending {xlsx} to master csv file.")
+                df_list.append(df)
+            except Exception as e:
+                print(f"Could not read file {xlsx} because of error: {e}")
+        # Concatenate all data into one DataFrame
+        big_df = pd.concat(df_list, ignore_index=True)
+
+        # Save the final result to a new CSV file
+        master_csv_path = os.path.join(output_path, 'master.csv')
+        big_df.to_csv(master_csv_path, index=False)
+
+        # Create parquet file.
+        master_parquet_file = os.path.join(output_path, 'master.parquet')
+
+        # Horrible workaround to deal with non-uniform datatypes in columns.
+        big_df = pd.read_csv(master_csv_path, dtype='unicode')
+        big_df.to_parquet(master_parquet_file)
+        generate_btap_reports(data_file=master_csv_path,
+                              pdf_output_folder=os.path.join(output_path,'pdf'))

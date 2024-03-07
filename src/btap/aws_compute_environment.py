@@ -22,10 +22,11 @@ BATCH_SERVICE_ROLE = 'arn:aws:iam::834599497928:role/service-role/AWSBatchServic
 
 
 class AWSComputeEnvironment:
-    def __init__(self,name = ''):
-        username = CommonPaths().get_username().replace('.', '_')
-        self._compute_environment_name = f"{username}_{name}_compute_environment"
-        self.launch_template_name = f'{username}_{name}_storage_template'
+    def __init__(self, build_env_name = None, name =''):
+        if build_env_name is None:
+            build_env_name = CommonPaths().get_build_env_name().replace('.', '_')
+        self._compute_environment_name = f"{build_env_name}_{name}_compute_environment"
+        self.launch_template_name = f'{build_env_name}_{name}_storage_template'
 
     def get_compute_environment_name(self):
         return self._compute_environment_name
@@ -101,9 +102,16 @@ class AWSComputeEnvironment:
                                      maxvCpus=MAX_AWS_VCPUS,
                                      instanceTypes=AWS_BATCH_COMPUTE_INSTANCE_TYPES,
                                      imageId=AWS_BATCH_DEFAULT_IMAGE,
-                                     subnets =  AWS_EC2Info().subnet_id_list,
-                                     securityGroupIds = AWS_EC2Info().securityGroupIds,
+                                     subnets =  None,
+                                     securityGroupIds = None,
                                      ):
+
+        if subnets == None:
+            subnets = AWS_EC2Info().subnet_id_list
+
+        if securityGroupIds == None:
+            securityGroupIds = AWS_EC2Info().securityGroupIds
+
 
         batch_client = AWSCredentials().batch_client
         # Inform user starting to create CE.
@@ -151,7 +159,9 @@ class AWSComputeEnvironment:
 
         return response
 
-    def __delete_compute_environment(self):
+    def __delete_compute_environment(self, computeEnvironmentName = None):
+        if not computeEnvironmentName is None:
+            self._compute_environment_name = computeEnvironmentName
         describe = self.__describe_compute_environments(self._compute_environment_name)
         if len(describe['computeEnvironments']) != 0:
             batch_client = AWSCredentials().batch_client

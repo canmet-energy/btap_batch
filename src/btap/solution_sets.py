@@ -215,7 +215,7 @@ def post_process_analyses(solution_sets_raw_results_folder="",
                                                   analysis_name=None, save_output=True)
         analysis_names = (sorted(results_df[':analysis_name'].unique()))
 
-    # If using local_docker
+    # If using local
     else:
         for output_folder_name in os.listdir(Path(solution_sets_raw_results_folder)):
             analysis_names.append(output_folder_name)
@@ -360,7 +360,7 @@ def post_process_analyses(solution_sets_raw_results_folder="",
                                                   analysis_name=None, save_output=True)
         analysis_names = (sorted(results_df[':analysis_name'].unique()))
 
-    # If using local_docker
+    # If using local
     else:
         for output_folder_name in os.listdir(Path(solution_set_output_folder)):
             analysis_names.append(output_folder_name)
