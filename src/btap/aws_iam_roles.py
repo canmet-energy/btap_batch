@@ -127,7 +127,7 @@ class IAMBatchJobRole(IAMRoles):
                 'PolicyArn': 'arn:aws:iam::aws:policy/AmazonDynamoDBFullAccess',
                 'PolicyName': 'AmazonDynamoDBFullAccess'},
             {
-                'PolicyArn': 'arn:aws:iam::aws:policy/AmazonEC2ContainerRegistryFullAccess ',
+                'PolicyArn': 'arn:aws:iam::aws:policy/AmazonEC2ContainerRegistryFullAccess',
                 'PolicyName': 'AmazonEC2ContainerRegistryFullAccess'},
 
 
