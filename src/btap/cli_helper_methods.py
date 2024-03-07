@@ -700,7 +700,7 @@ git_api_token: null
 compute_environment: local
 
 # Branch of btap_batch to be used in aws compute_environment runs on AWS.
-btap_batch_branch: build_change
+btap_batch_branch: dev
 
 # Branch of btap_costing to build used in environment
 btap_costing_branch: master
