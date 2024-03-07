@@ -9,7 +9,8 @@ import yaml
 import json
 from icecream import ic
 from src.btap.cli_helper_methods import analysis
-from src.btap.btap_analysis import BTAPAnalysis
+import time
+import shutil
 
 PROJECT_ROOT = str(Path(os.path.dirname(os.path.realpath(__file__))).parent.parent)
 
@@ -17,16 +18,16 @@ sys.path.append(PROJECT_ROOT)
 
 
 def generate_yml(
-        building_types_list=None,
-        epw_files=None,
-        hvac_fuel_types_list=None,
+        building_type=None,
+        location_name=None,
+        hvac_fuel_type=None,
         yaml_project_generation_folder=None,
         pop=None,
         generations=None,
+        analysis_config_file = None,
+        eta = 0.85
 ):
     # load template .yml file for creating all other .yml files
-    analysis_config_file = os.path.join(Path(os.path.dirname(os.path.realpath(__file__))).parent.parent, 'resources',
-                                        'solutionsets_optimization_template_input.yml')
     if not os.path.isfile(analysis_config_file):
         logging.error(f"could not find template input file at {analysis_config_file}. Exiting")
     # Open the yaml in analysis dict.
@@ -42,76 +43,63 @@ def generate_yml(
     with open(option_filters_file, encoding='utf-8') as json_file:
         option_filters = json.load(json_file)
 
-    # Weather files
-    for location_name in epw_files:
-        # HVAC / System Combinations.
-        for hvac_fuel_type_index in range(0, len(hvac_fuel_types_list)):
-            # Building Types
-            for building_name in building_types_list:
-                hvac_type = hvac_fuel_types_list[hvac_fuel_type_index][0]
-                fuel_type = hvac_fuel_types_list[hvac_fuel_type_index][1]
-                # ic(f"{location_name})
-                # ic(fuel_type)
-                # ic(hvac_type)
-                # ic(building_name)
 
-                # Look up available options from options_filters.json for this type.
-                result = list(filter(lambda options_filter: (
-                        options_filter['hvac_type'] == hvac_type and
-                        options_filter['fuel_type'] == fuel_type and
-                        building_name in options_filter['building_types']),
-                                     option_filters))
+    hvac_type = hvac_fuel_type[0]
+    fuel_type = hvac_fuel_type[1]
 
-                # Error checking.
-                if len(result) == 0:
-                    print("no matching filter found. Exiting.")
-                    exit(1)
-                if len(result) > 1:
-                    print("Too many filters found. Check options_filter.json logic. Exiting.")
-                    exit(1)
 
-                # Get options to remove and set to default.
-                remove_building_options = result[0]["remove_building_options"]
+    # Look up available options from options_filters.json for this type.
+    result = list(filter(lambda options_filter: (
+            options_filter['hvac_type'] == hvac_type and
+            options_filter['fuel_type'] == fuel_type and
+            building_type in options_filter['building_types']),
+                         option_filters))
 
-                # Make a copy of anaylsis_config and use it as template to create all other .yml files
-                template_yml = copy.deepcopy(analysis_config)
-                # Optimization parameters
-                template_yml[':algorithm_nsga_population'] = pop
-                template_yml[':algorithm_nsga_n_generations'] = generations
-                # Building and location.
-                template_yml[':options'][':building_type'] = [building_name]
-                template_yml[':options'][':epw_file'] = [location_name]
-                # hvac system and fuelset.
-                template_yml[':options'][':ecm_system_name'] = [i for i in template_yml[':options'][':ecm_system_name']
-                                                                if
-                                                                i in [
-                                                                    hvac_type]]
-                template_yml[':options'][':primary_heating_fuel'] = [i for i in
-                                                                     template_yml[':options'][':primary_heating_fuel']
-                                                                     if
-                                                                     i in [fuel_type]]
+    # Error checking.
+    if len(result) == 0:
+        print("no matching filter found. Exiting.")
+        exit(1)
+    if len(result) > 1:
+        print("Too many filters found. Check options_filter.json logic. Exiting.")
+        exit(1)
 
-                # removes options that do not apply to building type and fuel/hvac combinations.
-                for option in remove_building_options:
-                    # ic(option)
-                    template_yml[':options'][option] = [i for i in template_yml[':options'][option] if
-                                                        i in ['NECB_Default']]
+    # Get options to remove and set to default.
+    remove_building_options = result[0]["remove_building_options"]
 
-            # yml file name
-            yml_file_name = template_yml[':analysis_name'].replace('_example', '') + '_' + \
-                            template_yml[':options'][':building_type'][0] + '_' + \
-                            re.search(r"(CAN_(\w*))", location_name).group(2) + '_' + \
-                            template_yml[':options'][':primary_heating_fuel'][0] + '_' + \
-                            template_yml[':options'][':ecm_system_name'][0]
-            # :analysis_name
-            template_yml[':analysis_name'] = yml_file_name
-            # yml file path
-            yaml_folder_path = Path(os.path.join(Path(yaml_project_generation_folder), yml_file_name))
-            yml_file_path = os.path.join(yaml_folder_path, 'input.yml')
-            Path(os.path.join(yaml_folder_path)).mkdir(parents=True, exist_ok=True)
-            file = open(yml_file_path, "w")
-            yaml.dump(template_yml, file)
-            file.close()
+    # Make a copy of anaylsis_config and use it as template to create all other .yml files
+    template_yml = copy.deepcopy(analysis_config)
+    # Optimization parameters
+    template_yml[':algorithm_nsga_eta'] = eta
+    template_yml[':algorithm_nsga_population'] = pop
+    template_yml[':algorithm_nsga_n_generations'] = generations
+    # Building and location.
+    template_yml[':options'][':building_type'] = [building_type]
+    template_yml[':options'][':epw_file'] = [location_name]
+    # hvac system and fuelset.
+    template_yml[':options'][':ecm_system_name'] = [ hvac_type ]
+    template_yml[':options'][':primary_heating_fuel'] = [fuel_type]
+    # analysis name
+    epw_short = re.search(r"CAN_(\w*_\w*).*", location_name).group(1)
+    analysis_name = f"opt_necb_{building_type}_{fuel_type}_{hvac_type}_{epw_short}"
+    # :analysis_name
+    template_yml[':analysis_name'] = analysis_name
+
+
+    # removes options that do not apply to building type and fuel/hvac combinations.
+    for option in remove_building_options:
+        # ic(option)
+        template_yml[':options'][option] = [i for i in template_yml[':options'][option] if
+                                            i in ['NECB_Default']]
+
+
+    # yml file path
+    yaml_folder_path = Path(os.path.join(Path(yaml_project_generation_folder), analysis_name))
+    yml_file_path = os.path.join(yaml_folder_path, 'input.yml')
+    Path(os.path.join(yaml_folder_path)).mkdir(parents=True, exist_ok=True)
+    file = open(yml_file_path, "w")
+    yaml.dump(template_yml, file)
+    file.close()
+    return yaml_folder_path
 
 
 # =======================================================================================================================
@@ -124,36 +112,86 @@ def generate_solution_sets(
         epw_files=None,
         hvac_fuel_types_list=None,
         working_folder=None,
+        output_folder=None,
         pop=None,
         generations=None,
-        run_analyses=None
+        run_analyses=True,
+        analysis_config_file = os.path.join( Path(os.path.dirname(
+            os.path.realpath(__file__))).parent.parent,
+                                             'resources',
+                                          'solutionsets_optimization_template_input.yml'),
+        eta = 0.85
 ):
-    yaml_project_generation_folder = os.path.join(working_folder, 'projects_inputs')
-    simulation_results_folder = os.path.join(working_folder, 'projects_results')
+    start = time.time()
+    # Check if analyses folder exists if not create it.
+    Path(os.path.join(working_folder)).mkdir(parents=True, exist_ok=True)
 
-    # Call the function that creates all the analyses project folders and input.yml file associated with each folder
-    yml_folders = generate_yml(
-        building_types_list=building_types_list,  # a list of the building_types to look at.
-        epw_files=epw_files,  # a dictionary of the locations and associated epw files.
-        hvac_fuel_types_list=hvac_fuel_types_list,
-        yaml_project_generation_folder=yaml_project_generation_folder,
-        pop=pop,
-        generations=generations,
-    )
-    # print( locals() )
 
-    ##### Do 'analysis' for each input.yml file under the 'solution_set_input_folder' folder
-    if run_analyses:
-        for filename in os.listdir(Path(yaml_project_generation_folder)):
-            project_input_folder = os.path.join(Path(yaml_project_generation_folder), filename)
-            output_folder = os.path.join(Path(simulation_results_folder))
-            analysis(
-                project_input_folder=project_input_folder,
-                compute_environment=compute_environment,
-                reference_run=True,
-                output_folder=output_folder
-            )
+    supported_fuel_types = ['NECB_Default-NaturalGas',
+                            'NECB_Default-Electricity',
+                            'HS08_CCASHP_VRF-NaturalGasHPGasBackup',
+                            'HS08_CCASHP_VRF-ElectricityHPElecBackup',
+                            'HS09_CCASHP_Baseboard-NaturalGasHPGasBackup',
+                            'HS09_CCASHP_Baseboard-ElectricityHPElecBackup',
+                            'HS11_ASHP_PTHP-NaturalGasHPGasBackup',
+                            'HS11_ASHP_PTHP-ElectricityHPElecBackup',
+                            'HS12_ASHP_Baseboard-NaturalGasHPGasBackup',
+                            'HS12_ASHP_Baseboard-ElectricityHPElecBackup',
+                            'HS13_ASHP_VRF-NaturalGasHPGasBackup',
+                            'HS13_ASHP_VRF-ElectricityHPElecBackup',
+                            'HS14_CGSHP_FanCoils-NaturalGasHPGasBackup',
+                            'HS14_CGSHP_FanCoils-ElectricityHPElecBackup']
 
+    supported_building_types = [
+        'MediumOffice',
+        'LargeOffice',
+        'SmallOffice',
+        'PrimarySchool',
+        'SecondarySchool',
+        'LowriseApartment',
+        'MidriseApartment',
+        'HighriseApartment'
+    ]
+
+
+    if not (set(hvac_fuel_types_list).issubset(set(supported_fuel_types))):
+        print(f"Invalid fueltype system mix #{hvac_fuel_types_list}. Please use only the following:")
+        print(supported_fuel_types)
+        raise("hell")
+
+    if not (set(building_types_list).issubset(set(supported_building_types))):
+        print("Invalid building types detected. Please use only the following:")
+        print(supported_fuel_types)
+        exit(1)
+
+    hvac_fuel_types_list = [x.split('-') for x in hvac_fuel_types_list]
+
+    yaml_project_generation_folder = os.path.join(working_folder)
+    simulation_results_folder = os.path.join(output_folder)
+
+    for building_type in building_types_list:
+        for epw_file in epw_files:
+            for hvac_fuel_type in hvac_fuel_types_list:
+                # Call the function that creates all the analyses project folders and input.yml file associated with each folder
+                project_folder = generate_yml(
+                    building_type=building_type,  # a list of the building_types to look at.
+                    location_name=epw_file,  # a dictionary of the locations and associated epw files.
+                    hvac_fuel_type=hvac_fuel_type,
+                    yaml_project_generation_folder=yaml_project_generation_folder,
+                    pop=pop,
+                    generations=generations,
+                    analysis_config_file=analysis_config_file,
+                    eta = eta
+                )
+                if run_analyses:
+                    output_folder = os.path.join(Path(simulation_results_folder))
+                    project_folder = os.path.join(Path(project_folder))
+                    analysis(
+                        project_input_folder=project_folder,
+                        compute_environment=compute_environment,
+                        reference_run=True,
+                        output_folder=output_folder
+                    )
 
 def post_process_analyses(solution_sets_raw_results_folder="",
                           aws_database=True):
@@ -177,7 +215,7 @@ def post_process_analyses(solution_sets_raw_results_folder="",
                                                   analysis_name=None, save_output=True)
         analysis_names = (sorted(results_df[':analysis_name'].unique()))
 
-    # If using local_docker
+    # If using local
     else:
         for output_folder_name in os.listdir(Path(solution_sets_raw_results_folder)):
             analysis_names.append(output_folder_name)
@@ -322,7 +360,7 @@ def post_process_analyses(solution_sets_raw_results_folder="",
                                                   analysis_name=None, save_output=True)
         analysis_names = (sorted(results_df[':analysis_name'].unique()))
 
-    # If using local_docker
+    # If using local
     else:
         for output_folder_name in os.listdir(Path(solution_set_output_folder)):
             analysis_names.append(output_folder_name)

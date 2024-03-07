@@ -1,0 +1,230 @@
+:options:
+  :adv_dx_units:
+  - NECB_Default
+  - Carrier WeatherExpert
+  - Lennox Model L Ultra High Efficiency
+  :airloop_economizer_type:
+  - NECB_Default
+  - DifferentialEnthalpy
+  - DifferentialDryBulb
+  :baseline_system_zones_map_option:
+  - NECB_Default
+  :boiler_eff:
+  - NECB_Default
+  - Viessmann Vitocrossal 300 CT3-17 96.2% Efficient Condensing Gas Boiler
+  :building_type:
+  - LowriseApartment
+  :chiller_type:
+  - NECB_Default
+  - VSD
+  :daylighting_type:
+  - NECB_Default
+  - add_daylighting_controls
+  - none
+  :dcv_type:
+  - NECB_Default
+  - No_DCV
+  - Occupancy_based_DCV
+  - CO2_based_DCV
+  :door_construction_cond:
+  - NECB_Default
+  :ecm_system_name:
+  - NECB_Default
+  - HS09_CCASHP_Baseboard
+  - HS08_CCASHP_VRF
+  - HS11_ASHP_PTHP
+  - HS12_ASHP_Baseboard
+  - HS13_ASHP_VRF
+  - HS14_CGSHP_FanCoils
+  :electrical_loads_scale:
+  - NECB_Default
+  - 0.5
+  :epw_file:
+  - CAN_QC_Montreal-Trudeau.Intl.AP.716270_CWEC2016.epw
+  :erv_package:
+  - NECB_Default
+  - NECB_Default_All
+  - Plate-All
+  - Plate-Existing
+  - Rotary-All
+  - Rotary-Existing
+  :ext_floor_cond:
+  - NECB_Default
+  :ext_roof_cond:
+  - NECB_Default
+  - 0.227
+  - 0.193
+  - 0.183
+  - 0.162
+  - 0.142
+  - 0.138
+  - 0.121
+  :ext_wall_cond:
+  - NECB_Default
+  - 0.314
+  - 0.278
+  - 0.247
+  - 0.21
+  - 0.183
+  :fdwr_set:
+  - 0.4
+  - 0.2
+  - 0.6
+  - 0.8
+  :fixed_wind_solar_trans:
+  - NECB_Default
+  - 0.2
+  - 0.3
+  - 0.4
+  - 0.5
+  - 0.6
+  :fixed_window_cond:
+  - NECB_Default
+  - 2.4
+  - 2.2
+  - 1.6
+  :furnace_eff:
+  - NECB_Default
+  :glass_door_cond:
+  - NECB_Default
+  :glass_door_solar_trans:
+  - NECB_Default
+  :ground_floor_cond:
+  - NECB_Default
+  - 0.758
+  - 0.379
+  :ground_roof_cond:
+  - NECB_Default
+  :ground_wall_cond:
+  - NECB_Default
+  :infiltration_scale:
+  - NECB_Default
+  - 0.5
+  :lights_scale:
+  - 1.0
+  - 0.5
+  :lights_type:
+  - NECB_Default
+  :npv_discount_rate:
+  - NECB_Default
+  :npv_end_year:
+  - NECB_Default
+  :npv_start_year:
+  - NECB_Default
+  :nv_delta_temp_in_out:
+  - NECB_Default
+  :nv_opening_fraction:
+  - NECB_Default
+  :nv_temp_out_min:
+  - NECB_Default
+  :nv_type:
+  - NECB_Default
+  :oa_scale:
+  - NECB_Default
+  :occupancy_loads_scale:
+  - NECB_Default
+  :overhead_door_cond:
+  - NECB_Default
+  :primary_heating_fuel:
+  - NaturalGas
+  - Electricity
+  - NaturalGasHPGasBackup
+  - ElectricityHPElecBackup
+  :pv_ground_azimuth_angle:
+  - NECB_Default
+  :pv_ground_module_description:
+  - NECB_Default
+  :pv_ground_tilt_angle:
+  - NECB_Default
+  :pv_ground_total_area_pv_panels_m2:
+  - NECB_Default
+  :pv_ground_type:
+  - NECB_Default
+  :rotation_degrees:
+  - NECB_Default
+  :scale_x:
+  - NECB_Default
+  :scale_y:
+  - NECB_Default
+  :scale_z:
+  - NECB_Default
+  :shw_eff:
+  - NECB_Default
+  - Natural Gas Power Vent with Electric Ignition
+  :shw_scale:
+  - NECB_Default
+  - 0.75
+  - 0.5
+  - 0.25
+  :skylight_cond:
+  - NECB_Default
+  :skylight_solar_trans:
+  - NECB_Default
+  :srr_set:
+  - NECB_Default
+  :template:
+  - NECB2020
+:output_meters:
+- frequency: hourly
+  name: NaturalGas:Facility
+- frequency: hourly
+  name: Electricity:Facility
+- frequency: hourly
+  name: FuelOilNo2:Facility
+- frequency: hourly
+  name: InteriorLights:Electricity
+- frequency: hourly
+  name: Heating:Electricity
+- frequency: hourly
+  name: Heating:NaturalGas
+- frequency: hourly
+  name: Heating:FuelOilNo2
+- frequency: hourly
+  name: Heating:DistrictHeating
+- frequency: hourly
+  name: Cooling:Electricity
+- frequency: hourly
+  name: Heating:DistrictCooling
+- frequency: hourly
+  name: Fans:Electricity
+- frequency: hourly
+  name: Pumps:Electricity
+- frequency: hourly
+  name: InteriorEquipment:Electricity
+- frequency: hourly
+  name: WaterSystems:Electricity
+- frequency: hourly
+  name: WaterSystems:NaturalGas
+:output_variables:
+- frequency: hourly
+  key: '*'
+  operation: '*'
+  unit: '*'
+  variable: Zone Predicted Sensible Load to Setpoint Heat Transfer Rate
+- frequency: hourly
+  key: '*'
+  operation: '*'
+  unit: '*'
+  variable: Zone Predicted Sensible Load to Heating Setpoint Heat Transfer Rate
+- frequency: hourly
+  key: '*'
+  operation: '*'
+  unit: '*'
+  variable: Zone Predicted Sensible Load to Cooling Setpoint Heat Transfer Rate
+- frequency: hourly
+  key: '*'
+  operation: '*'
+  unit: '*'
+  variable: Zone Predicted Moisture Load Moisture Transfer Rate
+- frequency: hourly
+  key: '*'
+  operation: '*'
+  unit: '*'
+  variable: Zone Predicted Moisture Load to Humidifying Setpoint Moisture Transfer
+    Rate
+- frequency: hourly
+  key: '*'
+  operation: '*'
+  unit: '*'
+  variable: Zone Predicted Moisture Load to Dehumidifying Setpoint Moisture Transfer
+    Rate

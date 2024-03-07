@@ -1,24 +1,26 @@
 import os
 BTAP_BATCH_VERSION = '1.0.005'
 
-# Maximum AWS CPUS that AWS will allocate for the run.
-MAX_AWS_VCPUS = 2000
-# Number of VCPUs that AWSBatch will initialize with.
-# DESIRED_AWS_VCPUS = 50 # Not used currently
+# Maximum simulataneous simulations per analyses
+MAX_SIMULATIONS_PER_ANALYSIS = 500
+# Maximum AWS CPUS that AWS will allocate for the compute Environment.
+MAX_AWS_VCPUS = 3000
 # Minimum number of CPU should be set to zero.
 MIN_AWS_VCPUS = 0
 # Container allocated VCPU for AWS Batch
 WORKER_CONTAINER_VCPU = 1
 # Container allocated Memory (MB) for AWS Batch
-WORKER_CONTAINER_MEMORY = 2000
+WORKER_CONTAINER_MEMORY = 4000
 # Container Storage (GB)
-WORKER_CONTAINER_STORAGE = 100
+INSTANCE_STORAGE_SIZE_GB = 1000
 # Container allocated VCPU for AWS Batch
 MANAGER_CONTAINER_VCPU = 8
 # Container allocated Memory (MB) for AWS Batch
-MANAGER_CONTAINER_MEMORY = 16000
-# Container Storage (GB)
-MANAGER_CONTAINER_STORAGE = 500
+MANAGER_CONTAINER_MEMORY = 32000
+
+# Volume Type
+AWS_VOLUME_TYPE = 'io2' # could be gp2,gp3,io1,io2
+IOPS_VALUE = 10000 #Only used for io2 volumes.
 
 
 
@@ -26,7 +28,13 @@ MANAGER_CONTAINER_STORAGE = 500
 AWS_BATCH_ALLOCATION_STRATEGY = 'BEST_FIT_PROGRESSIVE'
 # AWS Compute instances types..setting to optimal to let AWS figure it out for me.
 # https://docs.aws.amazon.com/batch/latest/userguide/create-compute-environment.html
-AWS_BATCH_COMPUTE_INSTANCE_TYPES = ['optimal']#['m6i.16xlarge']
+AWS_BATCH_COMPUTE_INSTANCE_TYPES = ['m6i.32xlarge',
+                                    'm6i.24xlarge',
+                                    'm6i.16xlarge',
+                                    'm5.24xlarge',
+                                    'm5.16xlarge',
+                                    'm4.16xlarge',
+                                    'm5.16xlarge']
 # Using the public Amazon Linux 2 AMI to make use of overlay disk storage. Has all aws goodies already installed,
 # makeing secure session manager possible, and has docker pre-installed.
 AWS_BATCH_DEFAULT_IMAGE = 'ami-0a06b44c462364156'
@@ -51,6 +59,6 @@ BATCH_JOB_ROLE = 'arn:aws:iam::834599497928:role/batchJobRole'
 # Role to give permissions to batch to run.
 BATCH_SERVICE_ROLE = 'arn:aws:iam::834599497928:role/service-role/AWSBatchServiceRole'
 # Max Retry attemps for aws clients.
-AWS_MAX_RETRIES = 12
+AWS_MAX_RETRIES = 60
 # Dockerfile url location
 DOCKERFILE_URL = 'https://raw.githubusercontent.com/canmet-energy/btap_cli/dev/Dockerfile'

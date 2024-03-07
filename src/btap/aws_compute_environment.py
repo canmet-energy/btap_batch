@@ -3,7 +3,9 @@ from src.btap.constants import AWS_BATCH_ALLOCATION_STRATEGY
 from src.btap.constants import AWS_BATCH_COMPUTE_INSTANCE_TYPES
 from src.btap.constants import MIN_AWS_VCPUS
 from src.btap.constants import AWS_BATCH_DEFAULT_IMAGE
-from src.btap.constants import WORKER_CONTAINER_STORAGE
+from src.btap.constants import INSTANCE_STORAGE_SIZE_GB
+from src.btap.constants import AWS_VOLUME_TYPE
+from src.btap.constants import IOPS_VALUE
 import time
 import logging
 from random import random
@@ -20,18 +22,20 @@ BATCH_SERVICE_ROLE = 'arn:aws:iam::834599497928:role/service-role/AWSBatchServic
 
 
 class AWSComputeEnvironment:
-    def __init__(self):
-        username = CommonPaths().get_username().replace('.', '_')
-        self._compute_environment_name = f"{username}_compute_environment"
-        self.launch_template_name = f'{username}_storage_template'
+    def __init__(self, build_env_name = None, name =''):
+        if build_env_name is None:
+            build_env_name = CommonPaths().get_build_env_name().replace('.', '_')
+        self._compute_environment_name = f"{build_env_name}_{name}_compute_environment"
+        self.launch_template_name = f'{build_env_name}_{name}_storage_template'
 
     def get_compute_environment_name(self):
         return self._compute_environment_name
 
-    def setup(self):
+    def setup(self, maxvCpus=MAX_AWS_VCPUS):
         # This method creates batch infrastructure for user.
         launch_template = self.__add_storage_space_launch_template()
-        self.__create_compute_environment(launch_template=launch_template)
+        self.__create_compute_environment(launch_template=launch_template,
+                                          maxvCpus=maxvCpus)
 
     def tear_down(self):
         # This method creates batch infrastructure for user.
@@ -43,14 +47,15 @@ class AWSComputeEnvironment:
 
 
     # Short method that creates a template to increase the disk size of the containers. Default 100GB.
-    def __add_storage_space_launch_template(self, sizegb=WORKER_CONTAINER_STORAGE):
+    def __add_storage_space_launch_template(self, sizegb=INSTANCE_STORAGE_SIZE_GB):
         self.ec2 = AWSCredentials().ec2_client
 
         launch_template = self.ec2.describe_launch_templates()['LaunchTemplates']
         if next((item for item in launch_template if item["LaunchTemplateName"] == self.launch_template_name),
                 None) == None:
-            message = f'Creating EC2 instance launch template with 100GB of space named {self.launch_template_name}'
+            message = f'Creating EC2 instance launch template using  with {sizegb} of space named {self.launch_template_name}'
             logging.info(message)
+            print(message)
             response = self.ec2.create_launch_template(
                 DryRun=False,
                 LaunchTemplateName=self.launch_template_name,
@@ -61,8 +66,11 @@ class AWSComputeEnvironment:
                         {
                             'DeviceName': '/dev/xvda',
                             'Ebs': {
+                                'DeleteOnTermination': True,
+                                'Encrypted': False,
                                 'VolumeSize': sizegb,
-                                'VolumeType': 'gp2'
+                                'VolumeType': AWS_VOLUME_TYPE,
+                                'Iops': IOPS_VALUE
                             }
                         }
                     ]
@@ -71,6 +79,7 @@ class AWSComputeEnvironment:
         else:
             message = f"Launch Template {self.launch_template_name} already exists. Using existing."
             logging.info(message)
+            print(message)
         return self.launch_template_name
 
     def __describe_compute_environments(self, compute_environment_name, n=0):
@@ -86,7 +95,23 @@ class AWSComputeEnvironment:
             time.sleep(wait_time)
             return self.__describe_compute_environments(compute_environment_name, n=n + 1)
 
-    def __create_compute_environment(self, launch_template=None):
+    def __create_compute_environment(self,
+                                     launch_template=None,
+                                     allocationStrategy=AWS_BATCH_ALLOCATION_STRATEGY,
+                                     minvCpus=MIN_AWS_VCPUS,
+                                     maxvCpus=MAX_AWS_VCPUS,
+                                     instanceTypes=AWS_BATCH_COMPUTE_INSTANCE_TYPES,
+                                     imageId=AWS_BATCH_DEFAULT_IMAGE,
+                                     subnets =  None,
+                                     securityGroupIds = None,
+                                     ):
+
+        if subnets == None:
+            subnets = AWS_EC2Info().subnet_id_list
+
+        if securityGroupIds == None:
+            securityGroupIds = AWS_EC2Info().securityGroupIds
+
 
         batch_client = AWSCredentials().batch_client
         # Inform user starting to create CE.
@@ -103,14 +128,14 @@ class AWSComputeEnvironment:
             serviceRole=IAMBatchServiceRole().arn(),
             computeResources={
                 'type': 'EC2',
-                'allocationStrategy': AWS_BATCH_ALLOCATION_STRATEGY,
-                'minvCpus': MIN_AWS_VCPUS,
-                'maxvCpus': MAX_AWS_VCPUS,
+                'allocationStrategy': allocationStrategy,
+                'minvCpus': minvCpus,
+                'maxvCpus': maxvCpus,
                 # 'desiredvCpus': DESIRED_AWS_VCPUS,
-                'instanceTypes': AWS_BATCH_COMPUTE_INSTANCE_TYPES,
-                'imageId': AWS_BATCH_DEFAULT_IMAGE,
-                'subnets': AWS_EC2Info().subnet_id_list,
-                'securityGroupIds': AWS_EC2Info().securityGroupIds,
+                'instanceTypes': instanceTypes,
+                'imageId': imageId,
+                'subnets': subnets,
+                'securityGroupIds': securityGroupIds,
                 'instanceRole': 'ecsInstanceRole',
                 'launchTemplate': {
                     'launchTemplateName': launch_template}
@@ -134,7 +159,9 @@ class AWSComputeEnvironment:
 
         return response
 
-    def __delete_compute_environment(self):
+    def __delete_compute_environment(self, computeEnvironmentName = None):
+        if not computeEnvironmentName is None:
+            self._compute_environment_name = computeEnvironmentName
         describe = self.__describe_compute_environments(self._compute_environment_name)
         if len(describe['computeEnvironments']) != 0:
             batch_client = AWSCredentials().batch_client
