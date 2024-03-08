@@ -19,8 +19,6 @@
   - VSD
   :daylighting_type:
   - NECB_Default
-  - add_daylighting_controls
-  - none
   :dcv_type:
   - NECB_Default
   - No_DCV
