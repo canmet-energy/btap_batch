@@ -315,6 +315,7 @@ This will select the algorithm to use in the analysis. \n\n
       :daylighting_type:
         description: "
         Set the daylight control type to make use of natural daylighting where possible.\n\n
+        CURRENTLY DISABLED!!! Requires update to work with Openstudio 3.7.0
         * **NECB_Default**	Add daylighting sensors for light control in the spaces that must have as per NECB's requirements\n\n
         * **add_daylighting_controls**	Adds daylight sensors for light control in each space regardless of  NECB's requirements\n\n
         * **none**	Do no add daylighting sensors. \n\n
@@ -324,8 +325,8 @@ This will select the algorithm to use in the analysis. \n\n
             - type: string
               enum:
                 - NECB_Default
-                - add_daylighting_controls
-                - none
+#                - add_daylighting_controls
+#                - none
 
       :ecm_system_name:
         description: "
