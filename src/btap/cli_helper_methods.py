@@ -724,7 +724,7 @@ weather_list:
   - CAN_AB_Fort.Mcmurray.AP.716890_CWEC2020.epw
   
 
-# If you do not have access to the NRCan btap_costing repository this should be set to True. Setting this to True
+# If you do not have access to the NRCan btap_costing repository this should be set to True. Setting this to False
 # without access will cause the build to fail. If you are NRCan staff, please request access by providing your GitHub
 # username to chris.kirney@rncan-nrcan.gc.ca.  Once you have permission to access the repository, you can set this to
 # False.
