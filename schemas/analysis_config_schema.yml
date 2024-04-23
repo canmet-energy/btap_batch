@@ -207,6 +207,7 @@ This will select the algorithm to use in the analysis. \n\n
             - NaturalGasHPGasBackup
             - ElectricityHPGasBackupMixed
             - NaturalGasHPElecBackupMixed
+            - FuelOilNo2
 
       :dcv_type:
         description: "
