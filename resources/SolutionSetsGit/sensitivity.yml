@@ -53,6 +53,7 @@
   :ext_floor_cond:
   - NECB_Default
   :ext_roof_cond:
+  - NECB_Default
   - '0.227'
   - '0.193'
   - '0.183'
@@ -61,6 +62,7 @@
   - '0.138'
   - '0.121'
   :ext_wall_cond:
+  - NECB_Default
   - '0.314'
   - '0.278'
   - '0.247'
@@ -69,12 +71,14 @@
   :fdwr_set:
   - NECB_Default
   :fixed_wind_solar_trans:
+  - NECB_Default
   - '0.2'
   - '0.3'
   - '0.4'
   - '0.5'
   - '0.6'
   :fixed_window_cond:
+  - NECB_Default
   - '2.4'
   - '2.2'
   - '1.6'
@@ -85,6 +89,7 @@
   :glass_door_solar_trans:
   - NECB_Default
   :ground_floor_cond:
+  - NECB_Default
   - '0.758'
   - '0.379'
   :ground_roof_cond:
