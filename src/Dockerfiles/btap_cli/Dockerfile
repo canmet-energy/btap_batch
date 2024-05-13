@@ -7,6 +7,7 @@ ARG BTAP_COSTING_BRANCH=''
 ARG OS_STANDARDS_BRANCH='nrcan'
 ARG WEATHER_FILES=''
 ARG LOCALNRCAN=''
+ARG LOCALNRCAN_BRANCH='main'
 
 
 # Git api token secret. Do not share as a ENV.
@@ -22,11 +23,12 @@ USER  root
 
 #Be root and install nrcan_certs under the root folder if LOCALNRCAN is set.
 WORKDIR /
-RUN if [ -z "$LOCALNRCAN" ] ; then \
+RUN if [ ! -z "$LOCALNRCAN" ] ; then \
       echo "Cloning install_nrcan_certs repository" \
-      && git clone https://$GIT_API_TOKEN:x-oauth-basic@github.com/canmet-energy/linux_nrcan_certs.git --depth 1 --branch 'main' --single-branch /linux_nrcan_certs \
+      && git clone https://$GIT_API_TOKEN:x-oauth-basic@github.com/canmet-energy/linux_nrcan_certs.git --depth 1 --branch ${LOCALNRCAN_BRANCH} --single-branch /linux_nrcan_certs \
       && cd /linux_nrcan_certs \
-      && /install_nrcan_certs.sh;\
+      && ./install_nrcan_certs.sh \
+      && git rev-parse --short HEAD;\
     fi
 
 #Be root and install btap_costing under the root folder.
@@ -49,7 +51,7 @@ RUN if [ ! -z "$BTAP_COSTING_BRANCH" ] ; then \
         && cd /btap_costing \
         && sed -i '/^.*standards.*$/d' Gemfile \
         && echo "gem 'openstudio-standards', :github => 'NREL/openstudio-standards', :branch => '${OS_STANDARDS_BRANCH}'" | tee -a Gemfile \
-        #&& bundle install \
+        && bundle install \
         && echo 'standards revision' \
         && git rev-parse --short HEAD;\
     fi
