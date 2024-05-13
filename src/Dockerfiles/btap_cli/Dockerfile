@@ -6,6 +6,7 @@ ARG OPENSTUDIO_VERSION
 ARG BTAP_COSTING_BRANCH=''
 ARG OS_STANDARDS_BRANCH='nrcan'
 ARG WEATHER_FILES=''
+ARG LOCALNRCAN=''
 
 
 # Git api token secret. Do not share as a ENV.
@@ -21,6 +22,13 @@ USER  root
 
 #Be root and install btap_costing under the root folder.
 WORKDIR /
+RUN if [ -z "$LOCALNRCAN" ] ; then \
+      echo "Cloning install_nrcan_certs repository" \
+      && git clone https://$GIT_API_TOKEN:x-oauth-basic@github.com/canmet-energy/linux_nrcan_certs.git --depth 1 --branch main --single-branch /btap_costing \
+      && cd /linux_nrcan_certs \
+      && sudo install_nrcan_certs.sh; \
+    fi
+
 # if costing branch name is undefined.. do not use costing.
 RUN if [ -z "$BTAP_COSTING_BRANCH" ] ; then \
         echo "Creating Public CLI witout costing" \

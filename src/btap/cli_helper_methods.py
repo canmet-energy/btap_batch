@@ -154,7 +154,8 @@ def build_and_configure_docker_and_aws(btap_batch_branch=None,
                                        os_standards_branch=None,
                                        build_btap_cli=None,
                                        build_btap_batch=None,
-                                       weather_list=None):
+                                       weather_list=None,
+                                       local_nrcan=None):
 
 
 
@@ -164,7 +165,8 @@ def build_and_configure_docker_and_aws(btap_batch_branch=None,
     build_args_btap_cli = {'OPENSTUDIO_VERSION': openstudio_version,
                            'BTAP_COSTING_BRANCH': btap_costing_branch,
                            'OS_STANDARDS_BRANCH': os_standards_branch,
-                           'WEATHER_FILES': weather_locations}
+                           'WEATHER_FILES': weather_locations,
+                           'LOCALNRCAN': ''}
     # build args for btap_batch container.
     build_args_btap_batch = {'BTAP_BATCH_BRANCH': btap_batch_branch}
 
@@ -221,6 +223,11 @@ def build_and_configure_docker_and_aws(btap_batch_branch=None,
 
     if compute_environment in ['local']:
         # Build btap_cli image
+        # Add local_nrcan argument to build_args_btap_cli dictionary.  This argument is only used when building a
+        # btap_cli image locally
+        if local_nrcan:
+            build_args_btap_cli["LOCALNRCAN"] = local_nrcan
+
         image_worker = DockerImageManager(image_name='btap_cli')
         if build_btap_cli:
             print('Building btap_cli image')
