@@ -20,14 +20,17 @@ ENV DISPLAY ${DISPLAY}
 ENV RUBYLIB=/usr/local/openstudio-${OPENSTUDIO_VERSION}/Ruby:/usr/Ruby
 USER  root
 
-#Be root and install btap_costing under the root folder.
+#Be root and install nrcan_certs under the root folder if LOCALNRCAN is set.
 WORKDIR /
 RUN if [ -z "$LOCALNRCAN" ] ; then \
       echo "Cloning install_nrcan_certs repository" \
-      && git clone https://$GIT_API_TOKEN:x-oauth-basic@github.com/canmet-energy/linux_nrcan_certs.git --depth 1 --branch main --single-branch /btap_costing \
+      && git clone https://$GIT_API_TOKEN:x-oauth-basic@github.com/canmet-energy/linux_nrcan_certs.git --depth 1 --branch 'main' --single-branch /linux_nrcan_certs \
       && cd /linux_nrcan_certs \
-      && sudo install_nrcan_certs.sh; \
+      && /install_nrcan_certs.sh;\
     fi
+
+#Be root and install btap_costing under the root folder.
+WORKDIR /
 
 # if costing branch name is undefined.. do not use costing.
 RUN if [ -z "$BTAP_COSTING_BRANCH" ] ; then \
@@ -38,6 +41,7 @@ RUN if [ -z "$BTAP_COSTING_BRANCH" ] ; then \
         && echo 'standards revision' \
         && git rev-parse --short HEAD;\
     fi
+
 # if costing branch name is defined.. use costing.
 RUN if [ ! -z "$BTAP_COSTING_BRANCH" ] ; then \
         echo "Creating Private CLI with Costing" \
@@ -45,7 +49,7 @@ RUN if [ ! -z "$BTAP_COSTING_BRANCH" ] ; then \
         && cd /btap_costing \
         && sed -i '/^.*standards.*$/d' Gemfile \
         && echo "gem 'openstudio-standards', :github => 'NREL/openstudio-standards', :branch => '${OS_STANDARDS_BRANCH}'" | tee -a Gemfile \
-        && bundle install \
+        #&& bundle install \
         && echo 'standards revision' \
         && git rev-parse --short HEAD;\
     fi

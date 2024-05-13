@@ -108,6 +108,7 @@ required:
   - build_btap_cli
   - build_btap_batch
   - disable_costing
+  - local_nrcan
   - compute_environment
 additionalProperties: false
 

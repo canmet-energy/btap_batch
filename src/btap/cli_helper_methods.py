@@ -743,6 +743,10 @@ build_btap_cli: True
 # Rebuild btap_batch image
 build_btap_batch: True
 
+# Set this to True if you intend to build your environment locally on a computer connected to the NRCan network.
+# Otherwise leave it as False.
+local_nrcan: False
+
     """
 
     output_file = Path(build_config_path)
