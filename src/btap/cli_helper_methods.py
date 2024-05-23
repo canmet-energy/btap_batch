@@ -226,7 +226,7 @@ def build_and_configure_docker_and_aws(btap_batch_branch=None,
         # Add local_nrcan argument to build_args_btap_cli dictionary.  This argument is only used when building a
         # btap_cli image locally
         if local_nrcan:
-            build_args_btap_cli["LOCALNRCAN"] = local_nrcan
+            build_args_btap_cli["LOCALNRCAN"] = str(local_nrcan)
 
         image_worker = DockerImageManager(image_name='btap_cli')
         if build_btap_cli:
