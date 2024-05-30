@@ -6,6 +6,8 @@ ARG OPENSTUDIO_VERSION
 ARG BTAP_COSTING_BRANCH=''
 ARG OS_STANDARDS_BRANCH='nrcan'
 ARG WEATHER_FILES=''
+ARG LOCALNRCAN=''
+ARG LOCALNRCAN_BRANCH='main'
 
 
 # Git api token secret. Do not share as a ENV.
@@ -19,8 +21,19 @@ ENV DISPLAY ${DISPLAY}
 ENV RUBYLIB=/usr/local/openstudio-${OPENSTUDIO_VERSION}/Ruby:/usr/Ruby
 USER  root
 
+#Be root and install nrcan_certs under the root folder if LOCALNRCAN is set.
+WORKDIR /
+RUN if [ ! -z "$LOCALNRCAN" ] ; then \
+      echo "Cloning install_nrcan_certs repository" \
+      && git clone https://$GIT_API_TOKEN:x-oauth-basic@github.com/canmet-energy/linux_nrcan_certs.git --depth 1 --branch ${LOCALNRCAN_BRANCH} --single-branch /linux_nrcan_certs \
+      && cd /linux_nrcan_certs \
+      && ./install_nrcan_certs.sh \
+      && git rev-parse --short HEAD;\
+    fi
+
 #Be root and install btap_costing under the root folder.
 WORKDIR /
+
 # if costing branch name is undefined.. do not use costing.
 RUN if [ -z "$BTAP_COSTING_BRANCH" ] ; then \
         echo "Creating Public CLI witout costing" \
@@ -30,6 +43,7 @@ RUN if [ -z "$BTAP_COSTING_BRANCH" ] ; then \
         && echo 'standards revision' \
         && git rev-parse --short HEAD;\
     fi
+
 # if costing branch name is defined.. use costing.
 RUN if [ ! -z "$BTAP_COSTING_BRANCH" ] ; then \
         echo "Creating Private CLI with Costing" \
