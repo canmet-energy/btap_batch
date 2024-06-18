@@ -86,7 +86,8 @@ class BTAPAnalysis():
                  analysis_config=None,
                  output_folder=None,
                  analysis_input_folder=None,
-                 reference_run_df=None):
+                 reference_run_df=None,
+                 limited_output=None):
 
         # Will always use the btap_cli image that run the ruby code.
         self.image_name = 'btap_cli'
@@ -94,6 +95,7 @@ class BTAPAnalysis():
         self.analysis_input_folder = analysis_input_folder
         self.output_folder = output_folder
         self.reference_run_df = reference_run_df
+        self.limited_output = limited_output
 
         # Get analysis information for runs.
 
@@ -432,7 +434,8 @@ class BTAPAnalysis():
                                  results_folder=self.cp.analysis_results_folder(),
                                  compute_environment=self.compute_environment,
                                  output_variables=self.output_variables,
-                                 username=self.cp.get_build_env_name())
+                                 username=self.cp.get_build_env_name(),
+                                 limited_output=self.limited_output)
         # Store post process run into analysis object. Will need it later.
         self.btap_data_df = ppr.run()
 
