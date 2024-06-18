@@ -2,6 +2,7 @@
 :analysis_name: elimination_example
 :algorithm_type: elimination
 :reference_run: true
+:limited_output: false
 :output_variables: []
 :output_meters: []
 :options:

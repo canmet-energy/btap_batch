@@ -2,6 +2,7 @@
 :analysis_name: custom_osm_example
 :algorithm_type: parametric
 :reference_run: false
+:limited_output: false
 :output_variables: []
 :output_meters: []
 :options:

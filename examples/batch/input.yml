@@ -1,7 +1,8 @@
 ---
 :analysis_name: batch_example
 :algorithm_type: batch
-:reference_run: False
+:reference_run: false
+:limited_output: false
 :output_variables: []
 :output_meters: []
 
