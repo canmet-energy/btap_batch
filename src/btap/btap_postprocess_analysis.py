@@ -27,7 +27,7 @@ class PostProcessResults():
                  compute_environment=None, # where the analysis was run.
                  output_variables=None, # Custom E+ output varialbles.
                  username=None, # username, usually aws username.
-                 limited_output=None # Stops additional data from being written to.
+                 include_files=None # Stops additional data from being written to.
                  ):
 
         # ic(baseline_results)
@@ -66,7 +66,7 @@ class PostProcessResults():
         self.compute_environment = compute_environment
         self.output_variables = output_variables
         self.username = username
-        self.limited_output = limited_output
+        self.include_files = include_files
 
         #paths
 
@@ -80,6 +80,19 @@ class PostProcessResults():
         self.save_excel_output()
         if self.compute_environment == 'local_managed_aws_workers':
             self.save_dynamodb()
+
+        print("Folder: ", self.results_folder)
+
+        # Search the whole test folder for the matching files and remove ones that match the filters
+        local_delete_simulation_path_patterns = self.include_files
+        for pattern in local_delete_simulation_path_patterns:
+            for path in pathlib.Path(self.results_folder).parent.rglob("*"):
+                print(path)
+                if os.path.isdir(path):
+                    shutil.rmtree(path)
+                else:
+                    pathlib.Path(path).unlink()
+
         self.operation_on_hourly_output()
         return self.btap_data_df
 

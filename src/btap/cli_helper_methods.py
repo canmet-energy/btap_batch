@@ -332,7 +332,7 @@ def analysis(project_input_folder=None,
 
 
     reference_run = analysis_config[':reference_run']
-    limited_output = analysis_config[':limited_output']
+    include_files = analysis_config[':include_files']
     # delete output from previous run if present locally
     project_folder = os.path.join(output_folder,analysis_config[':analysis_name'])
     # Check if folder exists
@@ -387,14 +387,14 @@ def analysis(project_input_folder=None,
                                   analysis_input_folder=analysis_input_folder,
                                   output_folder=output_folder,
                                   reference_run_df=reference_run_df,
-                                  limited_output=limited_output)
+                                  include_files=include_files)
         # parametric
         elif analysis_config[':algorithm_type'] == 'parametric':
             ba = BTAPParametric(analysis_config=analysis_config,
                                 analysis_input_folder=analysis_input_folder,
                                 output_folder=os.path.join(output_folder),
                                 reference_run_df=reference_run_df,
-                                limited_output=limited_output)
+                                include_files=include_files)
 
         # parametric
         elif analysis_config[':algorithm_type'] == 'elimination':
@@ -402,33 +402,33 @@ def analysis(project_input_folder=None,
                                  analysis_input_folder=analysis_input_folder,
                                  output_folder=output_folder,
                                  reference_run_df=reference_run_df,
-                                 limited_output=limited_output)
+                                 include_files=include_files)
 
         elif analysis_config[':algorithm_type'] == 'sampling-lhs':
             ba = BTAPSamplingLHS(analysis_config=analysis_config,
                                  analysis_input_folder=analysis_input_folder,
                                  output_folder=output_folder,
                                  reference_run_df=reference_run_df,
-                                 limited_output=limited_output)
+                                 include_files=include_files)
 
         elif analysis_config[':algorithm_type'] == 'sensitivity':
             ba = BTAPSensitivity(analysis_config=analysis_config,
                                  analysis_input_folder=analysis_input_folder,
                                  output_folder=output_folder,
                                  reference_run_df=reference_run_df,
-                                 limited_output=limited_output)
+                                 include_files=include_files)
 
         elif analysis_config[':algorithm_type'] == 'reference':
             ba = BTAPReference(analysis_config=analysis_config,
                                analysis_input_folder=analysis_input_folder,
                                output_folder=output_folder,
-                               limited_output=limited_output)
+                               include_files=include_files)
 
         elif analysis_config[':algorithm_type'] == 'batch':
             ba = BTAPBatchAnalysis(analysis_config=analysis_config,
                                    analysis_input_folder=analysis_input_folder,
                                    output_folder=output_folder,
-                                   limited_output=limited_output)
+                                   include_files=include_files)
 
 
         else:

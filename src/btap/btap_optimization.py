@@ -89,14 +89,14 @@ class BTAPOptimization(BTAPAnalysis):
                  output_folder=None,
                  analysis_input_folder=None,
                  reference_run_df=None,
-                 limited_output=None
+                 include_files=None
                  ):
         # Run super initializer to set up default variables.
         super().__init__(analysis_config=analysis_config,
                          output_folder=output_folder,
                          analysis_input_folder=analysis_input_folder,
                          reference_run_df=reference_run_df,
-                         limited_output=limited_output
+                         include_files=include_files
                          )
         self.max_number_of_simulations = None
 

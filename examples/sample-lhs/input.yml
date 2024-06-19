@@ -5,7 +5,7 @@
 :algorithm_lhs_type: classic
 :algorithm_lhs_random_seed: 1
 :reference_run: true
-:limited_output: false
+:include_files: []
 :output_variables: []
 :output_meters: []
 :options:

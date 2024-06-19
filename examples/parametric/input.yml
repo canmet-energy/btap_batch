@@ -2,7 +2,7 @@
 :analysis_name: parametric_example
 :algorithm_type: parametric
 :reference_run: false
-:limited_output: false
+:include_files: []
 :output_variables: []
 :output_meters: []
 :options:
