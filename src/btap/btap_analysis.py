@@ -281,7 +281,7 @@ class BTAPAnalysis():
         run_options[':output_meters'] = self.output_meters
 
         # Local Paths
-        local_datapoint_input_folder = os.path.join(self.cp.algorithm_folder(), job_id)
+        local_datapoint_input_folder = os.path.join(self.cp.algorithm_folder(), 'runs/', job_id)
         local_run_option_file = os.path.join(self.cp.analysis_job_id_folder(job_id=job_id), 'run_options.yml')
 
         # Save run_option file for this simulation.
@@ -301,6 +301,24 @@ class BTAPAnalysis():
         # Submit Job to batch
         job = self.batch.create_job(job_id=job_id)
         job_data = job.submit_job(run_options=run_options)
+
+        # Include Files deleter
+        # If the list is not empty and the job was a success, remove the unwanted files
+        if self.include_files and job_data['status'] == 'SUCCEEDED':
+            datapoint_folder = pathlib.Path(local_datapoint_input_folder)
+            keep_files = []  # List of wanted files to match against the unwanted ones
+
+            for pattern in self.include_files:
+                keep_files += list(datapoint_folder.rglob(pattern))
+
+            for file in filter(lambda f: f not in keep_files, datapoint_folder.rglob('*')):
+                print(file)
+                if file.exists():
+                    if file.is_file():
+                        file.unlink()
+                    elif file.is_dir():
+                        shutil.rmtree(file)
+
         return job_data
 
     def save_results_to_database(self, job_data):
