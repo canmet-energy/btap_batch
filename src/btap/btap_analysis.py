@@ -302,21 +302,35 @@ class BTAPAnalysis():
         job = self.batch.create_job(job_id=job_id)
         job_data = job.submit_job(run_options=run_options)
 
-        # Include Files deleter
-        # If the list is not empty and the job was a success, remove the unwanted files
+        # :include_files file deleter
         if self.include_files and job_data['status'] == 'SUCCEEDED':
-            datapoint_folder = pathlib.Path(local_datapoint_input_folder)
-            keep_files = []  # List of wanted files to match against the unwanted ones
+            datapoint_folder = pathlib.Path(local_datapoint_input_folder)  # Make the datapoint folder a Path object
+            keep_files       = set()  # List of wanted files to match against the unwanted ones
+            parent_dirs      = set()  # Keep track of parent directories so they aren't deleted
 
+            # Compile a list of paths to keep
             for pattern in self.include_files:
-                keep_files += list(datapoint_folder.rglob(pattern))
+                keep_files |= set(datapoint_folder.rglob(pattern))
 
-            for file in filter(lambda f: f not in keep_files, datapoint_folder.rglob('*')):
-                print(file)
+            # Get each of the parent directories of the kept files
+            for file in keep_files:
+                i = 0
+                curr_parent_dir = file.parents[i]
+                while curr_parent_dir != datapoint_folder or curr_parent_dir in parent_dirs:
+                    parent_dirs.add(curr_parent_dir)
+                    i += 1
+                    curr_parent_dir = file.parents[i]
+
+            keep_files |= parent_dirs
+
+            # Delete the files which don't match the patterns
+            rm_files = set(filter(lambda f: f not in keep_files, datapoint_folder.rglob('*')))
+            for file in rm_files:
                 if file.exists():
                     if file.is_file():
                         file.unlink()
                     elif file.is_dir():
+                        rm_files -= set(file.rglob('*'))
                         shutil.rmtree(file)
 
         return job_data
