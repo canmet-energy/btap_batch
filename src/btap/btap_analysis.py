@@ -326,12 +326,11 @@ class BTAPAnalysis():
             # Delete the files which don't match the patterns
             rm_files = set(filter(lambda f: f not in keep_files, datapoint_folder.rglob('*')))
             for file in rm_files:
-                if file.exists():
-                    if file.is_file():
-                        file.unlink()
-                    elif file.is_dir():
-                        rm_files -= set(file.rglob('*'))
-                        shutil.rmtree(file)
+                if file.is_file():
+                    file.unlink()
+                elif file.is_dir():
+                    rm_files -= set(file.rglob('*'))
+                    shutil.rmtree(file)
 
         return job_data
 
