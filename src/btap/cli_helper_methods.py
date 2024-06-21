@@ -332,7 +332,14 @@ def analysis(project_input_folder=None,
 
 
     reference_run = analysis_config[':reference_run']
-    include_files = analysis_config[':include_files']
+
+    # The :include_files parameter is not mandatory, and will be substituted with a placeholder
+    # empty list if not present
+    if ':include_files' in analysis_config:
+        include_files = analysis_config[':include_files']
+    else:
+        include_files = []
+
     # delete output from previous run if present locally
     project_folder = os.path.join(output_folder,analysis_config[':analysis_name'])
     # Check if folder exists
