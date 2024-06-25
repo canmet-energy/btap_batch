@@ -380,7 +380,8 @@ def analysis(project_input_folder=None,
                 ref_analysis_config[':algorithm_type'] = 'reference'
                 br = BTAPReference(analysis_config=ref_analysis_config,
                                    analysis_input_folder=analysis_input_folder,
-                                   output_folder=os.path.join(output_folder))
+                                   output_folder=os.path.join(output_folder),
+                                   include_files=include_files)
 
                 br.run()
                 reference_run_df = br.btap_data_df
