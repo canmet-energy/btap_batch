@@ -12,10 +12,11 @@ from icecream import ic
 
 
 class AWSAnalysisJob():
-    def __init__(self, batch=None, job_id=None, reference_run=False):
+    def __init__(self, batch=None, job_id=None, reference_run=False, include_files=None):
 
         self.cloud_job_id = None  # Set by AWS when job is submitted.
         self.job_id = job_id
+        self.include_files = include_files
         # update run_options
         self.s3_bucket = AWSCredentials().account_id
         self.set_paths()

@@ -463,7 +463,7 @@ def analysis(project_input_folder=None,
                          compute_environment=AWSComputeEnvironment(name='btap_batch')
                          )
         # Submit analysis job to aws.
-        job = batch.create_job(job_id=analysis_name, reference_run=reference_run)
+        job = batch.create_job(job_id=analysis_name, reference_run=reference_run, include_files=include_files)
         return job.submit_job()
 
 

@@ -17,9 +17,11 @@ class DockerBatch():
         print("Nothing to tear down for local docker batch")
 
     def create_job(self,
-                   job_id=None
+                   job_id=None,
+                   include_files=None
                    ):
         return DockerBTAPJob(batch=self,
                              job_id=job_id,
+                             include_files=include_files
                              )
 

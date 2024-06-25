@@ -282,10 +282,6 @@ class BTAPAnalysis():
 
         # Local Paths
 
-        # In AWS the runs folder is named slightly differently.
-        # run_folder = 'runs/' if self.compute_environment == 'local' else 'run/'
-
-        local_datapoint_input_folder = os.path.join(self.cp.algorithm_folder(), 'runs/', job_id)
         local_run_option_file = os.path.join(self.cp.analysis_job_id_folder(job_id=job_id), 'run_options.yml')
 
         # Save run_option file for this simulation.
@@ -303,46 +299,12 @@ class BTAPAnalysis():
                 f"Copying osm file from {local_osm_dict[run_options[':building_type']]} to {self.cp.analysis_job_id_folder(job_id=job_id)}")
 
         # Submit Job to batch
-        job = self.batch.create_job(job_id=job_id)
+        job = self.batch.create_job(job_id=job_id, include_files=self.include_files)
         job_data = job.submit_job(run_options=run_options)
-
-        # If the include_files list isn't empty and the job is a success, delete the files:
-        if self.include_files and job_data['status'] == 'SUCCEEDED':
-            self.delete_unwanted_files(local_datapoint_input_folder)
 
         return job_data
 
     # This method deletes the unspecified files as per the :include_files input parameter
-
-    def delete_unwanted_files(self, job_folder):
-
-        datapoint_folder = pathlib.Path(job_folder)  # Make the datapoint folder a Path object
-        keep_files = set()   # List of wanted files to match against the unwanted ones
-        parent_dirs = set()  # List of parent directories so they aren't deleted
-
-        # Compile a list of paths to keep from the inputs specified
-        for pattern in self.include_files:
-            keep_files |= set(datapoint_folder.rglob(pattern))
-
-        # Get each of the parent directories of the kept files to not indirectly delete them
-        for file in keep_files:
-            i = 0
-            curr_parent_dir = file.parents[i]
-            while curr_parent_dir != datapoint_folder or curr_parent_dir in parent_dirs:
-                parent_dirs.add(curr_parent_dir)
-                i += 1
-                curr_parent_dir = file.parents[i]
-
-        keep_files |= parent_dirs
-
-        # Delete the files which don't match the patterns
-        rm_files = set(filter(lambda f: f not in keep_files, datapoint_folder.rglob('*')))
-        for file in rm_files:
-            if file.is_file():
-                file.unlink()
-            elif file.is_dir():
-                rm_files -= set(file.rglob('*'))
-                shutil.rmtree(file)
 
 
     def save_results_to_database(self, job_data):

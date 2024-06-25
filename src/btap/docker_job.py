@@ -2,16 +2,18 @@ import os
 import json
 import yaml
 import time
-from pathlib import Path
 import errno
+import shutil
+from pathlib import Path
 from src.btap.common_paths import CommonPaths
 from icecream import ic
 
 class DockerBTAPJob:
-    def __init__(self, batch=None, job_id=None, analysis_name = None ):
+    def __init__(self, batch=None, job_id=None, analysis_name = None, include_files = None):
         self.batch = batch
         self.job_id = job_id
         self.analysis_name = analysis_name # Not used but may be in the future.
+        self.include_files = include_files
         self.engine_command = 'bundle exec ruby btap_cli.rb'
         self._set_paths()
     #public
@@ -36,6 +38,9 @@ class DockerBTAPJob:
             job_data['status'] = "SUCCEEDED"
             job_data['simulation_time'] = time.time() - start
             job_data.update(self._get_job_results())
+
+            self.delete_unwanted_files(self.analysis_output_job_id_folder)
+
             return job_data
         except Exception as error:
             print(error)
@@ -46,6 +51,38 @@ class DockerBTAPJob:
             job_data['status'] = 'FAILED'
             self._save_output_file(job_data)
             return job_data
+
+    def delete_unwanted_files(self, job_folder):
+        print("AAAAAAAAAAAAAAAAA", self.include_files)
+        datapoint_folder = Path(job_folder)  # Make the datapoint folder a Path object
+        keep_files = set()   # List of wanted files to match against the unwanted ones
+        parent_dirs = set()  # List of parent directories so they aren't deleted
+
+        # Compile a list of paths to keep from the inputs specified
+        for pattern in self.include_files:
+            keep_files |= set(datapoint_folder.rglob(pattern))
+
+        # Get each of the parent directories of the kept files to not indirectly delete them
+        for file in keep_files:
+            i = 0
+            curr_parent_dir = file.parents[i]
+            while curr_parent_dir != datapoint_folder or curr_parent_dir in parent_dirs:
+                parent_dirs.add(curr_parent_dir)
+                i += 1
+                curr_parent_dir = file.parents[i]
+
+        keep_files |= parent_dirs
+
+        # Delete the files which don't match the patterns
+        rm_files = set(filter(lambda f: f not in keep_files, datapoint_folder.rglob('*')))
+        for file in rm_files:
+            if file.is_file():
+                file.unlink()
+            elif file.is_dir():
+                rm_files -= set(file.rglob('*'))
+                shutil.rmtree(file)
+
+
     #protected
     def _job_url(self):
         return self.cp.local_job_url(job_id=self.job_id)
