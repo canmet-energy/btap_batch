@@ -283,9 +283,9 @@ class BTAPAnalysis():
         # Local Paths
 
         # In AWS the runs folder is named slightly differently.
-        run_folder = 'runs/' if self.compute_environment == 'local' else 'run/'
+        # run_folder = 'runs/' if self.compute_environment == 'local' else 'run/'
 
-        local_datapoint_input_folder = os.path.join(self.cp.algorithm_folder(), run_folder, job_id)
+        local_datapoint_input_folder = os.path.join(self.cp.algorithm_folder(), 'runs/', job_id)
         local_run_option_file = os.path.join(self.cp.analysis_job_id_folder(job_id=job_id), 'run_options.yml')
 
         # Save run_option file for this simulation.
