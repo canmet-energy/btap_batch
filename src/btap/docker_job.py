@@ -53,7 +53,6 @@ class DockerBTAPJob:
             return job_data
 
     def delete_unwanted_files(self, job_folder):
-        print("AAAAAAAAAAAAAAAAA", self.include_files)
         datapoint_folder = Path(job_folder)  # Make the datapoint folder a Path object
         keep_files = set()   # List of wanted files to match against the unwanted ones
         parent_dirs = set()  # List of parent directories so they aren't deleted

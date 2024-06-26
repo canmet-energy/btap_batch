@@ -18,10 +18,10 @@ class AWSBTAPJob(DockerBTAPJob):
     def __init__(self, batch=None, job_id=None, include_files=None):
         super().__init__(batch=batch,
                          job_id=job_id,
+                         include_files=include_files
                          )
 
         self.cloud_job_id = None  # Set by AWS when job is submitted.
-        self.include_files = include_files
         # update run_options
         self.s3_bucket = AWSCredentials().account_id
         self._set_paths()
