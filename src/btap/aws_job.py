@@ -40,7 +40,9 @@ class AWSBTAPJob(DockerBTAPJob):
         self.target = self.cp.s3_datapoint_input_folder(job_id=self.job_id)
         # Local json file location
         self.local_json_file_path = self.cp.analysis_output_job_id_btap_json_path(job_id=self.job_id)
-        self.local_output_job_folder = self.cp.analysis_job_id_folder(job_id=self.job_id)
+
+        self.analysis_output_job_id_folder = self.cp.analysis_job_id_folder(job_id=self.job_id)
+        # ***temporary rename self.local_output_job_folder = self.cp.analysis_job_id_folder(job_id=self.job_id)
         # Used in postprocessing successful run from S3 and http url path construction.
         self.s3_datapoint_output_folder = self.cp.s3_datapoint_output_folder(job_id=self.job_id)
     def _command_args(self):
