@@ -304,8 +304,6 @@ class BTAPAnalysis():
 
         return job_data
 
-    # This method deletes the unspecified files as per the :include_files input parameter
-
 
     def save_results_to_database(self, job_data):
         if job_data['status'] == 'SUCCEEDED':
