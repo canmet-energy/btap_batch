@@ -126,7 +126,7 @@ class BTAPAnalysis():
         self.output_variables = self.analysis_config[':output_variables']
         self.output_meters = self.analysis_config[':output_meters']
         self.run_annual_simulation = True
-
+        print("OANOIANGOIANFAIFSMLAKMFLWANFSKJSNGOIEGNS")
         if self.compute_environment == 'local':
             print(f"running on {self.compute_environment}")
             self.image_manager = DockerImageManager(image_name=self.image_name)

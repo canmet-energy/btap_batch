@@ -39,6 +39,7 @@ class DockerBTAPJob:
             job_data['simulation_time'] = time.time() - start
             job_data.update(self._get_job_results())
 
+            print("AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA")
             self.delete_unwanted_files(self.cp.s3_datapoint_output_folder(job_id=self.job_id))
             # self.delete_unwanted_files(self.analysis_output_job_id_folder)
 

@@ -91,11 +91,13 @@ class AWSBTAPJob(DockerBTAPJob):
         message = f"Submitted job_id {self.job_id} , job name {self.aws_job_name()} to the job queue {self.batch.job_queue_name}"
         logging.info(message)
 
+        print("BBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBB")
         print(f"message: {message}")
         print(f"run options: {self.run_options}")
 
         # Set initial state of status variables
         while True:
+            print("BBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBB")
             # Don't hammer AWS.. make queries every minute for the run status
             time.sleep(60 + random())
             describeJobsResponse = self.__get_job_status()
