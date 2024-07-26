@@ -39,8 +39,27 @@ class DockerBTAPJob:
             job_data['simulation_time'] = time.time() - start
             job_data.update(self._get_job_results())
 
-            print("AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA")
-            self.delete_unwanted_files(self.cp.s3_datapoint_output_folder(job_id=self.job_id))
+            def pt(walk):
+                print(f"Directory Walk for {walk}")
+                for p, d, f, in os.walk(walk):
+                    print('{} {} {}'.format(repr(p), repr(d), repr(f)))
+
+            try:
+                pt(self.source)
+            except Exception:
+                print("ERROR: source not found")
+
+            try:
+                pt(self.s3_datapoint_output_folder)
+            except Exception:
+                print("ERROR: s3_datapoint_output_folder not found")
+
+            try:
+                pt(self.analysis_output_job_id_folder)
+            except Exception:
+                print("ERROR: analysis_output_job_id_folder not found")
+
+            # self.delete_unwanted_files(self.source)
             # self.delete_unwanted_files(self.analysis_output_job_id_folder)
 
             return job_data

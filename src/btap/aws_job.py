@@ -42,7 +42,6 @@ class AWSBTAPJob(DockerBTAPJob):
         self.local_json_file_path = self.cp.analysis_output_job_id_btap_json_path(job_id=self.job_id)
 
         self.analysis_output_job_id_folder = self.cp.analysis_job_id_folder(job_id=self.job_id)
-        # ***temporary rename self.local_output_job_folder = self.cp.analysis_job_id_folder(job_id=self.job_id)
         # Used in postprocessing successful run from S3 and http url path construction.
         self.s3_datapoint_output_folder = self.cp.s3_datapoint_output_folder(job_id=self.job_id)
     def _command_args(self):
@@ -91,13 +90,11 @@ class AWSBTAPJob(DockerBTAPJob):
         message = f"Submitted job_id {self.job_id} , job name {self.aws_job_name()} to the job queue {self.batch.job_queue_name}"
         logging.info(message)
 
-        print("BBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBB")
         print(f"message: {message}")
         print(f"run options: {self.run_options}")
 
         # Set initial state of status variables
         while True:
-            print("BBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBB")
             # Don't hammer AWS.. make queries every minute for the run status
             time.sleep(60 + random())
             describeJobsResponse = self.__get_job_status()
