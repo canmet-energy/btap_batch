@@ -59,6 +59,21 @@ class DockerBTAPJob:
             except Exception:
                 print("ERROR: analysis_output_job_id_folder not found")
 
+            try:
+                pt(self.target)
+            except Exception:
+                print("ERROR: target not found")
+
+            try:
+                pt(self.input_f)
+            except Exception:
+                print("ERROR: input_f not found")
+
+            try:
+                pt(self.output_f)
+            except Exception:
+                print("ERROR: output_f not found")
+
             # self.delete_unwanted_files(self.source)
             # self.delete_unwanted_files(self.analysis_output_job_id_folder)
 
