@@ -39,43 +39,10 @@ class DockerBTAPJob:
             job_data['simulation_time'] = time.time() - start
             job_data.update(self._get_job_results())
 
-            def pt(walk):
-                print(f"Directory Walk for {walk}")
-                for p, d, f, in os.walk(walk):
-                    print('{} {} {}'.format(repr(p), repr(d), repr(f)))
-
-            try:
-                pt(self.source)
-            except Exception:
-                print("ERROR: source not found")
-
-            try:
-                pt(self.s3_datapoint_output_folder)
-            except Exception:
-                print("ERROR: s3_datapoint_output_folder not found")
-
-            try:
-                pt(self.analysis_output_job_id_folder)
-            except Exception:
-                print("ERROR: analysis_output_job_id_folder not found")
-
-            try:
-                pt(self.target)
-            except Exception:
-                print("ERROR: target not found")
-
-            try:
-                pt(self.input_f)
-            except Exception:
-                print("ERROR: input_f not found")
-
-            try:
-                pt(self.output_f)
-            except Exception:
-                print("ERROR: output_f not found")
-
-            # self.delete_unwanted_files(self.source)
-            # self.delete_unwanted_files(self.analysis_output_job_id_folder)
+            # :include_files deleter here
+            # Currently only works locally, AWS runs don't seem to have the output files yet in this code context
+            # See the ticket in btap_tasks for more info
+            self.delete_unwanted_files(self.analysis_output_job_id_folder)
 
             return job_data
         except Exception as error:
@@ -106,6 +73,7 @@ class DockerBTAPJob:
                 i += 1
                 curr_parent_dir = file.parents[i]
 
+        # Combine the two sets and store it in keep_files
         keep_files |= parent_dirs
 
         # Delete the files which don't match the patterns
@@ -114,6 +82,7 @@ class DockerBTAPJob:
             if file.is_file():
                 file.unlink()
             elif file.is_dir():
+                # Remove the contents of the directory from the set to avoid unnecessary looping
                 rm_files -= set(file.rglob('*'))
                 shutil.rmtree(file)
 

@@ -164,3 +164,8 @@ class AWSBTAPJob(DockerBTAPJob):
             logging.warning(f"Status:Implementing exponential backoff for job {self.cloud_job_id} for {wait_time}s")
             time.sleep(wait_time)
             return self.__get_job_status(n=n + 1)
+
+    # Placeholder override of the :include_files deleter
+    # Currently doesn't work on AWS
+    def delete_unwanted_files(self, job_folder):
+        pass
