@@ -333,12 +333,12 @@ def analysis(project_input_folder=None,
 
     reference_run = analysis_config[':reference_run']
 
-    # The :include_files parameter is not mandatory, and will be substituted with a placeholder
+    # The :exclude_files parameter is not mandatory, and will be substituted with a placeholder
     # empty list if not present
-    if ':include_files' in analysis_config:
-        include_files = analysis_config[':include_files']
+    if ':exclude_files' in analysis_config:
+        exclude_files = analysis_config[':exclude_files']
     else:
-        include_files = []
+        exclude_files = []
 
     # delete output from previous run if present locally
     project_folder = os.path.join(output_folder,analysis_config[':analysis_name'])
@@ -381,7 +381,7 @@ def analysis(project_input_folder=None,
                 br = BTAPReference(analysis_config=ref_analysis_config,
                                    analysis_input_folder=analysis_input_folder,
                                    output_folder=os.path.join(output_folder),
-                                   include_files=include_files)
+                                   exclude_files=exclude_files)
 
                 br.run()
                 reference_run_df = br.btap_data_df
@@ -395,14 +395,14 @@ def analysis(project_input_folder=None,
                                   analysis_input_folder=analysis_input_folder,
                                   output_folder=output_folder,
                                   reference_run_df=reference_run_df,
-                                  include_files=include_files)
+                                  exclude_files=exclude_files)
         # parametric
         elif analysis_config[':algorithm_type'] == 'parametric':
             ba = BTAPParametric(analysis_config=analysis_config,
                                 analysis_input_folder=analysis_input_folder,
                                 output_folder=os.path.join(output_folder),
                                 reference_run_df=reference_run_df,
-                                include_files=include_files)
+                                exclude_files=exclude_files)
 
         # parametric
         elif analysis_config[':algorithm_type'] == 'elimination':
@@ -410,33 +410,33 @@ def analysis(project_input_folder=None,
                                  analysis_input_folder=analysis_input_folder,
                                  output_folder=output_folder,
                                  reference_run_df=reference_run_df,
-                                 include_files=include_files)
+                                 exclude_files=exclude_files)
 
         elif analysis_config[':algorithm_type'] == 'sampling-lhs':
             ba = BTAPSamplingLHS(analysis_config=analysis_config,
                                  analysis_input_folder=analysis_input_folder,
                                  output_folder=output_folder,
                                  reference_run_df=reference_run_df,
-                                 include_files=include_files)
+                                 exclude_files=exclude_files)
 
         elif analysis_config[':algorithm_type'] == 'sensitivity':
             ba = BTAPSensitivity(analysis_config=analysis_config,
                                  analysis_input_folder=analysis_input_folder,
                                  output_folder=output_folder,
                                  reference_run_df=reference_run_df,
-                                 include_files=include_files)
+                                 exclude_files=exclude_files)
 
         elif analysis_config[':algorithm_type'] == 'reference':
             ba = BTAPReference(analysis_config=analysis_config,
                                analysis_input_folder=analysis_input_folder,
                                output_folder=output_folder,
-                               include_files=include_files)
+                               exclude_files=exclude_files)
 
         elif analysis_config[':algorithm_type'] == 'batch':
             ba = BTAPBatchAnalysis(analysis_config=analysis_config,
                                    analysis_input_folder=analysis_input_folder,
                                    output_folder=output_folder,
-                                   include_files=include_files)
+                                   exclude_files=exclude_files)
 
 
         else:
@@ -463,7 +463,7 @@ def analysis(project_input_folder=None,
                          compute_environment=AWSComputeEnvironment(name='btap_batch')
                          )
         # Submit analysis job to aws.
-        job = batch.create_job(job_id=analysis_name, reference_run=reference_run, include_files=include_files)
+        job = batch.create_job(job_id=analysis_name, reference_run=reference_run, exclude_files=exclude_files)
         return job.submit_job()
 
 

@@ -2,7 +2,7 @@
 :analysis_name: batch_example
 :algorithm_type: batch
 :reference_run: false
-:include_files: []
+:exclude_files: []
 :output_variables: []
 :output_meters: []
 

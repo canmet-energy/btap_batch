@@ -18,10 +18,10 @@ class DockerBatch():
 
     def create_job(self,
                    job_id=None,
-                   include_files=None
+                   exclude_files=None
                    ):
         return DockerBTAPJob(batch=self,
                              job_id=job_id,
-                             include_files=include_files
+                             exclude_files=exclude_files
                              )
 

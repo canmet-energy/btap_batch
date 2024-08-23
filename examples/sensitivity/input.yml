@@ -2,7 +2,7 @@
 :analysis_name: sensitivity_example
 :algorithm_type: sensitivity
 :reference_run: true
-:include_files: []
+:exclude_files: []
 :output_variables: []
 :output_meters: []
 :options:

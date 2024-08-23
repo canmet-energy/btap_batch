@@ -2,7 +2,7 @@
 :analysis_name: optimization_example
 :algorithm_type: nsga2
 :reference_run: true
-:include_files: []
+:exclude_files: []
 :algorithm_nsga_population: 50
 :algorithm_nsga_n_generations: 5
 :algorithm_nsga_prob: 0.85

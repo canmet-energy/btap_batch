@@ -192,10 +192,10 @@ class AWSBatch:
             print(f"Job Queue {self.job_queue_name} already deleted.")
             return True
 
-    def create_job(self, job_id=None, reference_run=False, include_files=None):
+    def create_job(self, job_id=None, reference_run=False, exclude_files=None):
         job=None
         if self.image_manager.image_name == 'btap_cli':
-            job = AWSBTAPJob(batch=self, job_id=job_id, include_files=include_files)
+            job = AWSBTAPJob(batch=self, job_id=job_id, exclude_files=exclude_files)
         if self.image_manager.image_name == 'btap_batch':
             job = AWSAnalysisJob(batch=self, job_id=job_id, reference_run=reference_run)
         return job

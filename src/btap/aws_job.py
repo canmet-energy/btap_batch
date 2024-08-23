@@ -15,10 +15,10 @@ from icecream import ic
 
 
 class AWSBTAPJob(DockerBTAPJob):
-    def __init__(self, batch=None, job_id=None, include_files=None):
+    def __init__(self, batch=None, job_id=None, exclude_files=None):
         super().__init__(batch=batch,
                          job_id=job_id,
-                         include_files=include_files
+                         exclude_files=exclude_files
                          )
 
         self.cloud_job_id = None  # Set by AWS when job is submitted.
@@ -165,7 +165,7 @@ class AWSBTAPJob(DockerBTAPJob):
             time.sleep(wait_time)
             return self.__get_job_status(n=n + 1)
 
-    # Placeholder override of the :include_files deleter
+    # Placeholder override of the :exclude_files deleter
     # Currently doesn't work on AWS
     def delete_unwanted_files(self, job_folder):
         pass

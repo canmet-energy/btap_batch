@@ -15,14 +15,14 @@ class BTAPParametric(BTAPAnalysis):
                  output_folder=None,
                  analysis_input_folder=None,
                  reference_run_df=None,
-                 include_files=None
+                 exclude_files=None
                  ):
         # Run super initializer to set up default variables.
         super().__init__(analysis_config=analysis_config,
                          output_folder=output_folder,
                          analysis_input_folder=analysis_input_folder,
                          reference_run_df=reference_run_df,
-                         include_files=include_files
+                         exclude_files=exclude_files
                          )
         self.scenarios = []
         self.file_number = None

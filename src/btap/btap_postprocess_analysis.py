@@ -26,8 +26,7 @@ class PostProcessResults():
                  results_folder=None,  # Path to result folder ie output/optimization/results/ probably should be removed as redundant.
                  compute_environment=None, # where the analysis was run.
                  output_variables=None, # Custom E+ output varialbles.
-                 username=None, # username, usually aws username.
-                 include_files=None # Stops additional data from being written to.
+                 username=None # username, usually aws username.
                  ):
 
         # ic(baseline_results)
@@ -66,7 +65,6 @@ class PostProcessResults():
         self.compute_environment = compute_environment
         self.output_variables = output_variables
         self.username = username
-        self.include_files = include_files
 
         #paths
 

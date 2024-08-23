@@ -87,7 +87,7 @@ class BTAPAnalysis():
                  output_folder=None,
                  analysis_input_folder=None,
                  reference_run_df=None,
-                 include_files=None):
+                 exclude_files=None):
 
         # Will always use the btap_cli image that run the ruby code.
         self.image_name = 'btap_cli'
@@ -95,7 +95,7 @@ class BTAPAnalysis():
         self.analysis_input_folder = analysis_input_folder
         self.output_folder = output_folder
         self.reference_run_df = reference_run_df
-        self.include_files = include_files
+        self.exclude_files = exclude_files
 
         # Get analysis information for runs.
 
@@ -298,7 +298,7 @@ class BTAPAnalysis():
                 f"Copying osm file from {local_osm_dict[run_options[':building_type']]} to {self.cp.analysis_job_id_folder(job_id=job_id)}")
 
         # Submit Job to batch
-        job = self.batch.create_job(job_id=job_id, include_files=self.include_files)
+        job = self.batch.create_job(job_id=job_id, exclude_files=self.exclude_files)
         job_data = job.submit_job(run_options=run_options)
 
         return job_data
@@ -435,8 +435,8 @@ class BTAPAnalysis():
                                  results_folder=self.cp.analysis_results_folder(),
                                  compute_environment=self.compute_environment,
                                  output_variables=self.output_variables,
-                                 username=self.cp.get_build_env_name(),
-                                 include_files=self.include_files)
+                                 username=self.cp.get_build_env_name())
+
         # Store post process run into analysis object. Will need it later.
         self.btap_data_df = ppr.run()
 
