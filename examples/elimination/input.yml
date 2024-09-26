@@ -13,6 +13,8 @@
     - CAN_AB_Calgary.Intl.AP.718770_CWEC2020.epw
   :primary_heating_fuel:
     - Electricity
+  :swh_fuel: 
+    - NECB_Default
   :dcv_type:
     - NECB_Default
   :lights_type:

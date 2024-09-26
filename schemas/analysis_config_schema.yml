@@ -207,7 +207,25 @@ This will select the algorithm to use in the analysis. \n\n
             - NaturalGasHPGasBackup
             - ElectricityHPGasBackupMixed
             - NaturalGasHPElecBackupMixed
-
+      :swh_fuel:
+        description: "These are fuels that are used primarily for hot water needs.\n\n
+        | Service Hot Water Fuel | \n   
+        | --------               | \n
+        | NECB_Default           | \n 
+        | Electricity            | \n 
+        | NaturalGas             | \n 
+        | FuelOilNo2             | \n
+        | HeatPump               | \n
+        "
+        items:
+          anyOf:
+            - type: string
+              enum:
+                - NECB_Default
+                - NaturalGas
+                - Electricity
+                - FuelOilNo2   
+                - HeatPump     
       :dcv_type:
         description: "
         * **NECB_Default**	No Strategy (Same as No_DCV)\n\n
