@@ -20,6 +20,10 @@
     - Electricity
   :swh_fuel: 
     - NECB_Default
+  :boiler_fuel:
+    - NECB_Default
+  :boiler_cap_ratio:
+    - NECB_Default
   :dcv_type:
     - NECB_Default
   :lights_type:

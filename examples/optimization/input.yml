@@ -31,6 +31,10 @@
   :boiler_eff:
   - NECB_Default
   - Viessmann Vitocrossal 300 CT3-17 96.2% Efficient Condensing Gas Boiler
+  :boiler_fuel:
+    - NECB_Default
+  :boiler_cap_ratio:
+    - NECB_Default
   :chiller_type:
   - NECB_Default
   - VSD
