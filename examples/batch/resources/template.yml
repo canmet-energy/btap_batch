@@ -5,6 +5,7 @@
 :template: 'NECB2020'
 :epw_file: 'CAN_QC_Montreal-Trudeau.Intl.AP.716270_CWEC2016.epw'
 :primary_heating_fuel: 'NaturalGas'
+:swh_fuel: NECB_Default
 :dcv_type: 'NECB_Default'
 :lights_type: 'NECB_Default'
 :lights_scale: '1.0'

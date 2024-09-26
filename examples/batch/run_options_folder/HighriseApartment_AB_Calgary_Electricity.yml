@@ -39,6 +39,7 @@
 :occupancy_loads_scale: NECB_Default
 :overhead_door_cond: NECB_Default
 :primary_heating_fuel: Electricity
+:swh_fuel: NECB_Default
 :pv_ground_azimuth_angle: NECB_Default
 :pv_ground_module_description: NECB_Default
 :pv_ground_tilt_angle: NECB_Default

@@ -141,6 +141,8 @@
   - Electricity
   - NaturalGasHPGasBackup
   - ElectricityHPElecBackup
+  :swh_fuel: 
+  - NECB_Default
   :pv_ground_azimuth_angle:
   - NECB_Default
   :pv_ground_module_description:
