@@ -1028,5 +1028,4 @@ This will select the algorithm to use in the analysis. \n\n
         entered this will use the default NECB capacity ratios.
         "
         items:
-          anyOf:
-            - type: string
+          type: string
