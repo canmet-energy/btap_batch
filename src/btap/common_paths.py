@@ -92,13 +92,13 @@ class CommonPaths(object):
 
     # /output/analysis_name/analysis_type/runs
     def algorithm_run_folder(self):
-        return os.path.join(self.algorithm_folder(), 'runs')
+        return os.path.join(self.algorithm_folder(), 'run')
 
 
 
     # /output/analysis_name/algorithm_type/job_id
     def analysis_job_id_folder(self, job_id=None):
-        return os.path.join(self.algorithm_folder(),'runs', job_id)
+        return os.path.join(self.algorithm_folder(),'run', job_id)
 
     # /output/analysis_name/results
     def analysis_results_folder(self):
