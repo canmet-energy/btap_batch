@@ -18,6 +18,12 @@
     - CAN_QC_Montreal.Intl.AP.716270_CWEC2020.epw
   :primary_heating_fuel:
     - Electricity
+  :swh_fuel: 
+    - NECB_Default
+  :boiler_fuel:
+    - NECB_Default
+  :boiler_cap_ratio:
+    - NECB_Default
   :dcv_type:
     - NECB_Default
   :lights_type:
