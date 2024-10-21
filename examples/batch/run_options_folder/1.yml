@@ -5,6 +5,8 @@
 :epw_file: CAN_QC_Montreal.Intl.AP.716270_CWEC2020.epw
 :primary_heating_fuel:
   - Electricity
+:swh_fuel: 
+  - NECB_Default
 :dcv_type:
   - NECB_Default
 :lights_type:
