@@ -1,32 +1,74 @@
 ---
 :analysis_name: sampling_lhs_example
 :algorithm_type: sampling-lhs
-:algorithm_lhs_n_samples: 500
+:algorithm_lhs_n_samples: 5
 :algorithm_lhs_type: classic
 :algorithm_lhs_random_seed: 1
-:reference_run: true
-:output_variables: []
-:output_meters: []
+:reference_run: false
+:output_variables:     [{ key: '*',     variable: 'People Occupant Count',     frequency: 'hourly',     operation: '*',     unit: '*' },
+                        { key: '*',     variable: 'Lights Electricity Energy',     frequency: 'hourly',     operation: '*',     unit: 'J' },
+                        { key: '*',     variable: 'Zone Thermostat Cooling Setpoint Temperature',     frequency: 'hourly',     operation: '*',     unit: 'C' }
+  ]
+:output_meters: [
+    {    name: 'NaturalGas:Facility',     frequency: 'hourly'},
+    {    name: 'Electricity:Facility',     frequency: 'hourly'},
+    {    name: 'ElectricityNet:Facility',     frequency: 'hourly'},
+    # {    name: 'DISTRICTHEATING:FACILITY',     frequency: 'hourly'},
+    # {    name: 'DISTRICTCOOLING:FACILITY',     frequency: 'hourly'},
+    #{    name: 'FuelOil#2:Facility',     frequency: 'hourly'},
+    {    name: 'Heating:Electricity',     frequency: 'hourly'},
+    {    name: 'Cooling:Electricity',     frequency: 'hourly'}
+  ]
 :options:
   :template:
-    - NECB2020
-  :building_type:
-    - FullServiceRestaurant
-  :epw_file:
-    - CAN_QC_Montreal-Trudeau.Intl.AP.716270_CWEC2016.epw
+    - NECB2017
+  :building_type: [
+    #  "SecondarySchool",
+    # "PrimarySchool",
+       "SmallOffice",
+    # "MediumOffice",
+    # "LargeOffice",
+    # "SmallHotel",
+    # "LargeHotel",
+    # "Warehouse",
+    # "RetailStandalone",
+    # "RetailStripmall",
+    # "QuickServiceRestaurant",
+    #  "FullServiceRestaurant",
+    # "MidriseApartment",
+    #"HighriseApartment",
+    # "LowriseApartment",
+    #"Hospital",
+    #"Outpatient"
+  ]
+  :epw_file: [
+    #'CAN_QC_Montreal-Trudeau.Intl.AP.716270_CWEC2016.epw',
+    #'CAN_NS_Halifax.Dockyard.713280_CWEC2016.epw',
+    #'CAN_AB_Edmonton.Intl.AP.711230_CWEC2016.epw',
+    #'CAN_BC_Vancouver.Intl.AP.718920_CWEC2016.epw',
+    'CAN_AB_Calgary.Intl.AP.718770_CWEC2016.epw',
+    #'CAN_ON_Toronto.Pearson.Intl.AP.716240_CWEC2016.epw',
+    #'CAN_YT_Whitehorse.Intl.AP.719640_CWEC2016.epw'
+  ]
   :adv_dx_units:
   - NECB_Default
-  - Carrier WeatherExpert
-  - Lennox Model L Ultra High Efficiency
+  # - Carrier WeatherExpert
+  # - Lennox Model L Ultra High Efficiency
   :airloop_economizer_type:
   - NECB_Default
   - DifferentialEnthalpy
   - DifferentialDryBulb
   :baseline_system_zones_map_option:
   - NECB_Default
-  :boiler_eff:
-  - NECB_Default
-  - Viessmann Vitocrossal 300 CT3-17 96.2% Efficient Condensing Gas Boiler
+  :boiler_eff: [
+      "NECB_Default",
+      #"NECB 88% Efficient Condensing Boiler",
+      #"NECB 88% Efficient Condensing Boiler",
+      #"NECB 91% Efficient Condensing Boiler",
+      #"NECB 94% Efficient Condensing Boiler",
+      #"Viessmann Vitocrossal 300 CT3-17 96.2% Efficient Condensing Gas Boiler"
+  ]
+  
   :chiller_type:
   - NECB_Default
   - VSD
@@ -41,24 +83,24 @@
   - CO2_based_DCV
   :door_construction_cond:
   - NECB_Default
-  :ecm_system_name:
-  - NECB_Default
-  #- HS09_CCASHP_Baseboard
-  - HS08_CCASHP_VRF
-  - HS11_ASHP_PTHP
-  #- HS12_ASHP_Baseboard
-  - HS13_ASHP_VRF
-  - HS14_CGSHP_FanCoils
+  :ecm_system_name: [
+      'NECB_Default',
+      'HS09_CCASHP_Baseboard',
+      'HS08_CCASHP_VRF',
+      'HS11_ASHP_PTHP',
+      'HS12_ASHP_Baseboard',
+      'HS13_ASHP_VRF'
+  ]
   :electrical_loads_scale:
   - NECB_Default
   - 0.5
-  :erv_package:
-  - NECB_Default
-  - NECB_Default_All
-  - Plate-All
-  - Plate-Existing
-  - Rotary-All
-  - Rotary-Existing
+  :erv_package: [ #'NECB_Default',
+                  "NECB_Default_All",
+                  "Plate-All",
+                  "Plate-Existing",
+                  "Rotary-All",
+                  "Rotary-Existing"
+  ]
   :ext_floor_cond:
   - NECB_Default
   :ext_roof_cond:
@@ -77,8 +119,16 @@
   - 0.247
   - 0.21
   - 0.183
-  :fdwr_set:
-  - NECB_Default
+  :fdwr_set: 
+  #'NECB_Default',
+  - 0.1
+  - 0.2
+  - 0.3
+  - 0.4
+  - 0.5
+  - 0.6
+  - 0.69
+  
   :fixed_wind_solar_trans:
   - NECB_Default
   - 0.2
@@ -91,8 +141,13 @@
   - 2.4
   - 2.2
   - 1.6
-  :furnace_eff:
-  - NECB_Default
+  :furnace_eff: [
+      "NECB_Default",
+      #"NECB 85% Efficient Condensing Gas Furnace",
+      #"NECB 88% Efficient Condensing Gas Furnace",
+      #"NECB 91% Efficient Condensing Gas Furnace",
+      #"NECB 94% Efficient Condensing Gas Furnace"
+  ]
   :glass_door_cond:
   - NECB_Default
   :glass_door_solar_trans:
@@ -110,9 +165,15 @@
   - 0.5
   :lights_scale:
   - 1.0
+  - 0.9
+  - 0.8 
+  - 0.7
+  - 0.6
   - 0.5
-  :lights_type:
-  - NECB_Default
+  :lights_type: [
+      #'NECB_Default',
+      'LED'
+  ]
   :npv_discount_rate:
   - NECB_Default
   :npv_end_year:
@@ -132,13 +193,17 @@
   - NECB_Default
   :occupancy_loads_scale:
   - NECB_Default
+  - 0.95
+  - 0.9
+  - 0.85
+  - 0.8
   :overhead_door_cond:
   - NECB_Default
   :primary_heating_fuel:
-  - NaturalGas
+  #NaturalGas
   - Electricity
-  - NaturalGasHPGasBackup
-  - ElectricityHPElecBackup
+  #NaturalGasHPGasBackup
+  #ElectricityHPElecBackup
   :pv_ground_azimuth_angle:
   - NECB_Default
   :pv_ground_module_description:
@@ -147,10 +212,13 @@
   - NECB_Default
   :pv_ground_total_area_pv_panels_m2:
   - NECB_Default
-  :pv_ground_type:
-  - NECB_Default
-  :rotation_degrees:
-  - NECB_Default
+  :pv_ground_type: [ 'NECB_Default', 'add_pv_ground' ]
+  :rotation_degrees: 
+  #'NECB_Default',
+  - 0.0
+  - 45.0
+  - 90.0
+  
   :scale_x:
   - NECB_Default
   :scale_y:
@@ -171,3 +239,15 @@
   - NECB_Default
   :srr_set:
   - NECB_Default
+  - 0.03
+  - 0.05
+  - 0.08
+  - 0.10 
+
+  :swh_fuel: 
+  #- 'NECB_Default'
+  - 'Electricity'
+  #- 'NaturalGas'
+  #- 'FuelOilNo2'
+  #- 'HeatPump'
+  
