@@ -83,7 +83,6 @@ def build(**kwargs):
     os.environ['BUILD_ENV_NAME'] = config['build_env_name']
     os.environ['GIT_API_TOKEN'] = config['git_api_token']
     compute_environment = config['compute_environment']
-    local_nrcan = config['local_nrcan']
 
 
     if disable_costing:
@@ -97,8 +96,7 @@ def build(**kwargs):
                                        weather_list=weather_list,
                                        os_standards_branch=os_standards_branch,
                                        build_btap_batch=build_btap_batch,
-                                       build_btap_cli=build_btap_cli,
-                                       local_nrcan=local_nrcan)
+                                       build_btap_cli=build_btap_cli)
 
 
 
