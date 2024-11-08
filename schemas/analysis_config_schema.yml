@@ -207,7 +207,25 @@ This will select the algorithm to use in the analysis. \n\n
             - NaturalGasHPGasBackup
             - ElectricityHPGasBackupMixed
             - NaturalGasHPElecBackupMixed
-
+      :swh_fuel:
+        description: "These are fuels that are used primarily for hot water needs.\n\n
+        | Service Hot Water Fuel | \n   
+        | --------               | \n
+        | NECB_Default           | \n 
+        | Electricity            | \n 
+        | NaturalGas             | \n 
+        | FuelOilNo2             | \n
+        | HeatPump               | \n
+        "
+        items:
+          anyOf:
+            - type: string
+              enum:
+                - NECB_Default
+                - NaturalGas
+                - Electricity
+                - FuelOilNo2   
+                - HeatPump     
       :dcv_type:
         description: "
         * **NECB_Default**	No Strategy (Same as No_DCV)\n\n
@@ -975,3 +993,39 @@ This will select the algorithm to use in the analysis. \n\n
             - type: number
               minimum: 0.0
               maximum: 1.0
+      :boiler_fuel:
+        description: "
+        Ensures that baseboard heaters use hot water heated using boilers of the specified fuel type.  If boilers with
+        dissimilar fuel types are entered without specifying the 'boiler_cap_ratio' (see below) then a
+        'boiler_cap_ratio' of '75-25' is applied.  Otherwise, the default NECB defined ratios are used.  The available
+        options are:
+        | :boiler_fuel:                                                            | Description                                                                                       |\n
+        |--------------------------------------------------------------------------|---------------------------------------------------------------------------------------------------|\n
+        | NECB_Default                                                             | If boilers are used, their fuel type is the same as the primary heating fuel.                     |\n
+        | NaturalGas                                                               | Use natural gas primary and secondary boilers with NECB default efficiencies.                     |\n
+        | NaturalGasElecBackup                                                     | Use a natural gas primary boiler and an electric secondary boiler with NECB default efficiencies. |\n
+        | Electricity                                                              | Use electric primary and secondary boilers with NECB default efficiencies.                        |\n
+        | ElectricityGasBackup                                                     | Use an electric primary boiler and a natural gas secondary boiler with NECB default efficiencies. |\n
+        | FuelOilNo2                                                               | Use oil primary and secondary boilers with NECB default efficiencies.                             |\n
+        "
+        items:
+          anyOf:
+            - type: string
+              enum:
+                - NECB_Default
+                - NaturalGas
+                - NaturalGasElecBackup
+                - Electricity
+                - ElectricityGasBackup
+                - FuelOilNo2
+      :boiler_cap_ratio:
+        description: "
+        Defines the capacities of the primary and secondary boilers using a ratio.  If NECB_Default is used then the
+        boilers will be sized according to NECB rules.  If a ratio is entered it is applied to the auto-sized
+        capacity.  The entry should look like: '75-25'.  In this case the primary boiler will have a capacity that is
+        75% of the autosized capacity and the secondary boiler will have a capacity that is 25% of the auto-sized
+        capacity.  The ratios do not have to sum to 100.  For example a ratio of '75-75' could be used.  If '0-0' is
+        entered this will use the default NECB capacity ratios.
+        "
+        items:
+          type: string

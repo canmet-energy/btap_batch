@@ -61,15 +61,9 @@
   - DifferentialDryBulb
   :baseline_system_zones_map_option:
   - NECB_Default
-  :boiler_eff: [
-      "NECB_Default",
-      #"NECB 88% Efficient Condensing Boiler",
-      #"NECB 88% Efficient Condensing Boiler",
-      #"NECB 91% Efficient Condensing Boiler",
-      #"NECB 94% Efficient Condensing Boiler",
-      #"Viessmann Vitocrossal 300 CT3-17 96.2% Efficient Condensing Gas Boiler"
-  ]
-  
+  :boiler_eff:
+  - NECB_Default
+  - Viessmann Vitocrossal 300 CT3-17 96.2% Efficient Condensing Gas Boiler
   :chiller_type:
   - NECB_Default
   - VSD
@@ -213,10 +207,10 @@
   :overhead_door_cond:
   - NECB_Default
   :primary_heating_fuel:
-  #NaturalGas
+  - NaturalGas
   - Electricity
-  #NaturalGasHPGasBackup
-  #ElectricityHPElecBackup
+  - NaturalGasHPGasBackup
+  - ElectricityHPElecBackup
   :pv_ground_azimuth_angle:
   - NECB_Default
   :pv_ground_module_description:
