@@ -42,3 +42,7 @@ settings and under "General" tab, deselect the "Use the WSL2 based engine" This 
 ```
  \\s0-ott-nas1\CETC-CTEC\BET\windows_certs\nrcan_azure_amazon.cer . 
 ```
+
+**Problem**: Builds fail while at NRCan.
+
+**Solution**: NRCan currently requires certs to be installed in a container for downloads to work. This is required by the build process. The build process will try to determine if you are on the nrcan network by loading the intranet.nrcan.gc.ca website.  If it is down, your build may fail. This is VERY infrequent and the website will return usually very soon. The workaround is to simple work from home off the NRCan network.
