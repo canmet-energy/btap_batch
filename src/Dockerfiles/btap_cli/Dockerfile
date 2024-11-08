@@ -1,25 +1,14 @@
-ARG OPENSTUDIO_VERSION='3.6.1'
-FROM canmet/docker-openstudio:$OPENSTUDIO_VERSION
-# Need to remind Docker of the Openstudio version..https://docs.docker.com/engine/reference/builder/
-ARG OPENSTUDIO_VERSION
-# Branch information.
+ARG OPENSTUDIO_VERSION='3.7.0'
+FROM canmet/os_sdk_container:$OPENSTUDIO_VERSION
+
 ARG BTAP_COSTING_BRANCH=''
 ARG OS_STANDARDS_BRANCH='nrcan'
 ARG WEATHER_FILES=''
 ARG LOCALNRCAN=''
 ARG LOCALNRCAN_BRANCH='main'
-
-
-# Git api token secret. Do not share as a ENV.
 ARG GIT_API_TOKEN='nothing'
-MAINTAINER Phylroy Lopez phylroy.lopez@canada.ca
-# Set X session url..if needed.
-ARG DISPLAY=host.docker.internal
-ENV DISPLAY ${DISPLAY}
 
-# Set Ruby lib to use the version of OS.
-ENV RUBYLIB=/usr/local/openstudio-${OPENSTUDIO_VERSION}/Ruby:/usr/Ruby
-USER  root
+LABEL author="Phylroy Lopez phylroy.lopez@canada.ca"
 
 #Be root and install nrcan_certs under the root folder if LOCALNRCAN is set.
 WORKDIR /
@@ -31,7 +20,7 @@ RUN if [ ! -z "$LOCALNRCAN" ] ; then \
       && git rev-parse --short HEAD;\
     fi
 
-#Be root and install btap_costing under the root folder.
+#Install btap_costing under the root folder.
 WORKDIR /
 
 # if costing branch name is undefined.. do not use costing.
@@ -71,5 +60,4 @@ fi
 WORKDIR /btap_costing/utilities/btap_cli
 CMD ["/bin/bash"]
 
-#Sample invocation commands
 
