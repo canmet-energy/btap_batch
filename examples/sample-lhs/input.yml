@@ -1,5 +1,5 @@
 ---
-:analysis_name: sampling_lhs_example
+:analysis_name: test_for_btap_ml
 :algorithm_type: sampling-lhs
 :algorithm_lhs_n_samples: 5
 :algorithm_lhs_type: classic
@@ -7,7 +7,8 @@
 :reference_run: false
 :output_variables:     [{ key: '*',     variable: 'People Occupant Count',     frequency: 'hourly',     operation: '*',     unit: '*' },
                         { key: '*',     variable: 'Lights Electricity Energy',     frequency: 'hourly',     operation: '*',     unit: 'J' },
-                        { key: '*',     variable: 'Zone Thermostat Cooling Setpoint Temperature',     frequency: 'hourly',     operation: '*',     unit: 'C' }
+                        { key: '*',     variable: 'Zone Thermostat Cooling Setpoint Temperature',     frequency: 'hourly',     operation: '*',     unit: 'C' },
+                        { key: '*',     variable: 'Zone Thermostat Heating Setpoint Temperature',     frequency: 'hourly',     operation: '*',     unit: 'C' }
   ]
 :output_meters: [
     {    name: 'NaturalGas:Facility',     frequency: 'hourly'},
@@ -42,11 +43,11 @@
     #"Outpatient"
   ]
   :epw_file: [
-    #'CAN_QC_Montreal-Trudeau.Intl.AP.716270_CWEC2016.epw',
+    'CAN_QC_Montreal-Trudeau.Intl.AP.716270_CWEC2016.epw',
     #'CAN_NS_Halifax.Dockyard.713280_CWEC2016.epw',
     #'CAN_AB_Edmonton.Intl.AP.711230_CWEC2016.epw',
     #'CAN_BC_Vancouver.Intl.AP.718920_CWEC2016.epw',
-    'CAN_AB_Calgary.Intl.AP.718770_CWEC2016.epw',
+    #'CAN_AB_Calgary.Intl.AP.718770_CWEC2016.epw',
     #'CAN_ON_Toronto.Pearson.Intl.AP.716240_CWEC2016.epw',
     #'CAN_YT_Whitehorse.Intl.AP.719640_CWEC2016.epw'
   ]
@@ -77,7 +78,7 @@
 #  - add_daylighting_controls
 #  - none
   :dcv_type:
-  - NECB_Default
+  # NECB_Default
   - No_DCV
   - Occupancy_based_DCV
   - CO2_based_DCV
@@ -103,6 +104,10 @@
   ]
   :ext_floor_cond:
   - NECB_Default
+  - 0.227
+  - 0.183
+  - 0.162
+  - 0.142
   :ext_roof_cond:
   - NECB_Default
   - 0.227
@@ -158,8 +163,16 @@
   - 0.379
   :ground_roof_cond:
   - NECB_Default
+  - 0.568
+  - 0.379
+  - 0.284
+  - 0.210
   :ground_wall_cond:
   - NECB_Default
+  - 0.568
+  - 0.379
+  - 0.284
+  - 0.210
   :infiltration_scale:
   - NECB_Default
   - 0.5
@@ -227,7 +240,7 @@
   - NECB_Default
   :shw_eff:
   - NECB_Default
-  - Natural Gas Power Vent with Electric Ignition
+  # Natural Gas Power Vent with Electric Ignition
   :shw_scale:
   - NECB_Default
   - 0.75
@@ -244,10 +257,10 @@
   - 0.08
   - 0.10 
 
-  :swh_fuel: 
-  #- 'NECB_Default'
-  - 'Electricity'
-  #- 'NaturalGas'
-  #- 'FuelOilNo2'
-  #- 'HeatPump'
+  # :swh_fuel: 
+  # #- 'NECB_Default'
+  # - 'Electricity'
+  # - 'NaturalGas'
+  # #- 'FuelOilNo2'
+  # - 'HeatPump'
   

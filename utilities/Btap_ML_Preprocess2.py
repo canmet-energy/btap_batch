@@ -2,8 +2,8 @@ import pandas as pd
 import os
 
 # Paths to your directories
-csv_dir = './output/sampling_lhs_example/results/revised' 
-output_excel = './output/sampling_lhs_example/results/output.xlsx'  
+csv_dir = './output/revised' 
+output_excel = './output/test_for_btap_ml_output.xlsx'  
 
 output_data = pd.read_excel(output_excel)
 

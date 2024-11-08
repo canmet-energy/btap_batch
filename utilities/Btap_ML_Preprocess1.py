@@ -2,8 +2,11 @@ import pandas as pd
 import os
 
 # Path to the directory containing the CSV files
-directory = './output/sampling_lhs_example/results/hourly.csv'
-directory2 = './output/sampling_lhs_example/results/revised'
+directory = './output/hourly'
+directory2 = './output/revised'
+
+if not os.path.exists(directory2):
+    os.makedirs(directory2)
 
 # Loop through each file in the directory
 for filename in os.listdir(directory):
@@ -17,7 +20,10 @@ for filename in os.listdir(directory):
         # Calculate the averages for each required variable
         avg_people_occupant_count = df[df['Name'] == 'People Occupant Count'].iloc[:, 4:].mean()
         avg_lights_electricity_energy = df[df['Name'] == 'Lights Electricity Energy'].iloc[:, 4:].mean()
-        avg_zone_cooling_setpoint = df[df['Name'] == 'Zone Thermostat Cooling Setpoint Temperature'].iloc[:, 4:].mean()
+        avg_zone_cooling_setpoint = df[(df['Name'] == 'Zone Thermostat Cooling Setpoint Temperature') & 
+                               (df['KeyValue'] != 'ALL_ST=- UNDEFINED -_FL=BUILDING STORY 2_SCH=A')].iloc[:, 4:].mean()
+        avg_zone_heating_setpoint = df[(df['Name'] == 'Zone Thermostat Heating Setpoint Temperature') & 
+                               (df['KeyValue'] != 'ALL_ST=- UNDEFINED -_FL=BUILDING STORY 2_SCH=A')].iloc[:, 4:].mean()
         
         # Other required variables without averaging
         total_electricity = df[df['Name'] == 'Electricity:Facility'].iloc[:, 4:].values.flatten()
@@ -30,6 +36,7 @@ for filename in os.listdir(directory):
             'average People Occupant Count': avg_people_occupant_count.values,
             'average Lights Electricity Energy': avg_lights_electricity_energy.values,
             'average Zone Thermostat Cooling Setpoint Temperature': avg_zone_cooling_setpoint.values,
+            'average Zone Thermostat Heating Setpoint Temperature': avg_zone_heating_setpoint.values,
             'Electricity Facility': total_electricity,
             'Cooling Consumption': total_cooling,
             'Heating Consumption': total_heating
