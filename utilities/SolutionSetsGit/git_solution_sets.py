@@ -14,6 +14,12 @@ def git_solution_sets():
 
     LEEP = False
     HOURLY = True
+    CLIMATE_ZONES = [ #Sara
+        'CZ_4',
+        'CZ_5',
+        'CZ_6',
+        'CZ_7A'
+    ] #Sara
     SENSITIVITY_RUNS = False
     SENSITIVITY_PRIMARY_FUELS_PIVOT = [
         'Electricity',
@@ -160,8 +166,9 @@ def git_solution_sets():
     sensitivity_template = yaml.safe_load(sensitivity_template_file.read_text())
     optimization_template_file = pathlib.Path(os.path.join(pwd, 'optimization.yml'))
     optimization_template = yaml.safe_load(optimization_template_file.read_text())
-    parametric_template_file = pathlib.Path(os.path.join(pwd, 'parametric.yml'))
-    parametric_template = yaml.safe_load(parametric_template_file.read_text())
+
+    # parametric_template_file = pathlib.Path(os.path.join(pwd, 'parametric.yml')) #Sara TODO commented for now
+    # parametric_template = yaml.safe_load(parametric_template_file.read_text())   #Sara TODO commented for now
 
 
     if HOURLY:
@@ -169,15 +176,15 @@ def git_solution_sets():
         #optimization_template[':output_variables'] = HOURLY_OUTPUT_VARIABLES
         sensitivity_template[':output_meters'] = HOURLY_OUTPUT_METERS
         #sensitivity_template[':output_variables'] = HOURLY_OUTPUT_VARIABLES
-        parametric_template[':output_meters'] = HOURLY_OUTPUT_METERS
-        #parametric_template[':output_variables'] = HOURLY_OUTPUT_VARIABLES
+        # parametric_template[':output_meters'] = HOURLY_OUTPUT_METERS  #Sara TODO commented for now
+        # #parametric_template[':output_variables'] = HOURLY_OUTPUT_VARIABLES   #Sara TODO commented for now
     else: # turn off hourly output. Faster runs.
         optimization_template[':output_meters'] = []
         optimization_template[':output_variables'] = []
         sensitivity_template[':output_meters'] = []
         sensitivity_template[':output_variables'] = []
-        parametric_template[':output_meters'] = []
-        parametric_template[':output_variables'] = []
+        # parametric_template[':output_meters'] = []   #Sara TODO commented for now
+        # parametric_template[':output_variables'] = []    #Sara TODO commented for now
 
     lhs_template = copy.deepcopy(optimization_template)
 
@@ -236,8 +243,8 @@ def git_solution_sets():
     with open(optimization_template_file, 'w') as outfile:
         yaml.dump(optimization_template, outfile, default_flow_style=False)
 
-    with open(parametric_template_file, 'w') as outfile:
-        yaml.dump(parametric_template, outfile, default_flow_style=False)
+    # with open(parametric_template_file, 'w') as outfile:  #Sara TODO commented for now
+    #     yaml.dump(parametric_template, outfile, default_flow_style=False)  #Sara TODO commented for now
 
     # Iterage through building_type
     for building_type in building_types:
@@ -315,8 +322,78 @@ def git_solution_sets():
                              build_config=build_config,
                              output_folder=output_folder)
 
-            if PARAMETRIC_RUNS:
-                # Parametric Analysis
+            # if PARAMETRIC_RUNS:
+                # # Parametric Analysis
+                # for primary_heating_fuel in PARAMETRIC_PRIMARY_FUELS_PIVOT:
+                #     analysis_configuration = copy.deepcopy(parametric_template)
+                #     analysis_configuration[':options'][':building_type'] = [building_type]
+                #     analysis_configuration[':options'][':primary_heating_fuel'] = [primary_heating_fuel]
+                #     analysis_configuration[':options'][':epw_file'] = [epw_file[0]]
+                #     analysis_configuration[':algorithm_type'] = 'parametric'
+                #     analysis_configuration[':reference_run'] = True
+                #     analysis_configuration[':output_meters'] = HOURLY_OUTPUT_METERS
+                #
+                #     analysis_configuration[
+                #         ':analysis_name'] = f"OEEelec_{building_type}_{primary_heating_fuel}_{epw_file[1]}_par"
+                #     analysis_folder = os.path.join(projects_folder, analysis_configuration[':analysis_name'])
+                #     pathlib.Path(analysis_folder).mkdir(parents=True, exist_ok=True)
+                #     f = open(os.path.join(analysis_folder, "input.yml"), 'w')
+                #     yaml.dump(analysis_configuration, f)
+                #     # Submit analysis
+                #     print(f"Running {analysis_configuration[':analysis_name']}")
+                #     analysis(project_input_folder=analysis_folder,
+                #              build_config=build_config,
+                #              output_folder=output_folder)
+
+
+    # Iterage through building_type
+    for building_type in building_types:
+        if PARAMETRIC_RUNS:
+        # Parametric Analysis
+            for climate_zone in CLIMATE_ZONES:
+                if climate_zone == 'CZ_4':
+                    parametric_template_file = pathlib.Path(os.path.join(pwd, 'parametric_cz4.yml'))
+                    epw_files = [
+                        ['CAN_BC_Vancouver.Intl.AP.718920_NRCv12022_TMY_GW1.5.epw', 'YVR'],  # CZ 4
+                    ]
+                elif climate_zone == 'CZ_5':
+                    parametric_template_file = pathlib.Path(os.path.join(pwd, 'parametric_cz5.yml'))
+                    epw_files = [
+                        ['CAN_BC_Kelowna.Intl.AP.712030_NRCv12022_TMY_GW1.5.epw', 'YLW'],  # CZ 5
+                        ['CAN_ON_Toronto-Pearson.Intl.AP.716240_NRCv12022_TMY_GW1.5.epw', 'YYZ'],  # CZ 5
+                    ]
+                elif climate_zone == 'CZ_6':
+                    parametric_template_file = pathlib.Path(os.path.join(pwd, 'parametric_cz6.yml'))
+                    epw_files = [
+                        ['CAN_ON_Ottawa-Macdonald-Cartier.Intl.AP.716280_NRCv12022_TMY_GW1.5.epw', 'YOW'],  # CZ 6
+                        ['CAN_QC_Montreal-Trudeau.Intl.AP.716270_NRCv12022_TMY_GW1.5.epw', 'YUL'],  # CZ 6
+                        ['CAN_NS_Halifax-Stanfield.Intl.AP.713950_NRCv12022_TMY_GW1.5.epw', 'YHZ'],  # CZ 6
+                        ['CAN_NL_St.Johns.Intl.AP.718010_NRCv12022_TMY_GW1.5.epw', 'YYT'],  # CZ 6
+                        ['CAN_PE_Charlottetown.AP.717060_NRCv12022_TMY_GW1.5.epw', 'YYG'],  # CZ 6
+                        ['CAN_NB_Fredericton.Intl.AP.717000_NRCv12022_TMY_GW1.5.epw', 'YFC'],  # CZ 6
+                    ]
+                elif climate_zone == 'CZ_7A':
+                    parametric_template_file = pathlib.Path(os.path.join(pwd, 'parametric_cz7A.yml'))
+                    epw_files = [
+                        ['CAN_AB_Calgary.Intl.AP.718770_NRCv12022_TMY_GW1.5.epw', 'YYC'],  # CZ 7A
+                        ['CAN_AB_Edmonton.Intl.CS.711550_NRCv12022_TMY_GW1.5.epw', 'YEG'],  # CZ 7A
+                        ['CAN_SK_Saskatoon-Diefenbaker.Intl.AP.718660_NRCv12022_TMY_GW1.5.epw', 'YXE'],  # CZ 7A
+                        ['CAN_MB_Winnipeg-Richardson.Intl.AP.718520_NRCv12022_TMY_GW1.5.epw', 'YWG'],  # CZ 7A
+                    ]
+
+                parametric_template = yaml.safe_load(parametric_template_file.read_text())  # Sara TODO commented for now
+
+                if HOURLY:
+                    parametric_template[':output_meters'] = HOURLY_OUTPUT_METERS  # Sara TODO commented for now
+                    # parametric_template[':output_variables'] = HOURLY_OUTPUT_VARIABLES   #Sara TODO commented for now
+                else:  # turn off hourly output. Faster runs.
+                    parametric_template[':output_meters'] = []  # Sara TODO commented for now
+                    parametric_template[':output_variables'] = []  # Sara TODO commented for now
+
+                with open(parametric_template_file, 'w') as outfile:  # Sara TODO commented for now
+                    yaml.dump(parametric_template, outfile, default_flow_style=False)  # Sara TODO commented for now
+
+
                 for primary_heating_fuel in PARAMETRIC_PRIMARY_FUELS_PIVOT:
                     analysis_configuration = copy.deepcopy(parametric_template)
                     analysis_configuration[':options'][':building_type'] = [building_type]
