@@ -343,8 +343,8 @@ This will select the algorithm to use in the analysis. \n\n
             - type: string
               enum:
                 - NECB_Default
-#                - add_daylighting_controls
-#                - none
+                - add_daylighting_controls
+                - none
 
       :ecm_system_name:
         description: "
@@ -524,6 +524,14 @@ This will select the algorithm to use in the analysis. \n\n
                 - 0.247 # R22
                 - 0.210 # R27
                 - 0.183  #R31
+                - 0.334
+                - 0.305
+                - 0.276
+                - 0.247
+                - 0.377
+                - 0.345
+                - 0.312
+                - 0.280
 
       :ext_roof_cond:
         description: "
@@ -552,6 +560,14 @@ This will select the algorithm to use in the analysis. \n\n
                 - 0.142
                 - 0.138
                 - 0.121
+                - 0.189
+                - 0.179
+                - 0.159
+                - 0.139
+                - 0.213
+                - 0.203
+                - 0.179
+                - 0.157
 
       :ext_floor_cond:
         description: "
@@ -574,6 +590,14 @@ This will select the algorithm to use in the analysis. \n\n
                 - 0.183
                 - 0.162
                 - 0.142
+                - 0.222
+                - 0.201
+                - 0.179
+                - 0.159
+                - 0.251
+                - 0.228
+                - 0.203
+                - 0.179
 
       :ground_wall_cond:
         description: "
@@ -636,6 +660,8 @@ This will select the algorithm to use in the analysis. \n\n
               enum:
                 - 0.758
                 - 0.379
+                - 0.871
+                - 0.984
 
 
       :door_construction_cond:
@@ -678,6 +704,11 @@ This will select the algorithm to use in the analysis. \n\n
                 - 2.4
                 - 2.2
                 - 1.6
+                - 2.185
+                - 1.990
+                - 2.470
+                - 2.249
+
       :glass_door_cond:
         description:  "
         The thermal conductance W/(m2*k) of glass doors\n\n
@@ -735,6 +766,11 @@ This will select the algorithm to use in the analysis. \n\n
                 - 2.4
                 - 2.2
                 - 1.6
+                - 3.094
+                - 2.772
+                - 3.497
+                - 3.133
+                - 3.133
 
       :glass_door_solar_trans:
         description: "
