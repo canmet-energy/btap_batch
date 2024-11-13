@@ -83,12 +83,9 @@ def generate_pdf(analysis_name, dfcopy, pdf_output_folder):
         ic(analysis_name)
         print(f"Generating BTAP report: {pdf_output_file}")
         sensitivity_report(df=filtered_df, pdf_output=pdf_output_file)
-    if algorithm_type == 'nsga2':
-        print(f"Generating BTAP report: {pdf_output_file}")
-        nsga2_report(df=filtered_df, pdf_output=pdf_output_file)
-    if algorithm_type == 'sample-lhs':
-        print(f"Generating BTAP report: {pdf_output_file}")
-        nsga2_report(df=filtered_df, pdf_output=pdf_output_file)
+    if algorithm_type == 'nsga2' or algorithm_type == 'sample-lhs':
+        ic(analysis_name)
+
 
 
 def nsga2_report(df=None,

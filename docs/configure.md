@@ -27,7 +27,7 @@ Options:
 
 You can generate a template of the build_config.yml file by trying to build and environment for the first time.
 ```
-python ./bin/btap_batch build
+python ./bin/btap_batch.py build
 ```
 It will create a file under your home folder. For example if your computer username was plopez. It should create a file at the location below. 
 
@@ -44,7 +44,7 @@ To build, or rebuild the build environment simply type. It should take about 10m
 the environment either locally or on AWS. It may take much longer if you have a slow internet connection. 
 
 ```
-python ./bin/btap_batch build
+python ./bin/btap_batch.py build
 ```
 
 :warning: **Do not cancel this process. Let it run to completion**
