@@ -196,7 +196,8 @@ This will select the algorithm to use in the analysis. \n\n
         | **ElectricityHPElecBackup**     | Electric Resistance   | Heat Pump               | Electric Resistance|\n
         | **NaturalGasHPGasBackup**       | Natural Gas           | Heat Pump               | Natural Gas        |\n 
         | **ElectricityHPGasBackupMixed** | Electric Resistance   | Heat Pump               | Natural Gas        |\n 
-        | **NaturalGasHPElecBackupMixed** | Natural Gas           | Heat Pump               | Electric Resistance|\n 
+        | **NaturalGasHPElecBackupMixed** | Natural Gas           | Heat Pump               | Electric Resistance|\n
+        | **FuelOilNo2**                  | FuelOilNo2            | FuelOilNo2              | FuelOilNo2         |\n
         "
         items:
           type: string
@@ -207,6 +208,7 @@ This will select the algorithm to use in the analysis. \n\n
             - NaturalGasHPGasBackup
             - ElectricityHPGasBackupMixed
             - NaturalGasHPElecBackupMixed
+            - FuelOilNo2
       :swh_fuel:
         description: "These are fuels that are used primarily for hot water needs.\n\n
         | Service Hot Water Fuel | \n   
