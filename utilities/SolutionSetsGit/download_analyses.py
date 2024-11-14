@@ -152,13 +152,13 @@ def download_analyses(bucket='834599497928',
 
 download_analyses(bucket='834599497928',
                   prefix='sgilani/',  # S3 prefix MUST have a trailing /
-                  target_path=r'D:/BTAP/OEE_Electrification/PrimarySchool',  # Your local download folder.
+                  target_path=r'D:/BTAP/OEE_Electrification/PrimarySchool_baselines',  # Your local download folder.
                   hourly_csv=False,  # download hourly.csv zip
                   in_osm=True,  # download osm zip
                   eplusout_sql=False,  # download sqlite files zip
                   eplustbl_htm=False,  # download e+ htm report zip
                   concat_excel_files=True,  # concat all output.xlsx files to a master.csv and parquet file
-                  regex_filter='OEEelec_PrimarySchool_NaturalGas_YY.*$',  # an example that gets MidriseApartment from Toronto except the vintage analyses
+                  regex_filter='OEEelec_PrimarySchool_NaturalGas_\S\S\S_par.*',  # an example that gets MidriseApartment from Toronto except the vintage analyses
                   unzip_and_delete=False,  # This will unzip the zip files of all the above into a folder and delete the original zip file.
                   dry_run=False  # If set to true.. will do a dry run and not download anything. This is used to make sure your regex is working as intended.
                   )

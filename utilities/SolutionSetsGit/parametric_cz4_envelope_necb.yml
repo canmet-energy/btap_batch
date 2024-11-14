@@ -32,55 +32,17 @@
   :erv_package:
   - NECB_Default
   :ext_floor_cond:
-  - 0.193
-  - 0.175
-  - 0.156
-  - 0.138
-  - 0.222
-  - 0.201
-  - 0.179
-  - 0.159
-  - 0.251
-  - 0.228
-  - 0.203
-  - 0.179
+  - NECB_Default
   :ext_roof_cond:
-  - 0.164
-  - 0.156
-  - 0.138
-  - 0.121
-  - 0.189
-  - 0.179
-  - 0.159
-  - 0.139
-  - 0.213
-  - 0.203
-  - 0.179
-  - 0.157
+  - NECB_Default
   :ext_wall_cond:
-  - 0.29
-  - 0.265
-  - 0.24
-  - 0.215
-  - 0.334
-  - 0.305
-  - 0.276
-  - 0.247
-  - 0.377
-  - 0.345
-  - 0.312
-  - 0.28
+  - NECB_Default
   :fdwr_set:
   - NECB_Default
   :fixed_wind_solar_trans:
   - NECB_Default
   :fixed_window_cond:
-  - 1.9
-  - 1.73
-  - 2.185
-  - 1.99
-  - 2.47
-  - 2.249
+  - NECB_Default
   :furnace_eff:
   - NECB_Default
   :glass_door_cond:
@@ -88,9 +50,7 @@
   :glass_door_solar_trans:
   - NECB_Default
   :ground_floor_cond:
-  - 0.757
-  - 0.871
-  - 0.984
+  - NECB_Default
   :ground_roof_cond:
   - NECB_Default
   :ground_wall_cond:
@@ -146,47 +106,12 @@
   :shw_scale:
   - NECB_Default
   :skylight_cond:
-  - 2.69
-  - 2.41
-  - 3.094
-  - 2.772
-  - 3.497
-  - 3.133
+  - NECB_Default
   :skylight_solar_trans:
   - NECB_Default
   :srr_set:
   - NECB_Default
   :template:
   - NECB2020
-:output_meters:
-- frequency: hourly
-  name: NaturalGas:Facility
-- frequency: hourly
-  name: Electricity:Facility
-- frequency: hourly
-  name: FuelOilNo2:Facility
-- frequency: hourly
-  name: InteriorLights:Electricity
-- frequency: hourly
-  name: Heating:Electricity
-- frequency: hourly
-  name: Heating:NaturalGas
-- frequency: hourly
-  name: Heating:FuelOilNo2
-- frequency: hourly
-  name: Heating:DistrictHeating
-- frequency: hourly
-  name: Cooling:Electricity
-- frequency: hourly
-  name: Heating:DistrictCooling
-- frequency: hourly
-  name: Fans:Electricity
-- frequency: hourly
-  name: Pumps:Electricity
-- frequency: hourly
-  name: InteriorEquipment:Electricity
-- frequency: hourly
-  name: WaterSystems:Electricity
-- frequency: hourly
-  name: WaterSystems:NaturalGas
+:output_meters: []
 :output_variables: []
