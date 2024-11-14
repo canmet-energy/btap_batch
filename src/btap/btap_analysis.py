@@ -86,7 +86,8 @@ class BTAPAnalysis():
                  analysis_config=None,
                  output_folder=None,
                  analysis_input_folder=None,
-                 reference_run_df=None):
+                 reference_run_df=None,
+                 exclude_files=None):
 
         # Will always use the btap_cli image that run the ruby code.
         self.image_name = 'btap_cli'
@@ -94,6 +95,7 @@ class BTAPAnalysis():
         self.analysis_input_folder = analysis_input_folder
         self.output_folder = output_folder
         self.reference_run_df = reference_run_df
+        self.exclude_files = exclude_files
 
         # Get analysis information for runs.
 
@@ -124,7 +126,6 @@ class BTAPAnalysis():
         self.output_variables = self.analysis_config[':output_variables']
         self.output_meters = self.analysis_config[':output_meters']
         self.run_annual_simulation = True
-
         if self.compute_environment == 'local':
             print(f"running on {self.compute_environment}")
             self.image_manager = DockerImageManager(image_name=self.image_name)
@@ -279,7 +280,7 @@ class BTAPAnalysis():
         run_options[':output_meters'] = self.output_meters
 
         # Local Paths
-        local_datapoint_input_folder = os.path.join(self.cp.algorithm_folder(), job_id)
+
         local_run_option_file = os.path.join(self.cp.analysis_job_id_folder(job_id=job_id), 'run_options.yml')
 
         # Save run_option file for this simulation.
@@ -297,9 +298,11 @@ class BTAPAnalysis():
                 f"Copying osm file from {local_osm_dict[run_options[':building_type']]} to {self.cp.analysis_job_id_folder(job_id=job_id)}")
 
         # Submit Job to batch
-        job = self.batch.create_job(job_id=job_id)
+        job = self.batch.create_job(job_id=job_id, exclude_files=self.exclude_files)
         job_data = job.submit_job(run_options=run_options)
+
         return job_data
+
 
     def save_results_to_database(self, job_data):
         if job_data['status'] == 'SUCCEEDED':
@@ -433,6 +436,7 @@ class BTAPAnalysis():
                                  compute_environment=self.compute_environment,
                                  output_variables=self.output_variables,
                                  username=self.cp.get_build_env_name())
+
         # Store post process run into analysis object. Will need it later.
         self.btap_data_df = ppr.run()
 
