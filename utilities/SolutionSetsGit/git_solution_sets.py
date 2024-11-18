@@ -13,7 +13,7 @@ def git_solution_sets():
     os.environ['BUILD_ENV_NAME'] =build_config['build_env_name']
 
     LEEP = False
-    HOURLY = True
+    HOURLY = False
     CLIMATE_ZONES = [
         'CZ_4',
         'CZ_5',
@@ -34,14 +34,13 @@ def git_solution_sets():
         'ElectricityHPGasBackupMixed',
         'NaturalGasHPElecBackupMixed'
         ]
-    PARAMETRIC_RUNS = True
-    PARAMETRIC_PRIMARY_FUELS_PIVOT = [
-        # 'Electricity',
-        'NaturalGas',
-        # 'ElectricityHPElecBackup',
-        # 'NaturalGasHPGasBackup',
-        # 'ElectricityHPGasBackupMixed',
-        # 'NaturalGasHPElecBackupMixed'
+    PARAMETRIC_RUNS_OEE = False
+    PARAMETRIC_PRIMARY_FUELS_PIVOT_OEE = [
+        'NaturalGas'
+        ]
+    SENSITIVITY_RUNS_OEE = False
+    SENSITIVITY_PRIMARY_FUELS_PIVOT_OEE = [
+        'NaturalGas'
         ]
     OPTIMIZATION_RUNS = False
     OPTIMIZATION_PRIMARY_FUELS_PIVOT = [
@@ -304,7 +303,7 @@ def git_solution_sets():
     # Iterage through building_type
     for building_type in building_types:
 
-        if PARAMETRIC_RUNS:
+        if PARAMETRIC_RUNS_OEE:
         # Parametric Analysis
             for envelope in ENVELOPE:
                 for climate_zone in CLIMATE_ZONES:
@@ -378,7 +377,7 @@ def git_solution_sets():
                         yaml.dump(parametric_template, outfile, default_flow_style=False)
 
                     for epw_file in epw_files:
-                        for primary_heating_fuel in PARAMETRIC_PRIMARY_FUELS_PIVOT:
+                        for primary_heating_fuel in PARAMETRIC_PRIMARY_FUELS_PIVOT_OEE:
                             analysis_configuration = copy.deepcopy(parametric_template)
                             analysis_configuration[':options'][':building_type'] = [building_type]
                             analysis_configuration[':options'][':primary_heating_fuel'] = [primary_heating_fuel]
@@ -387,7 +386,7 @@ def git_solution_sets():
                             analysis_configuration[':reference_run'] = True
                             analysis_configuration[':output_meters'] = HOURLY_OUTPUT_METERS
 
-                            analysis_configuration[':analysis_name'] = f"OEEelec_{building_type}_{primary_heating_fuel}_{epw_file[1]}_{envelope}"
+                            analysis_configuration[':analysis_name'] = f"OEEelec_baseline_{building_type}_{primary_heating_fuel}_{epw_file[1]}_{envelope}_par"
                             analysis_folder = os.path.join(projects_folder, analysis_configuration[':analysis_name'])
                             pathlib.Path(analysis_folder).mkdir(parents=True, exist_ok=True)
                             f = open(os.path.join(analysis_folder, "input.yml"), 'w')
@@ -397,5 +396,81 @@ def git_solution_sets():
                             analysis(project_input_folder=analysis_folder,
                                      build_config=build_config,
                                      output_folder=output_folder)
+
+        if SENSITIVITY_RUNS_OEE:
+        # Sensitivity Analysis
+            for envelope in ENVELOPE:
+                for climate_zone in CLIMATE_ZONES:
+                    if climate_zone == 'CZ_4':
+                        sensitivity_template_file = pathlib.Path(os.path.join(pwd, 'sensitivity_cz4.yml')) #TODO Sara
+                        epw_files = [
+                            ['CAN_BC_Vancouver.Intl.AP.718920_NRCv12022_TMY_GW1.5.epw', 'YVR'],  # CZ 4
+                        ]
+
+                    elif climate_zone == 'CZ_5':
+                        sensitivity_template_file = pathlib.Path(os.path.join(pwd, 'sensitivity_cz5.yml')) #TODO Sara
+
+                        epw_files = [
+                            ['CAN_BC_Kelowna.Intl.AP.712030_NRCv12022_TMY_GW1.5.epw', 'YLW'],  # CZ 5
+                            ['CAN_ON_Toronto-Pearson.Intl.AP.716240_NRCv12022_TMY_GW1.5.epw', 'YYZ'],  # CZ 5
+                        ]
+
+                    elif climate_zone == 'CZ_6':
+                        sensitivity_template_file = pathlib.Path(os.path.join(pwd, 'sensitivity_cz6.yml')) #TODO Sara
+
+                        epw_files = [
+                            ['CAN_ON_Ottawa-Macdonald-Cartier.Intl.AP.716280_NRCv12022_TMY_GW1.5.epw', 'YOW'],  # CZ 6
+                            ['CAN_QC_Montreal-Trudeau.Intl.AP.716270_NRCv12022_TMY_GW1.5.epw', 'YUL'],  # CZ 6
+                            ['CAN_NS_Halifax-Stanfield.Intl.AP.713950_NRCv12022_TMY_GW1.5.epw', 'YHZ'],  # CZ 6
+                            ['CAN_NL_St.Johns.Intl.AP.718010_NRCv12022_TMY_GW1.5.epw', 'YYT'],  # CZ 6
+                            ['CAN_PE_Charlottetown.AP.717060_NRCv12022_TMY_GW1.5.epw', 'YYG'],  # CZ 6
+                            ['CAN_NB_Fredericton.Intl.AP.717000_NRCv12022_TMY_GW1.5.epw', 'YFC'],  # CZ 6
+                        ]
+
+                    elif climate_zone == 'CZ_7A':
+                        sensitivity_template_file = pathlib.Path(os.path.join(pwd, 'sensitivity_cz7A.yml')) #TODO Sara
+
+                        epw_files = [
+                            ['CAN_AB_Calgary.Intl.AP.718770_NRCv12022_TMY_GW1.5.epw', 'YYC'],  # CZ 7A
+                            ['CAN_AB_Edmonton.Intl.CS.711550_NRCv12022_TMY_GW1.5.epw', 'YEG'],  # CZ 7A
+                            ['CAN_SK_Saskatoon-Diefenbaker.Intl.AP.718660_NRCv12022_TMY_GW1.5.epw', 'YXE'],  # CZ 7A
+                            ['CAN_MB_Winnipeg-Richardson.Intl.AP.718520_NRCv12022_TMY_GW1.5.epw', 'YWG'],  # CZ 7A
+                        ]
+
+                    sensitivity_template = yaml.safe_load(sensitivity_template_file.read_text())
+
+                    if HOURLY:
+                        sensitivity_template[':output_meters'] = HOURLY_OUTPUT_METERS
+                        # sensitivity_template[':output_variables'] = HOURLY_OUTPUT_VARIABLES
+                    else:  # turn off hourly output. Faster runs.
+                        sensitivity_template[':output_meters'] = []
+                        sensitivity_template[':output_variables'] = []
+
+                    with open(sensitivity_template_file, 'w') as outfile:
+                        yaml.dump(sensitivity_template, outfile, default_flow_style=False)
+
+                    for epw_file in epw_files:
+                        for primary_heating_fuel in SENSITIVITY_PRIMARY_FUELS_PIVOT_OEE:
+                            analysis_configuration = copy.deepcopy(sensitivity_template)
+                            analysis_configuration[':options'][':building_type'] = [building_type]
+                            analysis_configuration[':options'][':primary_heating_fuel'] = [primary_heating_fuel]
+                            analysis_configuration[':options'][':epw_file'] = [epw_file[0]]
+                            analysis_configuration[':algorithm_type'] = 'sensitivity'
+                            analysis_configuration[':reference_run'] = True
+                            analysis_configuration[':output_meters'] = HOURLY_OUTPUT_METERS
+
+                            analysis_configuration[':analysis_name'] = f"OEEelec_baseline_{building_type}_{primary_heating_fuel}_{epw_file[1]}_{envelope}_sens"
+                            analysis_folder = os.path.join(projects_folder, analysis_configuration[':analysis_name'])
+                            pathlib.Path(analysis_folder).mkdir(parents=True, exist_ok=True)
+                            f = open(os.path.join(analysis_folder, "input.yml"), 'w')
+                            yaml.dump(analysis_configuration, f)
+                            # Submit analysis
+                            print(f"Running {analysis_configuration[':analysis_name']}")
+                            analysis(project_input_folder=analysis_folder,
+                                     build_config=build_config,
+                                     output_folder=output_folder)
+
+
+
 
 git_solution_sets()
