@@ -402,13 +402,13 @@ def git_solution_sets():
             for envelope in ENVELOPE:
                 for climate_zone in CLIMATE_ZONES:
                     if climate_zone == 'CZ_4':
-                        sensitivity_template_file = pathlib.Path(os.path.join(pwd, 'sensitivity_cz4.yml')) #TODO Sara
+                        sensitivity_template_file = pathlib.Path(os.path.join(pwd, 'sensitivity_cz4.yml'))
                         epw_files = [
                             ['CAN_BC_Vancouver.Intl.AP.718920_NRCv12022_TMY_GW1.5.epw', 'YVR'],  # CZ 4
                         ]
 
                     elif climate_zone == 'CZ_5':
-                        sensitivity_template_file = pathlib.Path(os.path.join(pwd, 'sensitivity_cz5.yml')) #TODO Sara
+                        sensitivity_template_file = pathlib.Path(os.path.join(pwd, 'sensitivity_cz5.yml'))
 
                         epw_files = [
                             ['CAN_BC_Kelowna.Intl.AP.712030_NRCv12022_TMY_GW1.5.epw', 'YLW'],  # CZ 5
@@ -416,7 +416,7 @@ def git_solution_sets():
                         ]
 
                     elif climate_zone == 'CZ_6':
-                        sensitivity_template_file = pathlib.Path(os.path.join(pwd, 'sensitivity_cz6.yml')) #TODO Sara
+                        sensitivity_template_file = pathlib.Path(os.path.join(pwd, 'sensitivity_cz6.yml'))
 
                         epw_files = [
                             ['CAN_ON_Ottawa-Macdonald-Cartier.Intl.AP.716280_NRCv12022_TMY_GW1.5.epw', 'YOW'],  # CZ 6
@@ -428,7 +428,7 @@ def git_solution_sets():
                         ]
 
                     elif climate_zone == 'CZ_7A':
-                        sensitivity_template_file = pathlib.Path(os.path.join(pwd, 'sensitivity_cz7A.yml')) #TODO Sara
+                        sensitivity_template_file = pathlib.Path(os.path.join(pwd, 'sensitivity_cz7A.yml'))
 
                         epw_files = [
                             ['CAN_AB_Calgary.Intl.AP.718770_NRCv12022_TMY_GW1.5.epw', 'YYC'],  # CZ 7A
