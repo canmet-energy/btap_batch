@@ -21,9 +21,9 @@ def git_solution_sets():
         'CZ_7A'
     ]
     ENVELOPE = [
-        'envelope_necb',
-        'envelope_necb_less15',
-        'envelope_necb_less30'
+        'env_necb',
+        'env_necb_less15',
+        'env_necb_less30'
     ]
     SENSITIVITY_RUNS = False
     SENSITIVITY_PRIMARY_FUELS_PIVOT = [
@@ -69,8 +69,8 @@ def git_solution_sets():
     algorithm_lhs_n_samples = 2000
 
     building_types = [
-        # "SecondarySchool",
-        "PrimarySchool",
+        "SecondarySchool",
+        # "PrimarySchool",
         # "SmallOffice",
         # "MediumOffice",
         # "LargeOffice",
@@ -81,8 +81,8 @@ def git_solution_sets():
         # "RetailStripmall",
         # "QuickServiceRestaurant",
         # "FullServiceRestaurant",
-        #  "MidriseApartment",
-        # "HighriseApartment",
+        "MidriseApartment",
+        "HighriseApartment",
         "LowriseApartment",
         # "Hospital",
         # "Outpatient"
@@ -308,24 +308,24 @@ def git_solution_sets():
             for envelope in ENVELOPE:
                 for climate_zone in CLIMATE_ZONES:
                     if climate_zone == 'CZ_4':
-                        if envelope == 'envelope_necb':
-                            parametric_template_file = pathlib.Path(os.path.join(pwd, 'parametric_cz4_envelope_necb_less15.yml'))
-                        elif envelope == 'envelope_necb_less15':
-                            parametric_template_file = pathlib.Path(os.path.join(pwd, 'parametric_cz4_envelope_necb_less15.yml'))
-                        elif envelope == 'envelope_necb_less30':
-                            parametric_template_file = pathlib.Path(os.path.join(pwd, 'parametric_cz4_envelope_necb_less30.yml'))
+                        if envelope == 'env_necb':
+                            parametric_template_file = pathlib.Path(os.path.join(pwd, 'parametric_cz4_env_necb_less15.yml'))
+                        elif envelope == 'env_necb_less15':
+                            parametric_template_file = pathlib.Path(os.path.join(pwd, 'parametric_cz4_env_necb_less15.yml'))
+                        elif envelope == 'env_necb_less30':
+                            parametric_template_file = pathlib.Path(os.path.join(pwd, 'parametric_cz4_env_necb_less30.yml'))
 
                         epw_files = [
                             ['CAN_BC_Vancouver.Intl.AP.718920_NRCv12022_TMY_GW1.5.epw', 'YVR'],  # CZ 4
                         ]
 
                     elif climate_zone == 'CZ_5':
-                        if envelope == 'envelope_necb':
-                            parametric_template_file = pathlib.Path(os.path.join(pwd, 'parametric_cz5_envelope_necb.yml'))
-                        elif envelope == 'envelope_necb_less15':
-                            parametric_template_file = pathlib.Path(os.path.join(pwd, 'parametric_cz5_envelope_necb_less15.yml'))
-                        elif envelope == 'envelope_necb_less30':
-                            parametric_template_file = pathlib.Path(os.path.join(pwd, 'parametric_cz5_envelope_necb_less30.yml'))
+                        if envelope == 'env_necb':
+                            parametric_template_file = pathlib.Path(os.path.join(pwd, 'parametric_cz5_env_necb.yml'))
+                        elif envelope == 'env_necb_less15':
+                            parametric_template_file = pathlib.Path(os.path.join(pwd, 'parametric_cz5_env_necb_less15.yml'))
+                        elif envelope == 'env_necb_less30':
+                            parametric_template_file = pathlib.Path(os.path.join(pwd, 'parametric_cz5_env_necb_less30.yml'))
 
                         epw_files = [
                             ['CAN_BC_Kelowna.Intl.AP.712030_NRCv12022_TMY_GW1.5.epw', 'YLW'],  # CZ 5
@@ -333,12 +333,12 @@ def git_solution_sets():
                         ]
 
                     elif climate_zone == 'CZ_6':
-                        if envelope == 'envelope_necb':
-                            parametric_template_file = pathlib.Path(os.path.join(pwd, 'parametric_cz6_envelope_necb.yml'))
-                        elif envelope == 'envelope_necb_less15':
-                            parametric_template_file = pathlib.Path(os.path.join(pwd, 'parametric_cz6_envelope_necb_less15.yml'))
-                        elif envelope == 'envelope_necb_less30':
-                            parametric_template_file = pathlib.Path(os.path.join(pwd, 'parametric_cz6_envelope_necb_less30.yml'))
+                        if envelope == 'env_necb':
+                            parametric_template_file = pathlib.Path(os.path.join(pwd, 'parametric_cz6_env_necb.yml'))
+                        elif envelope == 'env_necb_less15':
+                            parametric_template_file = pathlib.Path(os.path.join(pwd, 'parametric_cz6_env_necb_less15.yml'))
+                        elif envelope == 'env_necb_less30':
+                            parametric_template_file = pathlib.Path(os.path.join(pwd, 'parametric_cz6_env_necb_less30.yml'))
 
                         epw_files = [
                             ['CAN_ON_Ottawa-Macdonald-Cartier.Intl.AP.716280_NRCv12022_TMY_GW1.5.epw', 'YOW'],  # CZ 6
@@ -350,12 +350,12 @@ def git_solution_sets():
                         ]
 
                     elif climate_zone == 'CZ_7A':
-                        if envelope == 'envelope_necb':
-                            parametric_template_file = pathlib.Path(os.path.join(pwd, 'parametric_cz7A_envelope_necb.yml'))
-                        elif envelope == 'envelope_necb_less15':
-                            parametric_template_file = pathlib.Path(os.path.join(pwd, 'parametric_cz7A_envelope_necb_less15.yml'))
-                        elif envelope == 'envelope_necb_less30':
-                            parametric_template_file = pathlib.Path(os.path.join(pwd, 'parametric_cz7A_envelope_necb_less30.yml'))
+                        if envelope == 'env_necb':
+                            parametric_template_file = pathlib.Path(os.path.join(pwd, 'parametric_cz7A_env_necb.yml'))
+                        elif envelope == 'env_necb_less15':
+                            parametric_template_file = pathlib.Path(os.path.join(pwd, 'parametric_cz7A_env_necb_less15.yml'))
+                        elif envelope == 'env_necb_less30':
+                            parametric_template_file = pathlib.Path(os.path.join(pwd, 'parametric_cz7A_env_necb_less30.yml'))
 
                         epw_files = [
                             ['CAN_AB_Calgary.Intl.AP.718770_NRCv12022_TMY_GW1.5.epw', 'YYC'],  # CZ 7A
