@@ -22,8 +22,8 @@ def git_solution_sets():
     ]
     ENVELOPE = [
         'env_necb',
-        'env_necb_less15',
-        'env_necb_less30'
+        'env_necb_15',
+        'env_necb_30'
     ]
     SENSITIVITY_RUNS = False
     SENSITIVITY_PRIMARY_FUELS_PIVOT = [
@@ -309,10 +309,10 @@ def git_solution_sets():
                 for climate_zone in CLIMATE_ZONES:
                     if climate_zone == 'CZ_4':
                         if envelope == 'env_necb':
+                            parametric_template_file = pathlib.Path(os.path.join(pwd, 'parametric_cz4_env_necb.yml'))
+                        elif envelope == 'env_necb_15':
                             parametric_template_file = pathlib.Path(os.path.join(pwd, 'parametric_cz4_env_necb_less15.yml'))
-                        elif envelope == 'env_necb_less15':
-                            parametric_template_file = pathlib.Path(os.path.join(pwd, 'parametric_cz4_env_necb_less15.yml'))
-                        elif envelope == 'env_necb_less30':
+                        elif envelope == 'env_necb_30':
                             parametric_template_file = pathlib.Path(os.path.join(pwd, 'parametric_cz4_env_necb_less30.yml'))
 
                         epw_files = [
@@ -322,9 +322,9 @@ def git_solution_sets():
                     elif climate_zone == 'CZ_5':
                         if envelope == 'env_necb':
                             parametric_template_file = pathlib.Path(os.path.join(pwd, 'parametric_cz5_env_necb.yml'))
-                        elif envelope == 'env_necb_less15':
+                        elif envelope == 'env_necb_15':
                             parametric_template_file = pathlib.Path(os.path.join(pwd, 'parametric_cz5_env_necb_less15.yml'))
-                        elif envelope == 'env_necb_less30':
+                        elif envelope == 'env_necb_30':
                             parametric_template_file = pathlib.Path(os.path.join(pwd, 'parametric_cz5_env_necb_less30.yml'))
 
                         epw_files = [
@@ -335,9 +335,9 @@ def git_solution_sets():
                     elif climate_zone == 'CZ_6':
                         if envelope == 'env_necb':
                             parametric_template_file = pathlib.Path(os.path.join(pwd, 'parametric_cz6_env_necb.yml'))
-                        elif envelope == 'env_necb_less15':
+                        elif envelope == 'env_necb_15':
                             parametric_template_file = pathlib.Path(os.path.join(pwd, 'parametric_cz6_env_necb_less15.yml'))
-                        elif envelope == 'env_necb_less30':
+                        elif envelope == 'env_necb_30':
                             parametric_template_file = pathlib.Path(os.path.join(pwd, 'parametric_cz6_env_necb_less30.yml'))
 
                         epw_files = [
@@ -352,9 +352,9 @@ def git_solution_sets():
                     elif climate_zone == 'CZ_7A':
                         if envelope == 'env_necb':
                             parametric_template_file = pathlib.Path(os.path.join(pwd, 'parametric_cz7A_env_necb.yml'))
-                        elif envelope == 'env_necb_less15':
+                        elif envelope == 'env_necb_15':
                             parametric_template_file = pathlib.Path(os.path.join(pwd, 'parametric_cz7A_env_necb_less15.yml'))
-                        elif envelope == 'env_necb_less30':
+                        elif envelope == 'env_necb_30':
                             parametric_template_file = pathlib.Path(os.path.join(pwd, 'parametric_cz7A_env_necb_less30.yml'))
 
                         epw_files = [
@@ -386,7 +386,7 @@ def git_solution_sets():
                             analysis_configuration[':reference_run'] = True
                             analysis_configuration[':output_meters'] = HOURLY_OUTPUT_METERS
 
-                            analysis_configuration[':analysis_name'] = f"OEEelec_baseline_par_{building_type}_{primary_heating_fuel}_{epw_file[1]}_{envelope}"
+                            analysis_configuration[':analysis_name'] = f"OEEelec_BL_par_{building_type}_{primary_heating_fuel}_{epw_file[1]}_{envelope}"
                             analysis_folder = os.path.join(projects_folder, analysis_configuration[':analysis_name'])
                             pathlib.Path(analysis_folder).mkdir(parents=True, exist_ok=True)
                             f = open(os.path.join(analysis_folder, "input.yml"), 'w')
@@ -458,7 +458,7 @@ def git_solution_sets():
                         analysis_configuration[':reference_run'] = True
                         analysis_configuration[':output_meters'] = HOURLY_OUTPUT_METERS
 
-                        analysis_configuration[':analysis_name'] = f"OEEelec_baseline_sen_{building_type}_{primary_heating_fuel}_{epw_file[1]}"
+                        analysis_configuration[':analysis_name'] = f"OEEelec_BL_sen_{building_type}_{primary_heating_fuel}_{epw_file[1]}"
                         analysis_folder = os.path.join(projects_folder, analysis_configuration[':analysis_name'])
                         pathlib.Path(analysis_folder).mkdir(parents=True, exist_ok=True)
                         f = open(os.path.join(analysis_folder, "input.yml"), 'w')
