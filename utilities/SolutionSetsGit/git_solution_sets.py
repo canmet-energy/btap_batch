@@ -70,7 +70,7 @@ def git_solution_sets():
 
     building_types = [
         "SecondarySchool",
-        # "PrimarySchool",
+        "PrimarySchool",
         # "SmallOffice",
         # "MediumOffice",
         # "LargeOffice",
@@ -386,7 +386,7 @@ def git_solution_sets():
                             analysis_configuration[':reference_run'] = True
                             analysis_configuration[':output_meters'] = HOURLY_OUTPUT_METERS
 
-                            analysis_configuration[':analysis_name'] = f"OEEelec_baseline_{building_type}_{primary_heating_fuel}_{epw_file[1]}_{envelope}_par"
+                            analysis_configuration[':analysis_name'] = f"OEEelec_baseline_par_{building_type}_{primary_heating_fuel}_{epw_file[1]}_{envelope}"
                             analysis_folder = os.path.join(projects_folder, analysis_configuration[':analysis_name'])
                             pathlib.Path(analysis_folder).mkdir(parents=True, exist_ok=True)
                             f = open(os.path.join(analysis_folder, "input.yml"), 'w')
@@ -458,7 +458,7 @@ def git_solution_sets():
                         analysis_configuration[':reference_run'] = True
                         analysis_configuration[':output_meters'] = HOURLY_OUTPUT_METERS
 
-                        analysis_configuration[':analysis_name'] = f"OEEelec_baseline_{building_type}_{primary_heating_fuel}_{epw_file[1]}_sens"
+                        analysis_configuration[':analysis_name'] = f"OEEelec_baseline_sen_{building_type}_{primary_heating_fuel}_{epw_file[1]}"
                         analysis_folder = os.path.join(projects_folder, analysis_configuration[':analysis_name'])
                         pathlib.Path(analysis_folder).mkdir(parents=True, exist_ok=True)
                         f = open(os.path.join(analysis_folder, "input.yml"), 'w')
