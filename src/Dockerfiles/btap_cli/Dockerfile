@@ -4,15 +4,14 @@ FROM canmet/os_sdk_container:$OPENSTUDIO_VERSION
 ARG BTAP_COSTING_BRANCH=''
 ARG OS_STANDARDS_BRANCH='nrcan'
 ARG WEATHER_FILES=''
-ARG LOCALNRCAN=''
 ARG LOCALNRCAN_BRANCH='main'
 ARG GIT_API_TOKEN='nothing'
 
 LABEL author="Phylroy Lopez phylroy.lopez@canada.ca"
 
-#Be root and install nrcan_certs under the root folder if LOCALNRCAN is set.
+#Be root and install nrcan_certs if at NRCan.
 WORKDIR /
-RUN if [ ! -z "$LOCALNRCAN" ] ; then \
+RUN if [ "$(curl -k -o /dev/null -s -w "%{http_code}" "https://intranet.nrcan.gc.ca/")" -ge 100 ] && [ "$(curl -o /dev/null -s -w "%{http_code}" "https://intranet.nrcan.gc.ca/")" -lt 400 ]; then \
       echo "Cloning install_nrcan_certs repository" \
       && git clone https://$GIT_API_TOKEN:x-oauth-basic@github.com/canmet-energy/linux_nrcan_certs.git --depth 1 --branch ${LOCALNRCAN_BRANCH} --single-branch /linux_nrcan_certs \
       && cd /linux_nrcan_certs \
