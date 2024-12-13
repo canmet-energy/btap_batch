@@ -1031,3 +1031,334 @@ This will select the algorithm to use in the analysis. \n\n
         "
         items:
           type: string
+      :hvac_system_primary:
+        description: "
+        Defines the HVAC system type you want to assign to serve all spaces that are not dwelling units, washrooms, storage
+        areas, or corridors/mechanical/electrical rooms.  If left to NECB_Default, the HVAC system type will be chosen
+        based on NECB system selection criteria.
+        "
+        items:
+          anyOf:
+            - type: string
+              enum:
+                - NECB_Default
+                - PSZ RTU ASHP with Gas and ASHP Coils and Hot Water Baseboard with Gas Reheat
+                - PSZ RTU ASHP with Gas and ASHP Coils and Electric Baseboard with Gas Reheat
+                - PSZ RTU ASHP with Electric and ASHP Coils and Hot Water Baseboard with Electric Reheat
+                - PSZ RTU ASHP with Electric and ASHP Coils and Electric Baseboard with Electric Reheat
+                - PSZ MAU Hot Water and DX Coils and Hot Water Baseboard with PTAC
+                - PSZ MAU Hot Water and DX Coils and Electric Baseboard with PTAC
+                - PSZ MAU Electric and DX Coils and Hot Water Baseboard with PTAC
+                - PSZ MAU Electric and DX Coils and Electric Baseboard with PTAC
+                - FPFC MAU DX Coils with Scroll Chiller
+                - FPFC MAU DX Coils with Centrifugal Chiller
+                - FPFC MAU DX Coils with Rotary Screw Chiller
+                - FPFC MAU DX Coils with Reciprocating Chiller
+                - FPFC MAU Chilled Water Coils with Scroll Chiller
+                - FPFC MAU Chilled Water Coils with Centrifugal Chiller
+                - FPFC MAU Chilled Water Coils with Rotary Screw Chiller
+                - FPFC MAU Chilled Water Coils with Reciprocating Chiller
+                - PSZ RTU ASHP with Gas and ASHP with Gas Supp. Heat Coils and Hot Water Baseboard
+                - PSZ RTU ASHP with Gas and ASHP with Gas Supp. Heat Coils and Electric Baseboard
+                - PSZ RTU ASHP with Electric and ASHP with Electric Supp. Heat Coils and Hot Water Baseboard
+                - PSZ RTU ASHP with Electric and ASHP with Electric Supp. Heat Coils and Electric Baseboard
+                - PSZ RTU Gas and DX Coils and Hot Water Baseboard
+                - PSZ RTU Gas and DX Coils and Electric Baseboard
+                - PSZ RTU Electric and DX Coils and Hot Water Baseboard
+                - PSZ RTU Electric and DX Coils and Electric Baseboard
+                - PSZ RTU ASHP with Gas and ASHP with Gas Supp. Heat Coils and Hot Water Baseboard
+                - PSZ RTU ASHP with Gas and ASHP with Gas Supp. Heat Coils and Electric Baseboard
+                - PSZ RTU ASHP with Electric and ASHP with Electric Supp. Heat Coils and Hot Water Baseboard
+                - PSZ RTU ASHP with Electric and ASHP with Electric Supp. Heat Coils and Electric Baseboard
+                - PSZ RTU Gas and DX Coils and Hot Water Baseboard
+                - PSZ RTU Gas and DX Coils and Electric Baseboard
+                - PSZ RTU Electric and DX Coils and Hot Water Baseboard
+                - PSZ RTU Electric and DX Coils and Electric Baseboard
+                - TPFC MAU DX Coils with Scroll Chiller
+                - TPFC MAU DX Coils with Centrifugal Chiller
+                - TPFC MAU DX Coils with Rotary Screw Chiller
+                - TPFC MAU DX Coils with Reciprocating Chiller
+                - TPFC MAU Chilled Water Coils with Scroll Chiller
+                - TPFC MAU Chilled Water Coils with Centrifugal Chiller
+                - TPFC MAU Chilled Water Coils with Rotary Screw Chiller
+                - TPFC MAU Chilled Water Coils with Reciprocating Chiller
+                - MZ BU RTU Electric Heating Coil Scroll Chiller and Electric Baseboard
+                - MZ BU RTU Electric Heating Coil Centrifugal Chiller and Electric Baseboard
+                - MZ BU RTU Electric Heating Coil Rotary Screw Chiller and Electric Baseboard
+                - MZ BU RTU Electric Heating Coil Reciprocating Chiller and Electric Baseboard
+                - MZ BU RTU Electric Heating Coil Scroll Chiller and Hot Water Baseboard
+                - MZ BU RTU Electric Heating Coil Centrifugal Chiller and Hot Water Baseboard
+                - MZ BU RTU Electric Heating Coil Rotary Screw Chiller and Hot Water Baseboard
+                - MZ BU RTU Electric Heating Coil Reciprocating Chiller and Hot Water Baseboard
+                - MZ BU RTU Hot Water Heating Coil Scroll Chiller and Electric Baseboard
+                - MZ BU RTU Hot Water Heating Coil Centrifugal Chiller and Electric Baseboard
+                - MZ BU RTU Hot Water Heating Coil Rotary Screw Chiller and Electric Baseboard
+                - MZ BU RTU Hot Water Heating Coil Reciprocating Chiller and Electric Baseboard
+                - MZ BU RTU Hot Water Heating Coil Scroll Chiller and Hot Water Baseboard
+                - MZ BU RTU Hot Water Heating Coil Centrifugal Chiller and Hot Water Baseboard
+                - MZ BU RTU Hot Water Heating Coil Rotary Screw Chiller and Hot Water Baseboard
+                - MZ BU RTU Hot Water Heating Coil Reciprocating Chiller and Hot Water Baseboard
+      :hvac_system_dwelling_units:
+        description: "
+        Defines the HVAC system type you want to assign to serve all dwelling units.  If left to NECB_Default, the HVAC
+        system type will be chosen based on NECB system selection criteria.
+        "
+        items:
+          anyOf:
+            - type: string
+              enum:
+                - NECB_Default
+                - PSZ RTU ASHP with Gas and ASHP Coils and Hot Water Baseboard with Gas Reheat
+                - PSZ RTU ASHP with Gas and ASHP Coils and Electric Baseboard with Gas Reheat
+                - PSZ RTU ASHP with Electric and ASHP Coils and Hot Water Baseboard with Electric Reheat
+                - PSZ RTU ASHP with Electric and ASHP Coils and Electric Baseboard with Electric Reheat
+                - PSZ MAU Hot Water and DX Coils and Hot Water Baseboard with PTAC
+                - PSZ MAU Hot Water and DX Coils and Electric Baseboard with PTAC
+                - PSZ MAU Electric and DX Coils and Hot Water Baseboard with PTAC
+                - PSZ MAU Electric and DX Coils and Electric Baseboard with PTAC
+                - FPFC MAU DX Coils with Scroll Chiller
+                - FPFC MAU DX Coils with Centrifugal Chiller
+                - FPFC MAU DX Coils with Rotary Screw Chiller
+                - FPFC MAU DX Coils with Reciprocating Chiller
+                - FPFC MAU Chilled Water Coils with Scroll Chiller
+                - FPFC MAU Chilled Water Coils with Centrifugal Chiller
+                - FPFC MAU Chilled Water Coils with Rotary Screw Chiller
+                - FPFC MAU Chilled Water Coils with Reciprocating Chiller
+                - PSZ RTU ASHP with Gas and ASHP with Gas Supp. Heat Coils and Hot Water Baseboard
+                - PSZ RTU ASHP with Gas and ASHP with Gas Supp. Heat Coils and Electric Baseboard
+                - PSZ RTU ASHP with Electric and ASHP with Electric Supp. Heat Coils and Hot Water Baseboard
+                - PSZ RTU ASHP with Electric and ASHP with Electric Supp. Heat Coils and Electric Baseboard
+                - PSZ RTU Gas and DX Coils and Hot Water Baseboard
+                - PSZ RTU Gas and DX Coils and Electric Baseboard
+                - PSZ RTU Electric and DX Coils and Hot Water Baseboard
+                - PSZ RTU Electric and DX Coils and Electric Baseboard
+                - PSZ RTU ASHP with Gas and ASHP with Gas Supp. Heat Coils and Hot Water Baseboard
+                - PSZ RTU ASHP with Gas and ASHP with Gas Supp. Heat Coils and Electric Baseboard
+                - PSZ RTU ASHP with Electric and ASHP with Electric Supp. Heat Coils and Hot Water Baseboard
+                - PSZ RTU ASHP with Electric and ASHP with Electric Supp. Heat Coils and Electric Baseboard
+                - PSZ RTU Gas and DX Coils and Hot Water Baseboard
+                - PSZ RTU Gas and DX Coils and Electric Baseboard
+                - PSZ RTU Electric and DX Coils and Hot Water Baseboard
+                - PSZ RTU Electric and DX Coils and Electric Baseboard
+                - TPFC MAU DX Coils with Scroll Chiller
+                - TPFC MAU DX Coils with Centrifugal Chiller
+                - TPFC MAU DX Coils with Rotary Screw Chiller
+                - TPFC MAU DX Coils with Reciprocating Chiller
+                - TPFC MAU Chilled Water Coils with Scroll Chiller
+                - TPFC MAU Chilled Water Coils with Centrifugal Chiller
+                - TPFC MAU Chilled Water Coils with Rotary Screw Chiller
+                - TPFC MAU Chilled Water Coils with Reciprocating Chiller
+                - MZ BU RTU Electric Heating Coil Scroll Chiller and Electric Baseboard
+                - MZ BU RTU Electric Heating Coil Centrifugal Chiller and Electric Baseboard
+                - MZ BU RTU Electric Heating Coil Rotary Screw Chiller and Electric Baseboard
+                - MZ BU RTU Electric Heating Coil Reciprocating Chiller and Electric Baseboard
+                - MZ BU RTU Electric Heating Coil Scroll Chiller and Hot Water Baseboard
+                - MZ BU RTU Electric Heating Coil Centrifugal Chiller and Hot Water Baseboard
+                - MZ BU RTU Electric Heating Coil Rotary Screw Chiller and Hot Water Baseboard
+                - MZ BU RTU Electric Heating Coil Reciprocating Chiller and Hot Water Baseboard
+                - MZ BU RTU Hot Water Heating Coil Scroll Chiller and Electric Baseboard
+                - MZ BU RTU Hot Water Heating Coil Centrifugal Chiller and Electric Baseboard
+                - MZ BU RTU Hot Water Heating Coil Rotary Screw Chiller and Electric Baseboard
+                - MZ BU RTU Hot Water Heating Coil Reciprocating Chiller and Electric Baseboard
+                - MZ BU RTU Hot Water Heating Coil Scroll Chiller and Hot Water Baseboard
+                - MZ BU RTU Hot Water Heating Coil Centrifugal Chiller and Hot Water Baseboard
+                - MZ BU RTU Hot Water Heating Coil Rotary Screw Chiller and Hot Water Baseboard
+                - MZ BU RTU Hot Water Heating Coil Reciprocating Chiller and Hot Water Baseboard
+      :hvac_system_washrooms:
+        description: "
+        Defines the HVAC system type you want to assign to serve all washrooms.  If left to NECB_Default, the HVAC
+        system type will be chosen based on NECB system selection criteria.
+        "
+        items:
+          anyOf:
+            - type: string
+              enum:
+                - NECB_Default
+                - PSZ RTU ASHP with Gas and ASHP Coils and Hot Water Baseboard with Gas Reheat
+                - PSZ RTU ASHP with Gas and ASHP Coils and Electric Baseboard with Gas Reheat
+                - PSZ RTU ASHP with Electric and ASHP Coils and Hot Water Baseboard with Electric Reheat
+                - PSZ RTU ASHP with Electric and ASHP Coils and Electric Baseboard with Electric Reheat
+                - PSZ MAU Hot Water and DX Coils and Hot Water Baseboard with PTAC
+                - PSZ MAU Hot Water and DX Coils and Electric Baseboard with PTAC
+                - PSZ MAU Electric and DX Coils and Hot Water Baseboard with PTAC
+                - PSZ MAU Electric and DX Coils and Electric Baseboard with PTAC
+                - FPFC MAU DX Coils with Scroll Chiller
+                - FPFC MAU DX Coils with Centrifugal Chiller
+                - FPFC MAU DX Coils with Rotary Screw Chiller
+                - FPFC MAU DX Coils with Reciprocating Chiller
+                - FPFC MAU Chilled Water Coils with Scroll Chiller
+                - FPFC MAU Chilled Water Coils with Centrifugal Chiller
+                - FPFC MAU Chilled Water Coils with Rotary Screw Chiller
+                - FPFC MAU Chilled Water Coils with Reciprocating Chiller
+                - PSZ RTU ASHP with Gas and ASHP with Gas Supp. Heat Coils and Hot Water Baseboard
+                - PSZ RTU ASHP with Gas and ASHP with Gas Supp. Heat Coils and Electric Baseboard
+                - PSZ RTU ASHP with Electric and ASHP with Electric Supp. Heat Coils and Hot Water Baseboard
+                - PSZ RTU ASHP with Electric and ASHP with Electric Supp. Heat Coils and Electric Baseboard
+                - PSZ RTU Gas and DX Coils and Hot Water Baseboard
+                - PSZ RTU Gas and DX Coils and Electric Baseboard
+                - PSZ RTU Electric and DX Coils and Hot Water Baseboard
+                - PSZ RTU Electric and DX Coils and Electric Baseboard
+                - PSZ RTU ASHP with Gas and ASHP with Gas Supp. Heat Coils and Hot Water Baseboard
+                - PSZ RTU ASHP with Gas and ASHP with Gas Supp. Heat Coils and Electric Baseboard
+                - PSZ RTU ASHP with Electric and ASHP with Electric Supp. Heat Coils and Hot Water Baseboard
+                - PSZ RTU ASHP with Electric and ASHP with Electric Supp. Heat Coils and Electric Baseboard
+                - PSZ RTU Gas and DX Coils and Hot Water Baseboard
+                - PSZ RTU Gas and DX Coils and Electric Baseboard
+                - PSZ RTU Electric and DX Coils and Hot Water Baseboard
+                - PSZ RTU Electric and DX Coils and Electric Baseboard
+                - TPFC MAU DX Coils with Scroll Chiller
+                - TPFC MAU DX Coils with Centrifugal Chiller
+                - TPFC MAU DX Coils with Rotary Screw Chiller
+                - TPFC MAU DX Coils with Reciprocating Chiller
+                - TPFC MAU Chilled Water Coils with Scroll Chiller
+                - TPFC MAU Chilled Water Coils with Centrifugal Chiller
+                - TPFC MAU Chilled Water Coils with Rotary Screw Chiller
+                - TPFC MAU Chilled Water Coils with Reciprocating Chiller
+                - MZ BU RTU Electric Heating Coil Scroll Chiller and Electric Baseboard
+                - MZ BU RTU Electric Heating Coil Centrifugal Chiller and Electric Baseboard
+                - MZ BU RTU Electric Heating Coil Rotary Screw Chiller and Electric Baseboard
+                - MZ BU RTU Electric Heating Coil Reciprocating Chiller and Electric Baseboard
+                - MZ BU RTU Electric Heating Coil Scroll Chiller and Hot Water Baseboard
+                - MZ BU RTU Electric Heating Coil Centrifugal Chiller and Hot Water Baseboard
+                - MZ BU RTU Electric Heating Coil Rotary Screw Chiller and Hot Water Baseboard
+                - MZ BU RTU Electric Heating Coil Reciprocating Chiller and Hot Water Baseboard
+                - MZ BU RTU Hot Water Heating Coil Scroll Chiller and Electric Baseboard
+                - MZ BU RTU Hot Water Heating Coil Centrifugal Chiller and Electric Baseboard
+                - MZ BU RTU Hot Water Heating Coil Rotary Screw Chiller and Electric Baseboard
+                - MZ BU RTU Hot Water Heating Coil Reciprocating Chiller and Electric Baseboard
+                - MZ BU RTU Hot Water Heating Coil Scroll Chiller and Hot Water Baseboard
+                - MZ BU RTU Hot Water Heating Coil Centrifugal Chiller and Hot Water Baseboard
+                - MZ BU RTU Hot Water Heating Coil Rotary Screw Chiller and Hot Water Baseboard
+                - MZ BU RTU Hot Water Heating Coil Reciprocating Chiller and Hot Water Baseboard
+      :hvac_system_corridor:
+        description: "
+        Defines the HVAC system type you want to assign to serve all corridors, mechanical rooms, or electrical rooms.
+        If left to NECB_Default, the HVAC system type will be chosen based on NECB system selection criteria.
+        "
+        items:
+          anyOf:
+            - type: string
+              enum:
+                - NECB_Default
+                - PSZ RTU ASHP with Gas and ASHP Coils and Hot Water Baseboard with Gas Reheat
+                - PSZ RTU ASHP with Gas and ASHP Coils and Electric Baseboard with Gas Reheat
+                - PSZ RTU ASHP with Electric and ASHP Coils and Hot Water Baseboard with Electric Reheat
+                - PSZ RTU ASHP with Electric and ASHP Coils and Electric Baseboard with Electric Reheat
+                - PSZ MAU Hot Water and DX Coils and Hot Water Baseboard with PTAC
+                - PSZ MAU Hot Water and DX Coils and Electric Baseboard with PTAC
+                - PSZ MAU Electric and DX Coils and Hot Water Baseboard with PTAC
+                - PSZ MAU Electric and DX Coils and Electric Baseboard with PTAC
+                - FPFC MAU DX Coils with Scroll Chiller
+                - FPFC MAU DX Coils with Centrifugal Chiller
+                - FPFC MAU DX Coils with Rotary Screw Chiller
+                - FPFC MAU DX Coils with Reciprocating Chiller
+                - FPFC MAU Chilled Water Coils with Scroll Chiller
+                - FPFC MAU Chilled Water Coils with Centrifugal Chiller
+                - FPFC MAU Chilled Water Coils with Rotary Screw Chiller
+                - FPFC MAU Chilled Water Coils with Reciprocating Chiller
+                - PSZ RTU ASHP with Gas and ASHP with Gas Supp. Heat Coils and Hot Water Baseboard
+                - PSZ RTU ASHP with Gas and ASHP with Gas Supp. Heat Coils and Electric Baseboard
+                - PSZ RTU ASHP with Electric and ASHP with Electric Supp. Heat Coils and Hot Water Baseboard
+                - PSZ RTU ASHP with Electric and ASHP with Electric Supp. Heat Coils and Electric Baseboard
+                - PSZ RTU Gas and DX Coils and Hot Water Baseboard
+                - PSZ RTU Gas and DX Coils and Electric Baseboard
+                - PSZ RTU Electric and DX Coils and Hot Water Baseboard
+                - PSZ RTU Electric and DX Coils and Electric Baseboard
+                - PSZ RTU ASHP with Gas and ASHP with Gas Supp. Heat Coils and Hot Water Baseboard
+                - PSZ RTU ASHP with Gas and ASHP with Gas Supp. Heat Coils and Electric Baseboard
+                - PSZ RTU ASHP with Electric and ASHP with Electric Supp. Heat Coils and Hot Water Baseboard
+                - PSZ RTU ASHP with Electric and ASHP with Electric Supp. Heat Coils and Electric Baseboard
+                - PSZ RTU Gas and DX Coils and Hot Water Baseboard
+                - PSZ RTU Gas and DX Coils and Electric Baseboard
+                - PSZ RTU Electric and DX Coils and Hot Water Baseboard
+                - PSZ RTU Electric and DX Coils and Electric Baseboard
+                - TPFC MAU DX Coils with Scroll Chiller
+                - TPFC MAU DX Coils with Centrifugal Chiller
+                - TPFC MAU DX Coils with Rotary Screw Chiller
+                - TPFC MAU DX Coils with Reciprocating Chiller
+                - TPFC MAU Chilled Water Coils with Scroll Chiller
+                - TPFC MAU Chilled Water Coils with Centrifugal Chiller
+                - TPFC MAU Chilled Water Coils with Rotary Screw Chiller
+                - TPFC MAU Chilled Water Coils with Reciprocating Chiller
+                - MZ BU RTU Electric Heating Coil Scroll Chiller and Electric Baseboard
+                - MZ BU RTU Electric Heating Coil Centrifugal Chiller and Electric Baseboard
+                - MZ BU RTU Electric Heating Coil Rotary Screw Chiller and Electric Baseboard
+                - MZ BU RTU Electric Heating Coil Reciprocating Chiller and Electric Baseboard
+                - MZ BU RTU Electric Heating Coil Scroll Chiller and Hot Water Baseboard
+                - MZ BU RTU Electric Heating Coil Centrifugal Chiller and Hot Water Baseboard
+                - MZ BU RTU Electric Heating Coil Rotary Screw Chiller and Hot Water Baseboard
+                - MZ BU RTU Electric Heating Coil Reciprocating Chiller and Hot Water Baseboard
+                - MZ BU RTU Hot Water Heating Coil Scroll Chiller and Electric Baseboard
+                - MZ BU RTU Hot Water Heating Coil Centrifugal Chiller and Electric Baseboard
+                - MZ BU RTU Hot Water Heating Coil Rotary Screw Chiller and Electric Baseboard
+                - MZ BU RTU Hot Water Heating Coil Reciprocating Chiller and Electric Baseboard
+                - MZ BU RTU Hot Water Heating Coil Scroll Chiller and Hot Water Baseboard
+                - MZ BU RTU Hot Water Heating Coil Centrifugal Chiller and Hot Water Baseboard
+                - MZ BU RTU Hot Water Heating Coil Rotary Screw Chiller and Hot Water Baseboard
+                - MZ BU RTU Hot Water Heating Coil Reciprocating Chiller and Hot Water Baseboard
+      :hvac_system_storage:
+        description: "
+        Defines the HVAC system type you want to assign to serve all storage areas.  If left to NECB_Default, the HVAC
+        system type will be chosen based on NECB system selection criteria.
+        "
+        items:
+          anyOf:
+            - type: string
+              enum:
+                - NECB_Default
+                - PSZ RTU ASHP with Gas and ASHP Coils and Hot Water Baseboard with Gas Reheat
+                - PSZ RTU ASHP with Gas and ASHP Coils and Electric Baseboard with Gas Reheat
+                - PSZ RTU ASHP with Electric and ASHP Coils and Hot Water Baseboard with Electric Reheat
+                - PSZ RTU ASHP with Electric and ASHP Coils and Electric Baseboard with Electric Reheat
+                - PSZ MAU Hot Water and DX Coils and Hot Water Baseboard with PTAC
+                - PSZ MAU Hot Water and DX Coils and Electric Baseboard with PTAC
+                - PSZ MAU Electric and DX Coils and Hot Water Baseboard with PTAC
+                - PSZ MAU Electric and DX Coils and Electric Baseboard with PTAC
+                - FPFC MAU DX Coils with Scroll Chiller
+                - FPFC MAU DX Coils with Centrifugal Chiller
+                - FPFC MAU DX Coils with Rotary Screw Chiller
+                - FPFC MAU DX Coils with Reciprocating Chiller
+                - FPFC MAU Chilled Water Coils with Scroll Chiller
+                - FPFC MAU Chilled Water Coils with Centrifugal Chiller
+                - FPFC MAU Chilled Water Coils with Rotary Screw Chiller
+                - FPFC MAU Chilled Water Coils with Reciprocating Chiller
+                - PSZ RTU ASHP with Gas and ASHP with Gas Supp. Heat Coils and Hot Water Baseboard
+                - PSZ RTU ASHP with Gas and ASHP with Gas Supp. Heat Coils and Electric Baseboard
+                - PSZ RTU ASHP with Electric and ASHP with Electric Supp. Heat Coils and Hot Water Baseboard
+                - PSZ RTU ASHP with Electric and ASHP with Electric Supp. Heat Coils and Electric Baseboard
+                - PSZ RTU Gas and DX Coils and Hot Water Baseboard
+                - PSZ RTU Gas and DX Coils and Electric Baseboard
+                - PSZ RTU Electric and DX Coils and Hot Water Baseboard
+                - PSZ RTU Electric and DX Coils and Electric Baseboard
+                - PSZ RTU ASHP with Gas and ASHP with Gas Supp. Heat Coils and Hot Water Baseboard
+                - PSZ RTU ASHP with Gas and ASHP with Gas Supp. Heat Coils and Electric Baseboard
+                - PSZ RTU ASHP with Electric and ASHP with Electric Supp. Heat Coils and Hot Water Baseboard
+                - PSZ RTU ASHP with Electric and ASHP with Electric Supp. Heat Coils and Electric Baseboard
+                - PSZ RTU Gas and DX Coils and Hot Water Baseboard
+                - PSZ RTU Gas and DX Coils and Electric Baseboard
+                - PSZ RTU Electric and DX Coils and Hot Water Baseboard
+                - PSZ RTU Electric and DX Coils and Electric Baseboard
+                - TPFC MAU DX Coils with Scroll Chiller
+                - TPFC MAU DX Coils with Centrifugal Chiller
+                - TPFC MAU DX Coils with Rotary Screw Chiller
+                - TPFC MAU DX Coils with Reciprocating Chiller
+                - TPFC MAU Chilled Water Coils with Scroll Chiller
+                - TPFC MAU Chilled Water Coils with Centrifugal Chiller
+                - TPFC MAU Chilled Water Coils with Rotary Screw Chiller
+                - TPFC MAU Chilled Water Coils with Reciprocating Chiller
+                - MZ BU RTU Electric Heating Coil Scroll Chiller and Electric Baseboard
+                - MZ BU RTU Electric Heating Coil Centrifugal Chiller and Electric Baseboard
+                - MZ BU RTU Electric Heating Coil Rotary Screw Chiller and Electric Baseboard
+                - MZ BU RTU Electric Heating Coil Reciprocating Chiller and Electric Baseboard
+                - MZ BU RTU Electric Heating Coil Scroll Chiller and Hot Water Baseboard
+                - MZ BU RTU Electric Heating Coil Centrifugal Chiller and Hot Water Baseboard
+                - MZ BU RTU Electric Heating Coil Rotary Screw Chiller and Hot Water Baseboard
+                - MZ BU RTU Electric Heating Coil Reciprocating Chiller and Hot Water Baseboard
+                - MZ BU RTU Hot Water Heating Coil Scroll Chiller and Electric Baseboard
+                - MZ BU RTU Hot Water Heating Coil Centrifugal Chiller and Electric Baseboard
+                - MZ BU RTU Hot Water Heating Coil Rotary Screw Chiller and Electric Baseboard
+                - MZ BU RTU Hot Water Heating Coil Reciprocating Chiller and Electric Baseboard
+                - MZ BU RTU Hot Water Heating Coil Scroll Chiller and Hot Water Baseboard
+                - MZ BU RTU Hot Water Heating Coil Centrifugal Chiller and Hot Water Baseboard
+                - MZ BU RTU Hot Water Heating Coil Rotary Screw Chiller and Hot Water Baseboard
+                - MZ BU RTU Hot Water Heating Coil Reciprocating Chiller and Hot Water Baseboard
