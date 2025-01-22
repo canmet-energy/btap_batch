@@ -360,7 +360,8 @@ This will select the algorithm to use in the analysis. \n\n
         | HS11_ASHP_PTHP        | Use an Air-Source Heat Pump with electric backup in a dedicated-oudoor air system. Packaged-Terminal Heat-Pumps with electric backup are used in the zones.                                                  | In this measure a dedicated-outside air system with an ASHP is used. The performance curves and COP for the ASHP is based on NECB data for DX cooling and heating.   Packaged-Terminal Heat Pumps with electric backup are installed in the zones. The performance curves are from NECB (DX cooling and heating). All other NECB   HVAC system assumptions are maintained.                                                                              |\n
         | HS12_ASHP_Baseboard   | NECB air system modifed to use an Air-Source Heat Pump with electric backup. Electric   baseboards are installed in the zones.                                                                               | In this measure the NECB air system heating and cooling components are replaced with an ASHP with electric backup. The performance data for the ASHP is based on   NECB data for DX cooling and heating. All other NECB HVAC system assumptions are maintained.                                                                                                                                                                                         |\n
         | HS14_CGSHP_FanCoils   | Use a dedicated-outdoor air system with four-pipe fan coils in the zones. The heating and cooling coils of the air system and the zones are served by a central ground source heat pump and chiller plant.   | The central-ground source heat pump (size = 40% of peak heating load) and boiler (size = 60% of peak heating load) are used to meet the heating demand. The cooling demand is met using a water-cooled chiller (size = 40% of peak   cooling load) and a air-cooled chiller (size = 60% of peak cooling load). The heat pump and water-cooled chiller are connected to a ground-loop heat exchanger.                                                    |\n
-        | HS13_ASHP_VRF         |    | |\n\n
+        | HS13_ASHP_VRF         | 
+        | HS15_CASHP_FanCoils   | |\n\n
         "
         items:
           anyOf:
@@ -373,6 +374,7 @@ This will select the algorithm to use in the analysis. \n\n
                 - HS12_ASHP_Baseboard
                 - HS13_ASHP_VRF
                 - HS14_CGSHP_FanCoils
+                - HS15_CASHP_FanCoils
 
       :chiller_type:
         description: "
