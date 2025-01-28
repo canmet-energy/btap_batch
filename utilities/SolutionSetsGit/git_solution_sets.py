@@ -5,6 +5,7 @@ import pathlib
 from src.btap.cli_helper_methods import analysis, load_config
 from src.btap.cli_helper_methods import get_number_of_failures
 from src.btap.common_paths import CONFIG_FOLDER
+import json #Sara
 
 def git_solution_sets():
 
@@ -16,14 +17,24 @@ def git_solution_sets():
     HOURLY = False
     CLIMATE_ZONES = [
         'CZ_4',
-        'CZ_5',
-        'CZ_6',
-        'CZ_7A'
+        # 'CZ_5',
+        # 'CZ_6',
+        # 'CZ_7A'
     ]
     ENVELOPE = [
-        'env_necb',
-        'env_necb_15',
+        # 'env_necb',
+        # 'env_necb_15',
         'env_necb_30'
+    ]
+    ELECsystems_OEE = [
+        # 'MURBElectric_ElecResWH',
+        # 'MURBElectric_HPWH',
+        # 'MURBMixed_ElecResWH',
+        # 'MURBMixed_HPWH',
+        'SchoolElectric_ElecResWH',
+        # 'SchoolElectric_HPWH',
+        # 'SchoolMixed_ElecResWH',
+        # 'SchoolMixed_HPWH',
     ]
     SENSITIVITY_RUNS = False
     SENSITIVITY_PRIMARY_FUELS_PIVOT = [
@@ -42,6 +53,7 @@ def git_solution_sets():
     SENSITIVITY_PRIMARY_FUELS_PIVOT_OEE = [
         'NaturalGas'
         ]
+    SENSITIVITY_RUNS_ELECsystems_OEE = False #TODO Sara
     OPTIMIZATION_RUNS = False
     OPTIMIZATION_PRIMARY_FUELS_PIVOT = [
         'Electricity',
@@ -458,7 +470,8 @@ def git_solution_sets():
                         analysis_configuration[':reference_run'] = True
                         analysis_configuration[':output_meters'] = HOURLY_OUTPUT_METERS
 
-                        analysis_configuration[':analysis_name'] = f"OEEelec_BL_sen_{building_type}_{primary_heating_fuel}_{epw_file[1]}"
+                        # analysis_configuration[':analysis_name'] = f"OEEelec_BL_sen_{building_type}_{primary_heating_fuel}_{epw_file[1]}"
+                        analysis_configuration[':analysis_name'] = f"TEST"
                         analysis_folder = os.path.join(projects_folder, analysis_configuration[':analysis_name'])
                         pathlib.Path(analysis_folder).mkdir(parents=True, exist_ok=True)
                         f = open(os.path.join(analysis_folder, "input.yml"), 'w')
@@ -470,6 +483,131 @@ def git_solution_sets():
                                  output_folder=output_folder)
 
 
+
+
+    if SENSITIVITY_RUNS_ELECsystems_OEE:
+
+        OEE_scenario_template_file = pathlib.Path(os.path.join(pwd, 'OEE_scenario_yml_template.yml'))
+
+        # json OEE_scenario_filters  file for filtering options
+        OEE_scenario_filters_file = pathlib.Path(os.path.join(pwd, 'OEE_scenario_filters.json'))
+        # Open the yaml in analysis dict.
+        with open(OEE_scenario_filters_file, encoding='utf-8') as json_file:
+            OEE_scenario_filters = json.load(json_file)
+
+        for climate_zone in CLIMATE_ZONES:
+            for scenario in ELECsystems_OEE:
+                print('scenario is ', scenario)
+                if climate_zone == 'CZ_4':
+                    # sensitivity_template_file = pathlib.Path(os.path.join(pwd, scenario+'_cz4.yml'))
+                    epw_files = [
+                        ['CAN_BC_Vancouver.Intl.AP.718920_NRCv12022_TMY_GW1.5.epw', 'YVR'],  # CZ 4
+                    ]
+
+                elif climate_zone == 'CZ_5':
+                    # sensitivity_template_file = pathlib.Path(os.path.join(pwd, scenario+'_cz5.yml'))
+
+                    epw_files = [
+                        ['CAN_BC_Kelowna.Intl.AP.712030_NRCv12022_TMY_GW1.5.epw', 'YLW'],  # CZ 5
+                        ['CAN_ON_Toronto-Pearson.Intl.AP.716240_NRCv12022_TMY_GW1.5.epw', 'YYZ'],  # CZ 5
+                    ]
+
+                elif climate_zone == 'CZ_6':
+                    # sensitivity_template_file = pathlib.Path(os.path.join(pwd, scenario+'_cz6.yml'))
+
+                    epw_files = [
+                        ['CAN_ON_Ottawa-Macdonald-Cartier.Intl.AP.716280_NRCv12022_TMY_GW1.5.epw', 'YOW'],  # CZ 6
+                        ['CAN_QC_Montreal-Trudeau.Intl.AP.716270_NRCv12022_TMY_GW1.5.epw', 'YUL'],  # CZ 6
+                        ['CAN_NS_Halifax-Stanfield.Intl.AP.713950_NRCv12022_TMY_GW1.5.epw', 'YHZ'],  # CZ 6
+                        ['CAN_NL_St.Johns.Intl.AP.718010_NRCv12022_TMY_GW1.5.epw', 'YYT'],  # CZ 6
+                        ['CAN_PE_Charlottetown.AP.717060_NRCv12022_TMY_GW1.5.epw', 'YYG'],  # CZ 6
+                        ['CAN_NB_Fredericton.Intl.AP.717000_NRCv12022_TMY_GW1.5.epw', 'YFC'],  # CZ 6
+                    ]
+
+                elif climate_zone == 'CZ_7A':
+                    # sensitivity_template_file = pathlib.Path(os.path.join(pwd, scenario+'_cz7A.yml'))
+
+                    epw_files = [
+                        ['CAN_AB_Calgary.Intl.AP.718770_NRCv12022_TMY_GW1.5.epw', 'YYC'],  # CZ 7A
+                        ['CAN_AB_Edmonton.Intl.CS.711550_NRCv12022_TMY_GW1.5.epw', 'YEG'],  # CZ 7A
+                        ['CAN_SK_Saskatoon-Diefenbaker.Intl.AP.718660_NRCv12022_TMY_GW1.5.epw', 'YXE'],  # CZ 7A
+                        ['CAN_MB_Winnipeg-Richardson.Intl.AP.718520_NRCv12022_TMY_GW1.5.epw', 'YWG'],  # CZ 7A
+                    ]
+
+                OEE_scenario_template = yaml.safe_load(OEE_scenario_template_file.read_text())
+                print("Sara OEE_scenario_template: ", OEE_scenario_template)
+
+                if HOURLY:
+                    OEE_scenario_template[':output_meters'] = HOURLY_OUTPUT_METERS
+                    # sensitivity_template[':output_variables'] = HOURLY_OUTPUT_VARIABLES
+                else:  # turn off hourly output. Faster runs.
+                    OEE_scenario_template[':output_meters'] = []
+                    OEE_scenario_template[':output_variables'] = []
+
+                with open(sensitivity_template_file, 'w') as outfile:
+                    yaml.dump(OEE_scenario_template, outfile, default_flow_style=False)
+
+                for epw_file in epw_files:
+                    if scenario.startswith("School"):
+                        print('Scenario is school')
+                        list_building_type = ['PrimarySchool','SecondarySchool']
+                    elif scenario.startswith("MURB"):
+                        print('Scenario is MURB')
+                        list_building_type = ['LowriseApartment','MidriseApartment','HighriseApartment']
+
+                    for building_type in list_building_type:
+                        if building_type.endswith("School"):
+                            building_name = building_type.replace('School','')
+                        elif building_type.endswith("Apartment"):
+                            building_name = building_type.replace('Apartment','')
+
+                        for envelope in ENVELOPE:
+                            print('scenario: ',scenario)
+                            print('envelope: ',envelope)
+                            print('climate_zone: ',climate_zone)
+                            # Look up available options from OEE_scenario_filters.json for this type.
+                            result = list(filter(lambda OEE_scenario_filter: (
+                                    OEE_scenario_filter['scenario'] == scenario and
+                                    OEE_scenario_filter['envelope'] == envelope and
+                                    OEE_scenario_filter['climate_zone'] == climate_zone
+                                    # OEE_scenario_filter[''] ==  and
+                            ),OEE_scenario_filters))
+                            print('Sara ', result)
+                            print('Sara primary_heating_fuel', result[0][":primary_heating_fuel"])
+                            print('Sara ext_roof_cond', result[0][":ext_roof_cond"])
+                            print('Sara swh_fuel', result[0][":swh_fuel"])
+
+                            analysis_configuration = copy.deepcopy(OEE_scenario_template)
+                            analysis_configuration[':options'][':building_type'] = building_type
+                            analysis_configuration[':options'][':primary_heating_fuel'] = result[0][":primary_heating_fuel"]
+                            analysis_configuration[':options'][':ext_roof_cond'] = result[0][":ext_roof_cond"]
+                            analysis_configuration[':options'][':ext_wall_cond'] = result[0][":ext_wall_cond"]
+                            analysis_configuration[':options'][':fixed_window_cond'] = result[0][":fixed_window_cond"]
+                            analysis_configuration[':options'][':ground_floor_cond'] = result[0][":ground_floor_cond"]
+                            analysis_configuration[':options'][':skylight_cond'] = result[0][":skylight_cond"]
+                            analysis_configuration[':options'][':boiler_fuel'] = result[0][":boiler_fuel"]
+                            analysis_configuration[':options'][':hvac_system_primary'] = result[0][":hvac_system_primary"]
+                            analysis_configuration[':options'][':hvac_system_dwelling_units'] = result[0][":hvac_system_dwelling_units"]
+                            analysis_configuration[':options'][':swh_fuel'] = result[0][":swh_fuel"]
+                            analysis_configuration[':options'][':epw_file'] = [epw_file[0]]
+                            analysis_configuration[':algorithm_type'] = 'sensitivity'
+                            analysis_configuration[':reference_run'] = True
+                            analysis_configuration[':output_meters'] = HOURLY_OUTPUT_METERS
+
+                            analysis_configuration[':analysis_name'] = f"OEEelec_SC_{scenario}_{building_name}_{epw_file[1]}_{envelope}"
+                            print('Sara analysis name:', analysis_configuration[':analysis_name'])
+                            print('Sara analysis_configuration:', analysis_configuration)
+                            # print('Sara yml:', analysis_configuration)
+                            analysis_folder = os.path.join(projects_folder, analysis_configuration[':analysis_name'])
+                            pathlib.Path(analysis_folder).mkdir(parents=True, exist_ok=True)
+                            f = open(os.path.join(analysis_folder, "input.yml"), 'w')
+                            yaml.dump(analysis_configuration, f)
+
+                            # Submit analysis
+                            print(f"Running {analysis_configuration[':analysis_name']}")
+                            analysis(project_input_folder=analysis_folder,
+                                     build_config=build_config,
+                                     output_folder=output_folder)
 
 
 git_solution_sets()
