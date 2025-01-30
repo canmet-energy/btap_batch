@@ -13,6 +13,7 @@ def git_solution_sets():
     build_config = load_config(os.path.join(CONFIG_FOLDER, 'build_config.yml'))
     os.environ['BUILD_ENV_NAME'] =build_config['build_env_name']
 
+    OEE = True
     LEEP = False
     HOURLY = False
     CLIMATE_ZONES = [
@@ -54,6 +55,7 @@ def git_solution_sets():
         'NaturalGas'
         ]
     SCENARIO_RUNS_OEE = False
+    Baseline_RUNS_OEE = False
     OPTIMIZATION_RUNS = False
     OPTIMIZATION_PRIMARY_FUELS_PIVOT = [
         'Electricity',
@@ -180,6 +182,32 @@ def git_solution_sets():
         sensitivity_template[':output_variables'] = []
 
     lhs_template = copy.deepcopy(optimization_template)
+
+    if OEE:
+        epw_files_cz4 = [
+            ['CAN_BC_Vancouver.Intl.AP.718920_NRCv12022_TMY_GW1.5.epw', 'YVR'],  # CZ 4
+        ]
+
+        epw_files_cz5 = [
+            ['CAN_BC_Kelowna.Intl.AP.712030_NRCv12022_TMY_GW1.5.epw', 'YLW'],  # CZ 5
+            ['CAN_ON_Toronto-Pearson.Intl.AP.716240_NRCv12022_TMY_GW1.5.epw', 'YYZ'],  # CZ 5
+        ]
+
+        epw_files_cz6 = [
+            ['CAN_ON_Ottawa-Macdonald-Cartier.Intl.AP.716280_NRCv12022_TMY_GW1.5.epw', 'YOW'],  # CZ 6
+            ['CAN_QC_Montreal-Trudeau.Intl.AP.716270_NRCv12022_TMY_GW1.5.epw', 'YUL'],  # CZ 6
+            ['CAN_NS_Halifax-Stanfield.Intl.AP.713950_NRCv12022_TMY_GW1.5.epw', 'YHZ'],  # CZ 6
+            ['CAN_NL_St.Johns.Intl.AP.718010_NRCv12022_TMY_GW1.5.epw', 'YYT'],  # CZ 6
+            ['CAN_PE_Charlottetown.AP.717060_NRCv12022_TMY_GW1.5.epw', 'YYG'],  # CZ 6
+            ['CAN_NB_Fredericton.Intl.AP.717000_NRCv12022_TMY_GW1.5.epw', 'YFC'],  # CZ 6
+        ]
+
+        epw_files_cz7A = [
+            ['CAN_AB_Calgary.Intl.AP.718770_NRCv12022_TMY_GW1.5.epw', 'YYC'],  # CZ 7A
+            ['CAN_AB_Edmonton.Intl.CS.711550_NRCv12022_TMY_GW1.5.epw', 'YEG'],  # CZ 7A
+            ['CAN_SK_Saskatoon-Diefenbaker.Intl.AP.718660_NRCv12022_TMY_GW1.5.epw', 'YXE'],  # CZ 7A
+            ['CAN_MB_Winnipeg-Richardson.Intl.AP.718520_NRCv12022_TMY_GW1.5.epw', 'YWG'],  # CZ 7A
+        ]
 
     #LEEP Custom Options Overides
     if LEEP:
@@ -327,9 +355,7 @@ def git_solution_sets():
                         elif envelope == 'env_necb_30':
                             parametric_template_file = pathlib.Path(os.path.join(pwd, 'parametric_cz4_env_necb_less30.yml'))
 
-                        epw_files = [
-                            ['CAN_BC_Vancouver.Intl.AP.718920_NRCv12022_TMY_GW1.5.epw', 'YVR'],  # CZ 4
-                        ]
+                        epw_files = epw_files_cz4
 
                     elif climate_zone == 'CZ_5':
                         if envelope == 'env_necb':
@@ -339,10 +365,7 @@ def git_solution_sets():
                         elif envelope == 'env_necb_30':
                             parametric_template_file = pathlib.Path(os.path.join(pwd, 'parametric_cz5_env_necb_less30.yml'))
 
-                        epw_files = [
-                            ['CAN_BC_Kelowna.Intl.AP.712030_NRCv12022_TMY_GW1.5.epw', 'YLW'],  # CZ 5
-                            ['CAN_ON_Toronto-Pearson.Intl.AP.716240_NRCv12022_TMY_GW1.5.epw', 'YYZ'],  # CZ 5
-                        ]
+                        epw_files = epw_files_cz5
 
                     elif climate_zone == 'CZ_6':
                         if envelope == 'env_necb':
@@ -352,14 +375,7 @@ def git_solution_sets():
                         elif envelope == 'env_necb_30':
                             parametric_template_file = pathlib.Path(os.path.join(pwd, 'parametric_cz6_env_necb_less30.yml'))
 
-                        epw_files = [
-                            ['CAN_ON_Ottawa-Macdonald-Cartier.Intl.AP.716280_NRCv12022_TMY_GW1.5.epw', 'YOW'],  # CZ 6
-                            ['CAN_QC_Montreal-Trudeau.Intl.AP.716270_NRCv12022_TMY_GW1.5.epw', 'YUL'],  # CZ 6
-                            ['CAN_NS_Halifax-Stanfield.Intl.AP.713950_NRCv12022_TMY_GW1.5.epw', 'YHZ'],  # CZ 6
-                            ['CAN_NL_St.Johns.Intl.AP.718010_NRCv12022_TMY_GW1.5.epw', 'YYT'],  # CZ 6
-                            ['CAN_PE_Charlottetown.AP.717060_NRCv12022_TMY_GW1.5.epw', 'YYG'],  # CZ 6
-                            ['CAN_NB_Fredericton.Intl.AP.717000_NRCv12022_TMY_GW1.5.epw', 'YFC'],  # CZ 6
-                        ]
+                        epw_files = epw_files_cz6
 
                     elif climate_zone == 'CZ_7A':
                         if envelope == 'env_necb':
@@ -369,12 +385,7 @@ def git_solution_sets():
                         elif envelope == 'env_necb_30':
                             parametric_template_file = pathlib.Path(os.path.join(pwd, 'parametric_cz7A_env_necb_less30.yml'))
 
-                        epw_files = [
-                            ['CAN_AB_Calgary.Intl.AP.718770_NRCv12022_TMY_GW1.5.epw', 'YYC'],  # CZ 7A
-                            ['CAN_AB_Edmonton.Intl.CS.711550_NRCv12022_TMY_GW1.5.epw', 'YEG'],  # CZ 7A
-                            ['CAN_SK_Saskatoon-Diefenbaker.Intl.AP.718660_NRCv12022_TMY_GW1.5.epw', 'YXE'],  # CZ 7A
-                            ['CAN_MB_Winnipeg-Richardson.Intl.AP.718520_NRCv12022_TMY_GW1.5.epw', 'YWG'],  # CZ 7A
-                        ]
+                        epw_files = epw_files_cz7A
 
                     parametric_template = yaml.safe_load(parametric_template_file.read_text())
 
@@ -414,39 +425,23 @@ def git_solution_sets():
             for climate_zone in CLIMATE_ZONES:
                 if climate_zone == 'CZ_4':
                     sensitivity_template_file = pathlib.Path(os.path.join(pwd, 'sensitivity_cz4.yml'))
-                    epw_files = [
-                        ['CAN_BC_Vancouver.Intl.AP.718920_NRCv12022_TMY_GW1.5.epw', 'YVR'],  # CZ 4
-                    ]
+
+                    epw_files = epw_files_cz4
 
                 elif climate_zone == 'CZ_5':
                     sensitivity_template_file = pathlib.Path(os.path.join(pwd, 'sensitivity_cz5.yml'))
 
-                    epw_files = [
-                        ['CAN_BC_Kelowna.Intl.AP.712030_NRCv12022_TMY_GW1.5.epw', 'YLW'],  # CZ 5
-                        ['CAN_ON_Toronto-Pearson.Intl.AP.716240_NRCv12022_TMY_GW1.5.epw', 'YYZ'],  # CZ 5
-                    ]
+                    epw_files = epw_files_cz5
 
                 elif climate_zone == 'CZ_6':
                     sensitivity_template_file = pathlib.Path(os.path.join(pwd, 'sensitivity_cz6.yml'))
 
-                    epw_files = [
-                        ['CAN_ON_Ottawa-Macdonald-Cartier.Intl.AP.716280_NRCv12022_TMY_GW1.5.epw', 'YOW'],  # CZ 6
-                        ['CAN_QC_Montreal-Trudeau.Intl.AP.716270_NRCv12022_TMY_GW1.5.epw', 'YUL'],  # CZ 6
-                        ['CAN_NS_Halifax-Stanfield.Intl.AP.713950_NRCv12022_TMY_GW1.5.epw', 'YHZ'],  # CZ 6
-                        ['CAN_NL_St.Johns.Intl.AP.718010_NRCv12022_TMY_GW1.5.epw', 'YYT'],  # CZ 6
-                        ['CAN_PE_Charlottetown.AP.717060_NRCv12022_TMY_GW1.5.epw', 'YYG'],  # CZ 6
-                        ['CAN_NB_Fredericton.Intl.AP.717000_NRCv12022_TMY_GW1.5.epw', 'YFC'],  # CZ 6
-                    ]
+                    epw_files = epw_files_cz6
 
                 elif climate_zone == 'CZ_7A':
                     sensitivity_template_file = pathlib.Path(os.path.join(pwd, 'sensitivity_cz7A.yml'))
 
-                    epw_files = [
-                        ['CAN_AB_Calgary.Intl.AP.718770_NRCv12022_TMY_GW1.5.epw', 'YYC'],  # CZ 7A
-                        ['CAN_AB_Edmonton.Intl.CS.711550_NRCv12022_TMY_GW1.5.epw', 'YEG'],  # CZ 7A
-                        ['CAN_SK_Saskatoon-Diefenbaker.Intl.AP.718660_NRCv12022_TMY_GW1.5.epw', 'YXE'],  # CZ 7A
-                        ['CAN_MB_Winnipeg-Richardson.Intl.AP.718520_NRCv12022_TMY_GW1.5.epw', 'YWG'],  # CZ 7A
-                    ]
+                    epw_files = epw_files_cz7A
 
                 sensitivity_template = yaml.safe_load(sensitivity_template_file.read_text())
 
@@ -498,33 +493,16 @@ def git_solution_sets():
             for scenario in ELECsystems_OEE:
                 print('scenario is ', scenario)
                 if climate_zone == 'CZ_4':
-                    epw_files = [
-                        ['CAN_BC_Vancouver.Intl.AP.718920_NRCv12022_TMY_GW1.5.epw', 'YVR'],  # CZ 4
-                    ]
+                    epw_files = epw_files_cz4
 
                 elif climate_zone == 'CZ_5':
-                    epw_files = [
-                        ['CAN_BC_Kelowna.Intl.AP.712030_NRCv12022_TMY_GW1.5.epw', 'YLW'],  # CZ 5
-                        ['CAN_ON_Toronto-Pearson.Intl.AP.716240_NRCv12022_TMY_GW1.5.epw', 'YYZ'],  # CZ 5
-                    ]
+                    epw_files = epw_files_cz5
 
                 elif climate_zone == 'CZ_6':
-                    epw_files = [
-                        ['CAN_ON_Ottawa-Macdonald-Cartier.Intl.AP.716280_NRCv12022_TMY_GW1.5.epw', 'YOW'],  # CZ 6
-                        ['CAN_QC_Montreal-Trudeau.Intl.AP.716270_NRCv12022_TMY_GW1.5.epw', 'YUL'],  # CZ 6
-                        ['CAN_NS_Halifax-Stanfield.Intl.AP.713950_NRCv12022_TMY_GW1.5.epw', 'YHZ'],  # CZ 6
-                        ['CAN_NL_St.Johns.Intl.AP.718010_NRCv12022_TMY_GW1.5.epw', 'YYT'],  # CZ 6
-                        ['CAN_PE_Charlottetown.AP.717060_NRCv12022_TMY_GW1.5.epw', 'YYG'],  # CZ 6
-                        ['CAN_NB_Fredericton.Intl.AP.717000_NRCv12022_TMY_GW1.5.epw', 'YFC'],  # CZ 6
-                    ]
+                    epw_files = epw_files_cz6
 
                 elif climate_zone == 'CZ_7A':
-                    epw_files = [
-                        ['CAN_AB_Calgary.Intl.AP.718770_NRCv12022_TMY_GW1.5.epw', 'YYC'],  # CZ 7A
-                        ['CAN_AB_Edmonton.Intl.CS.711550_NRCv12022_TMY_GW1.5.epw', 'YEG'],  # CZ 7A
-                        ['CAN_SK_Saskatoon-Diefenbaker.Intl.AP.718660_NRCv12022_TMY_GW1.5.epw', 'YXE'],  # CZ 7A
-                        ['CAN_MB_Winnipeg-Richardson.Intl.AP.718520_NRCv12022_TMY_GW1.5.epw', 'YWG'],  # CZ 7A
-                    ]
+                    epw_files = epw_files_cz7A
 
                 OEE_scenario_template = yaml.safe_load(OEE_scenario_template_file.read_text())
 
@@ -539,11 +517,16 @@ def git_solution_sets():
 
                 for epw_file in epw_files:
                     if scenario.startswith("School"):
-                        print('Scenario is school')
-                        list_building_type = ['PrimarySchool'] #['PrimarySchool','SecondarySchool']
+                        list_building_type = [
+                            'PrimarySchool',
+                            'SecondarySchool'
+                        ]
                     elif scenario.startswith("MURB"):
-                        print('Scenario is MURB')
-                        list_building_type = ['LowriseApartment','MidriseApartment','HighriseApartment']
+                        list_building_type = [
+                            'LowriseApartment',
+                            'MidriseApartment',
+                            'HighriseApartment'
+                        ]
 
                     for building_type in list_building_type:
                         if building_type.endswith("School"):
@@ -552,9 +535,6 @@ def git_solution_sets():
                             building_name = building_type.replace('Apartment','')
 
                         for envelope in ENVELOPE:
-                            print('scenario: ',scenario)
-                            print('envelope: ',envelope)
-                            print('climate_zone: ',climate_zone)
                             # Look up available options from OEE_scenario_filters.json for this type.
                             result = list(filter(lambda OEE_scenario_filter: (
                                     OEE_scenario_filter['scenario'] == scenario and
@@ -582,7 +562,6 @@ def git_solution_sets():
 
                             analysis_configuration[':analysis_name'] = f"OEEelec_SC_{scenario}_{building_name}_{epw_file[1]}_{envelope}"
                             analysis_folder = os.path.join(projects_folder, analysis_configuration[':analysis_name'])
-                            print('analysis_folder: ', analysis_folder)
                             pathlib.Path(analysis_folder).mkdir(parents=True, exist_ok=True)
                             f = open(os.path.join(analysis_folder, "input.yml"), 'w')
                             yaml.dump(analysis_configuration, f)
@@ -595,5 +574,80 @@ def git_solution_sets():
 
 
 
+
+    if Baseline_RUNS_OEE:
+
+        OEE_baseline_template_file = pathlib.Path(os.path.join(pwd, 'OEE_baseline_yml_template.yml'))
+
+        # json OEE_baseline_filters  file for filtering options
+        OEE_baseline_filters_file = pathlib.Path(os.path.join(pwd, 'OEE_baseline_filters.json'))
+        # Open the yaml in analysis dict.
+        with open(OEE_baseline_filters_file, encoding='utf-8') as json_file:
+            OEE_baseline_filters = json.load(json_file)
+
+        for climate_zone in CLIMATE_ZONES:
+            if climate_zone == 'CZ_4':
+                epw_files = epw_files_cz4
+            elif climate_zone == 'CZ_5':
+                epw_files = epw_files_cz5
+            elif climate_zone == 'CZ_6':
+                epw_files = epw_files_cz6
+            elif climate_zone == 'CZ_7A':
+                epw_files = epw_files_cz7A
+
+            OEE_baseline_template = yaml.safe_load(OEE_baseline_template_file.read_text())
+
+            if HOURLY:
+                OEE_baseline_template[':output_meters'] = HOURLY_OUTPUT_METERS
+            else:  # turn off hourly output. Faster runs.
+                OEE_baseline_template[':output_meters'] = []
+                OEE_baseline_template[':output_variables'] = []
+
+            with open(OEE_baseline_template_file, 'w') as outfile:
+                yaml.dump(OEE_baseline_template, outfile, default_flow_style=False)
+
+            for epw_file in epw_files:
+                list_building_type = [
+                    'PrimarySchool',
+                    # 'SecondarySchool',
+                    # 'LowriseApartment',
+                    # 'MidriseApartment',
+                    # 'HighriseApartment'
+                ]
+
+                for building_type in list_building_type:
+
+                    for envelope in ENVELOPE:
+                        # Look up available options from OEE_baseline_filters.json for this type.
+                        result = list(filter(lambda OEE_baseline_filter: (
+                                OEE_baseline_filter['envelope'] == envelope and
+                                OEE_baseline_filter['climate_zone'] == climate_zone
+                        ), OEE_baseline_filters))
+
+                        analysis_configuration = copy.deepcopy(OEE_baseline_template)
+                        analysis_configuration[':options'][':building_type'] = [building_type]
+                        analysis_configuration[':options'][':primary_heating_fuel'] = [result[0][":primary_heating_fuel"]]
+                        analysis_configuration[':options'][':ext_roof_cond'] = [result[0][":ext_roof_cond"]]
+                        analysis_configuration[':options'][':ext_wall_cond'] = [result[0][":ext_wall_cond"]]
+                        analysis_configuration[':options'][':fixed_window_cond'] = [result[0][":fixed_window_cond"]]
+                        analysis_configuration[':options'][':ground_floor_cond'] = [result[0][":ground_floor_cond"]]
+                        analysis_configuration[':options'][':skylight_cond'] = [result[0][":skylight_cond"]]
+                        analysis_configuration[':options'][':erv_package'] = [result[0][":erv_package"]]
+                        analysis_configuration[':options'][':epw_file'] = [epw_file[0]]
+                        analysis_configuration[':algorithm_type'] = 'parametric'
+                        analysis_configuration[':reference_run'] = False
+                        analysis_configuration[':output_meters'] = HOURLY_OUTPUT_METERS
+
+                        analysis_configuration[':analysis_name'] = f"OEEelec_BL_{building_type}_{epw_file[1]}_{envelope}"
+                        analysis_folder = os.path.join(projects_folder, analysis_configuration[':analysis_name'])
+                        pathlib.Path(analysis_folder).mkdir(parents=True, exist_ok=True)
+                        f = open(os.path.join(analysis_folder, "input.yml"), 'w')
+                        yaml.dump(analysis_configuration, f)
+
+                        # Submit analysis
+                        print(f"Running {analysis_configuration[':analysis_name']}")
+                        analysis(project_input_folder=analysis_folder,
+                                 build_config=build_config,
+                                 output_folder=output_folder)
 
 git_solution_sets()
