@@ -1335,5 +1335,7 @@ This will select the algorithm to use in the analysis. \n\n
             - type: string
               enum:
                 - NECB_Default
+            - type: boolean
+              enum:
                 - True
                 - False
