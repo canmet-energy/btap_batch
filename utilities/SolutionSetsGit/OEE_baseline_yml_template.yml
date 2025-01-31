@@ -3,6 +3,8 @@
   - NECB_Default
   :airloop_economizer_type:
   - NECB_Default
+  :airloop_fancoils_heating:
+  - NECB_Default
   :baseline_system_zones_map_option:
   - NECB_Default
   :boiler_cap_ratio:

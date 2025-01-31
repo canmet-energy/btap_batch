@@ -28,11 +28,11 @@ def git_solution_sets():
         'env_necb_30'
     ]
     ELECsystems_OEE = [
-        # 'MURBElectric_ElecResWH',
+        'MURBElectric_ElecResWH',
         # 'MURBElectric_HPWH',
         # 'MURBMixed_ElecResWH',
         # 'MURBMixed_HPWH',
-        'SchoolElectric_ElecResWH',
+        # 'SchoolElectric_ElecResWH',
         # 'SchoolElectric_HPWH',
         # 'SchoolMixed_ElecResWH',
         # 'SchoolMixed_HPWH',
@@ -519,13 +519,13 @@ def git_solution_sets():
                     if scenario.startswith("School"):
                         list_building_type = [
                             'PrimarySchool',
-                            'SecondarySchool'
+                            # 'SecondarySchool'
                         ]
                     elif scenario.startswith("MURB"):
                         list_building_type = [
                             'LowriseApartment',
-                            'MidriseApartment',
-                            'HighriseApartment'
+                            # 'MidriseApartment',
+                            # 'HighriseApartment'
                         ]
 
                     for building_type in list_building_type:
@@ -555,6 +555,7 @@ def git_solution_sets():
                             analysis_configuration[':options'][':hvac_system_primary'] = [result[0][":hvac_system_primary"]]
                             analysis_configuration[':options'][':hvac_system_dwelling_units'] = [result[0][":hvac_system_dwelling_units"]]
                             analysis_configuration[':options'][':swh_fuel'] = [result[0][":swh_fuel"]]
+                            analysis_configuration[':options'][':airloop_fancoils_heating'] = [result[0][":airloop_fancoils_heating"]]
                             analysis_configuration[':options'][':epw_file'] = [epw_file[0]]
                             analysis_configuration[':algorithm_type'] = 'parametric'
                             analysis_configuration[':reference_run'] = False
