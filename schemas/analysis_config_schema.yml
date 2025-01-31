@@ -1376,3 +1376,18 @@ This will select the algorithm to use in the analysis. \n\n
                 - MZ BU RTU Hot Water Heating Coil Centrifugal Chiller and Hot Water Baseboard
                 - MZ BU RTU Hot Water Heating Coil Rotary Screw Chiller and Hot Water Baseboard
                 - MZ BU RTU Hot Water Heating Coil Reciprocating Chiller and Hot Water Baseboard
+
+      :airloop_fancoils_heating:
+        description: "Forces air loops to use fan coils for heating rather than gas or electric heating coils.  Set this
+        to True if that is what is intended.  Otherwise, leave it as NECB_Default or False and the air loop heating
+        coil will be set as per the system type and primary heating fuel.  If an ASHP is specified this will cause the
+        supplemental heating coil to by a fan coil."
+        items:
+          anyOf:
+            - type: string
+              enum:
+                - NECB_Default
+            - type: boolean
+              enum:
+                - True
+                - False
