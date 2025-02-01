@@ -1344,6 +1344,7 @@
     ":boiler_fuel": "ElectricityGasBackup",
     ":hvac_system_primary": "PSZ MAU Hot Water and DX Coils and Hot Water Baseboard with PTAC",
     ":hvac_system_dwelling_units": "PSZ MAU Hot Water and DX Coils and Hot Water Baseboard with PTAC",
+    ":swh_fuel": "Electricity",
     ":airloop_fancoils_heating": "NECB_Default"
   },
   {
