@@ -27,22 +27,38 @@ def git_solution_sets():
         'env_necb_15',
         'env_necb_30'
     ]
-    ELECsystems_OEE = [
-        'MURBElectric_ElecResWH',
-        'MURBMixed_ElecResWH',
-        'MURBASHPElectric_ElecResWH',
-        'MURBASHPMixed_ElecResWH',
-        'SchoolElectric_ElecResWH',
-        'SchoolMixed_ElecResWH',
-        'SchoolASHPElectric_ElecResWH',
-        'SchoolASHPMixed_ElecResWH',
-        'CASHPElectric_ElecResWH',
-        'CASHPMixed_ElecResWH',
-        'CGSHPElectric_ElecResWH',
-        'CGSHPMixed_ElecResWH',
-        'VRFElectricBoiler_ElecResWH',
-        'VRFMixedBoiler_ElecResWH',
-        'VRFElectricResBackup_ElecResWH'
+    ELECsystems_OEE = [ #TODO: exclude CASHP, and HPWH
+        # 'MURBElec_ElecResWH',
+        # 'MURBMixed_ElecResWH',
+        # 'MURBASHPElec_ElecResWH',
+        # 'MURBASHPMixed_ElecResWH',
+        # 'SchoolElec_ElecResWH',
+        # 'SchoolMixed_ElecResWH',
+        # 'SchoolASHPElec_ElecResWH',
+        # 'SchoolASHPMixed_ElecResWH',
+        ### 'CASHPElec_ElecResWH',
+        ### 'CASHPMixed_ElecResWH',
+        # 'CGSHPElec_ElecResWH',
+        # 'CGSHPMixed_ElecResWH',
+        # 'VRFElecBoiler_ElecResWH',
+        # 'VRFMixedBoiler_ElecResWH',
+        # 'VRFElecResBackup_ElecResWH',
+
+        # 'MURBElec_HPWH',
+        # 'MURBMixed_HPWH',
+        # 'MURBASHPElec_HPWH',
+        # 'MURBASHPMixed_HPWH',
+        # 'SchoolElec_HPWH',
+        # 'SchoolMixed_HPWH',
+        # 'SchoolASHPElec_HPWH',
+        # 'SchoolASHPMixed_HPWH',
+        # 'CASHPElec_HPWH',
+        # 'CASHPMixed_HPWH',
+        # 'CGSHPElec_HPWH',
+        # 'CGSHPMixed_HPWH',
+        # 'VRFElecBoiler_HPWH',
+        # 'VRFMixedBoiler_HPWH',
+        # 'VRFElecResBackup_HPWH'
     ]
     SENSITIVITY_RUNS = False
     SENSITIVITY_PRIMARY_FUELS_PIVOT = [
