@@ -1,0 +1,137 @@
+[
+   {
+    "index": 1,
+    "scenario": "MURBElectric_ElecResWH",
+    ":ecm_system_name": "NECB_Default",
+    ":primary_heating_fuel": "Electricity",
+    ":boiler_fuel": "Electricity",
+    ":swh_fuel": "Electricity",
+    ":airloop_fancoils_heating": "NECB_Default"
+  },
+ {
+    "index": 2,
+    "scenario": "MURBMixed_ElecResWH",
+    ":ecm_system_name": "NECB_Default",
+    ":primary_heating_fuel": "Electricity",
+    ":boiler_fuel": "ElectricityGasBackup",
+    ":swh_fuel": "Electricity",
+    ":airloop_fancoils_heating": "NECB_Default"
+  },
+ {
+    "index": 3,
+    "scenario": "MURBASHPElectric_ElecResWH",
+    ":ecm_system_name": "HS11_ASHP_PTHP",
+    ":primary_heating_fuel": "Electricity",
+    ":boiler_fuel": "Electricity",
+    ":swh_fuel": "Electricity",
+    ":airloop_fancoils_heating": "NECB_Default"
+  },
+ {
+    "index": 4,
+    "scenario": "MURBASHPMixed_ElecResWH",
+    ":ecm_system_name": "HS11_ASHP_PTHP",
+    ":primary_heating_fuel": "Electricity",
+    ":boiler_fuel": "ElectricityGasBackup",
+    ":swh_fuel": "Electricity",
+    ":airloop_fancoils_heating": true
+  },
+  {
+    "index": 5,
+    "scenario": "SchoolElectric_ElecResWH",
+    ":ecm_system_name": "NECB_Default",
+    ":primary_heating_fuel": "Electricity",
+    ":boiler_fuel": "Electricity",
+    ":swh_fuel": "Electricity",
+    ":airloop_fancoils_heating": "NECB_Default"
+  },
+ {
+    "index": 6,
+    "scenario": "SchoolMixed_ElecResWH",
+    ":ecm_system_name": "NECB_Default",
+    ":primary_heating_fuel": "Electricity",
+    ":boiler_fuel": "ElectricityGasBackup",
+    ":swh_fuel": "Electricity",
+    ":airloop_fancoils_heating": true
+  },
+ {
+    "index": 7,
+    "scenario": "SchoolASHPElectric_ElecResWH",
+    ":ecm_system_name": "HS11_ASHP_PTHP",
+    ":primary_heating_fuel": "Electricity",
+    ":boiler_fuel": "Electricity",
+    ":swh_fuel": "Electricity",
+    ":airloop_fancoils_heating": "NECB_Default"
+  },
+ {
+    "index": 8,
+    "scenario": "SchoolASHPMixed_ElecResWH",
+    ":ecm_system_name": "HS11_ASHP_PTHP",
+    ":primary_heating_fuel": "Electricity",
+    ":boiler_fuel": "ElectricityGasBackup",
+    ":swh_fuel": "Electricity",
+    ":airloop_fancoils_heating": true
+  },
+ {
+    "index": 9,
+    "scenario": "CASHPElectric_ElecResWH",
+    ":ecm_system_name": "HS15_CASHP_FanCoils",
+    ":primary_heating_fuel": "Electricity",
+    ":boiler_fuel": "Electricity",
+    ":swh_fuel": "Electricity",
+    ":airloop_fancoils_heating": "NECB_Default"
+  },
+ {
+    "index": 10,
+    "scenario": "CASHPMixed_ElecResWH",
+    ":ecm_system_name": "HS15_CASHP_FanCoils",
+    ":primary_heating_fuel": "Electricity",
+    ":boiler_fuel": "ElectricityGasBackup",
+    ":swh_fuel": "Electricity",
+    ":airloop_fancoils_heating": "NECB_Default"
+  },
+ {
+    "index": 11,
+    "scenario": "CGSHPElectric_ElecResWH",
+    ":ecm_system_name": "HS14_CGSHP_FanCoils",
+    ":primary_heating_fuel": "Electricity",
+    ":boiler_fuel": "Electricity",
+    ":swh_fuel": "Electricity",
+    ":airloop_fancoils_heating": "NECB_Default"
+  },
+ {
+    "index": 12,
+    "scenario": "CGSHPMixed_ElecResWH",
+    ":ecm_system_name": "HS14_CGSHP_FanCoils",
+    ":primary_heating_fuel": "Electricity",
+    ":boiler_fuel": "ElectricityGasBackup",
+    ":swh_fuel": "Electricity",
+    ":airloop_fancoils_heating": "NECB_Default"
+  },
+ {
+    "index": 13,
+    "scenario": "VRFElectricBoiler_ElecResWH",
+    ":ecm_system_name": "HS08_CCASHP_VRF",
+    ":primary_heating_fuel": "Electricity",
+    ":boiler_fuel": "Electricity",
+    ":swh_fuel": "Electricity",
+    ":airloop_fancoils_heating": "NECB_Default"
+  },
+ {
+    "index": 14,
+    "scenario": "VRFMixedBoiler_ElecResWH",
+    ":ecm_system_name": "HS08_CCASHP_VRF",
+    ":primary_heating_fuel": "Electricity",
+    ":boiler_fuel": "ElectricityGasBackup",
+    ":swh_fuel": "Electricity",
+    ":airloop_fancoils_heating": true
+  },
+ {
+    "index": 15,
+    "scenario": "VRFElectricResBackup_ElecResWH",
+    ":ecm_system_name": "HS08_CCASHP_VRF",
+    ":primary_heating_fuel": "Electricity",
+    ":boiler_fuel": "NECB_Default",
+    ":swh_fuel": "Electricity",
+    ":airloop_fancoils_heating": "NECB_Default"
+  }
+]

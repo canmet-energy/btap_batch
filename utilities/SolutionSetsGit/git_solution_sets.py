@@ -18,24 +18,31 @@ def git_solution_sets():
     HOURLY = False
     CLIMATE_ZONES = [
         'CZ_4',
-        # 'CZ_5',
-        # 'CZ_6',
-        # 'CZ_7A'
+        'CZ_5',
+        'CZ_6',
+        'CZ_7A'
     ]
     ENVELOPE = [
-        # 'env_necb',
-        # 'env_necb_15',
+        'env_necb',
+        'env_necb_15',
         'env_necb_30'
     ]
     ELECsystems_OEE = [
         'MURBElectric_ElecResWH',
-        # 'MURBElectric_HPWH',
-        # 'MURBMixed_ElecResWH',
-        # 'MURBMixed_HPWH',
-        # 'SchoolElectric_ElecResWH',
-        # 'SchoolElectric_HPWH',
-        # 'SchoolMixed_ElecResWH',
-        # 'SchoolMixed_HPWH',
+        'MURBMixed_ElecResWH',
+        'MURBASHPElectric_ElecResWH',
+        'MURBASHPMixed_ElecResWH',
+        'SchoolElectric_ElecResWH',
+        'SchoolMixed_ElecResWH',
+        'SchoolASHPElectric_ElecResWH',
+        'SchoolASHPMixed_ElecResWH',
+        'CASHPElectric_ElecResWH',
+        'CASHPMixed_ElecResWH',
+        'CGSHPElectric_ElecResWH',
+        'CGSHPMixed_ElecResWH',
+        'VRFElectricBoiler_ElecResWH',
+        'VRFMixedBoiler_ElecResWH',
+        'VRFElectricResBackup_ElecResWH'
     ]
     SENSITIVITY_RUNS = False
     SENSITIVITY_PRIMARY_FUELS_PIVOT = [
@@ -483,11 +490,18 @@ def git_solution_sets():
 
         OEE_scenario_template_file = pathlib.Path(os.path.join(pwd, 'OEE_scenario_yml_template.yml'))
 
-        # json OEE_scenario_filters  file for filtering options
-        OEE_scenario_filters_file = pathlib.Path(os.path.join(pwd, 'OEE_scenario_filters.json'))
+        # json OEE_scenario_system_filters  file for filtering options
+        OEE_scenario_system_filters_file = pathlib.Path(os.path.join(pwd, 'OEE_scenario_system_filters.json'))
         # Open the yaml in analysis dict.
-        with open(OEE_scenario_filters_file, encoding='utf-8') as json_file:
-            OEE_scenario_filters = json.load(json_file)
+        with open(OEE_scenario_system_filters_file, encoding='utf-8') as json_file:
+            OEE_scenario_system_filters = json.load(json_file)
+
+        # json OEE_scenario_envelope_filters  file for filtering options
+        OEE_scenario_envelope_filters_file = pathlib.Path(os.path.join(pwd, 'OEE_scenario_envelope_filters.json'))
+        # Open the yaml in analysis dict.
+        with open(OEE_scenario_envelope_filters_file, encoding='utf-8') as json_file:
+            OEE_scenario_envelope_filters = json.load(json_file)
+
 
         for climate_zone in CLIMATE_ZONES:
             for scenario in ELECsystems_OEE:
@@ -519,13 +533,21 @@ def git_solution_sets():
                     if scenario.startswith("School"):
                         list_building_type = [
                             'PrimarySchool',
-                            # 'SecondarySchool'
+                            'SecondarySchool'
                         ]
                     elif scenario.startswith("MURB"):
                         list_building_type = [
                             'LowriseApartment',
-                            # 'MidriseApartment',
-                            # 'HighriseApartment'
+                            'MidriseApartment',
+                            'HighriseApartment'
+                        ]
+                    else:
+                        list_building_type = [
+                            'LowriseApartment',
+                            'MidriseApartment',
+                            'HighriseApartment',
+                            'PrimarySchool',
+                            'SecondarySchool'
                         ]
 
                     for building_type in list_building_type:
@@ -535,27 +557,32 @@ def git_solution_sets():
                             building_name = building_type.replace('Apartment','')
 
                         for envelope in ENVELOPE:
-                            # Look up available options from OEE_scenario_filters.json for this type.
-                            result = list(filter(lambda OEE_scenario_filter: (
-                                    OEE_scenario_filter['scenario'] == scenario and
-                                    OEE_scenario_filter['envelope'] == envelope and
-                                    OEE_scenario_filter['climate_zone'] == climate_zone
-                                    # OEE_scenario_filter[''] ==  and
-                            ),OEE_scenario_filters))
+                            # Look up available options from OEE_scenario_system_filters.json for this type.
+                            result_system = list(filter(lambda OEE_scenario_system_filter: (
+                                    OEE_scenario_system_filter['scenario'] == scenario
+                            ),OEE_scenario_system_filters))
+
+                            # Look up available options from OEE_scenario_envelope_filters.json for this type.
+                            result_envelope = list(filter(lambda OEE_scenario_envelope_filter: (
+                                    OEE_scenario_envelope_filter['envelope'] == envelope and
+                                    OEE_scenario_envelope_filter['climate_zone'] == climate_zone
+                            ),OEE_scenario_envelope_filters))
 
                             analysis_configuration = copy.deepcopy(OEE_scenario_template)
+
+                            analysis_configuration[':options'][':ecm_system_name'] = [result_system[0][":ecm_system_name"]]
+                            analysis_configuration[':options'][':primary_heating_fuel'] = [result_system[0][":primary_heating_fuel"]]
+                            analysis_configuration[':options'][':boiler_fuel'] = [result_system[0][":boiler_fuel"]]
+                            analysis_configuration[':options'][':swh_fuel'] = [result_system[0][":swh_fuel"]]
+                            analysis_configuration[':options'][':airloop_fancoils_heating'] = [result_system[0][":airloop_fancoils_heating"]]
+
+                            analysis_configuration[':options'][':ext_roof_cond'] = [result_envelope[0][":ext_roof_cond"]]
+                            analysis_configuration[':options'][':ext_wall_cond'] = [result_envelope[0][":ext_wall_cond"]]
+                            analysis_configuration[':options'][':fixed_window_cond'] = [result_envelope[0][":fixed_window_cond"]]
+                            analysis_configuration[':options'][':ground_floor_cond'] = [result_envelope[0][":ground_floor_cond"]]
+                            analysis_configuration[':options'][':skylight_cond'] = [result_envelope[0][":skylight_cond"]]
+
                             analysis_configuration[':options'][':building_type'] = [building_type]
-                            analysis_configuration[':options'][':primary_heating_fuel'] = [result[0][":primary_heating_fuel"]]
-                            analysis_configuration[':options'][':ext_roof_cond'] = [result[0][":ext_roof_cond"]]
-                            analysis_configuration[':options'][':ext_wall_cond'] = [result[0][":ext_wall_cond"]]
-                            analysis_configuration[':options'][':fixed_window_cond'] = [result[0][":fixed_window_cond"]]
-                            analysis_configuration[':options'][':ground_floor_cond'] = [result[0][":ground_floor_cond"]]
-                            analysis_configuration[':options'][':skylight_cond'] = [result[0][":skylight_cond"]]
-                            analysis_configuration[':options'][':boiler_fuel'] = [result[0][":boiler_fuel"]]
-                            analysis_configuration[':options'][':hvac_system_primary'] = [result[0][":hvac_system_primary"]]
-                            analysis_configuration[':options'][':hvac_system_dwelling_units'] = [result[0][":hvac_system_dwelling_units"]]
-                            analysis_configuration[':options'][':swh_fuel'] = [result[0][":swh_fuel"]]
-                            analysis_configuration[':options'][':airloop_fancoils_heating'] = [result[0][":airloop_fancoils_heating"]]
                             analysis_configuration[':options'][':epw_file'] = [epw_file[0]]
                             analysis_configuration[':algorithm_type'] = 'parametric'
                             analysis_configuration[':reference_run'] = False
@@ -610,10 +637,10 @@ def git_solution_sets():
             for epw_file in epw_files:
                 list_building_type = [
                     'PrimarySchool',
-                    # 'SecondarySchool',
-                    # 'LowriseApartment',
-                    # 'MidriseApartment',
-                    # 'HighriseApartment'
+                    'SecondarySchool',
+                    'LowriseApartment',
+                    'MidriseApartment',
+                    'HighriseApartment'
                 ]
 
                 for building_type in list_building_type:
