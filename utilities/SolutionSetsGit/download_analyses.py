@@ -150,15 +150,141 @@ def download_analyses(bucket='834599497928',
 
 
 
-download_analyses(bucket='834599497928',
-                  prefix='sgilani/',  # S3 prefix MUST have a trailing /
-                  target_path=r'D:/BTAP/OEE_Electrification/PrimarySchool_baselines',  # Your local download folder.
-                  hourly_csv=False,  # download hourly.csv zip
-                  in_osm=True,  # download osm zip
-                  eplusout_sql=False,  # download sqlite files zip
-                  eplustbl_htm=False,  # download e+ htm report zip
-                  concat_excel_files=True,  # concat all output.xlsx files to a master.csv and parquet file
-                  regex_filter='OEEelec_PrimarySchool_NaturalGas_\S\S\S_par.*',  # an example that gets MidriseApartment from Toronto except the vintage analyses
-                  unzip_and_delete=False,  # This will unzip the zip files of all the above into a folder and delete the original zip file.
-                  dry_run=False  # If set to true.. will do a dry run and not download anything. This is used to make sure your regex is working as intended.
-                  )
+# download_analyses(bucket='834599497928',
+#                   prefix='sgilani/',  # S3 prefix MUST have a trailing /
+#                   target_path=r'C:/Users/sgilani/OneDrive - NRCan RNCan/Documents/BTAP/OEE-2024/Simulation/AWS-runs/Scenarios',  # Your local download folder.
+#                   hourly_csv=False,  # download hourly.csv zip
+#                   in_osm=False,  # download osm zip
+#                   eplusout_sql=False,  # download sqlite files zip
+#                   eplustbl_htm=False,  # download e+ htm report zip
+#                   concat_excel_files=False,  # concat all output.xlsx files to a master.csv and parquet file
+#                   regex_filter='OEEelec_SC_SchoolElec_ElecResWH_Primary_\S\S\S_env_*',#'OEEelec_SC_MURBElec_ElecResWH_Lowrise_\S\S\S_env_*',  # an example that gets MidriseApartment from Toronto except the vintage analyses
+#                   unzip_and_delete=False,  # This will unzip the zip files of all the above into a folder and delete the original zip file.
+#                   dry_run=True  # If set to true.. will do a dry run and not download anything. This is used to make sure your regex is working as intended.
+#                   )
+
+
+
+
+#=======================================================================================================================
+#### Download OEE outputs one by one, as the 'download_analyses' did not download all cases
+# First, create a list of all scenarios
+list_analysis_name = []
+ENVELOPE = [
+        'env_necb',
+        # 'env_necb_15',
+        # 'env_necb_30'
+    ]
+ELECsystems_OEE = [
+        # 'MURBElec_ElecResWH',
+        # 'MURBMixed_ElecResWH',
+        # 'MURBASHPElec_ElecResWH', #OK
+        'MURBASHPMixed_ElecResWH',
+        # 'SchoolElec_ElecResWH',
+        # 'SchoolMixed_ElecResWH',
+        # 'SchoolASHPElec_ElecResWH',
+        # 'SchoolASHPMixed_ElecResWH',
+        ### 'CASHPElec_ElecResWH',
+        ### 'CASHPMixed_ElecResWH',
+        # 'CGSHPElec_ElecResWH',
+        # 'CGSHPMixed_ElecResWH',
+        # 'VRFElecBoiler_ElecResWH',
+        # 'VRFMixedBoiler_ElecResWH',
+        # 'VRFElecResBackup_ElecResWH',
+
+        # 'MURBElec_HPWH',
+        # 'MURBMixed_HPWH',
+        # 'MURBASHPElec_HPWH',
+        # 'MURBASHPMixed_HPWH',
+        # 'SchoolElec_HPWH',
+        # 'SchoolMixed_HPWH',
+        # 'SchoolASHPElec_HPWH',
+        # 'SchoolASHPMixed_HPWH',
+        # 'CASHPElec_HPWH',
+        # 'CASHPMixed_HPWH',
+        # 'CGSHPElec_HPWH',
+        # 'CGSHPMixed_HPWH',
+        # 'VRFElecBoiler_HPWH',
+        # 'VRFMixedBoiler_HPWH',
+        # 'VRFElecResBackup_HPWH'
+    ]
+epw_files = [
+    # ['CAN_BC_Vancouver.Intl.AP.718920_NRCv12022_TMY_GW1.5.epw', 'YVR'],  # CZ 4
+    #
+    # ['CAN_BC_Kelowna.Intl.AP.712030_NRCv12022_TMY_GW1.5.epw', 'YLW'],  # CZ 5
+    # ['CAN_ON_Toronto-Pearson.Intl.AP.716240_NRCv12022_TMY_GW1.5.epw', 'YYZ'],  # CZ 5
+
+    # ['CAN_ON_Ottawa-Macdonald-Cartier.Intl.AP.716280_NRCv12022_TMY_GW1.5.epw', 'YOW'],  # CZ 6
+    # ['CAN_QC_Montreal-Trudeau.Intl.AP.716270_NRCv12022_TMY_GW1.5.epw', 'YUL'],  # CZ 6
+    # ['CAN_NS_Halifax-Stanfield.Intl.AP.713950_NRCv12022_TMY_GW1.5.epw', 'YHZ'],  # CZ 6
+    # ['CAN_NL_St.Johns.Intl.AP.718010_NRCv12022_TMY_GW1.5.epw', 'YYT'],  # CZ 6
+    # ['CAN_PE_Charlottetown.AP.717060_NRCv12022_TMY_GW1.5.epw', 'YYG'],  # CZ 6
+    # ['CAN_NB_Fredericton.Intl.AP.717000_NRCv12022_TMY_GW1.5.epw', 'YFC'],  # CZ 6
+
+    # ['CAN_AB_Calgary.Intl.AP.718770_NRCv12022_TMY_GW1.5.epw', 'YYC'],  # CZ 7A
+    ['CAN_AB_Edmonton.Intl.CS.711550_NRCv12022_TMY_GW1.5.epw', 'YEG'],  # CZ 7A
+    # ['CAN_SK_Saskatoon-Diefenbaker.Intl.AP.718660_NRCv12022_TMY_GW1.5.epw', 'YXE'],  # CZ 7A
+    # ['CAN_MB_Winnipeg-Richardson.Intl.AP.718520_NRCv12022_TMY_GW1.5.epw', 'YWG'],  # CZ 7A
+]
+for scenario in ELECsystems_OEE:
+    for epw_file in epw_files:
+        if scenario.startswith("School"):
+            list_building_type = [
+                'PrimarySchool',
+                'SecondarySchool'
+            ]
+        elif scenario.startswith("MURB"):
+            list_building_type = [
+                'LowriseApartment',
+                'MidriseApartment',
+                'HighriseApartment'
+            ]
+        else:
+            list_building_type = [
+                # 'LowriseApartment',
+                # 'MidriseApartment',
+                'HighriseApartment',
+                # 'PrimarySchool',
+                # 'SecondarySchool'
+            ]
+
+        for building_type in list_building_type:
+            if building_type.endswith("School"):
+                building_name = building_type.replace('School', '')
+            elif building_type.endswith("Apartment"):
+                building_name = building_type.replace('Apartment', '')
+
+            for envelope in ENVELOPE:
+                analysis_name = f"OEEelec_SC_{scenario}_{building_name}_{epw_file[1]}_{envelope}/"
+                list_analysis_name.append(analysis_name)
+print(list_analysis_name)
+print(len(list_analysis_name))
+
+### 'OEEelec_SC_MURBASHPMixed_ElecResWH_Highrise_YEG_env_necb/'
+for analysis_name in list_analysis_name:
+    download_analyses(bucket='834599497928',
+                      prefix='sgilani/',
+                      target_path=r'C:/Users/sgilani/OneDrive - NRCan RNCan/Documents/BTAP/OEE-2024/Simulation/AWS-runs/TEST',
+                      hourly_csv=False,
+                      in_osm=False,
+                      eplusout_sql=False,
+                      eplustbl_htm=False,
+                      concat_excel_files=False,
+                      regex_filter=analysis_name,
+                      unzip_and_delete=False,
+                      dry_run=False
+                      )
+
+    # # analysis_name = 'OEEelec_SC_MURBASHPMixed_ElecResWH_Highrise_YEG_env_necb/'
+    # key='sgilani/'+analysis_name
+    # bucket='834599497928'
+    # target_path=r'C:/Users/sgilani/OneDrive - NRCan RNCan/Documents/BTAP/OEE-2024/Simulation/AWS-runs/TEST'
+    #
+    # print('key', key)
+    #
+    # filetype = 'output.xlsx'
+    # source_zip_file = os.path.join(key, 'results', filetype).replace('\\', '/')
+    # target_zip_basename = os.path.join(target_path, os.path.basename(os.path.dirname(key)) + "_" + filetype)
+    # S3().download_file(s3_file=source_zip_file, bucket_name=bucket, target_path=target_zip_basename)
+
+#=======================================================================================================================
