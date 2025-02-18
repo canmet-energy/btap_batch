@@ -18,13 +18,13 @@ def git_solution_sets():
     HOURLY = False
     CLIMATE_ZONES = [
         'CZ_4',
-        'CZ_5',
-        'CZ_6',
-        'CZ_7A'
+        # 'CZ_5',
+        # 'CZ_6',
+        # 'CZ_7A'
     ]
     ENVELOPE = [
-        'env_necb',
-        'env_necb_15',
+        # 'env_necb',
+        # 'env_necb_15',
         'env_necb_30'
     ]
     ELECsystems_OEE = [ #TODO: exclude CASHP, and HPWH
@@ -58,7 +58,15 @@ def git_solution_sets():
         # 'CGSHPMixed_HPWH',
         # 'VRFElecBoiler_HPWH',
         # 'VRFMixedBoiler_HPWH',
-        # 'VRFElecResBackup_HPWH'
+        # 'VRFElecResBackup_HPWH',
+
+        'MURBMixed_ElecResWH_0199',
+        # 'MURBASHPMixed_ElecResWH_0199',
+        # 'SchoolMixed_ElecResWH_0199',
+        # 'SchoolASHPMixed_ElecResWH_0199',
+        # 'CGSHPMixed_ElecResWH_0199',
+        # 'VRFMixedBoiler_ElecResWH_0199'
+
     ]
     SENSITIVITY_RUNS = False
     SENSITIVITY_PRIMARY_FUELS_PIVOT = [
@@ -77,7 +85,7 @@ def git_solution_sets():
     SENSITIVITY_PRIMARY_FUELS_PIVOT_OEE = [
         'NaturalGas'
         ]
-    SCENARIO_RUNS_OEE = False
+    SCENARIO_RUNS_OEE = True
     Baseline_RUNS_OEE = False
     OPTIMIZATION_RUNS = False
     OPTIMIZATION_PRIMARY_FUELS_PIVOT = [
@@ -549,21 +557,21 @@ def git_solution_sets():
                     if scenario.startswith("School"):
                         list_building_type = [
                             'PrimarySchool',
-                            'SecondarySchool'
+                            # 'SecondarySchool'
                         ]
                     elif scenario.startswith("MURB"):
                         list_building_type = [
                             'LowriseApartment',
-                            'MidriseApartment',
-                            'HighriseApartment'
+                            # 'MidriseApartment',
+                            # 'HighriseApartment'
                         ]
                     else:
                         list_building_type = [
                             'LowriseApartment',
-                            'MidriseApartment',
-                            'HighriseApartment',
-                            'PrimarySchool',
-                            'SecondarySchool'
+                            # 'MidriseApartment',
+                            # 'HighriseApartment',
+                            # 'PrimarySchool',
+                            # 'SecondarySchool'
                         ]
 
                     for building_type in list_building_type:
@@ -591,6 +599,7 @@ def git_solution_sets():
                             analysis_configuration[':options'][':boiler_fuel'] = [result_system[0][":boiler_fuel"]]
                             analysis_configuration[':options'][':swh_fuel'] = [result_system[0][":swh_fuel"]]
                             analysis_configuration[':options'][':airloop_fancoils_heating'] = [result_system[0][":airloop_fancoils_heating"]]
+                            analysis_configuration[':options'][':boiler_cap_ratio'] = [result_system[0][":boiler_cap_ratio"]]
 
                             analysis_configuration[':options'][':ext_roof_cond'] = [result_envelope[0][":ext_roof_cond"]]
                             analysis_configuration[':options'][':ext_wall_cond'] = [result_envelope[0][":ext_wall_cond"]]
@@ -604,7 +613,18 @@ def git_solution_sets():
                             analysis_configuration[':reference_run'] = False
                             analysis_configuration[':output_meters'] = HOURLY_OUTPUT_METERS
 
-                            analysis_configuration[':analysis_name'] = f"OEEelec_SC_{scenario}_{building_name}_{epw_file[1]}_{envelope}"
+                            if scenario.endswith("_0199"):
+                                if building_type.endswith("School"):
+                                    if building_name == "Primary":
+                                        building_name = building_name.replace('Primary', 'Pri')
+                                    elif building_name == "Secondary":
+                                        building_name = building_name.replace('Secondary', 'Sec')
+                                elif building_type.endswith("Apartment"):
+                                    building_name = building_name.replace('rise', '')
+                                analysis_configuration[':analysis_name'] = f"OEEelec_SC_{scenario}_{building_name}_{epw_file[1]}_{envelope}"
+                            else:
+                                analysis_configuration[':analysis_name'] = f"OEEelec_SC_{scenario}_{building_name}_{epw_file[1]}_{envelope}"
+
                             analysis_folder = os.path.join(projects_folder, analysis_configuration[':analysis_name'])
                             pathlib.Path(analysis_folder).mkdir(parents=True, exist_ok=True)
                             f = open(os.path.join(analysis_folder, "input.yml"), 'w')
