@@ -986,7 +986,20 @@ This will select the algorithm to use in the analysis. \n\n
               maximum: 2050
       :npv_discount_rate:
         description: " 
-        An integer (year) less than 2051 (last year of neb_end_use_prices.csv).
+        A decimal value between 0 and 1. The discount rate applied when calculating utility npv.
+        NECB_Default: Will set it to 0.03.
+        "
+        items:
+          anyOf:
+            - type: string
+              enum:
+                - NECB_Default # default will set to 0.03
+            - type: number
+              minimum: 0.0
+              maximum: 1.0
+      :npv_discount_rate_carbon:
+        description: " 
+        A decimal value between 0 and 1. The discount rate applied when calculating carbon npv.
         NECB_Default: Will set it to 0.03.
         "
         items:
