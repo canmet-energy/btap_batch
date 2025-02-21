@@ -73,6 +73,8 @@
   - NECB_Default
   :npv_discount_rate:
   - 0.07
+  :npv_discount_rate_carbon:
+  - 0.03
   :npv_end_year:
   - 2044
   :npv_start_year:
