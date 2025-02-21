@@ -176,21 +176,21 @@ ENVELOPE = [
         'env_necb_30'
     ]
 ELECsystems_OEE = [
-        'MURBElec_ElecResWH',
-        'MURBMixed_ElecResWH',
-        'MURBASHPElec_ElecResWH',
-        'MURBASHPMixed_ElecResWH',
-        'SchoolElec_ElecResWH',
-        'SchoolMixed_ElecResWH',
-        'SchoolASHPElec_ElecResWH',
-        'SchoolASHPMixed_ElecResWH',
-        ### 'CASHPElec_ElecResWH',
-        ### 'CASHPMixed_ElecResWH',
-        'CGSHPElec_ElecResWH',
-        'CGSHPMixed_ElecResWH',
-        'VRFElecBoiler_ElecResWH',
-        'VRFMixedBoiler_ElecResWH',
-        'VRFElecResBackup_ElecResWH',
+        # 'MURBElec_ElecResWH',
+        # 'MURBMixed_ElecResWH',
+        # 'MURBASHPElec_ElecResWH',
+        # 'MURBASHPMixed_ElecResWH',
+        # 'SchoolElec_ElecResWH',
+        # 'SchoolMixed_ElecResWH',
+        # 'SchoolASHPElec_ElecResWH',
+        # 'SchoolASHPMixed_ElecResWH',
+        # ### 'CASHPElec_ElecResWH',
+        # ### 'CASHPMixed_ElecResWH',
+        # 'CGSHPElec_ElecResWH',
+        # 'CGSHPMixed_ElecResWH',
+        # 'VRFElecBoiler_ElecResWH',
+        # 'VRFMixedBoiler_ElecResWH',
+        # 'VRFElecResBackup_ElecResWH',
 
         ### 'MURBElec_HPWH',
         ### 'MURBMixed_HPWH',
@@ -206,7 +206,14 @@ ELECsystems_OEE = [
         ### 'CGSHPMixed_HPWH',
         ### 'VRFElecBoiler_HPWH',
         ### 'VRFMixedBoiler_HPWH',
-        ### 'VRFElecResBackup_HPWH'
+        ### 'VRFElecResBackup_HPWH',
+
+        'MURBMixed_ElecResWH_0199',
+        'MURBASHPMixed_ElecResWH_0199',
+        'SchoolMixed_ElecResWH_0199',
+        'SchoolASHPMixed_ElecResWH_0199',
+        'CGSHPMixed_ElecResWH_0199',
+        'VRFMixedBoiler_ElecResWH_0199'
     ]
 epw_files = [
     ['CAN_BC_Vancouver.Intl.AP.718920_NRCv12022_TMY_GW1.5.epw', 'YVR'],  # CZ 4
@@ -255,7 +262,17 @@ for scenario in ELECsystems_OEE:
                 building_name = building_type.replace('Apartment', '')
 
             for envelope in ENVELOPE:
-                analysis_name = f"OEEelec_SC_{scenario}_{building_name}_{epw_file[1]}_{envelope}/"
+                if scenario.endswith("_0199"):
+                    if building_type.endswith("School"):
+                        if building_name == "Primary":
+                            building_name = building_name.replace('Primary', 'Pri')
+                        elif building_name == "Secondary":
+                            building_name = building_name.replace('Secondary', 'Sec')
+                    elif building_type.endswith("Apartment"):
+                        building_name = building_name.replace('rise', '')
+                    analysis_name = f"OEEelec_SC_{scenario}_{building_name}_{epw_file[1]}_{envelope}"
+                else:
+                    analysis_name = f"OEEelec_SC_{scenario}_{building_name}_{epw_file[1]}_{envelope}"
                 list_analysis_name.append(analysis_name)
 print(list_analysis_name)
 print(len(list_analysis_name))
@@ -263,6 +280,7 @@ print(len(list_analysis_name))
 ### 'OEEelec_SC_MURBASHPMixed_ElecResWH_Highrise_YEG_env_necb/'
 datapoint_number = 0.0
 for analysis_name in list_analysis_name:
+    print('analysis_name', analysis_name)
     print(datapoint_number, analysis_name)
     # download_analyses(bucket='834599497928',
     #                   prefix='sgilani/',
@@ -278,16 +296,15 @@ for analysis_name in list_analysis_name:
     #                   )
     datapoint_number += 1.0
 
-    # analysis_name = 'OEEelec_SC_MURBASHPMixed_ElecResWH_Highrise_YEG_env_necb/'
-    key='sgilani/'+analysis_name
+    key='sgilani/'
     bucket='834599497928'
     target_path=r'C:/Users/sgilani/OneDrive - NRCan RNCan/Documents/BTAP/OEE-2024/Simulation/AWS-runs/Scenarios'
 
-    print('key', key)
-
     filetype = 'output.xlsx'
-    source_zip_file = os.path.join(key, 'results', filetype).replace('\\', '/')
-    target_zip_basename = os.path.join(target_path, os.path.basename(os.path.dirname(key)) + "_" + filetype)
+    source_zip_file = os.path.join(key, analysis_name, 'results', filetype).replace('\\', '/')
+    print('source_zip_file', source_zip_file)
+    target_zip_basename = os.path.join(target_path, analysis_name+'.xlsx')
+    print('target_zip_basename', target_zip_basename)
     S3().download_file(s3_file=source_zip_file, bucket_name=bucket, target_path=target_zip_basename)
 
 #=======================================================================================================================
