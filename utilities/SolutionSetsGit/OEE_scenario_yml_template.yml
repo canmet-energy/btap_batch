@@ -91,6 +91,8 @@
   - NECB_Default
   :occupancy_loads_scale:
   - NECB_Default
+  :oerd_utility_pricing:
+  - true
   :overhead_door_cond:
   - NECB_Default
   :primary_heating_fuel:
@@ -126,6 +128,8 @@
   :swh_fuel:
   - NECB_Default
   :template:
+  - NECB2020
+  :utility_pricing_year:
   - NECB2020
 :output_meters: []
 :output_variables: []
