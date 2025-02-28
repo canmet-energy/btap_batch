@@ -1038,7 +1038,20 @@ This will select the algorithm to use in the analysis. \n\n
               maximum: 2050
       :npv_discount_rate:
         description: " 
-        An integer (year) less than 2051 (last year of neb_end_use_prices.csv).
+        A decimal value between 0 and 1. The discount rate applied when calculating utility npv.
+        NECB_Default: Will set it to 0.03.
+        "
+        items:
+          anyOf:
+            - type: string
+              enum:
+                - NECB_Default # default will set to 0.03
+            - type: number
+              minimum: 0.0
+              maximum: 1.0
+      :npv_discount_rate_carbon:
+        description: " 
+        A decimal value between 0 and 1. The discount rate applied when calculating carbon npv.
         NECB_Default: Will set it to 0.03.
         "
         items:
@@ -1391,3 +1404,29 @@ This will select the algorithm to use in the analysis. \n\n
               enum:
                 - True
                 - False
+      :oerd_utility_pricing:
+        description: "Uses OERD collected utility pricing rather than NEB pricing.  Also allows for peak electricity pricing.
+        Set this to true to use OERD collected utility prices.  Otherwise leave it as NECB_Default or false."
+        items:
+          anyOf:
+            - type: string
+              enum:
+                - NECB_Default
+            - type: boolean
+              enum:
+                - True
+                - False
+      :utility_pricing_year:
+        description: " 
+        Choose the year for single year utility price estimates.  NOTE, this will not affect NPV calculations.  For NEB utility pricing
+        you can select from 2005 to 2050.  For OERCD pricing, you can select from 2020 to 2100.
+        NECB Default will set this to 2020.
+        "
+        items:
+          anyOf:
+            - type: string
+              enum:
+                - NECB_Default # Will set to 2022
+            - type: number
+              minimum: 2005
+              maximum: 2100
