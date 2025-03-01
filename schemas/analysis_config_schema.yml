@@ -375,7 +375,7 @@ This will select the algorithm to use in the analysis. \n\n
                 - HS12_ASHP_Baseboard
                 - HS13_ASHP_VRF
                 - HS14_CGSHP_FanCoils
-                - HS15_CASHP_FanCoils
+                - HS15_CAWHP_FanCoils
                 - HS16_ASHP_CAWHP_FanCoils
 
       :chiller_type:
