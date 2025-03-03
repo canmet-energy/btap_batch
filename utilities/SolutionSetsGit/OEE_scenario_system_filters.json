@@ -81,8 +81,8 @@
   },
  {
     "index": 9,
-    "scenario": "CASHPElec_ElecResWH",
-    ":ecm_system_name": "HS15_CASHP_FanCoils",
+    "scenario": "CAWHPElec_ElecResWH",
+    ":ecm_system_name": "HS15_CAWHP_FanCoils",
     ":primary_heating_fuel": "Electricity",
     ":boiler_fuel": "Electricity",
     ":swh_fuel": "Electricity",
@@ -91,8 +91,8 @@
   },
  {
     "index": 10,
-    "scenario": "CASHPMixed_ElecResWH",
-    ":ecm_system_name": "HS15_CASHP_FanCoils",
+    "scenario": "CAWHPMixed_ElecResWH",
+    ":ecm_system_name": "HS15_CAWHP_FanCoils",
     ":primary_heating_fuel": "Electricity",
     ":boiler_fuel": "ElectricityGasBackup",
     ":swh_fuel": "Electricity",
@@ -101,6 +101,26 @@
   },
  {
     "index": 11,
+    "scenario": "CAWASHPElec_ElecResWH",
+    ":ecm_system_name": "HS16_ASHP_CAWHP_FanCoils",
+    ":primary_heating_fuel": "Electricity",
+    ":boiler_fuel": "Electricity",
+    ":swh_fuel": "Electricity",
+    ":airloop_fancoils_heating": "NECB_Default",
+    ":boiler_cap_ratio": "NECB_Default"
+  },
+ {
+    "index": 12,
+    "scenario": "CAWASHPMixed_ElecResWH",
+    ":ecm_system_name": "HS16_ASHP_CAWHP_FanCoils",
+    ":primary_heating_fuel": "Electricity",
+    ":boiler_fuel": "ElectricityGasBackup",
+    ":swh_fuel": "Electricity",
+    ":airloop_fancoils_heating": "NECB_Default",
+    ":boiler_cap_ratio": "NECB_Default"
+  },
+ {
+    "index": 13,
     "scenario": "CGSHPElec_ElecResWH",
     ":ecm_system_name": "HS14_CGSHP_FanCoils",
     ":primary_heating_fuel": "Electricity",
@@ -110,7 +130,7 @@
     ":boiler_cap_ratio": "NECB_Default"
   },
  {
-    "index": 12,
+    "index": 14,
     "scenario": "CGSHPMixed_ElecResWH",
     ":ecm_system_name": "HS14_CGSHP_FanCoils",
     ":primary_heating_fuel": "Electricity",
@@ -120,7 +140,7 @@
     ":boiler_cap_ratio": "NECB_Default"
   },
  {
-    "index": 13,
+    "index": 15,
     "scenario": "VRFElecBoiler_ElecResWH",
     ":ecm_system_name": "HS08_CCASHP_VRF",
     ":primary_heating_fuel": "Electricity",
@@ -130,7 +150,7 @@
     ":boiler_cap_ratio": "NECB_Default"
   },
  {
-    "index": 14,
+    "index": 16,
     "scenario": "VRFMixedBoiler_ElecResWH",
     ":ecm_system_name": "HS08_CCASHP_VRF",
     ":primary_heating_fuel": "Electricity",
@@ -140,7 +160,7 @@
     ":boiler_cap_ratio": "NECB_Default"
   },
  {
-    "index": 15,
+    "index": 17,
     "scenario": "VRFElecResBackup_ElecResWH",
     ":ecm_system_name": "HS08_CCASHP_VRF",
     ":primary_heating_fuel": "Electricity",
@@ -155,7 +175,7 @@
 
 
   {
-    "index": 16,
+    "index": 18,
     "scenario": "MURBElec_HPWH",
     ":ecm_system_name": "NECB_Default",
     ":primary_heating_fuel": "Electricity",
@@ -165,7 +185,7 @@
     ":boiler_cap_ratio": "NECB_Default"
   },
  {
-    "index": 17,
+    "index": 19,
     "scenario": "MURBMixed_HPWH",
     ":ecm_system_name": "NECB_Default",
     ":primary_heating_fuel": "Electricity",
@@ -175,7 +195,7 @@
     ":boiler_cap_ratio": "NECB_Default"
   },
  {
-    "index": 18,
+    "index": 20,
     "scenario": "MURBASHPElec_HPWH",
     ":ecm_system_name": "HS11_ASHP_PTHP",
     ":primary_heating_fuel": "Electricity",
@@ -185,7 +205,7 @@
     ":boiler_cap_ratio": "NECB_Default"
   },
  {
-    "index": 19,
+    "index": 21,
     "scenario": "MURBASHPMixed_HPWH",
     ":ecm_system_name": "HS11_ASHP_PTHP",
     ":primary_heating_fuel": "Electricity",
@@ -195,7 +215,7 @@
     ":boiler_cap_ratio": "NECB_Default"
   },
   {
-    "index": 20,
+    "index": 22,
     "scenario": "SchoolElec_HPWH",
     ":ecm_system_name": "NECB_Default",
     ":primary_heating_fuel": "Electricity",
@@ -205,7 +225,7 @@
     ":boiler_cap_ratio": "NECB_Default"
   },
  {
-    "index": 21,
+    "index": 23,
     "scenario": "SchoolMixed_HPWH",
     ":ecm_system_name": "NECB_Default",
     ":primary_heating_fuel": "Electricity",
@@ -215,7 +235,7 @@
     ":boiler_cap_ratio": "NECB_Default"
   },
  {
-    "index": 22,
+    "index": 24,
     "scenario": "SchoolASHPElec_HPWH",
     ":ecm_system_name": "HS11_ASHP_PTHP",
     ":primary_heating_fuel": "Electricity",
@@ -225,7 +245,7 @@
     ":boiler_cap_ratio": "NECB_Default"
   },
  {
-    "index": 23,
+    "index": 25,
     "scenario": "SchoolASHPMixed_HPWH",
     ":ecm_system_name": "HS11_ASHP_PTHP",
     ":primary_heating_fuel": "Electricity",
@@ -235,9 +255,9 @@
     ":boiler_cap_ratio": "NECB_Default"
   },
  {
-    "index": 24,
-    "scenario": "CASHPElec_HPWH",
-    ":ecm_system_name": "HS15_CASHP_FanCoils",
+    "index": 26,
+    "scenario": "CAWHPElec_HPWH",
+    ":ecm_system_name": "HS15_CAWHP_FanCoils",
     ":primary_heating_fuel": "Electricity",
     ":boiler_fuel": "Electricity",
     ":swh_fuel": "HeatPump",
@@ -245,9 +265,9 @@
     ":boiler_cap_ratio": "NECB_Default"
   },
  {
-    "index": 25,
-    "scenario": "CASHPMixed_HPWH",
-    ":ecm_system_name": "HS15_CASHP_FanCoils",
+    "index": 27,
+    "scenario": "CAWHPMixed_HPWH",
+    ":ecm_system_name": "HS15_CAWHP_FanCoils",
     ":primary_heating_fuel": "Electricity",
     ":boiler_fuel": "ElectricityGasBackup",
     ":swh_fuel": "HeatPump",
@@ -255,7 +275,27 @@
     ":boiler_cap_ratio": "NECB_Default"
   },
  {
-    "index": 26,
+    "index": 28,
+    "scenario": "CAWASHPElec_HPWH",
+    ":ecm_system_name": "HS16_ASHP_CAWHP_FanCoils",
+    ":primary_heating_fuel": "Electricity",
+    ":boiler_fuel": "Electricity",
+    ":swh_fuel": "HeatPump",
+    ":airloop_fancoils_heating": "NECB_Default",
+    ":boiler_cap_ratio": "NECB_Default"
+  },
+ {
+    "index": 29,
+    "scenario": "CAWASHPMixed_HPWH",
+    ":ecm_system_name": "HS16_ASHP_CAWHP_FanCoils",
+    ":primary_heating_fuel": "Electricity",
+    ":boiler_fuel": "ElectricityGasBackup",
+    ":swh_fuel": "HeatPump",
+    ":airloop_fancoils_heating": "NECB_Default",
+    ":boiler_cap_ratio": "NECB_Default"
+  },
+ {
+    "index": 30,
     "scenario": "CGSHPElec_HPWH",
     ":ecm_system_name": "HS14_CGSHP_FanCoils",
     ":primary_heating_fuel": "Electricity",
@@ -265,7 +305,7 @@
     ":boiler_cap_ratio": "NECB_Default"
   },
  {
-    "index": 27,
+    "index": 31,
     "scenario": "CGSHPMixed_HPWH",
     ":ecm_system_name": "HS14_CGSHP_FanCoils",
     ":primary_heating_fuel": "Electricity",
@@ -275,7 +315,7 @@
     ":boiler_cap_ratio": "NECB_Default"
   },
  {
-    "index": 28,
+    "index": 32,
     "scenario": "VRFElecBoiler_HPWH",
     ":ecm_system_name": "HS08_CCASHP_VRF",
     ":primary_heating_fuel": "Electricity",
@@ -285,7 +325,7 @@
     ":boiler_cap_ratio": "NECB_Default"
   },
  {
-    "index": 29,
+    "index": 33,
     "scenario": "VRFMixedBoiler_HPWH",
     ":ecm_system_name": "HS08_CCASHP_VRF",
     ":primary_heating_fuel": "Electricity",
@@ -295,7 +335,7 @@
     ":boiler_cap_ratio": "NECB_Default"
   },
  {
-    "index": 30,
+    "index": 34,
     "scenario": "VRFElecResBackup_HPWH",
     ":ecm_system_name": "HS08_CCASHP_VRF",
     ":primary_heating_fuel": "Electricity",
@@ -307,8 +347,9 @@
 
 
 
+
  {
-    "index": 31,
+    "index": 35,
     "scenario": "MURBMixed_ElecResWH_0199",
     ":ecm_system_name": "NECB_Default",
     ":primary_heating_fuel": "Electricity",
@@ -318,7 +359,7 @@
     ":boiler_cap_ratio": "1-99"
   },
  {
-    "index": 32,
+    "index": 36,
     "scenario": "MURBASHPMixed_ElecResWH_0199",
     ":ecm_system_name": "HS11_ASHP_PTHP",
     ":primary_heating_fuel": "Electricity",
@@ -328,7 +369,7 @@
     ":boiler_cap_ratio": "1-99"
   },
  {
-    "index": 33,
+    "index": 37,
     "scenario": "SchoolMixed_ElecResWH_0199",
     ":ecm_system_name": "NECB_Default",
     ":primary_heating_fuel": "Electricity",
@@ -338,7 +379,7 @@
     ":boiler_cap_ratio": "1-99"
   },
   {
-    "index": 34,
+    "index": 38,
     "scenario": "SchoolASHPMixed_ElecResWH_0199",
     ":ecm_system_name": "HS11_ASHP_PTHP",
     ":primary_heating_fuel": "Electricity",
@@ -348,7 +389,7 @@
     ":boiler_cap_ratio": "1-99"
   },
  {
-    "index": 35,
+    "index": 39,
     "scenario": "CGSHPMixed_ElecResWH_0199",
     ":ecm_system_name": "HS14_CGSHP_FanCoils",
     ":primary_heating_fuel": "Electricity",
@@ -358,7 +399,7 @@
     ":boiler_cap_ratio": "1-99"
   },
  {
-    "index": 36,
+    "index": 40,
     "scenario": "VRFMixedBoiler_ElecResWH_0199",
     ":ecm_system_name": "HS08_CCASHP_VRF",
     ":primary_heating_fuel": "Electricity",
