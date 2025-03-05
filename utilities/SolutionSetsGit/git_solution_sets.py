@@ -27,7 +27,7 @@ def git_solution_sets():
         # 'env_necb_15',
         'env_necb_30'
     ]
-    ELECsystems_OEE = [ #TODO: exclude CASHP, and HPWH
+    ELECsystems_OEE = [ #TODO: exclude CAWHP and AWASHP as costing is under development
         # 'MURBElec_ElecResWH',
         # 'MURBMixed_ElecResWH',
         # 'MURBASHPElec_ElecResWH',
@@ -69,7 +69,24 @@ def git_solution_sets():
         # 'SchoolMixed_ElecResWH_0199',
         # 'SchoolASHPMixed_ElecResWH_0199',
         # 'CGSHPMixed_ElecResWH_0199',
-        # 'VRFMixedBoiler_ElecResWH_0199'
+        # 'VRFMixedBoiler_ElecResWH_0199',
+
+        # 'MURBMixed_ElecResWH_5050',
+        # 'MURBASHPMixed_ElecResWH_5050',
+        # 'SchoolMixed_ElecResWH_5050',
+        # 'SchoolASHPMixed_ElecResWH_5050',
+        # 'CAWHPMixed_ElecResWH_5050',
+        # 'CAWASHPMixed_ElecResWH_5050',
+        # 'CGSHPMixed_ElecResWH_5050',
+        # 'VRFMixedBoiler_ElecResWH_5050',
+        # 'MURBMixed_HPWH_5050',
+        # 'MURBASHPMixed_HPWH_5050',
+        # 'SchoolMixed_HPWH_5050',
+        # 'SchoolASHPMixed_HPWH_5050',
+        # 'CAWHPMixed_HPWH_5050',
+        # 'CAWASHPMixed_HPWH_5050',
+        # 'CGSHPMixed_HPWH_5050',
+        # 'VRFMixedBoiler_HPWH_5050',
 
     ]
     SENSITIVITY_RUNS = False
