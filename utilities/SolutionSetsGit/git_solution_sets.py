@@ -634,7 +634,7 @@ def git_solution_sets():
                             analysis_configuration[':reference_run'] = False
                             analysis_configuration[':output_meters'] = HOURLY_OUTPUT_METERS
 
-                            if scenario.endswith("_0199"):
+                            if (scenario.endswith("_0199")) | (scenario.endswith("_5050")):
                                 if building_type.endswith("School"):
                                     if building_name == "Primary":
                                         building_name = building_name.replace('Primary', 'Pri')
