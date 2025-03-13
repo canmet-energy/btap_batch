@@ -348,78 +348,14 @@
 
 
 
- {
+
+
+
+
+
+
+  {
     "index": 35,
-    "scenario": "MURBMixed_ElecResWH_0199",
-    ":ecm_system_name": "NECB_Default",
-    ":primary_heating_fuel": "Electricity",
-    ":boiler_fuel": "ElectricityGasBackup",
-    ":swh_fuel": "Electricity",
-    ":airloop_fancoils_heating": "NECB_Default",
-    ":boiler_cap_ratio": "1-99"
-  },
- {
-    "index": 36,
-    "scenario": "MURBASHPMixed_ElecResWH_0199",
-    ":ecm_system_name": "HS11_ASHP_PTHP",
-    ":primary_heating_fuel": "Electricity",
-    ":boiler_fuel": "ElectricityGasBackup",
-    ":swh_fuel": "Electricity",
-    ":airloop_fancoils_heating": true,
-    ":boiler_cap_ratio": "1-99"
-  },
- {
-    "index": 37,
-    "scenario": "SchoolMixed_ElecResWH_0199",
-    ":ecm_system_name": "NECB_Default",
-    ":primary_heating_fuel": "Electricity",
-    ":boiler_fuel": "ElectricityGasBackup",
-    ":swh_fuel": "Electricity",
-    ":airloop_fancoils_heating": true,
-    ":boiler_cap_ratio": "1-99"
-  },
-  {
-    "index": 38,
-    "scenario": "SchoolASHPMixed_ElecResWH_0199",
-    ":ecm_system_name": "HS11_ASHP_PTHP",
-    ":primary_heating_fuel": "Electricity",
-    ":boiler_fuel": "ElectricityGasBackup",
-    ":swh_fuel": "Electricity",
-    ":airloop_fancoils_heating": true,
-    ":boiler_cap_ratio": "1-99"
-  },
- {
-    "index": 39,
-    "scenario": "CGSHPMixed_ElecResWH_0199",
-    ":ecm_system_name": "HS14_CGSHP_FanCoils",
-    ":primary_heating_fuel": "Electricity",
-    ":boiler_fuel": "ElectricityGasBackup",
-    ":swh_fuel": "Electricity",
-    ":airloop_fancoils_heating": "NECB_Default",
-    ":boiler_cap_ratio": "1-99"
-  },
- {
-    "index": 40,
-    "scenario": "VRFMixedBoiler_ElecResWH_0199",
-    ":ecm_system_name": "HS08_CCASHP_VRF",
-    ":primary_heating_fuel": "Electricity",
-    ":boiler_fuel": "ElectricityGasBackup",
-    ":swh_fuel": "Electricity",
-    ":airloop_fancoils_heating": true,
-    ":boiler_cap_ratio": "1-99"
-  },
-
-
-
-
-
-
-
-
-
-
-  {
-    "index": 41,
     "scenario": "MURBMixed_ElecResWH_5050",
     ":ecm_system_name": "NECB_Default",
     ":primary_heating_fuel": "Electricity",
@@ -429,7 +365,7 @@
     ":boiler_cap_ratio": "50-50"
   },
  {
-    "index": 42,
+    "index": 36,
     "scenario": "MURBASHPMixed_ElecResWH_5050",
     ":ecm_system_name": "HS11_ASHP_PTHP",
     ":primary_heating_fuel": "Electricity",
@@ -439,7 +375,7 @@
     ":boiler_cap_ratio": "50-50"
   },
  {
-    "index": 43,
+    "index": 37,
     "scenario": "SchoolMixed_ElecResWH_5050",
     ":ecm_system_name": "NECB_Default",
     ":primary_heating_fuel": "Electricity",
@@ -449,7 +385,7 @@
     ":boiler_cap_ratio": "50-50"
   },
   {
-    "index": 44,
+    "index": 38,
     "scenario": "SchoolASHPMixed_ElecResWH_5050",
     ":ecm_system_name": "HS11_ASHP_PTHP",
     ":primary_heating_fuel": "Electricity",
@@ -459,7 +395,7 @@
     ":boiler_cap_ratio": "50-50"
   },
   {
-    "index": 45,
+    "index": 39,
     "scenario": "CAWHPMixed_ElecResWH_5050",
     ":ecm_system_name": "HS15_CAWHP_FanCoils",
     ":primary_heating_fuel": "Electricity",
@@ -469,7 +405,7 @@
     ":boiler_cap_ratio": "50-50"
   },
  {
-    "index": 46,
+    "index": 40,
     "scenario": "CAWASHPMixed_ElecResWH_5050",
     ":ecm_system_name": "HS16_ASHP_CAWHP_FanCoils",
     ":primary_heating_fuel": "Electricity",
@@ -479,7 +415,7 @@
     ":boiler_cap_ratio": "50-50"
   },
  {
-    "index": 47,
+    "index": 41,
     "scenario": "CGSHPMixed_ElecResWH_5050",
     ":ecm_system_name": "HS14_CGSHP_FanCoils",
     ":primary_heating_fuel": "Electricity",
@@ -489,7 +425,7 @@
     ":boiler_cap_ratio": "50-50"
   },
  {
-    "index": 48,
+    "index": 42,
     "scenario": "VRFMixedBoiler_ElecResWH_5050",
     ":ecm_system_name": "HS08_CCASHP_VRF",
     ":primary_heating_fuel": "Electricity",
@@ -502,7 +438,7 @@
 
 
   {
-    "index": 49,
+    "index": 43,
     "scenario": "MURBMixed_HPWH_5050",
     ":ecm_system_name": "NECB_Default",
     ":primary_heating_fuel": "Electricity",
@@ -512,7 +448,7 @@
     ":boiler_cap_ratio": "50-50"
   },
  {
-    "index": 50,
+    "index": 44,
     "scenario": "MURBASHPMixed_HPWH_5050",
     ":ecm_system_name": "HS11_ASHP_PTHP",
     ":primary_heating_fuel": "Electricity",
@@ -522,7 +458,7 @@
     ":boiler_cap_ratio": "50-50"
   },
  {
-    "index": 51,
+    "index": 45,
     "scenario": "SchoolMixed_HPWH_5050",
     ":ecm_system_name": "NECB_Default",
     ":primary_heating_fuel": "Electricity",
@@ -532,7 +468,7 @@
     ":boiler_cap_ratio": "50-50"
   },
   {
-    "index": 52,
+    "index": 46,
     "scenario": "SchoolASHPMixed_HPWH_5050",
     ":ecm_system_name": "HS11_ASHP_PTHP",
     ":primary_heating_fuel": "Electricity",
@@ -542,7 +478,7 @@
     ":boiler_cap_ratio": "50-50"
   },
   {
-    "index": 53,
+    "index": 47,
     "scenario": "CAWHPMixed_HPWH_5050",
     ":ecm_system_name": "HS15_CAWHP_FanCoils",
     ":primary_heating_fuel": "Electricity",
@@ -552,7 +488,7 @@
     ":boiler_cap_ratio": "50-50"
   },
  {
-    "index": 54,
+    "index": 48,
     "scenario": "CAWASHPMixed_HPWH_5050",
     ":ecm_system_name": "HS16_ASHP_CAWHP_FanCoils",
     ":primary_heating_fuel": "Electricity",
@@ -562,7 +498,7 @@
     ":boiler_cap_ratio": "50-50"
   },
  {
-    "index": 55,
+    "index": 49,
     "scenario": "CGSHPMixed_HPWH_5050",
     ":ecm_system_name": "HS14_CGSHP_FanCoils",
     ":primary_heating_fuel": "Electricity",
@@ -572,7 +508,7 @@
     ":boiler_cap_ratio": "50-50"
   },
  {
-    "index": 56,
+    "index": 50,
     "scenario": "VRFMixedBoiler_HPWH_5050",
     ":ecm_system_name": "HS08_CCASHP_VRF",
     ":primary_heating_fuel": "Electricity",
@@ -580,5 +516,172 @@
     ":swh_fuel": "HeatPump",
     ":airloop_fancoils_heating": true,
     ":boiler_cap_ratio": "50-50"
+  },
+
+
+
+
+  {
+    "index": 51,
+    "scenario": "MURBMixed_ElecResWH_0199",
+    ":ecm_system_name": "NECB_Default",
+    ":primary_heating_fuel": "Electricity",
+    ":boiler_fuel": "ElectricityGasBackup",
+    ":swh_fuel": "Electricity",
+    ":airloop_fancoils_heating": "NECB_Default",
+    ":boiler_cap_ratio": "1-99"
+  },
+ {
+    "index": 52,
+    "scenario": "MURBASHPMixed_ElecResWH_0199",
+    ":ecm_system_name": "HS11_ASHP_PTHP",
+    ":primary_heating_fuel": "Electricity",
+    ":boiler_fuel": "ElectricityGasBackup",
+    ":swh_fuel": "Electricity",
+    ":airloop_fancoils_heating": true,
+    ":boiler_cap_ratio": "1-99"
+  },
+ {
+    "index": 53,
+    "scenario": "SchoolMixed_ElecResWH_0199",
+    ":ecm_system_name": "NECB_Default",
+    ":primary_heating_fuel": "Electricity",
+    ":boiler_fuel": "ElectricityGasBackup",
+    ":swh_fuel": "Electricity",
+    ":airloop_fancoils_heating": true,
+    ":boiler_cap_ratio": "1-99"
+  },
+  {
+    "index": 54,
+    "scenario": "SchoolASHPMixed_ElecResWH_0199",
+    ":ecm_system_name": "HS11_ASHP_PTHP",
+    ":primary_heating_fuel": "Electricity",
+    ":boiler_fuel": "ElectricityGasBackup",
+    ":swh_fuel": "Electricity",
+    ":airloop_fancoils_heating": true,
+    ":boiler_cap_ratio": "1-99"
+  },
+  {
+    "index": 55,
+    "scenario": "CAWHPMixed_ElecResWH_0199",
+    ":ecm_system_name": "HS15_CAWHP_FanCoils",
+    ":primary_heating_fuel": "Electricity",
+    ":boiler_fuel": "ElectricityGasBackup",
+    ":swh_fuel": "Electricity",
+    ":airloop_fancoils_heating": "NECB_Default",
+    ":boiler_cap_ratio": "1-99"
+  },
+ {
+    "index": 56,
+    "scenario": "CAWASHPMixed_ElecResWH_0199",
+    ":ecm_system_name": "HS16_ASHP_CAWHP_FanCoils",
+    ":primary_heating_fuel": "Electricity",
+    ":boiler_fuel": "ElectricityGasBackup",
+    ":swh_fuel": "Electricity",
+    ":airloop_fancoils_heating": true,
+    ":boiler_cap_ratio": "1-99"
+  },
+ {
+    "index": 57,
+    "scenario": "CGSHPMixed_ElecResWH_0199",
+    ":ecm_system_name": "HS14_CGSHP_FanCoils",
+    ":primary_heating_fuel": "Electricity",
+    ":boiler_fuel": "ElectricityGasBackup",
+    ":swh_fuel": "Electricity",
+    ":airloop_fancoils_heating": "NECB_Default",
+    ":boiler_cap_ratio": "1-99"
+  },
+ {
+    "index": 58,
+    "scenario": "VRFMixedBoiler_ElecResWH_0199",
+    ":ecm_system_name": "HS08_CCASHP_VRF",
+    ":primary_heating_fuel": "Electricity",
+    ":boiler_fuel": "ElectricityGasBackup",
+    ":swh_fuel": "Electricity",
+    ":airloop_fancoils_heating": true,
+    ":boiler_cap_ratio": "1-99"
+  },
+
+
+
+  {
+    "index": 59,
+    "scenario": "MURBMixed_HPWH_0199",
+    ":ecm_system_name": "NECB_Default",
+    ":primary_heating_fuel": "Electricity",
+    ":boiler_fuel": "ElectricityGasBackup",
+    ":swh_fuel": "HeatPump",
+    ":airloop_fancoils_heating": "NECB_Default",
+    ":boiler_cap_ratio": "1-99"
+  },
+ {
+    "index": 60,
+    "scenario": "MURBASHPMixed_HPWH_0199",
+    ":ecm_system_name": "HS11_ASHP_PTHP",
+    ":primary_heating_fuel": "Electricity",
+    ":boiler_fuel": "ElectricityGasBackup",
+    ":swh_fuel": "HeatPump",
+    ":airloop_fancoils_heating": true,
+    ":boiler_cap_ratio": "1-99"
+  },
+ {
+    "index": 61,
+    "scenario": "SchoolMixed_HPWH_0199",
+    ":ecm_system_name": "NECB_Default",
+    ":primary_heating_fuel": "Electricity",
+    ":boiler_fuel": "ElectricityGasBackup",
+    ":swh_fuel": "HeatPump",
+    ":airloop_fancoils_heating": true,
+    ":boiler_cap_ratio": "1-99"
+  },
+  {
+    "index": 62,
+    "scenario": "SchoolASHPMixed_HPWH_0199",
+    ":ecm_system_name": "HS11_ASHP_PTHP",
+    ":primary_heating_fuel": "Electricity",
+    ":boiler_fuel": "ElectricityGasBackup",
+    ":swh_fuel": "HeatPump",
+    ":airloop_fancoils_heating": true,
+    ":boiler_cap_ratio": "1-99"
+  },
+  {
+    "index": 63,
+    "scenario": "CAWHPMixed_HPWH_0199",
+    ":ecm_system_name": "HS15_CAWHP_FanCoils",
+    ":primary_heating_fuel": "Electricity",
+    ":boiler_fuel": "ElectricityGasBackup",
+    ":swh_fuel": "HeatPump",
+    ":airloop_fancoils_heating": "NECB_Default",
+    ":boiler_cap_ratio": "1-99"
+  },
+ {
+    "index": 64,
+    "scenario": "CAWASHPMixed_HPWH_0199",
+    ":ecm_system_name": "HS16_ASHP_CAWHP_FanCoils",
+    ":primary_heating_fuel": "Electricity",
+    ":boiler_fuel": "ElectricityGasBackup",
+    ":swh_fuel": "HeatPump",
+    ":airloop_fancoils_heating": true,
+    ":boiler_cap_ratio": "1-99"
+  },
+ {
+    "index": 65,
+    "scenario": "CGSHPMixed_HPWH_0199",
+    ":ecm_system_name": "HS14_CGSHP_FanCoils",
+    ":primary_heating_fuel": "Electricity",
+    ":boiler_fuel": "ElectricityGasBackup",
+    ":swh_fuel": "HeatPump",
+    ":airloop_fancoils_heating": "NECB_Default",
+    ":boiler_cap_ratio": "1-99"
+  },
+ {
+    "index": 66,
+    "scenario": "VRFMixedBoiler_HPWH_0199",
+    ":ecm_system_name": "HS08_CCASHP_VRF",
+    ":primary_heating_fuel": "Electricity",
+    ":boiler_fuel": "ElectricityGasBackup",
+    ":swh_fuel": "HeatPump",
+    ":airloop_fancoils_heating": true,
+    ":boiler_cap_ratio": "1-99"
   }
 ]

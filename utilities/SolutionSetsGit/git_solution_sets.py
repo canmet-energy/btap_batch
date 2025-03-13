@@ -18,13 +18,13 @@ def git_solution_sets():
     HOURLY = False
     CLIMATE_ZONES = [
         'CZ_4',
-        # 'CZ_5',
-        # 'CZ_6',
-        # 'CZ_7A'
+        'CZ_5',
+        'CZ_6',
+        'CZ_7A'
     ]
     ENVELOPE = [
-        # 'env_necb',
-        # 'env_necb_15',
+        'env_necb',
+        'env_necb_15',
         'env_necb_30'
     ]
     ELECsystems_OEE = [ #TODO: exclude CAWHP and AWASHP as costing is under development
@@ -38,13 +38,13 @@ def git_solution_sets():
         # 'SchoolASHPMixed_ElecResWH',
         # 'CAWHPElec_ElecResWH',
         # 'CAWHPMixed_ElecResWH',
-        # 'CAWASHPElec_ElecResWH',
-        # 'CAWASHPMixed_ElecResWH',
+        # ### 'CAWASHPElec_ElecResWH',
+        # ### 'CAWASHPMixed_ElecResWH',
         # 'CGSHPElec_ElecResWH',
         # 'CGSHPMixed_ElecResWH',
-        # 'VRFElecBoiler_ElecResWH',
-        # 'VRFMixedBoiler_ElecResWH',
-        # 'VRFElecResBackup_ElecResWH',
+        # ### 'VRFElecBoiler_ElecResWH',
+        # ### 'VRFMixedBoiler_ElecResWH',
+        # ### 'VRFElecResBackup_ElecResWH',
 
         # 'MURBElec_HPWH',
         # 'MURBMixed_HPWH',
@@ -56,37 +56,51 @@ def git_solution_sets():
         # 'SchoolASHPMixed_HPWH',
         # 'CAWHPElec_HPWH',
         # 'CAWHPMixed_HPWH',
-        # 'CAWASHPElec_HPWH',
-        # 'CAWASHPMixed_HPWH',
+        # ##  'CAWASHPElec_HPWH',
+        # ##  'CAWASHPMixed_HPWH',
         # 'CGSHPElec_HPWH',
         # 'CGSHPMixed_HPWH',
-        # 'VRFElecBoiler_HPWH',
-        # 'VRFMixedBoiler_HPWH',
-        # 'VRFElecResBackup_HPWH',
+        # ##  'VRFElecBoiler_HPWH',
+        # ##  'VRFMixedBoiler_HPWH',
+        # ##  'VRFElecResBackup_HPWH',
 
-        # 'MURBMixed_ElecResWH_0199',
-        # 'MURBASHPMixed_ElecResWH_0199',
-        # 'SchoolMixed_ElecResWH_0199',
-        # 'SchoolASHPMixed_ElecResWH_0199',
-        # 'CGSHPMixed_ElecResWH_0199',
-        # 'VRFMixedBoiler_ElecResWH_0199',
+
 
         # 'MURBMixed_ElecResWH_5050',
         # 'MURBASHPMixed_ElecResWH_5050',
         # 'SchoolMixed_ElecResWH_5050',
         # 'SchoolASHPMixed_ElecResWH_5050',
         # 'CAWHPMixed_ElecResWH_5050',
-        # 'CAWASHPMixed_ElecResWH_5050',
+        # ## 'CAWASHPMixed_ElecResWH_5050',
         # 'CGSHPMixed_ElecResWH_5050',
-        # 'VRFMixedBoiler_ElecResWH_5050',
+        # ## 'VRFMixedBoiler_ElecResWH_5050',
         # 'MURBMixed_HPWH_5050',
         # 'MURBASHPMixed_HPWH_5050',
         # 'SchoolMixed_HPWH_5050',
         # 'SchoolASHPMixed_HPWH_5050',
         # 'CAWHPMixed_HPWH_5050',
-        # 'CAWASHPMixed_HPWH_5050',
+        # ## 'CAWASHPMixed_HPWH_5050',
         # 'CGSHPMixed_HPWH_5050',
-        # 'VRFMixedBoiler_HPWH_5050',
+        # ## 'VRFMixedBoiler_HPWH_5050',
+
+
+
+        # 'MURBMixed_ElecResWH_0199',
+        # 'MURBASHPMixed_ElecResWH_0199',
+        # 'SchoolMixed_ElecResWH_0199',
+        # 'SchoolASHPMixed_ElecResWH_0199',
+        # 'CAWHPMixed_ElecResWH_0199',
+        # ## 'CAWASHPMixed_ElecResWH_0199',
+        # 'CGSHPMixed_ElecResWH_0199',
+        # ## 'VRFMixedBoiler_ElecResWH_0199',
+        # 'MURBMixed_HPWH_0199',
+        # 'MURBASHPMixed_HPWH_0199',
+        # 'SchoolMixed_HPWH_0199',
+        # 'SchoolASHPMixed_HPWH_0199',
+        # 'CAWHPMixed_HPWH_0199',
+        # ## 'CAWASHPMixed_HPWH_0199',
+        # 'CGSHPMixed_HPWH_0199',
+        # ## 'VRFMixedBoiler_HPWH_0199',
 
     ]
     SENSITIVITY_RUNS = False
@@ -578,21 +592,21 @@ def git_solution_sets():
                     if scenario.startswith("School"):
                         list_building_type = [
                             'PrimarySchool',
-                            # 'SecondarySchool'
+                            'SecondarySchool'
                         ]
                     elif scenario.startswith("MURB"):
                         list_building_type = [
                             'LowriseApartment',
-                            # 'MidriseApartment',
-                            # 'HighriseApartment'
+                            'MidriseApartment',
+                            'HighriseApartment'
                         ]
                     else:
                         list_building_type = [
                             'LowriseApartment',
-                            # 'MidriseApartment',
-                            # 'HighriseApartment',
-                            # 'PrimarySchool',
-                            # 'SecondarySchool'
+                            'MidriseApartment',
+                            'HighriseApartment',
+                            'PrimarySchool',
+                            'SecondarySchool'
                         ]
 
                     for building_type in list_building_type:
