@@ -152,13 +152,13 @@ def download_analyses(bucket='834599497928',
 
 # download_analyses(bucket='834599497928',
 #                   prefix='sgilani/',  # S3 prefix MUST have a trailing /
-#                   target_path=r'C:/Users/sgilani/OneDrive - NRCan RNCan/Documents/BTAP/OEE-2024/Simulation/AWS-runs/Scenarios',  # Your local download folder.
+#                   target_path=r'C:/Users/sgilani/OneDrive - NRCan RNCan/Documents/BTAP/OEE-2024/Simulation/AWS-runs/FinalBaselines',  # Your local download folder.
 #                   hourly_csv=False,  # download hourly.csv zip
 #                   in_osm=False,  # download osm zip
 #                   eplusout_sql=False,  # download sqlite files zip
 #                   eplustbl_htm=False,  # download e+ htm report zip
 #                   concat_excel_files=False,  # concat all output.xlsx files to a master.csv and parquet file
-#                   regex_filter='OEEelec_SC_SchoolElec_ElecResWH_Primary_\S\S\S_env_*',#'OEEelec_SC_MURBElec_ElecResWH_Lowrise_\S\S\S_env_*',  # an example that gets MidriseApartment from Toronto except the vintage analyses
+#                   regex_filter='OEEelec_BL_Lowrise*',#'OEEelec_SC_MURBElec_ElecResWH_Lowrise_\S\S\S_env_*',  # an example that gets MidriseApartment from Toronto except the vintage analyses
 #                   unzip_and_delete=False,  # This will unzip the zip files of all the above into a folder and delete the original zip file.
 #                   dry_run=True  # If set to true.. will do a dry run and not download anything. This is used to make sure your regex is working as intended.
 #                   )
@@ -186,13 +186,13 @@ ELECsystems_OEE = [
         # 'SchoolASHPMixed_ElecResWH',
         # 'CAWHPElec_ElecResWH',
         # 'CAWHPMixed_ElecResWH',
-        # 'CAWASHPElec_ElecResWH',
-        # 'CAWASHPMixed_ElecResWH',
+        # ### 'CAWASHPElec_ElecResWH',
+        # ### 'CAWASHPMixed_ElecResWH',
         # 'CGSHPElec_ElecResWH',
         # 'CGSHPMixed_ElecResWH',
-        # 'VRFElecBoiler_ElecResWH',
-        # 'VRFMixedBoiler_ElecResWH',
-        # 'VRFElecResBackup_ElecResWH',
+        # ### 'VRFElecBoiler_ElecResWH',
+        # ### 'VRFMixedBoiler_ElecResWH',
+        # ### 'VRFElecResBackup_ElecResWH',
 
         # 'MURBElec_HPWH',
         # 'MURBMixed_HPWH',
@@ -204,37 +204,50 @@ ELECsystems_OEE = [
         # 'SchoolASHPMixed_HPWH',
         # 'CAWHPElec_HPWH',
         # 'CAWHPMixed_HPWH',
-        # 'CAWASHPElec_HPWH',
-        # 'CAWASHPMixed_HPWH',
+        # ##  'CAWASHPElec_HPWH',
+        # ##  'CAWASHPMixed_HPWH',
         # 'CGSHPElec_HPWH',
         # 'CGSHPMixed_HPWH',
-        # 'VRFElecBoiler_HPWH',
-        # 'VRFMixedBoiler_HPWH',
-        # 'VRFElecResBackup_HPWH',
+        # ##  'VRFElecBoiler_HPWH',
+        # ##  'VRFMixedBoiler_HPWH',
+        # ##  'VRFElecResBackup_HPWH',
+
+
+        # 'MURBMixed_ElecResWH_5050',
+        # 'MURBASHPMixed_ElecResWH_5050',
+        # 'SchoolMixed_ElecResWH_5050',
+        # 'SchoolASHPMixed_ElecResWH_5050',
+        # 'CAWHPMixed_ElecResWH_5050',
+        # ## 'CAWASHPMixed_ElecResWH_5050',
+        # 'CGSHPMixed_ElecResWH_5050',
+        # ## 'VRFMixedBoiler_ElecResWH_5050',
+        # 'MURBMixed_HPWH_5050',
+        # 'MURBASHPMixed_HPWH_5050',
+        # 'SchoolMixed_HPWH_5050',
+        # 'SchoolASHPMixed_HPWH_5050',
+        # 'CAWHPMixed_HPWH_5050',
+        # ## 'CAWASHPMixed_HPWH_5050',
+        # 'CGSHPMixed_HPWH_5050',
+        # ## 'VRFMixedBoiler_HPWH_5050',
+
+
 
         # 'MURBMixed_ElecResWH_0199',
         # 'MURBASHPMixed_ElecResWH_0199',
         # 'SchoolMixed_ElecResWH_0199',
         # 'SchoolASHPMixed_ElecResWH_0199',
+        # 'CAWHPMixed_ElecResWH_0199',
+        # ## 'CAWASHPMixed_ElecResWH_0199',
         # 'CGSHPMixed_ElecResWH_0199',
-        # 'VRFMixedBoiler_ElecResWH_0199',
-
-        'MURBMixed_ElecResWH_5050',
-        'MURBASHPMixed_ElecResWH_5050',
-        'SchoolMixed_ElecResWH_5050',
-        'SchoolASHPMixed_ElecResWH_5050',
-        'CAWHPMixed_ElecResWH_5050',
-        'CAWASHPMixed_ElecResWH_5050',
-        'CGSHPMixed_ElecResWH_5050',
-        'VRFMixedBoiler_ElecResWH_5050',
-        'MURBMixed_HPWH_5050',
-        'MURBASHPMixed_HPWH_5050',
-        'SchoolMixed_HPWH_5050',
-        'SchoolASHPMixed_HPWH_5050',
-        'CAWHPMixed_HPWH_5050',
-        'CAWASHPMixed_HPWH_5050',
-        'CGSHPMixed_HPWH_5050',
-        'VRFMixedBoiler_HPWH_5050',
+        # ## 'VRFMixedBoiler_ElecResWH_0199',
+        # 'MURBMixed_HPWH_0199',
+        # 'MURBASHPMixed_HPWH_0199',
+        # 'SchoolMixed_HPWH_0199',
+        # 'SchoolASHPMixed_HPWH_0199',
+        # 'CAWHPMixed_HPWH_0199',
+        # ## 'CAWASHPMixed_HPWH_0199',
+        # 'CGSHPMixed_HPWH_0199',
+        # ## 'VRFMixedBoiler_HPWH_0199',
     ]
 epw_files = [
     ['CAN_BC_Vancouver.Intl.AP.718920_NRCv12022_TMY_GW1.5.epw', 'YVR'],  # CZ 4
