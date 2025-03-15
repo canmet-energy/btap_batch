@@ -683,5 +683,50 @@
     ":swh_fuel": "HeatPump",
     ":airloop_fancoils_heating": true,
     ":boiler_cap_ratio": "1-99"
+  },
+
+
+
+
+
+ {
+    "index": 67,
+    "scenario": "VRFElecBoiler2_ElecResWH",
+    ":ecm_system_name": "HS08_CCASHP_VRF",
+    ":primary_heating_fuel": "Electricity",
+    ":boiler_fuel": "Electricity",
+    ":swh_fuel": "Electricity",
+    ":airloop_fancoils_heating": true,
+    ":boiler_cap_ratio": "NECB_Default"
+  },
+  {
+    "index": 68,
+    "scenario": "VRFElecBoiler2_HPWH",
+    ":ecm_system_name": "HS08_CCASHP_VRF",
+    ":primary_heating_fuel": "Electricity",
+    ":boiler_fuel": "Electricity",
+    ":swh_fuel": "HeatPump",
+    ":airloop_fancoils_heating": true,
+    ":boiler_cap_ratio": "NECB_Default"
+  },
+  {
+    "index": 69,
+    "scenario": "CAWASHPElec2_ElecResWH",
+    ":ecm_system_name": "HS16_ASHP_CAWHP_FanCoils",
+    ":primary_heating_fuel": "Electricity",
+    ":boiler_fuel": "Electricity",
+    ":swh_fuel": "Electricity",
+    ":airloop_fancoils_heating": true,
+    ":boiler_cap_ratio": "NECB_Default"
+  },
+  {
+    "index": 70,
+    "scenario": "CAWASHPElec2_HPWH",
+    ":ecm_system_name": "HS16_ASHP_CAWHP_FanCoils",
+    ":primary_heating_fuel": "Electricity",
+    ":boiler_fuel": "Electricity",
+    ":swh_fuel": "HeatPump",
+    ":airloop_fancoils_heating": true,
+    ":boiler_cap_ratio": "NECB_Default"
   }
 ]
