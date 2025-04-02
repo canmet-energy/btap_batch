@@ -89,6 +89,8 @@
   - NECB_Default
   :occupancy_loads_scale:
   - NECB_Default
+  :oerd_utility_pricing:
+  - true
   :overhead_door_cond:
   - NECB_Default
   :primary_heating_fuel:
