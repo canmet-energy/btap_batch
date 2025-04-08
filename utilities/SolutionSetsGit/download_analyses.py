@@ -171,9 +171,9 @@ def download_analyses(bucket='834599497928',
 # First, create a list of all scenarios
 list_analysis_name = []
 ENVELOPE = [
-        'env_necb',
-        'env_necb_15',
-        'env_necb_30'
+        # 'env_necb',
+        # 'env_necb_15',
+        # 'env_necb_30'
     ]
 ELECsystems_OEE = [
         # 'MURBElec_ElecResWH',
@@ -250,22 +250,22 @@ ELECsystems_OEE = [
         # ## 'VRFMixedBoiler_HPWH_0199',
     ]
 epw_files = [
-    ['CAN_BC_Vancouver.Intl.AP.718920_NRCv12022_TMY_GW1.5.epw', 'YVR'],  # CZ 4
-
-    ['CAN_BC_Kelowna.Intl.AP.712030_NRCv12022_TMY_GW1.5.epw', 'YLW'],  # CZ 5
-    ['CAN_ON_Toronto-Pearson.Intl.AP.716240_NRCv12022_TMY_GW1.5.epw', 'YYZ'],  # CZ 5
-
-    ['CAN_ON_Ottawa-Macdonald-Cartier.Intl.AP.716280_NRCv12022_TMY_GW1.5.epw', 'YOW'],  # CZ 6
-    ['CAN_QC_Montreal-Trudeau.Intl.AP.716270_NRCv12022_TMY_GW1.5.epw', 'YUL'],  # CZ 6
-    ['CAN_NS_Halifax-Stanfield.Intl.AP.713950_NRCv12022_TMY_GW1.5.epw', 'YHZ'],  # CZ 6
-    ['CAN_NL_St.Johns.Intl.AP.718010_NRCv12022_TMY_GW1.5.epw', 'YYT'],  # CZ 6
-    ['CAN_PE_Charlottetown.AP.717060_NRCv12022_TMY_GW1.5.epw', 'YYG'],  # CZ 6
-    ['CAN_NB_Fredericton.Intl.AP.717000_NRCv12022_TMY_GW1.5.epw', 'YFC'],  # CZ 6
-
-    ['CAN_AB_Calgary.Intl.AP.718770_NRCv12022_TMY_GW1.5.epw', 'YYC'],  # CZ 7A
-    ['CAN_AB_Edmonton.Intl.CS.711550_NRCv12022_TMY_GW1.5.epw', 'YEG'],  # CZ 7A
-    ['CAN_SK_Saskatoon-Diefenbaker.Intl.AP.718660_NRCv12022_TMY_GW1.5.epw', 'YXE'],  # CZ 7A
-    ['CAN_MB_Winnipeg-Richardson.Intl.AP.718520_NRCv12022_TMY_GW1.5.epw', 'YWG'],  # CZ 7A
+    # ['CAN_BC_Vancouver.Intl.AP.718920_NRCv12022_TMY_GW1.5.epw', 'YVR'],  # CZ 4
+    #
+    # ['CAN_BC_Kelowna.Intl.AP.712030_NRCv12022_TMY_GW1.5.epw', 'YLW'],  # CZ 5
+    # ['CAN_ON_Toronto-Pearson.Intl.AP.716240_NRCv12022_TMY_GW1.5.epw', 'YYZ'],  # CZ 5
+    #
+    # ['CAN_ON_Ottawa-Macdonald-Cartier.Intl.AP.716280_NRCv12022_TMY_GW1.5.epw', 'YOW'],  # CZ 6
+    # ['CAN_QC_Montreal-Trudeau.Intl.AP.716270_NRCv12022_TMY_GW1.5.epw', 'YUL'],  # CZ 6
+    # ['CAN_NS_Halifax-Stanfield.Intl.AP.713950_NRCv12022_TMY_GW1.5.epw', 'YHZ'],  # CZ 6
+    # ['CAN_NL_St.Johns.Intl.AP.718010_NRCv12022_TMY_GW1.5.epw', 'YYT'],  # CZ 6
+    # ['CAN_PE_Charlottetown.AP.717060_NRCv12022_TMY_GW1.5.epw', 'YYG'],  # CZ 6
+    # ['CAN_NB_Fredericton.Intl.AP.717000_NRCv12022_TMY_GW1.5.epw', 'YFC'],  # CZ 6
+    #
+    # ['CAN_AB_Calgary.Intl.AP.718770_NRCv12022_TMY_GW1.5.epw', 'YYC'],  # CZ 7A
+    # ['CAN_AB_Edmonton.Intl.CS.711550_NRCv12022_TMY_GW1.5.epw', 'YEG'],  # CZ 7A
+    # ['CAN_SK_Saskatoon-Diefenbaker.Intl.AP.718660_NRCv12022_TMY_GW1.5.epw', 'YXE'],  # CZ 7A
+    # ['CAN_MB_Winnipeg-Richardson.Intl.AP.718520_NRCv12022_TMY_GW1.5.epw', 'YWG'],  # CZ 7A
 ]
 for scenario in ELECsystems_OEE:
     for epw_file in epw_files:
@@ -330,6 +330,7 @@ for analysis_name in list_analysis_name:
     #                   )
     datapoint_number += 1.0
 
+    ### Download 'output.xlsx' files
     key='sgilani/'
     bucket='834599497928'
     target_path=r'C:/Users/sgilani/OneDrive - NRCan RNCan/Documents/BTAP/OEE-2024/Simulation/AWS-runs/Scenarios'
@@ -341,4 +342,25 @@ for analysis_name in list_analysis_name:
     print('target_zip_basename', target_zip_basename)
     S3().download_file(s3_file=source_zip_file, bucket_name=bucket, target_path=target_zip_basename)
 
+    ### Download 'eplusout.sql' files
+    key = 'sgilani/'
+    bucket = '834599497928'
+    target_path = r'D:/OneDrive - NRCan RNCan/Documents/BTAP/OEE-2024/Simulation/AWS-runs/Scenarios-Detailed-Analysis/SchoolASHPElec_HPWH_Vancouver'
+    filetype = 'eplusout.sql.zip'
+    source_zip_file = os.path.join(key, analysis_name, 'results', 'zips', filetype).replace('\\', '/')
+    print('source_zip_file', source_zip_file)
+    target_zip_basename = os.path.join(target_path, os.path.basename(os.path.dirname(key)) + "_" + filetype)
+    print('target_zip_basename', target_zip_basename)
+    unzip_and_delete = True
+    is_downloaded = S3().download_file(s3_file=source_zip_file, bucket_name=bucket, target_path=target_zip_basename)
+    print('is_downloaded', is_downloaded)
+    if unzip_and_delete and is_downloaded:
+        extraction_folder_suffix = 'eplusout.sql'
+        extraction_folder = os.path.join(target_path, analysis_name, extraction_folder_suffix)
+        print('extraction_folder', extraction_folder)
+        pathlib.Path(extraction_folder).mkdir(parents=True, exist_ok=True)
+        with zipfile.ZipFile(target_zip_basename, 'r') as zip_ref:
+            zip_ref.extractall(extraction_folder)
+            print(zip_ref)
+        pathlib.Path(target_zip_basename).unlink(missing_ok=True)
 #=======================================================================================================================
