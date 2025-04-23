@@ -16,7 +16,7 @@
     ":primary_heating_fuel": "Electricity",
     ":boiler_fuel": "ElectricityGasBackup",
     ":swh_fuel": "Electricity",
-    ":airloop_fancoils_heating": "NECB_Default",
+    ":airloop_fancoils_heating": true,
     ":boiler_cap_ratio": "NECB_Default"
   },
  {
@@ -96,7 +96,7 @@
     ":primary_heating_fuel": "Electricity",
     ":boiler_fuel": "ElectricityGasBackup",
     ":swh_fuel": "Electricity",
-    ":airloop_fancoils_heating": "NECB_Default",
+    ":airloop_fancoils_heating": true,
     ":boiler_cap_ratio": "NECB_Default"
   },
  {
@@ -136,7 +136,7 @@
     ":primary_heating_fuel": "Electricity",
     ":boiler_fuel": "ElectricityGasBackup",
     ":swh_fuel": "Electricity",
-    ":airloop_fancoils_heating": "NECB_Default",
+    ":airloop_fancoils_heating": true,
     ":boiler_cap_ratio": "NECB_Default"
   },
  {
@@ -191,7 +191,7 @@
     ":primary_heating_fuel": "Electricity",
     ":boiler_fuel": "ElectricityGasBackup",
     ":swh_fuel": "HeatPump",
-    ":airloop_fancoils_heating": "NECB_Default",
+    ":airloop_fancoils_heating": true,
     ":boiler_cap_ratio": "NECB_Default"
   },
  {
@@ -271,7 +271,7 @@
     ":primary_heating_fuel": "Electricity",
     ":boiler_fuel": "ElectricityGasBackup",
     ":swh_fuel": "HeatPump",
-    ":airloop_fancoils_heating": "NECB_Default",
+    ":airloop_fancoils_heating": true,
     ":boiler_cap_ratio": "NECB_Default"
   },
  {
@@ -311,7 +311,7 @@
     ":primary_heating_fuel": "Electricity",
     ":boiler_fuel": "ElectricityGasBackup",
     ":swh_fuel": "HeatPump",
-    ":airloop_fancoils_heating": "NECB_Default",
+    ":airloop_fancoils_heating": true,
     ":boiler_cap_ratio": "NECB_Default"
   },
  {
@@ -361,7 +361,7 @@
     ":primary_heating_fuel": "Electricity",
     ":boiler_fuel": "ElectricityGasBackup",
     ":swh_fuel": "Electricity",
-    ":airloop_fancoils_heating": "NECB_Default",
+    ":airloop_fancoils_heating": true,
     ":boiler_cap_ratio": "50-50"
   },
  {
@@ -401,7 +401,7 @@
     ":primary_heating_fuel": "Electricity",
     ":boiler_fuel": "ElectricityGasBackup",
     ":swh_fuel": "Electricity",
-    ":airloop_fancoils_heating": "NECB_Default",
+    ":airloop_fancoils_heating": true,
     ":boiler_cap_ratio": "50-50"
   },
  {
@@ -421,7 +421,7 @@
     ":primary_heating_fuel": "Electricity",
     ":boiler_fuel": "ElectricityGasBackup",
     ":swh_fuel": "Electricity",
-    ":airloop_fancoils_heating": "NECB_Default",
+    ":airloop_fancoils_heating": true,
     ":boiler_cap_ratio": "50-50"
   },
  {
@@ -444,7 +444,7 @@
     ":primary_heating_fuel": "Electricity",
     ":boiler_fuel": "ElectricityGasBackup",
     ":swh_fuel": "HeatPump",
-    ":airloop_fancoils_heating": "NECB_Default",
+    ":airloop_fancoils_heating": true,
     ":boiler_cap_ratio": "50-50"
   },
  {
@@ -484,7 +484,7 @@
     ":primary_heating_fuel": "Electricity",
     ":boiler_fuel": "ElectricityGasBackup",
     ":swh_fuel": "HeatPump",
-    ":airloop_fancoils_heating": "NECB_Default",
+    ":airloop_fancoils_heating": true,
     ":boiler_cap_ratio": "50-50"
   },
  {
@@ -504,7 +504,7 @@
     ":primary_heating_fuel": "Electricity",
     ":boiler_fuel": "ElectricityGasBackup",
     ":swh_fuel": "HeatPump",
-    ":airloop_fancoils_heating": "NECB_Default",
+    ":airloop_fancoils_heating": true,
     ":boiler_cap_ratio": "50-50"
   },
  {
@@ -528,7 +528,7 @@
     ":primary_heating_fuel": "Electricity",
     ":boiler_fuel": "ElectricityGasBackup",
     ":swh_fuel": "Electricity",
-    ":airloop_fancoils_heating": "NECB_Default",
+    ":airloop_fancoils_heating": true,
     ":boiler_cap_ratio": "1-99"
   },
  {
@@ -568,7 +568,7 @@
     ":primary_heating_fuel": "Electricity",
     ":boiler_fuel": "ElectricityGasBackup",
     ":swh_fuel": "Electricity",
-    ":airloop_fancoils_heating": "NECB_Default",
+    ":airloop_fancoils_heating": true,
     ":boiler_cap_ratio": "1-99"
   },
  {
@@ -588,7 +588,7 @@
     ":primary_heating_fuel": "Electricity",
     ":boiler_fuel": "ElectricityGasBackup",
     ":swh_fuel": "Electricity",
-    ":airloop_fancoils_heating": "NECB_Default",
+    ":airloop_fancoils_heating": true,
     ":boiler_cap_ratio": "1-99"
   },
  {
@@ -611,7 +611,7 @@
     ":primary_heating_fuel": "Electricity",
     ":boiler_fuel": "ElectricityGasBackup",
     ":swh_fuel": "HeatPump",
-    ":airloop_fancoils_heating": "NECB_Default",
+    ":airloop_fancoils_heating": true,
     ":boiler_cap_ratio": "1-99"
   },
  {
@@ -651,7 +651,7 @@
     ":primary_heating_fuel": "Electricity",
     ":boiler_fuel": "ElectricityGasBackup",
     ":swh_fuel": "HeatPump",
-    ":airloop_fancoils_heating": "NECB_Default",
+    ":airloop_fancoils_heating": true,
     ":boiler_cap_ratio": "1-99"
   },
  {
@@ -671,7 +671,7 @@
     ":primary_heating_fuel": "Electricity",
     ":boiler_fuel": "ElectricityGasBackup",
     ":swh_fuel": "HeatPump",
-    ":airloop_fancoils_heating": "NECB_Default",
+    ":airloop_fancoils_heating": true,
     ":boiler_cap_ratio": "1-99"
   },
  {
