@@ -20,12 +20,6 @@ properties:
     You can review available branches [here](https://github.com/canmet-energy/btap_batch) if you are a developer. "
     type: string
 
-  btap_costing_branch:
-    description: "Branch of btap_costing to use to build environment. The default branch to use is 'master' This 
-    branch is only accessible for authorized users. You can review available branches 
-    [here](https://github.com/canmet-energy/btap_costing) if you are a developer."
-    type: string
-
   os_standards_branch:
     description: "Branch of NREL's Openstudio-standards to use to build environment. The default branch to use is 'master' This 
     branch is only accessible for authorized users. You can review available branches
@@ -101,7 +95,6 @@ required:
   - build_env_name
   - git_api_token
   - btap_batch_branch
-  - btap_costing_branch
   - os_standards_branch
   - openstudio_version
   - weather_list
