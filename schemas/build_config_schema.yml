@@ -58,10 +58,10 @@ properties:
     minItems: 1
     maxItems: 100
 
-  disable_costing:
+  enable_rsmeans:
     description: "If you do not have access RSMEANs data api. This should be false. Please contact NRCan is you wish to do costed simulations."
     type: boolean
-    default: true
+    default: false
 
   build_btap_cli:
     description: "**ADVANCED** Build most recent btap_cli always. Set to false to save time if standards and costing branches have not changed."
@@ -100,7 +100,7 @@ required:
   - weather_list
   - build_btap_cli
   - build_btap_batch
-  - disable_costing
+  - enable_rsmeans
   - local_nrcan
   - compute_environment
 additionalProperties: false

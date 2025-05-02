@@ -1,6 +1,7 @@
 ARG OPENSTUDIO_VERSION='3.7.0'
 FROM canmet/os_sdk_container:$OPENSTUDIO_VERSION
 
+ARG ENABLE_RSMEANS=''
 ARG OS_STANDARDS_BRANCH='nrcan'
 ARG WEATHER_FILES=''
 ARG LOCALNRCAN=''
@@ -11,7 +12,7 @@ LABEL author="Phylroy Lopez phylroy.lopez@canada.ca"
 
 #Be root and install nrcan_certs under the root folder if LOCALNRCAN is set.
 WORKDIR /
-RUN if [ ! -z "$LOCALNRCAN" ] ; then \
+RUN if [ $LOCALNRCAN ] ; then \
       echo "Cloning install_nrcan_certs repository" \
       && git clone https://$GIT_API_TOKEN:x-oauth-basic@github.com/canmet-energy/linux_nrcan_certs.git --depth 1 --branch ${LOCALNRCAN_BRANCH} --single-branch /linux_nrcan_certs \
       && cd /linux_nrcan_certs \
@@ -23,12 +24,20 @@ RUN if [ ! -z "$LOCALNRCAN" ] ; then \
 WORKDIR /
 
 # Clone openstudio-standards into the container
-RUN echo "Creating Public CLI witout costing" \
+RUN echo "Creating Public CLI" \
     && git clone https://$GIT_API_TOKEN:x-oauth-basic@github.com/NREL/openstudio-standards.git --depth 1 --branch ${OS_STANDARDS_BRANCH} --single-branch /openstudio-standards \
     && cd /openstudio-standards \
     && bundle install \
     && echo 'standards revision' \
     && git rev-parse --short HEAD;
+
+RUN echo "Overwriting placeholder costing data with RSMeans data"
+RUN if [ $ENABLE_RSMEANS ]; then \
+        curl -v -s https://$GIT_API_TOKEN:x-oauth-basic@raw.githubusercontent.com/canmet-energy/btap_costing_data_generation/refs/heads/main/resources/rsmeans_factors.csv \
+                -o /openstudio-standards/lib/openstudio-standards/btap/costing/common_resources/costs_local_factors.csv \
+        && curl -v -s https://$GIT_API_TOKEN:x-oauth-basic@raw.githubusercontent.com/canmet-energy/btap_costing_data_generation/refs/heads/main/output/costs_rsmeans.csv \
+                -o /openstudio-standards/lib/openstudio-standards/btap/costing/common_resources/costs.csv; \
+    fi
 
 # Make folders that will map to host drives.
 WORKDIR /openstudio-standards/utilities/btap_cli
