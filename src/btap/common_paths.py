@@ -5,8 +5,9 @@ PROJECT_ROOT = str(Path(os.path.dirname(os.path.realpath(__file__))).parent.abso
 DOCKERFILES_FOLDER = os.path.join(Path(os.path.dirname(os.path.realpath(__file__))).parent.absolute(), 'Dockerfiles')
 PROJECT_FOLDER = os.path.join(Path(os.path.dirname(os.path.realpath(__file__))).parent.parent.absolute())
 EXAMPLE_FOLDER = os.path.join(PROJECT_FOLDER, 'examples')
-OUTPUT_FOLDER = os.path.join(PROJECT_FOLDER, "output")
-SCHEMA_FOLDER = os.path.join(PROJECT_FOLDER, "schemas")
+OUTPUT_FOLDER = os.path.join(PROJECT_FOLDER, 'output')
+SCHEMA_FOLDER = os.path.join(PROJECT_FOLDER, 'schemas')
+RESOURCES_FOLDER = os.path.join(PROJECT_FOLDER, 'resources')
 if os.name == 'nt':
     HOME = os.path.join(os.environ['USERPROFILE'])
     USER = os.environ['USERNAME']
@@ -15,8 +16,8 @@ else:
     USER = os.getenv('USER', 'no_user')
 
 CONFIG_FOLDER = os.path.join(HOME, '.btap', 'config')
-HISTORIC_WEATHER_LIST = "https://github.com/canmet-energy/btap_weather/raw/main/historic_weather_filenames.json"
-FUTURE_WEATHER_LIST = "https://github.com/canmet-energy/btap_weather/raw/main/future_weather_filenames.json"
+HISTORIC_WEATHER_LIST = os.path.join(RESOURCES_FOLDER, 'historic_weather_filenames.json')
+FUTURE_WEATHER_LIST = os.path.join(RESOURCES_FOLDER, 'future_weather_filenames.json')
 HISTORIC_WEATHER_REPO = "https://github.com/canmet-energy/btap_weather/raw/main/historic/"
 FUTURE_WEATHER_REPO = "https://github.com/canmet-energy/btap_weather/raw/main/future/"
 AWS_BUCKET = '834599497928'

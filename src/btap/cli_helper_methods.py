@@ -26,7 +26,7 @@ import zipfile
 import pathlib
 import re
 
-import requests
+import json
 import shutil
 import time
 import copy
@@ -126,8 +126,8 @@ def get_weather_locations(weather_locations=[]):
         'CAN_AB_Fort.Mcmurray.AP.716890_CWEC2020.epw'
     ]
     # Get list of historic and future weather files available from git repo. See definitions for URLs
-    hist_files = requests.get(HISTORIC_WEATHER_LIST, allow_redirects=True).json()
-    fut_files = requests.get(FUTURE_WEATHER_LIST, allow_redirects=True).json()
+    hist_files = json.load(open(HISTORIC_WEATHER_LIST))
+    fut_files  = json.load(open(FUTURE_WEATHER_LIST))
 
     # Check if any weather locations on the weather file list are not default weather locations
     custom_weather_locs = [x for x in weather_locations if x not in default_weather_locations]
