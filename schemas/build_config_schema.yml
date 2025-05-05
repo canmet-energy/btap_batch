@@ -42,7 +42,7 @@ properties:
   weather_list:
     description: "List of Weather files to build included in the build environment. Only .epw files , and <100 files. 
     Other weather locations are available. However, you have to define the ones you want to use when creating your 
-    environment.  The other locations that you can use can be found in [here](https://github.com/canmet-energy/btap_weather)\n\n 
+    environment.  The other locations that you can use can be found in [here](https://climate.onebuilding.org/)\n\n 
 
     Here is an example:\n\n"
 

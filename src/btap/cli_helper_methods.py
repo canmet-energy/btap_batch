@@ -125,9 +125,26 @@ def get_weather_locations(weather_locations=[]):
         'CAN_NT_Yellowknife.AP.719360_CWEC2020.epw',
         'CAN_AB_Fort.Mcmurray.AP.716890_CWEC2020.epw'
     ]
+
+    # Used to resolve the download link from using just the filename.
+    abbreviation_map = { 
+        'AB': 'AB_Alberta/',
+        'BC': 'BC_British_Columbia/',
+        'MB': 'MB_Manitoba/',
+        'NB': 'NB_New_Brunswick/',
+        'NL': 'NL_Newfoundland_and_Labrador/',
+        'NS': 'NS_Nova_Scotia/',
+        'NT': 'NT_Northwest_Territories/',
+        'NU': 'NU_Nunavut/',
+        'ON': 'ON_Ontario/',
+        'PE': 'PE_Prince_Edward_Island/',
+        'QC': 'QC_Quebec/',
+        'SK': 'SK_Saskatchewan/',
+        'YT': 'YT_Yukon/'
+    }
     # Get list of historic and future weather files available from git repo. See definitions for URLs
-    hist_files = json.load(open(HISTORIC_WEATHER_LIST))
-    fut_files  = json.load(open(FUTURE_WEATHER_LIST))
+    hist_files = set(json.load(open(HISTORIC_WEATHER_LIST)))
+    fut_files  = set(json.load(open(FUTURE_WEATHER_LIST)))
 
     # Check if any weather locations on the weather file list are not default weather locations
     custom_weather_locs = [x for x in weather_locations if x not in default_weather_locations]
@@ -136,13 +153,22 @@ def get_weather_locations(weather_locations=[]):
     custom_weather_locs = [re.sub(r'\.epw$', '.zip', loc) for loc in custom_weather_locs]
 
     # Check if any of the weather files are not part of historical or future files.
-    non_existant_files = list(set(custom_weather_locs) - set(hist_files + fut_files))
+    non_existant_files = set(custom_weather_locs) - (hist_files | fut_files)
     if len(non_existant_files) > 0:
-        print(f"Could not find the weather files {non_existant_files} in the btap_batch repository from your build_conf.yml file.  Please check if it is spelled correctly and check if it is in the repository (https://github.com/canmet-energy/btap_weather)." )
+        print(
+            f"Could not find the weather files {non_existant_files} in the btap_batch repository" 
+             "from your build_conf.yml file.  Please check if it is spelled correctly and check if" 
+             "it is in either:\nThe historic list: https://climate.onebuilding.org/WMO_Region_4_North_and_Central_America/CAN_Canada/index.html"
+             "\nThe future list: https://climate.onebuilding.org/WMO_Region_4_North_and_Central_America/CAN_Canada_Future/index.html")
         exit(1)
 
     # prefix custom_weather with correct URL for fut or hist.  Already filtered for one or the other above.. so the else works implicitly for future.
-    custom_weather_string = [HISTORIC_WEATHER_REPO + loc if loc in hist_files else FUTURE_WEATHER_REPO + loc  for loc in custom_weather_locs]
+    custom_weather_string = [
+        HISTORIC_WEATHER_REPO + abbreviation_map[loc[4 : 6]] + loc
+        if loc in hist_files 
+        else FUTURE_WEATHER_REPO + abbreviation_map[loc[4 : 6]] + loc
+        for loc in custom_weather_locs
+    ]
 
     # Return a single string from the list separated by a space.
     return  " ".join(custom_weather_string)
@@ -718,8 +744,9 @@ os_standards_branch: nrcan
 # OpenStudio version used by analyses and built into the container environment. The E+ version used for simulations is determined by the OpenStudio version.
 openstudio_version: 3.7.0
 
-# List of Weather files to build included in the build environment. Only .epw files , and <100 files. Other weather locations are available. However, you have to define the ones you want to use when creating your environment.  The other locations that you can use can be found in this repository:
-# https://github.com/canmet-energy/btap_weather
+# List of Weather files to build included in the build environment. Only .epw files , and <100 files. Other weather locations are available. However, you have to define the ones you want to use when creating your environment.  The other locations that you can use can be found on Climate.OneBuilding.Org:
+# https://climate.onebuilding.org/WMO_Region_4_North_and_Central_America/CAN_Canada/index.html
+# https://climate.onebuilding.org/WMO_Region_4_North_and_Central_America/CAN_Canada_Future/index.html
 weather_list:
   - CAN_QC_Montreal.Intl.AP.716270_CWEC2020.epw
   - CAN_NS_Halifax.Dockyard.713280_CWEC2020.epw

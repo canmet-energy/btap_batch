@@ -18,8 +18,8 @@ else:
 CONFIG_FOLDER = os.path.join(HOME, '.btap', 'config')
 HISTORIC_WEATHER_LIST = os.path.join(RESOURCES_FOLDER, 'historic_weather_filenames.json')
 FUTURE_WEATHER_LIST = os.path.join(RESOURCES_FOLDER, 'future_weather_filenames.json')
-HISTORIC_WEATHER_REPO = "https://github.com/canmet-energy/btap_weather/raw/main/historic/"
-FUTURE_WEATHER_REPO = "https://github.com/canmet-energy/btap_weather/raw/main/future/"
+HISTORIC_WEATHER_REPO = "https://climate.onebuilding.org/WMO_Region_4_North_and_Central_America/CAN_Canada/"
+FUTURE_WEATHER_REPO = "https://climate.onebuilding.org/WMO_Region_4_North_and_Central_America/CAN_Canada_Future/"
 AWS_BUCKET = '834599497928'
 
 
