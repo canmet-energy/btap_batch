@@ -12,7 +12,7 @@ LABEL author="Phylroy Lopez phylroy.lopez@canada.ca"
 
 #Be root and install nrcan_certs under the root folder if LOCALNRCAN is set.
 WORKDIR /
-RUN if [ $LOCALNRCAN ] ; then \
+RUN if [ -n "$LOCALNRCAN" ] ; then \
       echo "Cloning install_nrcan_certs repository" \
       && git clone https://$GIT_API_TOKEN:x-oauth-basic@github.com/canmet-energy/linux_nrcan_certs.git --depth 1 --branch ${LOCALNRCAN_BRANCH} --single-branch /linux_nrcan_certs \
       && cd /linux_nrcan_certs \
@@ -31,9 +31,9 @@ RUN echo "Creating Public CLI" \
     && echo 'standards revision' \
     && git rev-parse --short HEAD;
 
-RUN echo "Overwriting placeholder costing data with RSMeans data"
-RUN if [ $ENABLE_RSMEANS ]; then \
-        curl -v -s https://$GIT_API_TOKEN:x-oauth-basic@raw.githubusercontent.com/canmet-energy/btap_costing_data_generation/refs/heads/main/resources/rsmeans_factors.csv \
+RUN if [ -n "$ENABLE_RSMEANS" ]; then \
+        echo "Overwriting placeholder costing data with RSMeans data (ENABLE_RSMEANS=$ENABLE_RSMEANS)" \
+        && curl -v -s https://$GIT_API_TOKEN:x-oauth-basic@raw.githubusercontent.com/canmet-energy/btap_costing_data_generation/refs/heads/main/resources/rsmeans_factors.csv \
                 -o /openstudio-standards/lib/openstudio-standards/btap/costing/common_resources/costs_local_factors.csv \
         && curl -v -s https://$GIT_API_TOKEN:x-oauth-basic@raw.githubusercontent.com/canmet-energy/btap_costing_data_generation/refs/heads/main/output/costs_rsmeans.csv \
                 -o /openstudio-standards/lib/openstudio-standards/btap/costing/common_resources/costs.csv; \
@@ -47,7 +47,7 @@ RUN mkdir weather
 
 # Download non-standard weather files to the weather directory.
 WORKDIR /openstudio-standards/utilities/btap_cli/weather
-RUN if [ ! -z "$WEATHER_FILES" ] ; then \
+RUN if [ -n "$WEATHER_FILES" ] ; then \
     echo "Downloading weather files." \
     && wget --no-check-certificate $WEATHER_FILES; \
 fi
