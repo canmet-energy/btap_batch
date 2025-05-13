@@ -77,6 +77,7 @@ def build(**kwargs):
     btap_costing_branch = config['btap_costing_branch']
     openstudio_version = config['openstudio_version']
     disable_costing = config['disable_costing']
+    btap_weather = config['btap_weather']
     weather_list = config['weather_list']
     build_btap_cli = config['build_btap_cli']
     build_btap_batch = config['build_btap_batch']
@@ -94,6 +95,7 @@ def build(**kwargs):
                                        btap_costing_branch=btap_costing_branch,
                                        compute_environment=compute_environment,
                                        openstudio_version=openstudio_version,
+                                       btap_weather=btap_weather,
                                        weather_list=weather_list,
                                        os_standards_branch=os_standards_branch,
                                        build_btap_batch=build_btap_batch,

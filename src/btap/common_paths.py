@@ -15,12 +15,20 @@ else:
     HOME = os.path.join(os.environ['HOME'])
     USER = os.getenv('USER', 'no_user')
 
+AWS_BUCKET    = '834599497928'
 CONFIG_FOLDER = os.path.join(HOME, '.btap', 'config')
+
+# Climate.OneBuilding.Org paths
 HISTORIC_WEATHER_LIST = os.path.join(RESOURCES_FOLDER, 'historic_weather_filenames.json')
-FUTURE_WEATHER_LIST = os.path.join(RESOURCES_FOLDER, 'future_weather_filenames.json')
+FUTURE_WEATHER_LIST   = os.path.join(RESOURCES_FOLDER, 'future_weather_filenames.json')
 HISTORIC_WEATHER_REPO = "https://climate.onebuilding.org/WMO_Region_4_North_and_Central_America/CAN_Canada/"
-FUTURE_WEATHER_REPO = "https://climate.onebuilding.org/WMO_Region_4_North_and_Central_America/CAN_Canada_Future/"
-AWS_BUCKET = '834599497928'
+FUTURE_WEATHER_REPO   = "https://climate.onebuilding.org/WMO_Region_4_North_and_Central_America/CAN_Canada_Future/"
+
+# btap_weather paths
+HISTORIC_WEATHER_LIST_BTAP = "https://github.com/canmet-energy/btap_weather/raw/main/historic_weather_filenames.json"
+FUTURE_WEATHER_LIST_BTAP   = "https://github.com/canmet-energy/btap_weather/raw/main/future_weather_filenames.json"
+HISTORIC_WEATHER_REPO_BTAP = "https://github.com/canmet-energy/btap_weather/raw/main/historic/"
+FUTURE_WEATHER_REPO_BTAP   = "https://github.com/canmet-energy/btap_weather/raw/main/future/"
 
 
 class CommonPaths(object):

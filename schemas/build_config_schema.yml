@@ -39,6 +39,11 @@ properties:
       - 3.6.1
       - 3.7.0
 
+  btap_weather:
+    description: "Location of weather files to download. If true, downloads from [btap_weather](https://github.com/canmet-energy/btap_weather). Else, downloads from Climate.OneBuilding.Org."
+    type: boolean
+    default: true
+
   weather_list:
     description: "List of Weather files to build included in the build environment. Only .epw files , and <100 files. 
     Other weather locations are available. However, you have to define the ones you want to use when creating your 
