@@ -27,87 +27,81 @@ def git_solution_sets():
         'env_necb_15',
         'env_necb_30'
     ]
-    ELECsystems_OEE = [ #TODO: exclude CAWHP and AWASHP as costing is under development
-        # # 'MURBElec_ElecResWH',
+    ELECsystems_OEE = [
+        'MURBElec_ElecResWH',
         'MURBMixed_ElecResWH',
-        # # 'MURBASHPElec_ElecResWH',
-        # 'MURBASHPMixed_ElecResWH',
-        # # 'SchoolElec_ElecResWH',
-        # 'SchoolMixed_ElecResWH',
-        # # 'SchoolASHPElec_ElecResWH',
-        # 'SchoolASHPMixed_ElecResWH',
-        # # 'CAWHPElec_ElecResWH',
+        'MURBASHPElec_ElecResWH',
+        'MURBASHPMixed_ElecResWH',
+        'SchoolElec_ElecResWH',
+        'SchoolMixed_ElecResWH',
+        'SchoolASHPElec_ElecResWH',
+        'SchoolASHPMixed_ElecResWH',
+        'CAWHPElec_ElecResWH',
         'CAWHPMixed_ElecResWH',
-        # 'CAWASHPElec_ElecResWH',
-        # 'CAWASHPMixed_ElecResWH',
-        # # 'CGSHPElec_ElecResWH',
+        'CAWASHPElec_ElecResWH',
+        'CAWASHPMixed_ElecResWH',
+        'CGSHPElec_ElecResWH',
         'CGSHPMixed_ElecResWH',
-        # 'VRFElecBoiler_ElecResWH',
-        # 'VRFMixedBoiler_ElecResWH',
-        # 'VRFElecResBackup_ElecResWH',
+        'VRFElecBoiler_ElecResWH',
+        'VRFMixedBoiler_ElecResWH',
+        'VRFElecResBackup_ElecResWH',
 
-        # # 'MURBElec_HPWH',
+        'MURBElec_HPWH',
         'MURBMixed_HPWH',
-        # # 'MURBASHPElec_HPWH',
-        # # 'MURBASHPMixed_HPWH',
-        # # 'SchoolElec_HPWH',
-        # # 'SchoolMixed_HPWH',
-        # # 'SchoolASHPElec_HPWH',
-        # # 'SchoolASHPMixed_HPWH',
-        # # 'CAWHPElec_HPWH',
+        'MURBASHPElec_HPWH',
+        'MURBASHPMixed_HPWH',
+        'SchoolElec_HPWH',
+        'SchoolMixed_HPWH',
+        'SchoolASHPElec_HPWH',
+        'SchoolASHPMixed_HPWH',
+        'CAWHPElec_HPWH',
         'CAWHPMixed_HPWH',
-        # 'CAWASHPElec_HPWH',
-        # 'CAWASHPMixed_HPWH',
-        # # 'CGSHPElec_HPWH',
+        'CAWASHPElec_HPWH',
+        'CAWASHPMixed_HPWH',
+        'CGSHPElec_HPWH',
         'CGSHPMixed_HPWH',
-        # 'VRFElecBoiler_HPWH',
-        # 'VRFMixedBoiler_HPWH',
-        # 'VRFElecResBackup_HPWH',
-
-
+        'VRFElecBoiler_HPWH',
+        'VRFMixedBoiler_HPWH',
+        'VRFElecResBackup_HPWH',
 
         'MURBMixed_ElecResWH_5050',
-        # # # 'MURBASHPMixed_ElecResWH_5050',
-        # # # 'SchoolMixed_ElecResWH_5050',
-        # # # 'SchoolASHPMixed_ElecResWH_5050',
+        'MURBASHPMixed_ElecResWH_5050',
+        'SchoolMixed_ElecResWH_5050',
+        'SchoolASHPMixed_ElecResWH_5050',
         'CAWHPMixed_ElecResWH_5050',
-        # # 'CAWASHPMixed_ElecResWH_5050',
+        'CAWASHPMixed_ElecResWH_5050',
         'CGSHPMixed_ElecResWH_5050',
-        # # 'VRFMixedBoiler_ElecResWH_5050',
+        'VRFMixedBoiler_ElecResWH_5050',
         'MURBMixed_HPWH_5050',
-        # # # 'MURBASHPMixed_HPWH_5050',
-        # # # 'SchoolMixed_HPWH_5050',
-        # # # 'SchoolASHPMixed_HPWH_5050',
+        'MURBASHPMixed_HPWH_5050',
+        'SchoolMixed_HPWH_5050',
+        'SchoolASHPMixed_HPWH_5050',
         'CAWHPMixed_HPWH_5050',
-        #  'CAWASHPMixed_HPWH_5050', #TODO later
+        'CAWASHPMixed_HPWH_5050',
         'CGSHPMixed_HPWH_5050',
-        #  'VRFMixedBoiler_HPWH_5050', #TODO later
-
-
+        'VRFMixedBoiler_HPWH_5050',
 
         'MURBMixed_ElecResWH_0199',
-        # # # 'MURBASHPMixed_ElecResWH_0199',
-        # # # 'SchoolMixed_ElecResWH_0199',
-        # # # 'SchoolASHPMixed_ElecResWH_0199',
+        'MURBASHPMixed_ElecResWH_0199',
+        'SchoolMixed_ElecResWH_0199',
+        'SchoolASHPMixed_ElecResWH_0199',
         'CAWHPMixed_ElecResWH_0199',
-        # # 'CAWASHPMixed_ElecResWH_0199',
+        'CAWASHPMixed_ElecResWH_0199',
         'CGSHPMixed_ElecResWH_0199',
-        # # 'VRFMixedBoiler_ElecResWH_0199',
+        'VRFMixedBoiler_ElecResWH_0199',
         'MURBMixed_HPWH_0199',
-        # # # 'MURBASHPMixed_HPWH_0199',
-        # # # 'SchoolMixed_HPWH_0199',
-        # # # 'SchoolASHPMixed_HPWH_0199',
+        'MURBASHPMixed_HPWH_0199',
+        'SchoolMixed_HPWH_0199',
+        'SchoolASHPMixed_HPWH_0199',
         'CAWHPMixed_HPWH_0199',
-        #  'CAWASHPMixed_HPWH_0199', #TODO later
+        'CAWASHPMixed_HPWH_0199',
         'CGSHPMixed_HPWH_0199',
-        #  'VRFMixedBoiler_HPWH_0199', #TODO later
+        'VRFMixedBoiler_HPWH_0199',
 
-        # 'VRFElecBoiler2_ElecResWH',
-        # 'VRFElecBoiler2_HPWH',
-        # 'CAWASHPElec2_ElecResWH',
-        # 'CAWASHPElec2_HPWH'
-
-
+        'VRFElecBoiler2_ElecResWH',
+        'VRFElecBoiler2_HPWH',
+        'CAWASHPElec2_ElecResWH',
+        'CAWASHPElec2_HPWH'
     ]
     SENSITIVITY_RUNS = False
     SENSITIVITY_PRIMARY_FUELS_PIVOT = [
@@ -126,7 +120,7 @@ def git_solution_sets():
     SENSITIVITY_PRIMARY_FUELS_PIVOT_OEE = [
         'NaturalGas'
         ]
-    SCENARIO_RUNS_OEE = True
+    SCENARIO_RUNS_OEE = False
     Baseline_RUNS_OEE = False
     OPTIMIZATION_RUNS = False
     OPTIMIZATION_PRIMARY_FUELS_PIVOT = [
@@ -258,11 +252,18 @@ def git_solution_sets():
     if OEE:
         epw_files_cz4 = [
             ['CAN_BC_Vancouver.Intl.AP.718920_NRCv12022_TMY_GW1.5.epw', 'YVR'],  # CZ 4
+
+            ## Historic weather files
+            # ['CAN_BC_Vancouver.Intl.AP.718920_CWEC2020v2.epw', 'YVR']
         ]
 
         epw_files_cz5 = [
             ['CAN_BC_Kelowna.Intl.AP.712030_NRCv12022_TMY_GW1.5.epw', 'YLW'],  # CZ 5
             ['CAN_ON_Toronto-Pearson.Intl.AP.716240_NRCv12022_TMY_GW1.5.epw', 'YYZ'],  # CZ 5
+
+            ## Historic weather files
+            # ['CAN_BC_Kelowna.Intl.AP.712030_CWEC2020v2.epw', 'YLW'],
+            # ['CAN_ON_Toronto-Pearson.Intl.AP.716240_CWEC2020v2.epw', 'YYZ']
         ]
 
         epw_files_cz6 = [
@@ -272,6 +273,14 @@ def git_solution_sets():
             ['CAN_NL_St.Johns.Intl.AP.718010_NRCv12022_TMY_GW1.5.epw', 'YYT'],  # CZ 6
             ['CAN_PE_Charlottetown.AP.717060_NRCv12022_TMY_GW1.5.epw', 'YYG'],  # CZ 6
             ['CAN_NB_Fredericton.Intl.AP.717000_NRCv12022_TMY_GW1.5.epw', 'YFC'],  # CZ 6
+
+            ## Historic weather files
+            # ['CAN_ON_Ottawa-Macdonald-Cartier.Intl.AP.716280_CWEC2020v2.epw', 'YOW'],
+            # ['CAN_QC_Montreal-Trudeau.Intl.AP.716270_CWEC2020v2.epw', 'YUL'],
+            # ['CAN_NS_Halifax-Stanfield.Intl.AP.713950_CWEC2020v2.epw', 'YHZ'],
+            # ['CAN_NL_St.Johns.Intl.AP.718010_CWEC2020v2.epw', 'YYT'],
+            # ['CAN_PE_Charlottetown.AP.717060_CWEC2020v2.epw', 'YYG'],
+            # ['CAN_NB_Fredericton.Intl.AP.717000_CWEC2020v2.epw', 'YFC']
         ]
 
         epw_files_cz7A = [
@@ -279,6 +288,12 @@ def git_solution_sets():
             ['CAN_AB_Edmonton.Intl.CS.711550_NRCv12022_TMY_GW1.5.epw', 'YEG'],  # CZ 7A
             ['CAN_SK_Saskatoon-Diefenbaker.Intl.AP.718660_NRCv12022_TMY_GW1.5.epw', 'YXE'],  # CZ 7A
             ['CAN_MB_Winnipeg-Richardson.Intl.AP.718520_NRCv12022_TMY_GW1.5.epw', 'YWG'],  # CZ 7A
+
+            ## Historic weather files
+            # ['CAN_AB_Calgary.Intl.AP.718770_CWEC2020v2.epw', 'YYC'],
+            # ['CAN_AB_Edmonton.Intl.AP.711230_CWEC2020v2.epw', 'YEG'],
+            # ['CAN_SK_Saskatoon-Diefenbaker.Intl.AP.718660_CWEC2020v2.epw', 'YXE'],
+            # ['CAN_MB_Winnipeg-Richardson.Intl.AP.718520_CWEC2020v2.epw', 'YWG']
         ]
 
     #LEEP Custom Options Overides
