@@ -151,16 +151,18 @@ def download_analyses(bucket='834599497928',
 
 
 # download_analyses(bucket='834599497928',
-#                   prefix='sgilani/',  # S3 prefix MUST have a trailing /
-#                   target_path=r'C:/Users/sgilani/OneDrive - NRCan RNCan/Documents/BTAP/OEE-2024/Simulation/AWS-runs/FinalBaselines',  # Your local download folder.
+#                   # prefix='sgilani/',  # S3 prefix MUST have a trailing /
+#                   prefix='sgilani_oee_hist_weather/',
+#                   # target_path=r'C:/Users/sgilani/OneDrive - NRCan RNCan/Documents/BTAP/OEE-2024/Simulation/AWS-runs/FinalBaselines',  # Your local download folder.
+#                   target_path=r'D:/BTAP/OEE_Electrification/if-using-historic-weather',
 #                   hourly_csv=False,  # download hourly.csv zip
 #                   in_osm=False,  # download osm zip
 #                   eplusout_sql=False,  # download sqlite files zip
 #                   eplustbl_htm=False,  # download e+ htm report zip
 #                   concat_excel_files=False,  # concat all output.xlsx files to a master.csv and parquet file
-#                   regex_filter='OEEelec_BL_Lowrise*',#'OEEelec_SC_MURBElec_ElecResWH_Lowrise_\S\S\S_env_*',  # an example that gets MidriseApartment from Toronto except the vintage analyses
+#                   regex_filter='OEEelec_BL_Secondary*',#'OEEelec_SC_MURBElec_ElecResWH_Lowrise_\S\S\S_env_*',  # an example that gets MidriseApartment from Toronto except the vintage analyses
 #                   unzip_and_delete=False,  # This will unzip the zip files of all the above into a folder and delete the original zip file.
-#                   dry_run=True  # If set to true.. will do a dry run and not download anything. This is used to make sure your regex is working as intended.
+#                   dry_run=False  # If set to true.. will do a dry run and not download anything. This is used to make sure your regex is working as intended.
 #                   )
 
 
@@ -176,78 +178,80 @@ ENVELOPE = [
         # 'env_necb_30'
     ]
 ELECsystems_OEE = [
-        # 'MURBElec_ElecResWH',
-        # 'MURBMixed_ElecResWH',
-        # 'MURBASHPElec_ElecResWH',
-        # 'MURBASHPMixed_ElecResWH',
-        # 'SchoolElec_ElecResWH',
-        # 'SchoolMixed_ElecResWH',
-        # 'SchoolASHPElec_ElecResWH',
-        # 'SchoolASHPMixed_ElecResWH',
-        # 'CAWHPElec_ElecResWH',
-        # 'CAWHPMixed_ElecResWH',
-        # ### 'CAWASHPElec_ElecResWH',
-        # ### 'CAWASHPMixed_ElecResWH',
-        # 'CGSHPElec_ElecResWH',
-        # 'CGSHPMixed_ElecResWH',
-        # ### 'VRFElecBoiler_ElecResWH',
-        # ### 'VRFMixedBoiler_ElecResWH',
-        # ### 'VRFElecResBackup_ElecResWH',
-
-        # 'MURBElec_HPWH',
-        # 'MURBMixed_HPWH',
-        # 'MURBASHPElec_HPWH',
-        # 'MURBASHPMixed_HPWH',
-        # 'SchoolElec_HPWH',
-        # 'SchoolMixed_HPWH',
-        # 'SchoolASHPElec_HPWH',
-        # 'SchoolASHPMixed_HPWH',
-        # 'CAWHPElec_HPWH',
-        # 'CAWHPMixed_HPWH',
-        # ##  'CAWASHPElec_HPWH',
-        # ##  'CAWASHPMixed_HPWH',
-        # 'CGSHPElec_HPWH',
-        # 'CGSHPMixed_HPWH',
-        # ##  'VRFElecBoiler_HPWH',
-        # ##  'VRFMixedBoiler_HPWH',
-        # ##  'VRFElecResBackup_HPWH',
-
-
-        # 'MURBMixed_ElecResWH_5050',
-        # 'MURBASHPMixed_ElecResWH_5050',
-        # 'SchoolMixed_ElecResWH_5050',
-        # 'SchoolASHPMixed_ElecResWH_5050',
-        # 'CAWHPMixed_ElecResWH_5050',
-        # ## 'CAWASHPMixed_ElecResWH_5050',
-        # 'CGSHPMixed_ElecResWH_5050',
-        # ## 'VRFMixedBoiler_ElecResWH_5050',
-        # 'MURBMixed_HPWH_5050',
-        # 'MURBASHPMixed_HPWH_5050',
-        # 'SchoolMixed_HPWH_5050',
-        # 'SchoolASHPMixed_HPWH_5050',
-        # 'CAWHPMixed_HPWH_5050',
-        # ## 'CAWASHPMixed_HPWH_5050',
-        # 'CGSHPMixed_HPWH_5050',
-        # ## 'VRFMixedBoiler_HPWH_5050',
-
-
-
-        # 'MURBMixed_ElecResWH_0199',
-        # 'MURBASHPMixed_ElecResWH_0199',
-        # 'SchoolMixed_ElecResWH_0199',
-        # 'SchoolASHPMixed_ElecResWH_0199',
-        # 'CAWHPMixed_ElecResWH_0199',
-        # ## 'CAWASHPMixed_ElecResWH_0199',
-        # 'CGSHPMixed_ElecResWH_0199',
-        # ## 'VRFMixedBoiler_ElecResWH_0199',
-        # 'MURBMixed_HPWH_0199',
-        # 'MURBASHPMixed_HPWH_0199',
-        # 'SchoolMixed_HPWH_0199',
-        # 'SchoolASHPMixed_HPWH_0199',
-        # 'CAWHPMixed_HPWH_0199',
-        # ## 'CAWASHPMixed_HPWH_0199',
-        # 'CGSHPMixed_HPWH_0199',
-        # ## 'VRFMixedBoiler_HPWH_0199',
+    # 'MURBElec_ElecResWH',
+    # 'MURBMixed_ElecResWH',
+    # 'MURBASHPElec_ElecResWH',
+    # 'MURBASHPMixed_ElecResWH',
+    # 'SchoolElec_ElecResWH',
+    # 'SchoolMixed_ElecResWH',
+    # 'SchoolASHPElec_ElecResWH',
+    # 'SchoolASHPMixed_ElecResWH',
+    # 'CAWHPElec_ElecResWH',
+    # 'CAWHPMixed_ElecResWH',
+    # 'CAWASHPElec_ElecResWH',
+    # 'CAWASHPMixed_ElecResWH',
+    # 'CGSHPElec_ElecResWH',
+    # 'CGSHPMixed_ElecResWH',
+    # 'VRFElecBoiler_ElecResWH',
+    # 'VRFMixedBoiler_ElecResWH',
+    # 'VRFElecResBackup_ElecResWH',
+    #
+    # 'MURBElec_HPWH',
+    # 'MURBMixed_HPWH',
+    # 'MURBASHPElec_HPWH',
+    # 'MURBASHPMixed_HPWH',
+    # 'SchoolElec_HPWH',
+    # 'SchoolMixed_HPWH',
+    # 'SchoolASHPElec_HPWH',
+    # 'SchoolASHPMixed_HPWH',
+    # 'CAWHPElec_HPWH',
+    # 'CAWHPMixed_HPWH',
+    # 'CAWASHPElec_HPWH',
+    # 'CAWASHPMixed_HPWH',
+    # 'CGSHPElec_HPWH',
+    # 'CGSHPMixed_HPWH',
+    # 'VRFElecBoiler_HPWH',
+    # 'VRFMixedBoiler_HPWH',
+    # 'VRFElecResBackup_HPWH',
+    #
+    # 'MURBMixed_ElecResWH_5050',
+    # 'MURBASHPMixed_ElecResWH_5050',
+    # 'SchoolMixed_ElecResWH_5050',
+    # 'SchoolASHPMixed_ElecResWH_5050',
+    # 'CAWHPMixed_ElecResWH_5050',
+    # 'CAWASHPMixed_ElecResWH_5050',
+    # 'CGSHPMixed_ElecResWH_5050',
+    # 'VRFMixedBoiler_ElecResWH_5050',
+    # 'MURBMixed_HPWH_5050',
+    # 'MURBASHPMixed_HPWH_5050',
+    # 'SchoolMixed_HPWH_5050',
+    # 'SchoolASHPMixed_HPWH_5050',
+    # 'CAWHPMixed_HPWH_5050',
+    # 'CAWASHPMixed_HPWH_5050',
+    # 'CGSHPMixed_HPWH_5050',
+    # 'VRFMixedBoiler_HPWH_5050',
+    #
+    # 'MURBMixed_ElecResWH_0199',
+    # 'MURBASHPMixed_ElecResWH_0199',
+    # 'SchoolMixed_ElecResWH_0199',
+    # 'SchoolASHPMixed_ElecResWH_0199',
+    # 'CAWHPMixed_ElecResWH_0199',
+    # 'CAWASHPMixed_ElecResWH_0199',
+    # 'CGSHPMixed_ElecResWH_0199',
+    # 'VRFMixedBoiler_ElecResWH_0199',
+    # 'MURBMixed_HPWH_0199',
+    # 'MURBASHPMixed_HPWH_0199',
+    # 'SchoolMixed_HPWH_0199',
+    # 'SchoolASHPMixed_HPWH_0199',
+    # 'CAWHPMixed_HPWH_0199',
+    # 'CAWASHPMixed_HPWH_0199',
+    # 'CGSHPMixed_HPWH_0199',
+    # 'VRFMixedBoiler_HPWH_0199',
+    #
+    # 'VRFElecBoiler2_ElecResWH',
+    # 'VRFElecBoiler2_HPWH',
+    # 'CAWASHPElec2_ElecResWH',
+    # 'CAWASHPElec2_HPWH'
     ]
 epw_files = [
     # ['CAN_BC_Vancouver.Intl.AP.718920_NRCv12022_TMY_GW1.5.epw', 'YVR'],  # CZ 4
@@ -266,26 +270,41 @@ epw_files = [
     # ['CAN_AB_Edmonton.Intl.CS.711550_NRCv12022_TMY_GW1.5.epw', 'YEG'],  # CZ 7A
     # ['CAN_SK_Saskatoon-Diefenbaker.Intl.AP.718660_NRCv12022_TMY_GW1.5.epw', 'YXE'],  # CZ 7A
     # ['CAN_MB_Winnipeg-Richardson.Intl.AP.718520_NRCv12022_TMY_GW1.5.epw', 'YWG'],  # CZ 7A
+
+    # ['CAN_BC_Vancouver.Intl.AP.718920_CWEC2020.epw', 'YVR'],
+    # ['CAN_BC_Kelowna.712030_CWEC2020.epw', 'YLW'],
+    # ['CAN_ON_Toronto.Intl.AP.716240_CWEC2020.epw', 'YYZ'],
+    # ['CAN_ON_Ottawa.Intl.AP.716280_CWEC2020.epw', 'YOW'],
+    # ['CAN_QC_Montreal.Intl.AP.716270_CWEC2020.epw', 'YUL'],
+    # ['CAN_NS_Halifax.Intl.AP.713950_CWEC2020.epw', 'YHZ'],
+    # ['CAN_NL_St.Johns.Intl.AP.718010_CWEC2020.epw', 'YYT'],
+    # ['CAN_PE_Charlottetown.AP.717060_CWEC2020.epw', 'YYG'],
+    # ['CAN_NB_Fredericton.717000_CWEC2020.epw', 'YFC'],
+    # ['CAN_AB_Calgary.Intl.AP.718770_CWEC2020.epw', 'YYC'],
+    # ['CAN_AB_Edmonton.Intl.AP.711230_CWEC2020.epw', 'YEG'],
+    # ['CAN_SK_Saskatoon.Intl.AP.718660_CWEC2020.epw', 'YXE'],
+    # ['CAN_MB_Winnipeg.Intl.AP.718520_CWEC2020.epw', 'YWG']
+
 ]
 for scenario in ELECsystems_OEE:
     for epw_file in epw_files:
         if scenario.startswith("School"):
             list_building_type = [
-                'PrimarySchool',
+                # 'PrimarySchool',
                 'SecondarySchool'
             ]
         elif scenario.startswith("MURB"):
             list_building_type = [
-                'LowriseApartment',
-                'MidriseApartment',
+                # 'LowriseApartment',
+                # 'MidriseApartment',
                 'HighriseApartment'
             ]
         else:
             list_building_type = [
-                'LowriseApartment',
-                'MidriseApartment',
+                # 'LowriseApartment',
+                # 'MidriseApartment',
                 'HighriseApartment',
-                'PrimarySchool',
+                # 'PrimarySchool',
                 'SecondarySchool'
             ]
 
@@ -317,7 +336,7 @@ for analysis_name in list_analysis_name:
     print('analysis_name', analysis_name)
     print(datapoint_number, analysis_name)
     # download_analyses(bucket='834599497928',
-    #                   prefix='sgilani/',
+    #                   prefix='sgilani_oee_hist_weather/',
     #                   target_path=r'C:/Users/sgilani/OneDrive - NRCan RNCan/Documents/BTAP/OEE-2024/Simulation/AWS-runs/Scenarios',
     #                   hourly_csv=False,
     #                   in_osm=False,
@@ -330,37 +349,40 @@ for analysis_name in list_analysis_name:
     #                   )
     datapoint_number += 1.0
 
-    ### Download 'output.xlsx' files
-    key='sgilani/'
-    bucket='834599497928'
-    target_path=r'C:/Users/sgilani/OneDrive - NRCan RNCan/Documents/BTAP/OEE-2024/Simulation/AWS-runs/Scenarios'
+    # ### Download 'output.xlsx' files
+    # key='sgilani_oee_hist_weather/'
+    # bucket='834599497928'
+    # # target_path=r'C:/Users/sgilani/OneDrive - NRCan RNCan/Documents/BTAP/OEE-2024/Simulation/AWS-runs/Scenarios'
+    # target_path=r'D:/BTAP/OEE_Electrification/if-using-historic-weather'
+    #
+    # filetype = 'output.xlsx'
+    # source_zip_file = os.path.join(key, analysis_name, 'results', filetype).replace('\\', '/')
+    # print('source_zip_file', source_zip_file)
+    # target_zip_basename = os.path.join(target_path, analysis_name+'.xlsx')
+    # print('target_zip_basename', target_zip_basename)
+    # S3().download_file(s3_file=source_zip_file, bucket_name=bucket, target_path=target_zip_basename)
 
-    filetype = 'output.xlsx'
-    source_zip_file = os.path.join(key, analysis_name, 'results', filetype).replace('\\', '/')
-    print('source_zip_file', source_zip_file)
-    target_zip_basename = os.path.join(target_path, analysis_name+'.xlsx')
-    print('target_zip_basename', target_zip_basename)
-    S3().download_file(s3_file=source_zip_file, bucket_name=bucket, target_path=target_zip_basename)
-
-    ### Download 'eplusout.sql' files
-    key = 'sgilani/'
-    bucket = '834599497928'
-    target_path = r'D:/OneDrive - NRCan RNCan/Documents/BTAP/OEE-2024/Simulation/AWS-runs/Scenarios-Detailed-Analysis/SchoolASHPElec_HPWH_Vancouver'
-    filetype = 'eplusout.sql.zip'
-    source_zip_file = os.path.join(key, analysis_name, 'results', 'zips', filetype).replace('\\', '/')
-    print('source_zip_file', source_zip_file)
-    target_zip_basename = os.path.join(target_path, os.path.basename(os.path.dirname(key)) + "_" + filetype)
-    print('target_zip_basename', target_zip_basename)
-    unzip_and_delete = True
-    is_downloaded = S3().download_file(s3_file=source_zip_file, bucket_name=bucket, target_path=target_zip_basename)
-    print('is_downloaded', is_downloaded)
-    if unzip_and_delete and is_downloaded:
-        extraction_folder_suffix = 'eplusout.sql'
-        extraction_folder = os.path.join(target_path, analysis_name, extraction_folder_suffix)
-        print('extraction_folder', extraction_folder)
-        pathlib.Path(extraction_folder).mkdir(parents=True, exist_ok=True)
-        with zipfile.ZipFile(target_zip_basename, 'r') as zip_ref:
-            zip_ref.extractall(extraction_folder)
-            print(zip_ref)
-        pathlib.Path(target_zip_basename).unlink(missing_ok=True)
+    # ### Download 'eplusout.sql' files
+    # key = 'sgilani_oee_hist_weather/'
+    # bucket = '834599497928'
+    # # target_path = r'D:/OneDrive - NRCan RNCan/Documents/BTAP/OEE-2024/Simulation/AWS-runs/Scenarios-Detailed-Analysis/SchoolASHPElec_HPWH_Vancouver'
+    # target_path = r'D:/BTAP/OEE_Electrification/if-using-historic-weather/Better-NPV/SchoolASHPElec_HPWH_Vancouver'
+    # target_path = r'D:/BTAP/OEE_Electrification/if-using-historic-weather/Better-NPV/MURBASHPElec_HPWH'
+    # filetype = 'eplusout.sql.zip'
+    # source_zip_file = os.path.join(key, analysis_name, 'results', 'zips', filetype).replace('\\', '/')
+    # print('source_zip_file', source_zip_file)
+    # target_zip_basename = os.path.join(target_path, os.path.basename(os.path.dirname(key)) + "_" + filetype)
+    # print('target_zip_basename', target_zip_basename)
+    # unzip_and_delete = True
+    # is_downloaded = S3().download_file(s3_file=source_zip_file, bucket_name=bucket, target_path=target_zip_basename)
+    # print('is_downloaded', is_downloaded)
+    # if unzip_and_delete and is_downloaded:
+    #     extraction_folder_suffix = 'eplusout.sql'
+    #     extraction_folder = os.path.join(target_path, analysis_name, extraction_folder_suffix)
+    #     print('extraction_folder', extraction_folder)
+    #     pathlib.Path(extraction_folder).mkdir(parents=True, exist_ok=True)
+    #     with zipfile.ZipFile(target_zip_basename, 'r') as zip_ref:
+    #         zip_ref.extractall(extraction_folder)
+    #         print(zip_ref)
+    #     pathlib.Path(target_zip_basename).unlink(missing_ok=True)
 #=======================================================================================================================
