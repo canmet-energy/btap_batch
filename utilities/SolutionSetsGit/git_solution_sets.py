@@ -251,15 +251,15 @@ def git_solution_sets():
 
     if OEE:
         epw_files_cz4 = [
-            ['CAN_BC_Vancouver.Intl.AP.718920_NRCv12022_TMY_GW1.5.epw', 'YVR'],  # CZ 4
+            ['CAN_BC_Vancouver.Intl.AP.718920_NRCv12022_TMY_GW1.5_EPW.epw', 'YVR'],  # CZ 4
 
             ## Historic weather files
             # ['CAN_BC_Vancouver.Intl.AP.718920_CWEC2020.epw', 'YVR']
         ]
 
         epw_files_cz5 = [
-            ['CAN_BC_Kelowna.Intl.AP.712030_NRCv12022_TMY_GW1.5.epw', 'YLW'],  # CZ 5
-            ['CAN_ON_Toronto-Pearson.Intl.AP.716240_NRCv12022_TMY_GW1.5.epw', 'YYZ'],  # CZ 5
+            ['CAN_BC_Kelowna.Intl.AP.712030_NRCv12022_TMY_GW1.5_EPW.epw', 'YLW'],  # CZ 5
+            ['CAN_ON_Toronto-Pearson.Intl.AP.716240_NRCv12022_TMY_GW1.5_EPW.epw', 'YYZ'],  # CZ 5
 
             ## Historic weather files
             # ['CAN_BC_Kelowna.712030_CWEC2020.epw', 'YLW'],
@@ -267,12 +267,12 @@ def git_solution_sets():
         ]
 
         epw_files_cz6 = [
-            ['CAN_ON_Ottawa-Macdonald-Cartier.Intl.AP.716280_NRCv12022_TMY_GW1.5.epw', 'YOW'],  # CZ 6
-            ['CAN_QC_Montreal-Trudeau.Intl.AP.716270_NRCv12022_TMY_GW1.5.epw', 'YUL'],  # CZ 6
-            ['CAN_NS_Halifax-Stanfield.Intl.AP.713950_NRCv12022_TMY_GW1.5.epw', 'YHZ'],  # CZ 6
-            ['CAN_NL_St.Johns.Intl.AP.718010_NRCv12022_TMY_GW1.5.epw', 'YYT'],  # CZ 6
-            ['CAN_PE_Charlottetown.AP.717060_NRCv12022_TMY_GW1.5.epw', 'YYG'],  # CZ 6
-            ['CAN_NB_Fredericton.Intl.AP.717000_NRCv12022_TMY_GW1.5.epw', 'YFC'],  # CZ 6
+            ['CAN_ON_Ottawa-Macdonald-Cartier.Intl.AP.716280_NRCv12022_TMY_GW1.5_EPW.epw', 'YOW'],  # CZ 6
+            ['CAN_QC_Montreal-Trudeau.Intl.AP.716270_NRCv12022_TMY_GW1.5_EPW.epw', 'YUL'],  # CZ 6
+            ['CAN_NS_Halifax-Stanfield.Intl.AP.713950_NRCv12022_TMY_GW1.5_EPW.epw', 'YHZ'],  # CZ 6
+            ['CAN_NL_St.Johns.Intl.AP.718010_NRCv12022_TMY_GW1.5_EPW.epw', 'YYT'],  # CZ 6
+            ['CAN_PE_Charlottetown.AP.717060_NRCv12022_TMY_GW1.5_EPW.epw', 'YYG'],  # CZ 6
+            ['CAN_NB_Fredericton.Intl.AP.717000_NRCv12022_TMY_GW1.5_EPW.epw', 'YFC'],  # CZ 6
 
             ## Historic weather files
             # ['CAN_ON_Ottawa.Intl.AP.716280_CWEC2020.epw', 'YOW'],
@@ -284,10 +284,10 @@ def git_solution_sets():
         ]
 
         epw_files_cz7A = [
-            ['CAN_AB_Calgary.Intl.AP.718770_NRCv12022_TMY_GW1.5.epw', 'YYC'],  # CZ 7A
-            ['CAN_AB_Edmonton.Intl.CS.711550_NRCv12022_TMY_GW1.5.epw', 'YEG'],  # CZ 7A
-            ['CAN_SK_Saskatoon-Diefenbaker.Intl.AP.718660_NRCv12022_TMY_GW1.5.epw', 'YXE'],  # CZ 7A
-            ['CAN_MB_Winnipeg-Richardson.Intl.AP.718520_NRCv12022_TMY_GW1.5.epw', 'YWG'],  # CZ 7A
+            ['CAN_AB_Calgary.Intl.AP.718770_NRCv12022_TMY_GW1.5_EPW.epw', 'YYC'],  # CZ 7A
+            ['CAN_AB_Edmonton.Intl.CS.711550_NRCv12022_TMY_GW1.5_EPW.epw', 'YEG'],  # CZ 7A
+            ['CAN_SK_Saskatoon-Diefenbaker.Intl.AP.718660_NRCv12022_TMY_GW1.5_EPW.epw', 'YXE'],  # CZ 7A
+            ['CAN_MB_Winnipeg-Richardson.Intl.AP.718520_NRCv12022_TMY_GW1.5_EPW.epw', 'YWG'],  # CZ 7A
 
             ## Historic weather files
             # ['CAN_AB_Calgary.Intl.AP.718770_CWEC2020.epw', 'YYC'],
