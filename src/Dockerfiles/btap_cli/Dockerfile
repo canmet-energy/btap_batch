@@ -12,7 +12,7 @@ LABEL author="Phylroy Lopez phylroy.lopez@canada.ca"
 
 #Be root and install nrcan_certs under the root folder if LOCALNRCAN is set.
 WORKDIR /
-RUN if [ ! -z "$LOCALNRCAN" ] ; then \
+RUN if [ -n "$LOCALNRCAN" ] ; then \
       echo "Cloning install_nrcan_certs repository" \
       && git clone https://$GIT_API_TOKEN:x-oauth-basic@github.com/canmet-energy/linux_nrcan_certs.git --depth 1 --branch ${LOCALNRCAN_BRANCH} --single-branch /linux_nrcan_certs \
       && cd /linux_nrcan_certs \
@@ -34,7 +34,7 @@ RUN if [ -z "$BTAP_COSTING_BRANCH" ] ; then \
     fi
 
 # if costing branch name is defined.. use costing.
-RUN if [ ! -z "$BTAP_COSTING_BRANCH" ] ; then \
+RUN if [ -n "$BTAP_COSTING_BRANCH" ] ; then \
         echo "Creating Private CLI with Costing" \
         && git clone https://$GIT_API_TOKEN:x-oauth-basic@github.com/canmet-energy/btap_costing.git --depth 1 --branch ${BTAP_COSTING_BRANCH} --single-branch /btap_costing \
         && cd /btap_costing \
@@ -53,7 +53,7 @@ RUN mkdir weather
 
 # Download non-standard weather files to the weather directory.
 WORKDIR /btap_costing/utilities/btap_cli/weather
-RUN if [ ! -z "$WEATHER_FILES" ] ; then \
+RUN if [ -n "$WEATHER_FILES" ] ; then \
     echo "Downloading weather files." \
     && wget --no-check-certificate $WEATHER_FILES; \
 fi

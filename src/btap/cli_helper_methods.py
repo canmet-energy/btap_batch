@@ -18,7 +18,10 @@ from src.btap.btap_sensitivity import BTAPSensitivity
 from src.btap.btap_batch_analysis import BTAPBatchAnalysis
 from src.btap.reports import generate_btap_reports
 from src.btap.aws_s3 import S3
-from src.btap.common_paths import CommonPaths, SCHEMA_FOLDER, HISTORIC_WEATHER_LIST,FUTURE_WEATHER_LIST,HISTORIC_WEATHER_REPO,FUTURE_WEATHER_REPO,USER
+from src.btap.common_paths import CommonPaths, SCHEMA_FOLDER, HISTORIC_WEATHER_LIST, \
+    FUTURE_WEATHER_LIST, HISTORIC_WEATHER_REPO, FUTURE_WEATHER_REPO, HISTORIC_WEATHER_LIST_BTAP, \
+    FUTURE_WEATHER_LIST_BTAP, HISTORIC_WEATHER_REPO_BTAP, FUTURE_WEATHER_REPO_BTAP, USER, \
+    CLIMATE_ONEBUILDING_FOLDER, CLIMATE_ONEBUILDING_MAP, CLIMATE_ONEBUILDING_URL
 import os
 import pandas as pd
 from src.btap.aws_s3 import S3
@@ -26,6 +29,7 @@ import zipfile
 import pathlib
 import re
 
+import json
 import requests
 import shutil
 import time
@@ -103,9 +107,13 @@ def get_pareto_points(costs, return_mask=True):
     else:
         return is_efficient
 
+def get_weather_locations(btap_weather: bool, weather_locations=[]) -> str:
 
+    # Helper function for building download links for Climate.OneBuilding.Org.
+    def build_link(data, zip_file):
+        return CLIMATE_ONEBUILDING_URL + data["region"] + data["country"] + \
+               data["province_map"][zip_file[4 : 6]] + zip_file
 
-def get_weather_locations(weather_locations=[]):
     default_weather_locations =  [
         'CAN_QC_Montreal-Trudeau.Intl.AP.716270_CWEC2016.epw',
         'CAN_NS_Halifax.Dockyard.713280_CWEC2016.epw',
@@ -125,27 +133,106 @@ def get_weather_locations(weather_locations=[]):
         'CAN_NT_Yellowknife.AP.719360_CWEC2020.epw',
         'CAN_AB_Fort.Mcmurray.AP.716890_CWEC2020.epw'
     ]
-    # Get list of historic and future weather files available from git repo. See definitions for URLs
-    hist_files = requests.get(HISTORIC_WEATHER_LIST, allow_redirects=True).json()
-    fut_files = requests.get(FUTURE_WEATHER_LIST, allow_redirects=True).json()
 
-    # Check if any weather locations on the weather file list are not default weather locations
-    custom_weather_locs = [x for x in weather_locations if x not in default_weather_locations]
+    if btap_weather: # Download from btap_weather
+        # Get list of historic and future weather files available from git repo. See definitions for URLs
+        historic_list = set(requests.get(HISTORIC_WEATHER_LIST_BTAP, allow_redirects=True).json())
+        future_list   = set(requests.get(FUTURE_WEATHER_LIST_BTAP, allow_redirects=True).json())
 
-    # Replace .epw for .zip as this is the basename used in the weatherfile repository.
-    custom_weather_locs = [re.sub(r'\.epw$', '.zip', loc) for loc in custom_weather_locs]
+        # Check if any weather locations on the weather file list are not default weather locations.
+        custom_weather_locs = {
+            re.sub(r'\.epw$', '.zip', x) # Replace .epw for .zip as this is the basename 
+            for x in weather_locations   # used in the weatherfile repository.
+            if x not in default_weather_locations
+        }
 
-    # Check if any of the weather files are not part of historical or future files.
-    non_existant_files = list(set(custom_weather_locs) - set(hist_files + fut_files))
-    if len(non_existant_files) > 0:
-        print(f"Could not find the weather files {non_existant_files} in the btap_batch repository from your build_conf.yml file.  Please check if it is spelled correctly and check if it is in the repository (https://github.com/canmet-energy/btap_weather)." )
-        exit(1)
+        # Check if any of the weather files are not part of historical or future files.
+        non_existant_files = (custom_weather_locs - historic_list) - future_list 
 
-    # prefix custom_weather with correct URL for fut or hist.  Already filtered for one or the other above.. so the else works implicitly for future.
-    custom_weather_string = [HISTORIC_WEATHER_REPO + loc if loc in hist_files else FUTURE_WEATHER_REPO + loc  for loc in custom_weather_locs]
+        if len(non_existant_files) > 0:
+            print(
+                f"Could not find the weather files {non_existant_files} in the list of BTAP "
+                "weather files from your build_conf.yml file. Please check if it is spelled "
+                "correctly and check whether it is in:"
+                f"\nThe historic list: {HISTORIC_WEATHER_LIST_BTAP}"
+                f"\nThe future list: {FUTURE_WEATHER_LIST_BTAP}")
+            exit(1)
+
+        # prefix custom_weather with correct URL for fut or hist.  Already filtered for one or the other above.. so the else works implicitly for future.
+        custom_weather_list = [
+            HISTORIC_WEATHER_REPO_BTAP + loc 
+            if loc in historic_list 
+            else FUTURE_WEATHER_REPO_BTAP + loc  
+            for loc in custom_weather_locs
+        ]
+
+    else: # Download from Climate.OneBuilding.Org.
+        custom_weather_list = []
+        weather_groups      = {}
+        non_existant_files  = {} # Maps missing files to their associated file list.
+        
+        # Group weather files by country to avoid reopening files where unnessecary.
+        for weather_file in weather_locations:
+            prefix = weather_file[0 : 3]
+
+            if prefix not in weather_groups:
+                weather_groups[prefix] = []
+
+            weather_groups[prefix].append(re.sub(r'\.epw$', '.zip', weather_file))
+
+        for prefix in weather_groups:
+            if prefix == 'CAN': # Search historic and future files if this is a Canadian file.
+                historic_data = json.load(open(HISTORIC_WEATHER_LIST))
+                future_data   = json.load(open(FUTURE_WEATHER_LIST))
+                for zip_file in weather_groups[prefix]:
+                    if zip_file in set(future_data["file_list"]):
+                        custom_weather_list.append(build_link(future_data, zip_file))
+
+                    elif zip_file in set(historic_data["file_list"]):
+                        custom_weather_list.append(build_link(historic_data, zip_file))
+
+                    else:
+                        non_existant_files[zip_file] = f"{HISTORIC_WEATHER_LIST} or {FUTURE_WEATHER_LIST}"
+
+            else: # Other files not in canada.
+                file_map = json.load(open(CLIMATE_ONEBUILDING_MAP))
+
+                # Contains the list of weather files for a given country as well as ohter 
+                # information needed for building the download link.
+                weather_data_file = os.path.join(CLIMATE_ONEBUILDING_FOLDER, file_map[prefix])
+
+                # Try to load the weather file list for the country based on the 3-character 
+                # country code.
+                try: 
+                    weather_data = json.load(open(weather_data_file))
+                except FileNotFoundError as error:
+                    print(
+                        f"Error: Couldn't resolve country code {prefix} for file {weather_file}"
+                        f"Full error description: {error}")
+                    exit(1)
+                except Exception as error:
+                    print(f"Unkown error: {error}")
+                    exit(1)
+                
+                for zip_file in weather_groups[prefix]:
+                    if zip_file in set(weather_data["file_list"]):
+                        # Build the download link and append it to the list of locations.
+                        custom_weather_list.append(build_link(weather_data, zip_file))
+                    else:
+                        non_existant_files[weather_file] = weather_data_file
+        
+        if len(non_existant_files) > 0:
+            print(
+                "Could not find the weather files in the list of weather files from "
+                "ClimateOneBuilding.Org from your build_conf.yml file. The following weather files "
+                "could not be found in their appropriate weather lists:")
+            for file, file_list in non_existant_files.items():
+                print(file, ':', file_list)
+                
+            exit(1)
 
     # Return a single string from the list separated by a space.
-    return  " ".join(custom_weather_string)
+    return  " ".join(custom_weather_list)
 
 def build_and_configure_docker_and_aws(btap_batch_branch=None,
                                        btap_costing_branch=None,
@@ -154,13 +241,14 @@ def build_and_configure_docker_and_aws(btap_batch_branch=None,
                                        os_standards_branch=None,
                                        build_btap_cli=None,
                                        build_btap_batch=None,
+                                       btap_weather=None,
                                        weather_list=None,
                                        local_nrcan=None):
 
 
 
     # Get the weather locations from the weather list
-    weather_locations = get_weather_locations(weather_list)
+    weather_locations = get_weather_locations(btap_weather, weather_list)
     # build args for aws and btap_cli container.
     build_args_btap_cli = {'OPENSTUDIO_VERSION': openstudio_version,
                            'BTAP_COSTING_BRANCH': btap_costing_branch,
@@ -718,8 +806,20 @@ os_standards_branch: nrcan
 # OpenStudio version used by analyses and built into the container environment. The E+ version used for simulations is determined by the OpenStudio version.
 openstudio_version: 3.7.0
 
-# List of Weather files to build included in the build environment. Only .epw files , and <100 files. Other weather locations are available. However, you have to define the ones you want to use when creating your environment.  The other locations that you can use can be found in this repository:
-# https://github.com/canmet-energy/btap_weather
+# Location of weather files to download. 
+# If true, downloads from btap_weather. Else, downloads from Climate.OneBuilding.Org. 
+# The other locations that you can use can be found in their respective locations here: 
+# btap_weather:
+#   {HISTORIC_WEATHER_REPO_BTAP}
+#   {FUTURE_WEATHER_REPO_BTAP}
+# Climate.OneBuilding.Org:
+#   {HISTORIC_WEATHER_REPO}
+#   {FUTURE_WEATHER_REPO}
+btap_weather: True 
+
+# List of Weather files to build included in the build environment. 
+# Only .epw files , and <100 files. Other weather locations are available. 
+# However, you have to define the ones you want to use when creating your environment.  
 weather_list:
   - CAN_QC_Montreal.Intl.AP.716270_CWEC2020.epw
   - CAN_NS_Halifax.Dockyard.713280_CWEC2020.epw
