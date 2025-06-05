@@ -154,11 +154,12 @@ def get_weather_locations(btap_weather: bool, weather_locations=[]) -> str:
                 f"Could not find the weather files {non_existant_files} in the list of BTAP "
                 "weather files from your build_conf.yml file. Please check if it is spelled "
                 "correctly and check whether it is in:"
-                f"\nThe historic list: {HISTORIC_WEATHER_LIST_BTAP}"
-                f"\nThe future list: {FUTURE_WEATHER_LIST_BTAP}")
+                f"\n  The historic list: {HISTORIC_WEATHER_LIST_BTAP}"
+                f"\n  The future list: {FUTURE_WEATHER_LIST_BTAP}")
             exit(1)
 
-        # prefix custom_weather with correct URL for fut or hist.  Already filtered for one or the other above.. so the else works implicitly for future.
+        # prefix custom_weather with correct URL for fut or hist.  
+        # Already filtered for one or the other above.. so the else works implicitly for future.
         custom_weather_list = [
             HISTORIC_WEATHER_REPO_BTAP + loc 
             if loc in historic_list 
@@ -197,7 +198,7 @@ def get_weather_locations(btap_weather: bool, weather_locations=[]) -> str:
             else: # Other files not in canada.
                 file_map = json.load(open(CLIMATE_ONEBUILDING_MAP))
 
-                # Contains the list of weather files for a given country as well as ohter 
+                # Contains the list of weather files for a given country as well as other 
                 # information needed for building the download link.
                 weather_data_file = os.path.join(CLIMATE_ONEBUILDING_FOLDER, file_map[prefix])
 
@@ -211,7 +212,7 @@ def get_weather_locations(btap_weather: bool, weather_locations=[]) -> str:
                         f"Full error description: {error}")
                     exit(1)
                 except Exception as error:
-                    print(f"Unkown error: {error}")
+                    print(f"Unknown error: {error}")
                     exit(1)
                 
                 for zip_file in weather_groups[prefix]:
@@ -824,11 +825,11 @@ weather_list:
   - CAN_NT_Yellowknife.AP.719360_CWEC2020.epw
   - CAN_AB_Fort.Mcmurray.AP.716890_CWEC2020.epw
 
-# If you do not have access to the NRCan RSMeans data this should be set to False.
+# If you do not have access to RSMeans data this should be set to False.
 # By default, btap_costing uses a randomized placeholder dataset to perform costing. 
-# If you are NRCan staff or have an RSMeans license and you would like to request the proprietary RSMeans data, 
+# If you are NRCan staff or have an RSMeans license and you would like to request the RSMeans data, 
 # please request access by providing your GitHub username to chris.kirney@rncan-nrcan.gc.ca.  
-# Once you have permission to access the repository, you can set this to True.
+# Once you have been granted permission to access those resources, you can set this to True.
 enable_rsmeans: False
 
 # Rebuild btap_cli image
