@@ -235,7 +235,7 @@ def get_weather_locations(btap_weather: bool, weather_locations=[]) -> str:
     return  " ".join(custom_weather_list)
 
 def build_and_configure_docker_and_aws(btap_batch_branch=None,
-                                       btap_costing_branch=None,
+                                       enable_rsmeans=None,
                                        compute_environment=None,
                                        openstudio_version=None,
                                        os_standards_branch=None,
@@ -251,7 +251,7 @@ def build_and_configure_docker_and_aws(btap_batch_branch=None,
     weather_locations = get_weather_locations(btap_weather, weather_list)
     # build args for aws and btap_cli container.
     build_args_btap_cli = {'OPENSTUDIO_VERSION': openstudio_version,
-                           'BTAP_COSTING_BRANCH': btap_costing_branch,
+                           'ENABLE_RSMEANS' : 'True' if enable_rsmeans == True else '',
                            'OS_STANDARDS_BRANCH': os_standards_branch,
                            'WEATHER_FILES': weather_locations,
                            'LOCALNRCAN': ''}
@@ -405,7 +405,7 @@ def analysis(project_input_folder=None,
         exit(1)
     analysis_config, analysis_input_folder, analyses_folder = BTAPAnalysis.load_analysis_input_file(
         analysis_config_file=analysis_config_file)
-
+    
     if 'build_env_name' in analysis_config: # input.yml has priority.
         os.environ['BUILD_ENV_NAME'] = config['build_env_name']
 
@@ -415,9 +415,6 @@ def analysis(project_input_folder=None,
 
     if compute_environment == None:
         raise("Computer environment was not defined")
-
-
-
 
     reference_run = analysis_config[':reference_run']
     # delete output from previous run if present locally
@@ -785,7 +782,7 @@ def generate_build_config(build_config_path = None):
 # This is the name of the build environment. This will prefix all images, s3 folders, and resources created on aws. Please ensure that it is 24 characters long or less, only uses numbers and lowercase letters, and includes no spaces or special characters aside from underscore. Use the underscore character instead of spaces.
 build_env_name: {USER.lower()}
 
-# Github Token. This must be set to build and run analyses. See the disable_costing section below if you are NRCan staff and would to access costing. 
+# Github Token. This must be set to build and run analyses. See the enable_rsmeans section below if you are NRCan staff and would to access RSMeans costing data. 
 git_api_token: null
 
 # Compute Environment used to build and run analyses. Options are
@@ -796,9 +793,6 @@ compute_environment: local
 
 # Branch of btap_batch to be used in aws compute_environment runs on AWS.
 btap_batch_branch: dev
-
-# Branch of btap_costing to build used in environment
-btap_costing_branch: master
 
 # Branch of openstudio-standards used in environment
 os_standards_branch: nrcan
@@ -829,13 +823,13 @@ weather_list:
   - CAN_ON_Toronto.Intl.AP.716240_CWEC2020.epw
   - CAN_NT_Yellowknife.AP.719360_CWEC2020.epw
   - CAN_AB_Fort.Mcmurray.AP.716890_CWEC2020.epw
-  
 
-# If you do not have access to the NRCan btap_costing repository this should be set to True. Setting this to False
-# without access will cause the build to fail. If you are NRCan staff, please request access by providing your GitHub
-# username to chris.kirney@rncan-nrcan.gc.ca.  Once you have permission to access the repository, you can set this to
-# False.
-disable_costing: True
+# If you do not have access to the NRCan RSMeans data this should be set to False.
+# By default, btap_costing uses a randomized placeholder dataset to perform costing. 
+# If you are NRCan staff or have an RSMeans license and you would like to request the proprietary RSMeans data, 
+# please request access by providing your GitHub username to chris.kirney@rncan-nrcan.gc.ca.  
+# Once you have permission to access the repository, you can set this to True.
+enable_rsmeans: False
 
 # Rebuild btap_cli image
 build_btap_cli: True

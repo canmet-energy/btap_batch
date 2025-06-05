@@ -115,10 +115,10 @@ class DockerBTAPJob:
     def __volume_mounts(self):
         volumes = {
             self.analysis_output_folder: {
-                'bind': '/btap_costing/utilities/btap_cli/output',
+                'bind': '/openstudio-standards/utilities/btap_cli/output',
                 'mode': 'rw'},
             self.analysis_input_job_id_folder: {
-                'bind': '/btap_costing/utilities/btap_cli/input',
+                'bind': '/openstudio-standards/utilities/btap_cli/input',
                 'mode': 'rw'},
         }
         return volumes

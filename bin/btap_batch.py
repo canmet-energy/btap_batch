@@ -73,10 +73,9 @@ def build(**kwargs):
     config = load_config(build_config_path)
 
     btap_batch_branch = config['btap_batch_branch']
+    enable_rsmeans = config['enable_rsmeans']
     os_standards_branch = config['os_standards_branch']
-    btap_costing_branch = config['btap_costing_branch']
     openstudio_version = config['openstudio_version']
-    disable_costing = config['disable_costing']
     btap_weather = config['btap_weather']
     weather_list = config['weather_list']
     build_btap_cli = config['build_btap_cli']
@@ -85,14 +84,8 @@ def build(**kwargs):
     os.environ['GIT_API_TOKEN'] = config['git_api_token']
     compute_environment = config['compute_environment']
     local_nrcan = config['local_nrcan']
-
-
-    if disable_costing:
-        # Setting the costing branch to an empty string will force the docker file to not use costing.
-        btap_costing_branch = ''
-
     build_and_configure_docker_and_aws(btap_batch_branch=btap_batch_branch,
-                                       btap_costing_branch=btap_costing_branch,
+                                       enable_rsmeans=enable_rsmeans,
                                        compute_environment=compute_environment,
                                        openstudio_version=openstudio_version,
                                        btap_weather=btap_weather,

@@ -12,8 +12,8 @@ class BTAPCLI:
 
     def __init__(self):
         self._engine_command = 'bundle exec ruby btap_cli.rb'
-        self._container_input_path = '/btap_costing/utilities/btap_cli/input'
-        self._container_output_path = '/btap_costing/utilities/btap_cli/output'
+        self._container_input_path = '/openstudio-standards/utilities/btap_cli/input'
+        self._container_output_path = '/openstudio-standards/utilities/btap_cli/output'
 
     def docker_container_command(self, engine_args=[]):
         arg_string = ''
@@ -136,8 +136,8 @@ class BTAPCLI:
 class BTAPBATCH(BTAPCLI):
     def __init__(self):
         self._engine_command = 'bundle exec ruby btap_cli.rb'
-        self._container_input_path = '/btap_costing/utilities/btap_cli/input'
-        self._container_output_path = '/btap_costing/utilities/btap_cli/output'
+        self._container_input_path = '/openstudio-standards/utilities/btap_cli/input'
+        self._container_output_path = '/openstudio-standards/utilities/btap_cli/output'
 
 
 
