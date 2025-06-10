@@ -2,10 +2,9 @@ import unittest
 import os
 from pathlib import Path
 import sys
-from src.btap.cli_helper_methods import analysis,build_and_configure_docker_and_aws
-
 PROJECT_ROOT = str(Path(os.path.dirname(os.path.realpath(__file__))).parent.absolute())
 sys.path.append(PROJECT_ROOT)
+from src.btap.cli_helper_methods import analysis,build_and_configure_docker_and_aws
 PROJECT_FOLDER = os.path.join(Path(os.path.dirname(os.path.realpath(__file__))).parent.absolute())
 EXAMPLE_FOLDER = os.path.join(PROJECT_FOLDER,'examples')
 OUTPUT_FOLDER = os.path.join(PROJECT_FOLDER, "output")
@@ -13,7 +12,6 @@ COMPUTE_ENVIRONMENT='aws'
 
 class TestBuildConfigureDocker(unittest.TestCase):
     build_and_configure_docker_and_aws(btap_batch_branch='main',
-                                       btap_costing_branch='master',
                                        compute_environment=COMPUTE_ENVIRONMENT,
                                        openstudio_version='3.5.1',
                                        os_standards_branch='nrcan')

@@ -4,4 +4,4 @@
 :reference_run: False
 :output_variables: []
 :output_meters: []
-
+:enable_costing: true

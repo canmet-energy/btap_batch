@@ -1,12 +1,13 @@
 ---
 :analysis_name: sampling_lhs_example
 :algorithm_type: sampling-lhs
-:algorithm_lhs_n_samples: 500
+:algorithm_lhs_n_samples: 50
 :algorithm_lhs_type: classic
 :algorithm_lhs_random_seed: 1
 :reference_run: true
 :output_variables: []
 :output_meters: []
+:enable_costing: true
 :options:
   :template:
     - NECB2020
