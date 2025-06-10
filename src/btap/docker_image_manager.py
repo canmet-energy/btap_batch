@@ -89,11 +89,12 @@ class DockerImageManager:
                 forcerm=True
             )
         except BuildError as e:
-            print(f"Something went wrong with image build {self.get_full_image_name()}! The container error is: ")
+            print(f"Something went wrong with image build {self.get_full_image_name()}! The logs are: ")
             for line in e.build_log:
                 if 'stream' in line:
                     print(line['stream'].strip())
                     logging.error(line['stream'].strip())
+            print(f"The error description is: {e}")
             print(f"Building ENV used were {self._get_image_build_args()}")
             print(f"You can debug the build with the following docker command:")
             print(self.get_image_build_cli())

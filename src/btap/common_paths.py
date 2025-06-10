@@ -5,8 +5,9 @@ PROJECT_ROOT = str(Path(os.path.dirname(os.path.realpath(__file__))).parent.abso
 DOCKERFILES_FOLDER = os.path.join(Path(os.path.dirname(os.path.realpath(__file__))).parent.absolute(), 'Dockerfiles')
 PROJECT_FOLDER = os.path.join(Path(os.path.dirname(os.path.realpath(__file__))).parent.parent.absolute())
 EXAMPLE_FOLDER = os.path.join(PROJECT_FOLDER, 'examples')
-OUTPUT_FOLDER = os.path.join(PROJECT_FOLDER, "output")
-SCHEMA_FOLDER = os.path.join(PROJECT_FOLDER, "schemas")
+OUTPUT_FOLDER = os.path.join(PROJECT_FOLDER, 'output')
+SCHEMA_FOLDER = os.path.join(PROJECT_FOLDER, 'schemas')
+RESOURCES_FOLDER = os.path.join(PROJECT_FOLDER, 'resources')
 if os.name == 'nt':
     HOME = os.path.join(os.environ['USERPROFILE'])
     USER = os.environ['USERNAME']
@@ -14,12 +15,25 @@ else:
     HOME = os.path.join(os.environ['HOME'])
     USER = os.getenv('USER', 'no_user')
 
+AWS_BUCKET    = '834599497928'
 CONFIG_FOLDER = os.path.join(HOME, '.btap', 'config')
-HISTORIC_WEATHER_LIST = "https://github.com/canmet-energy/btap_weather/raw/main/historic_weather_filenames.json"
-FUTURE_WEATHER_LIST = "https://github.com/canmet-energy/btap_weather/raw/main/future_weather_filenames.json"
-HISTORIC_WEATHER_REPO = "https://github.com/canmet-energy/btap_weather/raw/main/historic/"
-FUTURE_WEATHER_REPO = "https://github.com/canmet-energy/btap_weather/raw/main/future/"
-AWS_BUCKET = '834599497928'
+
+# Climate.OneBuilding.Org paths
+CLIMATE_ONEBUILDING_FOLDER = os.path.join(RESOURCES_FOLDER, 'climate_onebuilding_weather_lists') 
+CLIMATE_ONEBUILDING_MAP    = os.path.join(CLIMATE_ONEBUILDING_FOLDER, 'file_map.json') 
+AMERICA_FOLDER             = os.path.join(CLIMATE_ONEBUILDING_FOLDER, 'america')
+EUROPE_FOLDER              = os.path.join(CLIMATE_ONEBUILDING_FOLDER, 'europe')
+HISTORIC_WEATHER_LIST      = os.path.join(AMERICA_FOLDER, 'CAN_Canada.json')
+FUTURE_WEATHER_LIST        = os.path.join(AMERICA_FOLDER, 'CAN_Canada_Future.json')
+CLIMATE_ONEBUILDING_URL    = "https://climate.onebuilding.org/"
+HISTORIC_WEATHER_REPO      = f"{CLIMATE_ONEBUILDING_URL}WMO_Region_4_North_and_Central_America/CAN_Canada/"
+FUTURE_WEATHER_REPO        = f"{CLIMATE_ONEBUILDING_URL}WMO_Region_4_North_and_Central_America/CAN_Canada_Future/"
+
+# btap_weather paths
+HISTORIC_WEATHER_LIST_BTAP = "https://github.com/canmet-energy/btap_weather/raw/main/historic_weather_filenames.json"
+FUTURE_WEATHER_LIST_BTAP   = "https://github.com/canmet-energy/btap_weather/raw/main/future_weather_filenames.json"
+HISTORIC_WEATHER_REPO_BTAP = "https://github.com/canmet-energy/btap_weather/raw/main/historic/"
+FUTURE_WEATHER_REPO_BTAP   = "https://github.com/canmet-energy/btap_weather/raw/main/future/"
 
 
 class CommonPaths(object):

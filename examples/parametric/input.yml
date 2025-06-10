@@ -4,6 +4,7 @@
 :reference_run: false
 :output_variables: []
 :output_meters: []
+:enable_costing: true
 :options:
   :building_type:
     - FullServiceRestaurant

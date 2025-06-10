@@ -11,6 +11,7 @@
   - cost_utility_neb_total_cost_per_m_sq
 :output_variables: []
 :output_meters: []
+:enable_costing: true
 :options:
   :template:
     - NECB2020

@@ -4,6 +4,7 @@
 :reference_run: true
 :output_variables: []
 :output_meters: []
+:enable_costing: true
 :options:
   :adv_dx_units:
   - NECB_Default

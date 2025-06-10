@@ -12,7 +12,6 @@ COMPUTE_ENVIRONMENT='aws'
 
 class TestBuildConfigureDocker(unittest.TestCase):
     build_and_configure_docker_and_aws(btap_batch_branch='main',
-                                       btap_costing_branch='master',
                                        compute_environment=COMPUTE_ENVIRONMENT,
                                        openstudio_version='3.5.1',
                                        os_standards_branch='nrcan')
