@@ -15,9 +15,10 @@ from icecream import ic
 
 
 class AWSBTAPJob(DockerBTAPJob):
-    def __init__(self, batch=None, job_id=None):
+    def __init__(self, batch=None, job_id=None, exclude_files=None):
         super().__init__(batch=batch,
                          job_id=job_id,
+                         exclude_files=exclude_files
                          )
 
         self.cloud_job_id = None  # Set by AWS when job is submitted.
@@ -39,7 +40,8 @@ class AWSBTAPJob(DockerBTAPJob):
         self.target = self.cp.s3_datapoint_input_folder(job_id=self.job_id)
         # Local json file location
         self.local_json_file_path = self.cp.analysis_output_job_id_btap_json_path(job_id=self.job_id)
-        self.local_output_job_folder = self.cp.analysis_job_id_folder(job_id=self.job_id)
+
+        self.analysis_output_job_id_folder = self.cp.analysis_job_id_folder(job_id=self.job_id)
         # Used in postprocessing successful run from S3 and http url path construction.
         self.s3_datapoint_output_folder = self.cp.s3_datapoint_output_folder(job_id=self.job_id)
     def _command_args(self):
@@ -87,6 +89,10 @@ class AWSBTAPJob(DockerBTAPJob):
         self.run_options['cloud_job_name'] = self.aws_job_name()
         message = f"Submitted job_id {self.job_id} , job name {self.aws_job_name()} to the job queue {self.batch.job_queue_name}"
         logging.info(message)
+
+        print(f"message: {message}")
+        print(f"run options: {self.run_options}")
+
         # Set initial state of status variables
         while True:
             # Don't hammer AWS.. make queries every minute for the run status
@@ -158,3 +164,8 @@ class AWSBTAPJob(DockerBTAPJob):
             logging.warning(f"Status:Implementing exponential backoff for job {self.cloud_job_id} for {wait_time}s")
             time.sleep(wait_time)
             return self.__get_job_status(n=n + 1)
+
+    # Placeholder override of the :exclude_files deleter
+    # Currently doesn't work on AWS
+    def delete_unwanted_files(self, job_folder):
+        pass

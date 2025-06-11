@@ -2,16 +2,18 @@ import os
 import json
 import yaml
 import time
-from pathlib import Path
 import errno
+import shutil
+from pathlib import Path
 from src.btap.common_paths import CommonPaths
 from icecream import ic
 
 class DockerBTAPJob:
-    def __init__(self, batch=None, job_id=None, analysis_name = None ):
+    def __init__(self, batch=None, job_id=None, analysis_name = None, exclude_files = None):
         self.batch = batch
         self.job_id = job_id
         self.analysis_name = analysis_name # Not used but may be in the future.
+        self.exclude_files = exclude_files
         self.engine_command = 'bundle exec ruby btap_cli.rb'
         self._set_paths()
     #public
@@ -36,6 +38,12 @@ class DockerBTAPJob:
             job_data['status'] = "SUCCEEDED"
             job_data['simulation_time'] = time.time() - start
             job_data.update(self._get_job_results())
+
+            # :exclude_files deleter here
+            # Currently only works locally, AWS runs don't seem to have the output files yet in this code context
+            # See the ticket in btap_tasks for more info
+            self.delete_unwanted_files(self.analysis_output_job_id_folder)
+
             return job_data
         except Exception as error:
             print(error)
@@ -46,7 +54,17 @@ class DockerBTAPJob:
             job_data['status'] = 'FAILED'
             self._save_output_file(job_data)
             return job_data
-    #protected
+
+    def delete_unwanted_files(self, job_folder):
+        datapoint_folder = Path(job_folder)  # Make the datapoint folder a Path object
+
+        for pattern in self.exclude_files:
+            for file in datapoint_folder.rglob(pattern):
+                if file.is_file():
+                    file.unlink()
+                elif file.is_dir():
+                    shutil.rmtree(file)
+
     def _job_url(self):
         return self.cp.local_job_url(job_id=self.job_id)
     def _set_paths(self):
