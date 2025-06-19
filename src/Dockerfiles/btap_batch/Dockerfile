@@ -1,4 +1,4 @@
-FROM public.ecr.aws/amazonlinux/amazonlinux:2022
+FROM public.ecr.aws/amazonlinux/amazonlinux:2023
 ARG BTAP_BATCH_BRANCH
 ARG GIT_API_TOKEN
 ARG BUILD_ENV_NAME
