@@ -8,6 +8,8 @@ ENV GIT_API_TOKEN=$GIT_API_TOKEN
 ENV BTAP_BATCH_BRANCH=$BTAP_BATCH_BRANCH
 ENV PYTHONPATH=/btap_batch
 
+FROM fedora:36
+RUN dnf install -y glibc
 
 RUN curl -O https://bootstrap.pypa.io/get-pip.py
 RUN yum -y install python39
