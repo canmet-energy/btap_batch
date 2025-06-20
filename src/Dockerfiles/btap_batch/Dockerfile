@@ -1,4 +1,4 @@
-FROM public.ecr.aws/amazonlinux/amazonlinux:latest
+FROM public.ecr.aws/ubuntu/ubuntu:22.04
 ARG BTAP_BATCH_BRANCH
 ARG GIT_API_TOKEN
 ARG BUILD_ENV_NAME
@@ -8,22 +8,23 @@ ENV GIT_API_TOKEN=$GIT_API_TOKEN
 ENV BTAP_BATCH_BRANCH=$BTAP_BATCH_BRANCH
 ENV PYTHONPATH=/btap_batch
 
-RUN curl -O https://bootstrap.pypa.io/get-pip.py
-RUN yum -y install python39
-RUN python3 get-pip.py --user
-RUN yum -y install git
+RUN apt-get -y update
+RUN apt-get install -y python3.9
+RUN apt-get install -y python3-pip
+RUN apt-get install -y git
 RUN echo "Cloning btap_batch"
 RUN git clone https://$GIT_API_TOKEN:x-oauth-basic@github.com/canmet-energy/btap_batch.git --depth 1 --branch ${BTAP_BATCH_BRANCH} --single-branch /btap_batch
 RUN cd /btap_batch && echo 'btap_batch revision' && git rev-parse --short HEAD
-RUN cd /btap_batch && /root/.local/bin/pip install -r requirements.txt
-RUN yum -y update
-RUN yum -y install docker
-RUN yum -y install nano
-RUN yum -y install wget
+RUN cd /btap_batch && pip install --upgrade pip
+RUN cd /btap_batch && pip install -r requirements.txt
+RUN apt-get -y install docker
+RUN apt-get -y install nano
+RUN apt-get -y install wget
+RUN apt-get -y install chromium-browser
 #Install Chromium for Python charts.
-RUN wget https://dl.google.com/linux/direct/google-chrome-stable_current_x86_64.rpm
-RUN yum -y install ./google-chrome-stable_current_x86_64.rpm
-RUN ln -s /usr/bin/google-chrome-stable /usr/bin/chromium
+#RUN wget https://dl.google.com/linux/direct/google-chrome-stable_current_x86_64.rpm
+#RUN apt-get -y install ./google-chrome-stable_current_x86_64.rpm
+RUN ln -s /usr/bin/chromium-browser /usr/bin/chromium
 # Alternate install chrome driver
 #RUN wget https://chromedriver.storage.googleapis.com/2.37/chromedriver_linux64.zip
 #RUN unzip chromedriver_linux64.zip
