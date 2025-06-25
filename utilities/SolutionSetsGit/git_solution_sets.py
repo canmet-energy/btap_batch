@@ -251,7 +251,8 @@ def git_solution_sets():
 
     if OEE:
         epw_files_cz4 = [
-            ['CAN_BC_Vancouver.Intl.AP.718920_NRCv12022_TMY_GW1.5_EPW.epw', 'YVR'],  # CZ 4
+            # ['CAN_BC_Vancouver.Intl.AP.718920_NRCv12022_TMY_GW1.5_EPW.epw', 'YVR'],  # CZ 4
+            ['CAN_BC_Victoria.Intl.AP.717990_NRCv12022_TMY_GW1.5_EPW.epw', 'YYJ'], # CZ 4
 
             ## Historic weather files
             # ['CAN_BC_Vancouver.Intl.AP.718920_CWEC2020.epw', 'YVR']
@@ -272,7 +273,8 @@ def git_solution_sets():
             ['CAN_NS_Halifax-Stanfield.Intl.AP.713950_NRCv12022_TMY_GW1.5_EPW.epw', 'YHZ'],  # CZ 6
             ['CAN_NL_St.Johns.Intl.AP.718010_NRCv12022_TMY_GW1.5_EPW.epw', 'YYT'],  # CZ 6
             ['CAN_PE_Charlottetown.AP.717060_NRCv12022_TMY_GW1.5_EPW.epw', 'YYG'],  # CZ 6
-            ['CAN_NB_Fredericton.Intl.AP.717000_NRCv12022_TMY_GW1.5_EPW.epw', 'YFC'],  # CZ 6
+            # ['CAN_NB_Fredericton.Intl.AP.717000_NRCv12022_TMY_GW1.5_EPW.epw', 'YFC'],  # CZ 6
+            ['CAN_NB_Saint.John.AP.716090_NRCv12022_TMY_GW1.5_EPW.epw', 'YSJ'],  # CZ 6
 
             ## Historic weather files
             # ['CAN_ON_Ottawa.Intl.AP.716280_CWEC2020.epw', 'YOW'],
