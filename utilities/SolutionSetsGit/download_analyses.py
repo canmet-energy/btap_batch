@@ -255,6 +255,7 @@ ELECsystems_OEE = [
     ]
 epw_files = [
     # ['CAN_BC_Vancouver.Intl.AP.718920_NRCv12022_TMY_GW1.5_EPW.epw', 'YVR'],  # CZ 4
+    # ['CAN_BC_Victoria.Intl.AP.717990_NRCv12022_TMY_GW1.5_EPW.epw', 'YYJ'], # CZ 4
     #
     # ['CAN_BC_Kelowna.Intl.AP.712030_NRCv12022_TMY_GW1.5_EPW.epw', 'YLW'],  # CZ 5
     # ['CAN_ON_Toronto-Pearson.Intl.AP.716240_NRCv12022_TMY_GW1.5_EPW.epw', 'YYZ'],  # CZ 5
@@ -265,11 +266,14 @@ epw_files = [
     # ['CAN_NL_St.Johns.Intl.AP.718010_NRCv12022_TMY_GW1.5_EPW.epw', 'YYT'],  # CZ 6
     # ['CAN_PE_Charlottetown.AP.717060_NRCv12022_TMY_GW1.5_EPW.epw', 'YYG'],  # CZ 6
     # ['CAN_NB_Fredericton.Intl.AP.717000_NRCv12022_TMY_GW1.5_EPW.epw', 'YFC'],  # CZ 6
+    # ['CAN_NB_Saint.John.AP.716090_NRCv12022_TMY_GW1.5_EPW.epw', 'YSJ'],  # CZ 6
     #
     # ['CAN_AB_Calgary.Intl.AP.718770_NRCv12022_TMY_GW1.5_EPW.epw', 'YYC'],  # CZ 7A
     # ['CAN_AB_Edmonton.Intl.CS.711550_NRCv12022_TMY_GW1.5_EPW.epw', 'YEG'],  # CZ 7A
     # ['CAN_SK_Saskatoon-Diefenbaker.Intl.AP.718660_NRCv12022_TMY_GW1.5_EPW.epw', 'YXE'],  # CZ 7A
     # ['CAN_MB_Winnipeg-Richardson.Intl.AP.718520_NRCv12022_TMY_GW1.5_EPW.epw', 'YWG'],  # CZ 7A
+
+
 
     # ['CAN_BC_Vancouver.Intl.AP.718920_CWEC2020.epw', 'YVR'],
     # ['CAN_BC_Kelowna.712030_CWEC2020.epw', 'YLW'],
