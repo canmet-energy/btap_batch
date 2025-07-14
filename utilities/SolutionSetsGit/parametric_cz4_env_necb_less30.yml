@@ -5,9 +5,15 @@
   - Lennox Model L Ultra High Efficiency
   :airloop_economizer_type:
   - NECB_Default
+  :airloop_fancoils_heating:
+  - NECB_Default
   :baseline_system_zones_map_option:
   - NECB_Default
+  :boiler_cap_ratio:
+  - NECB_Default
   :boiler_eff:
+  - NECB_Default
+  :boiler_fuel:
   - NECB_Default
   :building_type:
   - LowriseApartment
@@ -31,8 +37,6 @@
   - CAN_QC_Montreal-Trudeau.Intl.AP.716270_CWEC2016.epw
   :erv_package:
   - NECB_Default
-  - NECB_Default_All
-  - Plate-All
   - Plate-Existing
   :ext_floor_cond:
   - NECB_Default
@@ -58,6 +62,16 @@
   - NECB_Default
   :ground_wall_cond:
   - NECB_Default
+  :hvac_system_corridor:
+  - NECB_Default
+  :hvac_system_dwelling_units:
+  - NECB_Default
+  :hvac_system_primary:
+  - NECB_Default
+  :hvac_system_storage:
+  - NECB_Default
+  :hvac_system_washrooms:
+  - NECB_Default
   :infiltration_scale:
   - NECB_Default
   :lights_scale:
@@ -65,11 +79,13 @@
   :lights_type:
   - NECB_Default
   :npv_discount_rate:
-  - NECB_Default
+  - 0.07
+  :npv_discount_rate_carbon:
+  - 0.03
   :npv_end_year:
-  - NECB_Default
+  - 2044
   :npv_start_year:
-  - NECB_Default
+  - 2025
   :nv_delta_temp_in_out:
   - NECB_Default
   :nv_opening_fraction:
@@ -82,6 +98,8 @@
   - NECB_Default
   :occupancy_loads_scale:
   - NECB_Default
+  :oerd_utility_pricing:
+  - true
   :overhead_door_cond:
   - NECB_Default
   :primary_heating_fuel:
@@ -113,6 +131,8 @@
   :skylight_solar_trans:
   - NECB_Default
   :srr_set:
+  - NECB_Default
+  :swh_fuel:
   - NECB_Default
   :template:
   - NECB2020
