@@ -7,6 +7,7 @@ ARG WEATHER_FILES=''
 ARG LOCALNRCAN=''
 ARG LOCALNRCAN_BRANCH='main'
 ARG GIT_API_TOKEN='nothing'
+ARG OS_STANDARDS_ORG='NREL'
 
 LABEL author="Phylroy Lopez phylroy.lopez@canada.ca"
 
@@ -25,7 +26,7 @@ WORKDIR /
 
 # Clone openstudio-standards into the container
 RUN echo "Creating Public CLI" \
-    && git clone https://$GIT_API_TOKEN:x-oauth-basic@github.com/NREL/openstudio-standards.git --depth 1 --branch ${OS_STANDARDS_BRANCH} --single-branch /openstudio-standards \
+    && git clone https://$GIT_API_TOKEN:x-oauth-basic@github.com/${OS_STANDARDS_ORG}/openstudio-standards.git --depth 1 --branch ${OS_STANDARDS_BRANCH} --single-branch /openstudio-standards \
     && cd /openstudio-standards \
     && bundle install \
     && echo 'standards revision' \

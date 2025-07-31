@@ -74,6 +74,7 @@ def build(**kwargs):
 
     btap_batch_branch = config['btap_batch_branch']
     enable_rsmeans = config['enable_rsmeans']
+    os_standards_org = config['os_standards_org']
     os_standards_branch = config['os_standards_branch']
     openstudio_version = config['openstudio_version']
     btap_weather = config['btap_weather']
@@ -90,6 +91,7 @@ def build(**kwargs):
                                        openstudio_version=openstudio_version,
                                        btap_weather=btap_weather,
                                        weather_list=weather_list,
+                                       os_standards_org=os_standards_org,
                                        os_standards_branch=os_standards_branch,
                                        build_btap_batch=build_btap_batch,
                                        build_btap_cli=build_btap_cli,

@@ -14,7 +14,8 @@ class TestBuildConfigureDocker(unittest.TestCase):
     build_and_configure_docker_and_aws(btap_batch_branch='main',
                                        compute_environment=COMPUTE_ENVIRONMENT,
                                        openstudio_version='3.5.1',
-                                       os_standards_branch='nrcan')
+                                       os_standards_branch='nrcan',
+                                       os_standards_org='NREL')
 
 class TestAnalyses(unittest.TestCase):
     def test_analyses(self):

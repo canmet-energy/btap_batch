@@ -239,6 +239,7 @@ def build_and_configure_docker_and_aws(btap_batch_branch=None,
                                        enable_rsmeans=None,
                                        compute_environment=None,
                                        openstudio_version=None,
+                                       os_standards_org=None,
                                        os_standards_branch=None,
                                        build_btap_cli=None,
                                        build_btap_batch=None,
@@ -253,6 +254,7 @@ def build_and_configure_docker_and_aws(btap_batch_branch=None,
     # build args for aws and btap_cli container.
     build_args_btap_cli = {'OPENSTUDIO_VERSION': openstudio_version,
                            'ENABLE_RSMEANS' : 'True' if enable_rsmeans == True else '',
+                           'OS_STANDARDS_ORG': os_standards_org,
                            'OS_STANDARDS_BRANCH': os_standards_branch,
                            'WEATHER_FILES': weather_locations,
                            'LOCALNRCAN': ''}
@@ -794,6 +796,9 @@ compute_environment: local
 
 # Branch of btap_batch to be used in aws compute_environment runs on AWS.
 btap_batch_branch: dev
+
+# GitHub organization (or user) that contains the openstudio-standards repository.  If you did not fork the openstudio-standards repository, you can leave this as NREL.
+os_standards_org: NREL
 
 # Branch of openstudio-standards used in environment
 os_standards_branch: nrcan

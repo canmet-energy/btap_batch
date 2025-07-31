@@ -20,11 +20,18 @@ properties:
     You can review available branches [here](https://github.com/canmet-energy/btap_batch) if you are a developer. "
     type: string
 
+  os_standards_org:
+    description: "The GitHub organization name containing the OpenStudio-standards repository. This is used to build the btap_cli environment. 
+    The default is NREL, but you can use your own fork of the OpenStudio-Standards repository."
+    type: string
+    default: NREL
+
   os_standards_branch:
-    description: "Branch of NREL's Openstudio-standards to use to build environment. The default branch to use is 'master' This 
+    description: "Branch of NREL's (or organization defined by os_standards_org above) Openstudio-standards to use to build environment. The default branch to use is 'nrcan' This 
     branch is only accessible for authorized users. You can review available branches
     [here](https://github.com/nrel/openstudio-standards)"
     type: string
+    default: nrcan
 
   openstudio_version:
     description: "Valid version of the OpenStudio SDK to build with."
@@ -100,6 +107,7 @@ required:
   - build_env_name
   - git_api_token
   - btap_batch_branch
+  - os_standards_org
   - os_standards_branch
   - openstudio_version
   - weather_list
