@@ -254,22 +254,40 @@ def build_and_configure_docker_and_aws(btap_batch_branch=None,
     weather_locations = get_weather_locations(btap_weather, weather_list)
     
     # Check if the local_costing_path file exists and convert to absolute path if relative
+    dockerfile_costing_path = ''  # Path relative to the Dockerfile build context
     if local_costing_path:
         # If path is relative, make it absolute
         if not os.path.isabs(local_costing_path):
             local_costing_path = os.path.join(PROJECT_FOLDER, local_costing_path)
         
-        # Check if the file actually exists, if not set to None
-        if not os.path.isfile(local_costing_path):
-            local_costing_path = None
-   
+        # Check if the file actually exists
+        if os.path.isfile(local_costing_path):
+            # Copy the costing file to the Dockerfile build context
+            dockerfile_folder = os.path.join(PROJECT_FOLDER, 'src', 'Dockerfiles', 'btap_cli')
+            dockerfile_costing_path = 'costing_database.json'  # Relative path in build context
+            target_path = os.path.join(dockerfile_folder, dockerfile_costing_path)
+            
+            try:
+                shutil.copy2(local_costing_path, target_path)
+                print(f"Copied costing file from {local_costing_path} to {target_path}")
+            except Exception as e:
+                print(f"Warning: Could not copy costing file: {e}")
+                dockerfile_costing_path = ''
+        else:
+            print(f"Warning: Local costing file not found at {local_costing_path}")
+            dockerfile_costing_path = None
+
+    # Set os_standards_org to NREL if not provided
+    if os_standards_org == '':
+        os_standards_org = 'NREL'
+
     # build args for aws and btap_cli container.
     build_args_btap_cli = {'OPENSTUDIO_VERSION': openstudio_version,
                            'ENABLE_RSMEANS' : 'True' if enable_rsmeans == True else '',
                            'OS_STANDARDS_ORG': os_standards_org,
                            'OS_STANDARDS_BRANCH': os_standards_branch,
                            'WEATHER_FILES': weather_locations,
-                           'LOCAL_COSTING_PATH': local_costing_path,
+                           'LOCAL_COSTING_PATH': dockerfile_costing_path,  # Use the relative path in build context
                            'LOCALNRCAN': ''}
     # build args for btap_batch container.
     build_args_btap_batch = {'BTAP_BATCH_BRANCH': btap_batch_branch}
@@ -298,6 +316,17 @@ def build_and_configure_docker_and_aws(btap_batch_branch=None,
         if build_btap_cli:
             print('Building btap_cli on aws..')
             image_worker.build_image(build_args=build_args_btap_cli)
+            
+            # Clean up: Remove the copied costing file from the build context
+            if dockerfile_costing_path:
+                dockerfile_folder = os.path.join(PROJECT_FOLDER, 'src', 'Dockerfiles', 'btap_cli')
+                target_path = os.path.join(dockerfile_folder, dockerfile_costing_path)
+                try:
+                    if os.path.exists(target_path):
+                        os.remove(target_path)
+                        print(f"Cleaned up costing file from build context: {target_path}")
+                except Exception as e:
+                    print(f"Warning: Could not clean up costing file: {e}")
 
         # Create Job description and queues for workers.
         batch_cli = AWSBatch(image_manager=image_worker,
@@ -336,6 +365,17 @@ def build_and_configure_docker_and_aws(btap_batch_branch=None,
         if build_btap_cli:
             print('Building btap_cli image')
             image_worker.build_image(build_args=build_args_btap_cli)
+            
+            # Clean up: Remove the copied costing file from the build context
+            if dockerfile_costing_path:
+                dockerfile_folder = os.path.join(PROJECT_FOLDER, 'src', 'Dockerfiles', 'btap_cli')
+                target_path = os.path.join(dockerfile_folder, dockerfile_costing_path)
+                try:
+                    if os.path.exists(target_path):
+                        os.remove(target_path)
+                        print(f"Cleaned up costing file from build context: {target_path}")
+                except Exception as e:
+                    print(f"Warning: Could not clean up costing file: {e}")
         else:
             print("Skipping building btap_cli image at users request.")
 
@@ -840,9 +880,9 @@ weather_list:
   - CAN_NT_Yellowknife.AP.719360_CWEC2020.epw
   - CAN_AB_Fort.Mcmurray.AP.716890_CWEC2020.epw
 
-# Path to the local costing_database.json costing file.  The default is '<this btap_batch local repository location>/resources/costing/costing_database.json'. If you are using a custom costing file, you can set the path here.
+# Path to the local costing_database.json costing file.  The default is '<this btap_batch local repository location>\resources\costing\costing_database.json'. If you are using a custom costing file, you can set the path here.
 # Ignore this if you are not using costing or content with the default costing_database.json costing file."
-local_costing_path: resources/costing/costing_database.json
+local_costing_path: resources\costing\costing_database.json
 
 # Rebuild btap_cli image
 build_btap_cli: True

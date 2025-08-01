@@ -33,9 +33,11 @@ RUN echo "Creating Public CLI" \
     && echo 'standards revision' \
     && git rev-parse --short HEAD;
 
-RUN if [ -n "$LOCAL_COSTING_PATH" ]; then \
+# Copy local costing file if LOCAL_COSTING_PATH is provided
+COPY ${LOCAL_COSTING_PATH:-/dev/null} /tmp/local_costing.json
+RUN if [ -n "$LOCAL_COSTING_PATH" ] && [ -f "$LOCAL_COSTING_PATH" ]; then \
         echo "Using local costing file at $LOCAL_COSTING_PATH" \
-        && cp $LOCAL_COSTING_PATH /openstudio-standards/lib/openstudio-standards/btap/costing/costing_database.json; \
+        && cp "$LOCAL_COSTING_PATH" /openstudio-standards/lib/openstudio-standards/btap/costing/costing_database.json; \
     fi
 
 RUN if [ -n "$ENABLE_RSMEANS" ]; then \

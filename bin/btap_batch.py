@@ -74,12 +74,12 @@ def build(**kwargs):
 
     btap_batch_branch = config['btap_batch_branch']
     enable_rsmeans = config.get('enable_rsmeans', None)
-    os_standards_org = config.get('os_standards_org', None)
+    os_standards_org = config.get('os_standards_org', '')
     os_standards_branch = config['os_standards_branch']
     openstudio_version = config['openstudio_version']
     btap_weather = config['btap_weather']
     weather_list = config['weather_list']
-    local_costing_path = config.get('local_costing_path', None)
+    local_costing_path = config.get('local_costing_path', '')
     build_btap_cli = config['build_btap_cli']
     build_btap_batch = config['build_btap_batch']
     os.environ['BUILD_ENV_NAME'] = config['build_env_name']
