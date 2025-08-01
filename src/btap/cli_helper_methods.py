@@ -21,7 +21,7 @@ from src.btap.aws_s3 import S3
 from src.btap.common_paths import CommonPaths, SCHEMA_FOLDER, HISTORIC_WEATHER_LIST, \
     FUTURE_WEATHER_LIST, HISTORIC_WEATHER_REPO, FUTURE_WEATHER_REPO, HISTORIC_WEATHER_LIST_BTAP, \
     FUTURE_WEATHER_LIST_BTAP, HISTORIC_WEATHER_REPO_BTAP, FUTURE_WEATHER_REPO_BTAP, USER, \
-    CLIMATE_ONEBUILDING_FOLDER, CLIMATE_ONEBUILDING_MAP, CLIMATE_ONEBUILDING_URL
+    CLIMATE_ONEBUILDING_FOLDER, CLIMATE_ONEBUILDING_MAP, CLIMATE_ONEBUILDING_URL, PROJECT_FOLDER
 import os
 import pandas as pd
 from src.btap.aws_s3 import S3
@@ -237,6 +237,7 @@ def get_weather_locations(btap_weather: bool, weather_locations=[]) -> str:
 
 def build_and_configure_docker_and_aws(btap_batch_branch=None,
                                        enable_rsmeans=None,
+                                       local_costing_path=None,
                                        compute_environment=None,
                                        openstudio_version=None,
                                        os_standards_org=None,
@@ -251,12 +252,18 @@ def build_and_configure_docker_and_aws(btap_batch_branch=None,
 
     # Get the weather locations from the weather list
     weather_locations = get_weather_locations(btap_weather, weather_list)
+    
+    # Convert local_costing_path to absolute path if it's relative
+    if local_costing_path and not os.path.isabs(local_costing_path):
+        local_costing_path = os.path.join(PROJECT_FOLDER, local_costing_path)
+    
     # build args for aws and btap_cli container.
     build_args_btap_cli = {'OPENSTUDIO_VERSION': openstudio_version,
                            'ENABLE_RSMEANS' : 'True' if enable_rsmeans == True else '',
                            'OS_STANDARDS_ORG': os_standards_org,
                            'OS_STANDARDS_BRANCH': os_standards_branch,
                            'WEATHER_FILES': weather_locations,
+                           'LOCAL_COSTING_PATH': local_costing_path,
                            'LOCALNRCAN': ''}
     # build args for btap_batch container.
     build_args_btap_batch = {'BTAP_BATCH_BRANCH': btap_batch_branch}
@@ -797,9 +804,6 @@ compute_environment: local
 # Branch of btap_batch to be used in aws compute_environment runs on AWS.
 btap_batch_branch: dev
 
-# GitHub organization (or user) that contains the openstudio-standards repository.  If you did not fork the openstudio-standards repository, you can leave this as NREL.
-os_standards_org: NREL
-
 # Branch of openstudio-standards used in environment
 os_standards_branch: nrcan
 
@@ -830,12 +834,9 @@ weather_list:
   - CAN_NT_Yellowknife.AP.719360_CWEC2020.epw
   - CAN_AB_Fort.Mcmurray.AP.716890_CWEC2020.epw
 
-# If you do not have access to RSMeans data this should be set to False.
-# By default, btap_costing uses a randomized placeholder dataset to perform costing. 
-# If you are NRCan staff or have an RSMeans license and you would like to request the RSMeans data, 
-# please request access by providing your GitHub username to chris.kirney@rncan-nrcan.gc.ca.  
-# Once you have been granted permission to access those resources, you can set this to True.
-enable_rsmeans: False
+# Path to the local costing_database.json costing file.  The default is '<this btap_batch local repository location>/resources/costing/costing_database.json'. If you are using a custom costing file, you can set the path here.
+# Ignore this if you are not using costing or content with the default costing_database.json costing file."
+local_costing_path: resources/costing/costing_database.json
 
 # Rebuild btap_cli image
 build_btap_cli: True

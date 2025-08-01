@@ -6,6 +6,7 @@ ARG OS_STANDARDS_BRANCH='nrcan'
 ARG WEATHER_FILES=''
 ARG LOCALNRCAN=''
 ARG LOCALNRCAN_BRANCH='main'
+ARG LOCAL_COSTING_PATH=''
 ARG GIT_API_TOKEN='nothing'
 ARG OS_STANDARDS_ORG='NREL'
 
@@ -39,6 +40,11 @@ RUN if [ -n "$ENABLE_RSMEANS" ]; then \
         && curl -v -s https://$GIT_API_TOKEN:x-oauth-basic@raw.githubusercontent.com/canmet-energy/btap_costing_data_generation/refs/heads/main/output/costs_rsmeans.csv \
                 -o /openstudio-standards/lib/openstudio-standards/btap/costing/common_resources/costs.csv; \
 fi
+
+RUN if [ -n "$LOCAL_COSTING_PATH" ]; then \
+        echo "Using local costing file at $LOCAL_COSTING_PATH" \
+        && cp $LOCAL_COSTING_PATH /openstudio-standards/lib/openstudio-standards/btap/costing/costing_database.json; \
+    fi
 
 # Make folders that will map to host drives.
 WORKDIR /openstudio-standards/utilities/btap_cli

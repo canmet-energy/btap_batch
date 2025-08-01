@@ -21,13 +21,13 @@ properties:
     type: string
 
   os_standards_org:
-    description: "The GitHub organization name containing the OpenStudio-standards repository. This is used to build the btap_cli environment. 
-    The default is NREL, but you can use your own fork of the OpenStudio-Standards repository."
+    description: "**ADVANCED** The GitHub organization name containing the OpenStudio-standards repository. This is the fork used to build the btap_cli environment. 
+    The default is NREL."
     type: string
     default: NREL
 
   os_standards_branch:
-    description: "Branch of NREL's (or organization defined by os_standards_org above) Openstudio-standards to use to build environment. The default branch to use is 'nrcan' This 
+    description: "Branch of NREL's Openstudio-standards repository to use to build environment. The default branch to use is 'nrcan' This 
     branch is only accessible for authorized users. You can review available branches
     [here](https://github.com/nrel/openstudio-standards)"
     type: string
@@ -71,9 +71,15 @@ properties:
     maxItems: 100
 
   enable_rsmeans:
-    description: "If you do not have access RSMEANs data api. This should be false. Please contact NRCan is you wish to do costed simulations."
+    description: "**ADVANCED** for NRCan use only."
     type: boolean
     default: false
+
+  local_costing_path:
+    description: "Path to the local costing_database.json costing file.  The default is '<this btap_batch local repository location>/resources/costing/costing_database.json'. If you are using a custom costing file, you can set the path. here\n\n
+    Ignore this if you are not using costing or content with the default costing_database.json costing file.\n\n"
+    type: string
+    default: resources/costing/costing_database.json
 
   build_btap_cli:
     description: "**ADVANCED** Build most recent btap_cli always. Set to false to save time if standards and costing branches have not changed."
@@ -111,9 +117,10 @@ required:
   - os_standards_branch
   - openstudio_version
   - weather_list
+  - enable_rsmeans
+  - local_costing_path
   - build_btap_cli
   - build_btap_batch
-  - enable_rsmeans
   - local_nrcan
   - compute_environment
 additionalProperties: false
