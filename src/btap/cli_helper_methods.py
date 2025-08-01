@@ -253,10 +253,16 @@ def build_and_configure_docker_and_aws(btap_batch_branch=None,
     # Get the weather locations from the weather list
     weather_locations = get_weather_locations(btap_weather, weather_list)
     
-    # Convert local_costing_path to absolute path if it's relative
-    if local_costing_path and not os.path.isabs(local_costing_path):
-        local_costing_path = os.path.join(PROJECT_FOLDER, local_costing_path)
-    
+    # Check if the local_costing_path file exists and convert to absolute path if relative
+    if local_costing_path:
+        # If path is relative, make it absolute
+        if not os.path.isabs(local_costing_path):
+            local_costing_path = os.path.join(PROJECT_FOLDER, local_costing_path)
+        
+        # Check if the file actually exists, if not set to None
+        if not os.path.isfile(local_costing_path):
+            local_costing_path = None
+   
     # build args for aws and btap_cli container.
     build_args_btap_cli = {'OPENSTUDIO_VERSION': openstudio_version,
                            'ENABLE_RSMEANS' : 'True' if enable_rsmeans == True else '',

@@ -79,12 +79,14 @@ def build(**kwargs):
     openstudio_version = config['openstudio_version']
     btap_weather = config['btap_weather']
     weather_list = config['weather_list']
+    local_costing_path = config['local_costing_path']
     build_btap_cli = config['build_btap_cli']
     build_btap_batch = config['build_btap_batch']
     os.environ['BUILD_ENV_NAME'] = config['build_env_name']
     os.environ['GIT_API_TOKEN'] = config['git_api_token']
     compute_environment = config['compute_environment']
     local_nrcan = config['local_nrcan']
+    
     build_and_configure_docker_and_aws(btap_batch_branch=btap_batch_branch,
                                        enable_rsmeans=enable_rsmeans,
                                        compute_environment=compute_environment,
@@ -93,6 +95,7 @@ def build(**kwargs):
                                        weather_list=weather_list,
                                        os_standards_org=os_standards_org,
                                        os_standards_branch=os_standards_branch,
+                                       local_costing_path=local_costing_path,
                                        build_btap_batch=build_btap_batch,
                                        build_btap_cli=build_btap_cli,
                                        local_nrcan=local_nrcan)

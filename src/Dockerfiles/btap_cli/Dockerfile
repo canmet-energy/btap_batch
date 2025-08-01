@@ -33,6 +33,11 @@ RUN echo "Creating Public CLI" \
     && echo 'standards revision' \
     && git rev-parse --short HEAD;
 
+RUN if [ -n "$LOCAL_COSTING_PATH" ]; then \
+        echo "Using local costing file at $LOCAL_COSTING_PATH" \
+        && cp $LOCAL_COSTING_PATH /openstudio-standards/lib/openstudio-standards/btap/costing/costing_database.json; \
+    fi
+
 RUN if [ -n "$ENABLE_RSMEANS" ]; then \
         echo "Overwriting placeholder costing data with RSMeans data (ENABLE_RSMEANS=$ENABLE_RSMEANS)" \
         && curl -v -s https://$GIT_API_TOKEN:x-oauth-basic@raw.githubusercontent.com/canmet-energy/btap_costing_data_generation/refs/heads/main/resources/rsmeans_factors.csv \
@@ -40,11 +45,6 @@ RUN if [ -n "$ENABLE_RSMEANS" ]; then \
         && curl -v -s https://$GIT_API_TOKEN:x-oauth-basic@raw.githubusercontent.com/canmet-energy/btap_costing_data_generation/refs/heads/main/output/costs_rsmeans.csv \
                 -o /openstudio-standards/lib/openstudio-standards/btap/costing/common_resources/costs.csv; \
 fi
-
-RUN if [ -n "$LOCAL_COSTING_PATH" ]; then \
-        echo "Using local costing file at $LOCAL_COSTING_PATH" \
-        && cp $LOCAL_COSTING_PATH /openstudio-standards/lib/openstudio-standards/btap/costing/costing_database.json; \
-    fi
 
 # Make folders that will map to host drives.
 WORKDIR /openstudio-standards/utilities/btap_cli
