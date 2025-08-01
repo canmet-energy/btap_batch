@@ -79,7 +79,7 @@ def build(**kwargs):
     openstudio_version = config['openstudio_version']
     btap_weather = config['btap_weather']
     weather_list = config['weather_list']
-    local_costing_path = config['local_costing_path']
+    local_costing_path = config.get('local_costing_path', None)
     build_btap_cli = config['build_btap_cli']
     build_btap_batch = config['build_btap_batch']
     os.environ['BUILD_ENV_NAME'] = config['build_env_name']
