@@ -254,8 +254,12 @@ def build_and_configure_docker_and_aws(btap_batch_branch=None,
     weather_locations = get_weather_locations(btap_weather, weather_list)
     
     # Check if the local_costing_path file exists and convert to absolute path if relative
-    dockerfile_costing_path = ''  # Path relative to the Dockerfile build context
+    dockerfile_costing_path = 'do_not_delete.txt'  # Dummy path relative to the Dockerfile build context
+    copy_costing_file = 'false'  # Do not use the costing file in the Docker build by default
     if local_costing_path:
+        copy_costing_file = 'true'  # Default to copying the costing file
+
+    if copy_costing_file == 'true':
         # If path is relative, make it absolute
         if not os.path.isabs(local_costing_path):
             local_costing_path = os.path.join(PROJECT_FOLDER, local_costing_path)
@@ -269,13 +273,16 @@ def build_and_configure_docker_and_aws(btap_batch_branch=None,
             
             try:
                 shutil.copy2(local_costing_path, target_path)
+                copy_costing_file = 'true'  # Use the costing file in the Docker build
                 print(f"Copied costing file from {local_costing_path} to {target_path}")
             except Exception as e:
                 print(f"Warning: Could not copy costing file: {e}")
-                dockerfile_costing_path = ''
+                dockerfile_costing_path = 'do_not_delete.txt'  # Placeholder if copy fails
+                copy_costing_file = 'false'  # Do not use the costing file in the Docker build if copy fails
         else:
             print(f"Warning: Local costing file not found at {local_costing_path}")
-            dockerfile_costing_path = None
+            dockerfile_costing_path = 'do_not_delete.txt'  # Placeholder if file does not exist
+            copy_costing_file = 'false'  # Do not use the costing file in the Docker build if the costing file does not exist
 
     # Set os_standards_org to NREL if not provided
     if os_standards_org == '':
@@ -288,6 +295,7 @@ def build_and_configure_docker_and_aws(btap_batch_branch=None,
                            'OS_STANDARDS_BRANCH': os_standards_branch,
                            'WEATHER_FILES': weather_locations,
                            'LOCAL_COSTING_PATH': dockerfile_costing_path,  # Use the relative path in build context
+                           'COPY_COSTING_FILE': copy_costing_file,
                            'LOCALNRCAN': ''}
     # build args for btap_batch container.
     build_args_btap_batch = {'BTAP_BATCH_BRANCH': btap_batch_branch}
@@ -318,7 +326,7 @@ def build_and_configure_docker_and_aws(btap_batch_branch=None,
             image_worker.build_image(build_args=build_args_btap_cli)
             
             # Clean up: Remove the copied costing file from the build context
-            if dockerfile_costing_path:
+            if copy_costing_file == 'true' and dockerfile_costing_path != 'do_not_delete.txt':
                 dockerfile_folder = os.path.join(PROJECT_FOLDER, 'src', 'Dockerfiles', 'btap_cli')
                 target_path = os.path.join(dockerfile_folder, dockerfile_costing_path)
                 try:
@@ -367,7 +375,7 @@ def build_and_configure_docker_and_aws(btap_batch_branch=None,
             image_worker.build_image(build_args=build_args_btap_cli)
             
             # Clean up: Remove the copied costing file from the build context
-            if dockerfile_costing_path:
+            if copy_costing_file == 'true' and dockerfile_costing_path != 'do_not_delete.txt':
                 dockerfile_folder = os.path.join(PROJECT_FOLDER, 'src', 'Dockerfiles', 'btap_cli')
                 target_path = os.path.join(dockerfile_folder, dockerfile_costing_path)
                 try:

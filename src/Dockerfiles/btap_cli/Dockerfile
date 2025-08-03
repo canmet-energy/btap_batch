@@ -6,7 +6,8 @@ ARG OS_STANDARDS_BRANCH='nrcan'
 ARG WEATHER_FILES=''
 ARG LOCALNRCAN=''
 ARG LOCALNRCAN_BRANCH='main'
-ARG LOCAL_COSTING_PATH=''
+ARG LOCAL_COSTING_PATH='do_not_delete.txt'
+ARG COPY_COSTING_FILE='false'
 ARG GIT_API_TOKEN='nothing'
 ARG OS_STANDARDS_ORG='NREL'
 
@@ -35,7 +36,7 @@ RUN echo "Creating Public CLI" \
 
 # Copy local costing file if LOCAL_COSTING_PATH is provided
 COPY ${LOCAL_COSTING_PATH:-/dev/null} /tmp/local_costing.json
-RUN if [ -n "$LOCAL_COSTING_PATH" ] && [ -f "$LOCAL_COSTING_PATH" ]; then \
+RUN if [ -n "${LOCAL_COSTING_PATH}" ] && [ "$COPY_COSTING_FILE" = "true" ] && [ -f "$LOCAL_COSTING_PATH" ]; then \
         echo "Using local costing file at $LOCAL_COSTING_PATH" \
         && cp "$LOCAL_COSTING_PATH" /openstudio-standards/lib/openstudio-standards/btap/costing/costing_database.json; \
     fi

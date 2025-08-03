@@ -10,7 +10,7 @@ phases:
     commands:
       - echo Build started on `date`
       - echo Building the Docker image...
-      - docker build . -t $IMAGE_REPO_NAME:$IMAGE_TAG --build-arg GIT_API_TOKEN=$GIT_API_TOKEN --build-arg OPENSTUDIO_VERSION=$OPENSTUDIO_VERSION --build-arg OS_STANDARDS_BRANCH=$OS_STANDARDS_BRANCH --build-arg OS_STANDARDS_ORG=$OS_STANDARDS_ORG --build-arg ENABLE_RSMEANS=$ENABLE_RSMEANS --build-arg WEATHER_FILES="$WEATHER_FILES --build-arg LOCAL_COSTING_PATH=$LOCAL_COSTING_PATH"
+      - docker build . -t $IMAGE_REPO_NAME:$IMAGE_TAG --build-arg GIT_API_TOKEN=$GIT_API_TOKEN --build-arg OPENSTUDIO_VERSION=$OPENSTUDIO_VERSION --build-arg OS_STANDARDS_BRANCH=$OS_STANDARDS_BRANCH --build-arg OS_STANDARDS_ORG=$OS_STANDARDS_ORG --build-arg ENABLE_RSMEANS=$ENABLE_RSMEANS --build-arg WEATHER_FILES="$WEATHER_FILES --build-arg LOCAL_COSTING_PATH=$LOCAL_COSTING_PATH --build-arg COPY_COSTING_FILE=$COPY_COSTING_FILE
       - docker tag $IMAGE_REPO_NAME:$IMAGE_TAG $AWS_ACCOUNT_ID.dkr.ecr.$AWS_DEFAULT_REGION.amazonaws.com/$IMAGE_REPO_NAME:$IMAGE_TAG
   post_build:
     commands:
