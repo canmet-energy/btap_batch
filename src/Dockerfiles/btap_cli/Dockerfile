@@ -39,7 +39,7 @@ RUN echo "Creating Public CLI" \
 # Copy local costing file if LOCAL_COSTING_PATH is provided and the file exists
 # If LOCAL_COSTING_PATH is not set, or there is an issue with the copy, it defaults to 'do_not_delete.txt' and the /tmp/costs.csv file is not copied
 COPY $LOCAL_COSTING_PATH /tmp/costs.csv
-RUN if [ -n "$COPY_COSTING_FILE" ]; then \
+RUN if [ -n "$COPY_COSTING_FILE" ] ; then \
         echo "Using local costing file at $LOCAL_COSTING_PATH" \
         && cp -f /tmp/costs.csv /openstudio-standards/lib/openstudio-standards/btap/costing/common_resources/costs.csv \
     fi
@@ -47,12 +47,12 @@ RUN if [ -n "$COPY_COSTING_FILE" ]; then \
 # Copy local costing file if LOCAL_FACTORS_PATH is provided and the file exists
 # If LOCAL_FACTORS_PATH is not set, or there is an issue with the copy, it defaults to 'do_not_delete.txt' and the /tmp/costs_local_factors.csv file is not copied
 COPY $LOCAL_FACTORS_PATH /tmp/costs_local_factors.csv
-RUN if [ -n "$COPY_FACTORS_FILE" ]; then \
+RUN if [ -n "$COPY_FACTORS_FILE" ] ; then \
         echo "Using local costing factors file at $LOCAL_FACTORS_PATH" \
         && cp -f /tmp/costs_local_factors.csv /openstudio-standards/lib/openstudio-standards/btap/costing/common_resources/costs_local_factors.csv \
     fi
 
-RUN if [ -n "$ENABLE_RSMEANS" ]; then \
+RUN if [ -n "$ENABLE_RSMEANS" ] ; then \
         echo "Overwriting placeholder costing data with RSMeans data (ENABLE_RSMEANS=$ENABLE_RSMEANS)" \
         && curl -v -s https://$GIT_API_TOKEN:x-oauth-basic@raw.githubusercontent.com/canmet-energy/btap_costing_data_generation/refs/heads/main/resources/rsmeans_factors.csv \
                 -o /openstudio-standards/lib/openstudio-standards/btap/costing/common_resources/costs_local_factors.csv \
