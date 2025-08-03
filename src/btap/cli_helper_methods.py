@@ -236,7 +236,7 @@ def get_weather_locations(btap_weather: bool, weather_locations=[]) -> str:
     return  " ".join(custom_weather_list)
 
 def build_and_configure_docker_and_aws(btap_batch_branch=None,
-                                       enable_rsmeans='',
+                                       enable_rsmeans=False,
                                        local_costing_path='',
                                        local_factors_path='',
                                        compute_environment=None,
@@ -254,9 +254,6 @@ def build_and_configure_docker_and_aws(btap_batch_branch=None,
     # Get the weather locations from the weather list
     weather_locations = get_weather_locations(btap_weather, weather_list)
 
-    enable_rsmeans_costing = False
-    if enable_rsmeans.lower() == 'true':
-        enable_rsmeans_costing = True
     # Check if the local_costing_path file exists and convert to absolute path if relative
     dockerfile_costing_path = 'do_not_delete.txt'  # Dummy path relative to the Dockerfile build context
     dockerfile_factors_path = 'do_not_delete.txt'  # Dummy path relative to the Dockerfile build context
@@ -325,7 +322,7 @@ def build_and_configure_docker_and_aws(btap_batch_branch=None,
 
     # build args for aws and btap_cli container.
     build_args_btap_cli = {'OPENSTUDIO_VERSION': openstudio_version,
-                           'ENABLE_RSMEANS' : 'True' if enable_rsmeans_costing == True else '',
+                           'ENABLE_RSMEANS' : 'True' if enable_rsmeans == True else '',
                            'OS_STANDARDS_ORG': os_standards_org,
                            'OS_STANDARDS_BRANCH': os_standards_branch,
                            'WEATHER_FILES': weather_locations,
