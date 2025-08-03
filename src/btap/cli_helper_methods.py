@@ -943,11 +943,11 @@ weather_list:
   - CAN_NT_Yellowknife.AP.719360_CWEC2020.epw
   - CAN_AB_Fort.Mcmurray.AP.716890_CWEC2020.epw
 
-# Path to the local costs.csv costing file.  The default is '\resources\costing\costs.csv'. If you are using a custom costing file, you can set the path here.
+# Path to the local costs.csv costing file.  The default is 'resources\costing\costs.csv'. If you are using a custom costing file, you can set the path here.
 # All relative paths are relative to the root of the btap_batch repository you are using. Ignore this if you are not using costing or are content with the default costs.csv costing file."
 local_costing_path: resources\costing\costs.csv
 
-# Path to the local costs_local_factors.csv costing localization factors file.  The default is '\resources\costing\costs_local_factors.csv'. If you are using a custom costing localization factors file, you can set the path here.
+# Path to the local costs_local_factors.csv costing localization factors file.  The default is 'resources\costing\costs_local_factors.csv'. If you are using a custom costing localization factors file, you can set the path here.
 # All relative paths are relative to the root of the btap_batch repository you are using. Ignore this if you are not using local costing localization factors or content with the default costs_local_factors.csv costing localization factors file."
 local_factors_path: resources\costing\costs_local_factors.csv
 
