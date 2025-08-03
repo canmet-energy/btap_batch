@@ -37,8 +37,8 @@ RUN echo "Creating Public CLI" \
     && git rev-parse --short HEAD;
 
 # Copy local costing file if LOCAL_COSTING_PATH is provided
-COPY ${LOCAL_COSTING_PATH:-/dev/null} /tmp/costs.csv
-COPY ${LOCAL_FACTORS_PATH:-/dev/null} /tmp/costs_local_factors.csv
+COPY $LOCAL_COSTING_PATH /tmp/costs.csv
+COPY $LOCAL_FACTORS_PATH /tmp/costs_local_factors.csv
 RUN if [ -n "${LOCAL_COSTING_PATH}" ] && [ -n "$COPY_COSTING_FILE" ] && [ -f "$LOCAL_COSTING_PATH" ]; then \
         echo "Using local costing file at $LOCAL_COSTING_PATH" \
         && cp -f /tmp/costs.csv /openstudio-standards/lib/openstudio-standards/btap/costing/common_resources/costs.csv \
