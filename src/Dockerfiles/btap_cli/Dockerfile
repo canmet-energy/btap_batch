@@ -39,12 +39,12 @@ RUN echo "Creating Public CLI" \
 # Copy local costing file if LOCAL_COSTING_PATH is provided
 COPY $LOCAL_COSTING_PATH /tmp/costs.csv
 COPY $LOCAL_FACTORS_PATH /tmp/costs_local_factors.csv
-RUN if [ -n "${LOCAL_COSTING_PATH}" ] && [ -n "$COPY_COSTING_FILE" ] && [ -f "$LOCAL_COSTING_PATH" ]; then \
+RUN if [ -n "$COPY_COSTING_FILE" ]; then \
         echo "Using local costing file at $LOCAL_COSTING_PATH" \
         && cp -f /tmp/costs.csv /openstudio-standards/lib/openstudio-standards/btap/costing/common_resources/costs.csv \
     fi
 
-RUN if [ -n "${LOCAL_FACTORS_PATH}" ] && [ -n "$COPY_FACTORS_FILE" ] && [ -f "$LOCAL_FACTORS_PATH" ]; then \
+RUN if [ -n "$COPY_FACTORS_FILE" ]; then \
         echo "Using local costing factors file at $LOCAL_FACTORS_PATH" \
         && cp -f /tmp/costs_local_factors.csv /openstudio-standards/lib/openstudio-standards/btap/costing/common_resources/costs_local_factors.csv \
     fi
