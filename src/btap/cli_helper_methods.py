@@ -253,7 +253,8 @@ def build_and_configure_docker_and_aws(btap_batch_branch=None,
 
     # Get the weather locations from the weather list
     weather_locations = get_weather_locations(btap_weather, weather_list)
-    
+
+    enable_rsmeans = False if enable_rsmeans == '' or enable_rsmeans == None else enable_rsmeans = True
     # Check if the local_costing_path file exists and convert to absolute path if relative
     dockerfile_costing_path = 'do_not_delete.txt'  # Dummy path relative to the Dockerfile build context
     dockerfile_factors_path = 'do_not_delete.txt'  # Dummy path relative to the Dockerfile build context

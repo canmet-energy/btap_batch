@@ -73,7 +73,7 @@ def build(**kwargs):
     config = load_config(build_config_path)
 
     btap_batch_branch = config['btap_batch_branch']
-    enable_rsmeans = config.get('enable_rsmeans', None)
+    enable_rsmeans = config.get('enable_rsmeans', '')
     os_standards_org = config.get('os_standards_org', '')
     os_standards_branch = config['os_standards_branch']
     openstudio_version = config['openstudio_version']
