@@ -7,11 +7,13 @@ ARG WEATHER_FILES=''
 ARG LOCALNRCAN=''
 ARG LOCALNRCAN_BRANCH='main'
 ARG LOCAL_COSTING_PATH='do_not_delete.txt'
-ARG COPY_COSTING_FILE='false'
+ARG LOCAL_FACTORS_PATH='do_not_delete.txt'
+ARG COPY_COSTING_FILE=''
+ARG COPY_FACTORS_FILE=''
 ARG GIT_API_TOKEN='nothing'
 ARG OS_STANDARDS_ORG='NREL'
 
-LABEL author="Phylroy Lopez phylroy.lopez@canada.ca"
+LABEL author="Phylroy Lopez phylroy.lopez@canada.ca, Chris Kirney chris.kirney@nrcan-rncan.gc.ca, Nicholas Pneumaticos nicholas.pneumaticos@nrcan-rncan.gc.ca"
 
 #Be root and install nrcan_certs under the root folder if LOCALNRCAN is set.
 WORKDIR /
@@ -36,9 +38,15 @@ RUN echo "Creating Public CLI" \
 
 # Copy local costing file if LOCAL_COSTING_PATH is provided
 COPY ${LOCAL_COSTING_PATH:-/dev/null} /tmp/local_costing.json
-RUN if [ -n "${LOCAL_COSTING_PATH}" ] && [ "$COPY_COSTING_FILE" = "true" ] && [ -f "$LOCAL_COSTING_PATH" ]; then \
+COPY ${LOCAL_FACTORS_PATH:-/dev/null} /tmp/local_factors.json
+RUN if [ -n "${LOCAL_COSTING_PATH}" ] && [ -n "$COPY_COSTING_FILE" ] && [ -f "$LOCAL_COSTING_PATH" ]; then \
         echo "Using local costing file at $LOCAL_COSTING_PATH" \
-        && cp "$LOCAL_COSTING_PATH" /openstudio-standards/lib/openstudio-standards/btap/costing/costing_database.json; \
+        && cp -f "$LOCAL_COSTING_PATH" /openstudio-standards/lib/openstudio-standards/btap/costing/common_resources/costs.csv \
+    fi
+
+RUN if [ -n "${LOCAL_FACTORS_PATH}" ] && [ -n "$COPY_FACTORS_FILE" ] && [ -f "$LOCAL_FACTORS_PATH" ]; then \
+        echo "Using local costing factors file at $LOCAL_FACTORS_PATH" \
+        && cp -f "$LOCAL_FACTORS_PATH" /openstudio-standards/lib/openstudio-standards/btap/costing/common_resources/costs_local_factors.csv \
     fi
 
 RUN if [ -n "$ENABLE_RSMEANS" ]; then \
