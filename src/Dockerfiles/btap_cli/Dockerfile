@@ -36,14 +36,17 @@ RUN echo "Creating Public CLI" \
     && echo 'standards revision' \
     && git rev-parse --short HEAD;
 
-# Copy local costing file if LOCAL_COSTING_PATH is provided
+# Copy local costing file if LOCAL_COSTING_PATH is provided and the file exists
+# If LOCAL_COSTING_PATH is not set, or there is an issue with the copy, it defaults to 'do_not_delete.txt' and the /tmp/costs.csv file is not copied
 COPY $LOCAL_COSTING_PATH /tmp/costs.csv
-COPY $LOCAL_FACTORS_PATH /tmp/costs_local_factors.csv
 RUN if [ -n "$COPY_COSTING_FILE" ]; then \
         echo "Using local costing file at $LOCAL_COSTING_PATH" \
         && cp -f /tmp/costs.csv /openstudio-standards/lib/openstudio-standards/btap/costing/common_resources/costs.csv \
     fi
 
+# Copy local costing file if LOCAL_FACTORS_PATH is provided and the file exists
+# If LOCAL_FACTORS_PATH is not set, or there is an issue with the copy, it defaults to 'do_not_delete.txt' and the /tmp/costs_local_factors.csv file is not copied
+COPY $LOCAL_FACTORS_PATH /tmp/costs_local_factors.csv
 RUN if [ -n "$COPY_FACTORS_FILE" ]; then \
         echo "Using local costing factors file at $LOCAL_FACTORS_PATH" \
         && cp -f /tmp/costs_local_factors.csv /openstudio-standards/lib/openstudio-standards/btap/costing/common_resources/costs_local_factors.csv \
