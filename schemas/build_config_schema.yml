@@ -76,10 +76,17 @@ properties:
     default: false
 
   local_costing_path:
-    description: "Path to the local costing_database.json costing file.  The default is '<this btap_batch local repository location>/resources/costing/costing_database.json'. If you are using a custom costing file, you can set the path. here\n\n
-    Ignore this if you are not using costing or content with the default costing_database.json costing file.\n\n"
+    description: "Path to the local costs.csv costing file.  The default is '<this btap_batch local repository location>/resources/costing/costs.csv'. If you are using a custom costing file, you can set the path. here\n\n
+    Ignore this if you are not using costing or are content with the default costing_database.json costing file.\n\n"
     type: string
-    default: resources/costing/costing_database.json
+    default: resources/costing/costs.csv
+
+  local_factors_path:
+    description: "Path to the local costs_local_factors.csv costing localization factors file.  The default is '<this btap_batch local repository location>/resources/costing/costs_local_factors.csv'. If you are using\n\n
+    a custom costing localization factors file, you can set the path here\n\n
+    Ignore this if you are not using costing or are content with the default costing_local_factors.csv costing localization factors file.\n\n"
+    type: string
+    default: resources/costing/costs_local_factors.csv
 
   build_btap_cli:
     description: "**ADVANCED** Build most recent btap_cli always. Set to false to save time if standards and costing branches have not changed."
@@ -116,7 +123,6 @@ required:
   - os_standards_branch
   - openstudio_version
   - weather_list
-  - local_costing_path
   - build_btap_cli
   - build_btap_batch
   - local_nrcan
