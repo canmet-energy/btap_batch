@@ -1,0 +1,1 @@
+This file is copied into the image created using the Dockerfile if no costing_database.json is present or if the user does not want to use it.  I am doing this because if statements around a Dockerfile COPY command are not allowed and the other ways of making copying files into an image conditional seem more complicated.
