@@ -20,11 +20,18 @@ properties:
     You can review available branches [here](https://github.com/canmet-energy/btap_batch) if you are a developer. "
     type: string
 
+  os_standards_org:
+    description: "**ADVANCED** The GitHub organization name containing the OpenStudio-standards repository. This is the fork used to build the btap_cli environment. 
+    The default is NREL."
+    type: string
+    default: NREL
+
   os_standards_branch:
-    description: "Branch of NREL's Openstudio-standards to use to build environment. The default branch to use is 'master' This 
+    description: "Branch of NREL's Openstudio-standards repository to use to build environment. The default branch to use is 'nrcan' This 
     branch is only accessible for authorized users. You can review available branches
     [here](https://github.com/nrel/openstudio-standards)"
     type: string
+    default: nrcan
 
   openstudio_version:
     description: "Valid version of the OpenStudio SDK to build with."
@@ -65,9 +72,22 @@ properties:
     maxItems: 100
 
   enable_rsmeans:
-    description: "If you do not have access RSMEANs data api. This should be false. Please contact NRCan is you wish to do costed simulations."
+    description: "**ADVANCED** for NRCan use only."
     type: boolean
     default: false
+
+  local_costing_path:
+    description: "Path to the local costs.csv costing file.  The default is '<this btap_batch local repository location>/resources/costing/costs.csv'. If you are using a custom costing file, you can set the path. here\n\n
+    Ignore this if you are not using costing or are content with the default costing_database.json costing file.\n\n"
+    type: string
+    default: resources/costing/costs.csv
+
+  local_factors_path:
+    description: "Path to the local costs_local_factors.csv costing localization factors file.  The default is '<this btap_batch local repository location>/resources/costing/costs_local_factors.csv'. If you are using\n\n
+    a custom costing localization factors file, you can set the path here\n\n
+    Ignore this if you are not using costing or are content with the default costing_local_factors.csv costing localization factors file.\n\n"
+    type: string
+    default: resources/costing/costs_local_factors.csv
 
   build_btap_cli:
     description: "**ADVANCED** Build most recent btap_cli always. Set to false to save time if standards and costing branches have not changed."
@@ -106,7 +126,6 @@ required:
   - weather_list
   - build_btap_cli
   - build_btap_batch
-  - enable_rsmeans
   - local_nrcan
   - compute_environment
 additionalProperties: false
