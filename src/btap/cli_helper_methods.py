@@ -336,7 +336,7 @@ def build_and_configure_docker_and_aws(btap_batch_branch=None,
 
 
 
-    if compute_environment  in ['local_managed_aws_workers', 'aws']:
+    if compute_environment in ['local_managed_aws_workers', 'aws']:
         delete_aws_build_env(os.environ['BUILD_ENV_NAME'])
 
         # # Create new
