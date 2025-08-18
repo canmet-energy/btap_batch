@@ -2,6 +2,7 @@
 :analysis_name: parametric_example
 :algorithm_type: parametric
 :reference_run: false
+:exclude_files: []
 :output_variables: []
 :output_meters: []
 :enable_costing: true

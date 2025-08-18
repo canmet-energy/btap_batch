@@ -2,6 +2,7 @@
 :analysis_name: elimination_example
 :algorithm_type: elimination
 :reference_run: true
+:exclude_files: []
 :output_variables: []
 :output_meters: []
 :enable_costing: true
