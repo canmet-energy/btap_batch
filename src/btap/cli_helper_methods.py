@@ -336,7 +336,7 @@ def build_and_configure_docker_and_aws(btap_batch_branch=None,
 
 
 
-    if compute_environment  in ['local_managed_aws_workers', 'aws']:
+    if compute_environment in ['local_managed_aws_workers', 'aws']:
         delete_aws_build_env(os.environ['BUILD_ENV_NAME'])
 
         # # Create new
@@ -917,7 +917,7 @@ btap_batch_branch: dev
 os_standards_branch: nrcan
 
 # OpenStudio version used by analyses and built into the container environment. The E+ version used for simulations is determined by the OpenStudio version.
-openstudio_version: 3.7.0
+openstudio_version: 3.9.0
 
 # Location of weather files to download. 
 # If true, downloads from btap_weather. Else, downloads from Climate.OneBuilding.Org. 
