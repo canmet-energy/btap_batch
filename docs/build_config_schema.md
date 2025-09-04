@@ -91,6 +91,7 @@
 Must be one of:
 * "3.6.1"
 * "3.7.0"
+* "3.9.0"
 
 ## <a name="btap_weather"></a>6. Property `root > btap_weather`
 
@@ -102,7 +103,16 @@ Must be one of:
 
 **Description:** Location of weather files to download. If true, downloads from [btap_weather](https://github.com/canmet-energy/btap_weather). Else, downloads from Climate.OneBuilding.Org.
 
-## <a name="weather_list"></a>7. Property `root > weather_list`
+## <a name="btap_weather"></a>8. Property `root > btap_weather`
+|              |           |
+| ------------ | --------- |
+| **Type**     | `boolean` |
+| **Required** | Yes       |
+| **Default**  | `true`    |
+
+**Description:** Location of weather files to download. If true, downloads from [btap_weather](https://github.com/canmet-energy/btap_weather). Else, downloads from Climate.OneBuilding.Org.
+
+## <a name="weather_list"></a>8. Property `root > weather_list`
 
 |                           |                                                                           |
 | ------------------------- | ------------------------------------------------------------------------- |

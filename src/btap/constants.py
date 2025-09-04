@@ -10,13 +10,13 @@ MIN_AWS_VCPUS = 0
 # Container allocated VCPU for AWS Batch
 WORKER_CONTAINER_VCPU = 1
 # Container allocated Memory (MB) for AWS Batch
-WORKER_CONTAINER_MEMORY = 4000
+WORKER_CONTAINER_MEMORY = 8000
 # Container Storage (GB)
-INSTANCE_STORAGE_SIZE_GB = 1000
+INSTANCE_STORAGE_SIZE_GB = 4000
 # Container allocated VCPU for AWS Batch
-MANAGER_CONTAINER_VCPU = 8
+MANAGER_CONTAINER_VCPU = 16
 # Container allocated Memory (MB) for AWS Batch
-MANAGER_CONTAINER_MEMORY = 32000
+MANAGER_CONTAINER_MEMORY = 64000
 
 # Volume Type
 AWS_VOLUME_TYPE = 'io2' # could be gp2,gp3,io1,io2
@@ -59,6 +59,6 @@ BATCH_JOB_ROLE = 'arn:aws:iam::834599497928:role/batchJobRole'
 # Role to give permissions to batch to run.
 BATCH_SERVICE_ROLE = 'arn:aws:iam::834599497928:role/service-role/AWSBatchServiceRole'
 # Max Retry attemps for aws clients.
-AWS_MAX_RETRIES = 60
+AWS_MAX_RETRIES = 90
 # Dockerfile url location
 DOCKERFILE_URL = 'https://raw.githubusercontent.com/canmet-energy/btap_cli/dev/Dockerfile'
