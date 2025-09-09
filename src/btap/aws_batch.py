@@ -195,8 +195,16 @@ class AWSBatch:
     def create_job(self, job_id=None, reference_run=False):
         job=None
         if self.image_manager.image_name == 'btap_cli':
+            print("****************Creating AWS btap_cli Job****************")
+            print("Reference run:", reference_run)
+            print("********************************************************")
+            print("")
             job = AWSBTAPJob(batch=self, job_id=job_id)
         if self.image_manager.image_name == 'btap_batch':
+            print("****************Creating AWS btap_batch Job****************")
+            print("Reference run:", reference_run)
+            print("********************************************************")
+            print("")
             job = AWSAnalysisJob(batch=self, job_id=job_id, reference_run=reference_run)
         return job
 
