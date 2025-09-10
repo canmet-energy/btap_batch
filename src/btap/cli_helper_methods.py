@@ -560,8 +560,18 @@ def analysis(project_input_folder=None,
         print(f"Deleting old files in S3 folder {prefix}")
         S3().bulk_del_with_pbar(bucket=bucket, prefix=prefix)
 
+        print("")
+        print("#########################################################################")
+        print("################## compute_environment pre: {} ##################".format(compute_environment))
+        print("#########################################################################")
+        print("")
 
     if compute_environment == 'local' or compute_environment == 'local_managed_aws_workers':
+        print("")
+        print("#########################################################################")
+        print("################## compute_environment post: {} ##################".format(compute_environment))
+        print("#########################################################################")
+        print("")
         analysis_config[':compute_environment'] = compute_environment
 
         # Don't run a reference run on a reference analysis
@@ -572,6 +582,11 @@ def analysis(project_input_folder=None,
         if reference_run == True:
             if analysis_config[':algorithm_type'] != 'batch':
                 # Run reference
+                print("")
+                print("#########################################################################")
+                print("################## Running reference case for analysis ##################")
+                print("#########################################################################")
+                print("")
                 ref_analysis_config = copy.deepcopy(analysis_config)
                 ref_analysis_config[':algorithm_type'] = 'reference'
                 br = BTAPReference(analysis_config=ref_analysis_config,
@@ -580,16 +595,31 @@ def analysis(project_input_folder=None,
 
                 br.run()
                 reference_run_df = br.btap_data_df
+                print("")
+                print("#########################################################################")
+                print("#################### Finished running reference case ####################")
+                print("#########################################################################")
+                print("")
 
         # BTAP analysis placeholder.
         ba = None
 
         # nsga2
         if analysis_config[':algorithm_type'] == 'nsga2':
+            print("")
+            print("#########################################################################")
+            print("#################### Creating optimization analysis #####################")
+            print("#########################################################################")
+            print("")
             ba = BTAPOptimization(analysis_config=analysis_config,
                                   analysis_input_folder=analysis_input_folder,
                                   output_folder=output_folder,
                                   reference_run_df=reference_run_df)
+            print("")
+            print("#########################################################################")
+            print("################# Finished creating optimization analysis ###############")
+            print("#########################################################################")
+            print("")
         # parametric
         elif analysis_config[':algorithm_type'] == 'parametric':
             ba = BTAPParametric(analysis_config=analysis_config,
@@ -631,7 +661,17 @@ def analysis(project_input_folder=None,
             print(f"Error:Analysis type {analysis_config[':algorithm_type']} not supported. Exiting.")
             exit(1)
 
+        print("")
+        print("#########################################################################")
+        print("#################### Starting optimization analysis #####################")
+        print("#########################################################################")
+        print("")
         ba.run()
+        print("")
+        print("#########################################################################")
+        print("#################### Finished optimization analysis #####################")
+        print("#########################################################################")
+        print("")
         print(f"Excel results file {ba.analysis_excel_results_path()}")
         if compute_environment == 'local':
             generate_btap_reports(data_file=ba.analysis_excel_results_path(), pdf_output_folder=ba.analysis_results_folder())
