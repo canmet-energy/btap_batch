@@ -1,8 +1,9 @@
+icecream
 icecream==2.1.7
 scikit-learn==1.7.2
 pymoo==0.6.1.5
 pyyaml==6.0.2
-boto3==1.40.27
+boto3==1.40.28
 pandas==2.3.2
 scikit-optimize==0.10.2
 openstudio==3.9.0
