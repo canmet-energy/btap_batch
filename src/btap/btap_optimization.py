@@ -1,6 +1,6 @@
 from pymoo.optimize import minimize
 from pymoo.core.problem import ElementwiseProblem
-from pymoo.core.problem import starmap_parallelized_eval
+from pymoo.core.problem import StarmapParallelization
 from pymoo.factory import get_algorithm, get_crossover, get_mutation, get_sampling
 from multiprocessing.pool import ThreadPool
 import botocore
@@ -164,8 +164,7 @@ class BTAPOptimization(BTAPAnalysis):
                 # Create thread pool object.
                 with ThreadPool(self.batch.image_manager.get_threads()) as pool:
                     # Create pymoo problem. Pass self for helper methods and set up a starmap multithread pool.
-                    problem = BTAPProblem(btap_optimization=self, runner=pool.starmap,
-                                          func_eval=starmap_parallelized_eval)
+                    problem = BTAPProblem(btap_optimization=self, runner=StarmapParallelization(pool.starmap))
                     # configure the algorithm.
                     method = get_algorithm("nsga2",
                                            pop_size=pop_size,
