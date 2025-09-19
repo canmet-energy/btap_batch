@@ -1,8 +1,7 @@
 from pymoo.optimize import minimize
 from pymoo.core.problem import ElementwiseProblem
-from pymoo.algorithms.moo.nsga2 import NSGA2
-from pymoo.core.variable import Choice
-from pymoo.termination import get_termination
+from pymoo.core.problem import starmap_parallelized_eval
+from pymoo.factory import get_algorithm, get_crossover, get_mutation, get_sampling
 from multiprocessing.pool import ThreadPool
 import botocore
 import time
@@ -26,28 +25,21 @@ class BTAPProblem(ElementwiseProblem):
         # Make analysis object visible throughout class.
         self.btap_optimization = btap_optimization
 
-        # Create variable definitions using Choice type for discrete optimization
-        #test = btap_optimization.analysis_config[':options']
-
-        #variables = btap_optimization.analysis_config[':options']
-        variables = {}
-        for var, val in btap_optimization.analysis_config[':options'].items():
-            #test2 = {var.key: var.value}
-            variables.update({var: Choice(val)})
-            #print("hello")
-            #variables.append(Choice(options=list(range(self.btap_optimization.x_u()[var] + 1))))
-
-        #for i, max_val in enumerate(self.btap_optimization.x_u()):
-            # Create Choice variables with options from 0 to max_val (inclusive)
-        #    variables.append(Choice(options=list(range(max_val + 1))))
-
         # Initialize super with information from [':algorithm'] in input file.
         super().__init__(
-            vars=variables,
+            # Number of variables that are present in the yml file.
+            n_var=self.btap_optimization.number_of_variables(),
             # Number of minimize_objectives in input file.
             n_obj=len(self.btap_optimization.algorithm_nsga_minimize_objectives),
             # We never have constraints.
             n_constr=0,
+            # set the lower bound array of variable options.. all start a zero. So an array of zeros.
+            xl=[0] * self.btap_optimization.number_of_variables(),
+            # the upper bound for each variable option as an integer.. We are dealing only with discrete integers in
+            # this optimization.
+            xu=self.btap_optimization.x_u(),
+            # Tell pymoo that the variables are discrete integers and not floats as is usually the default.
+            type_var=int,
             # options to parent class (not used)
             # Note if using a linter and get warning "Expected Dictionary and got Dict" This is a false positive.
             **kwargs)
@@ -55,7 +47,7 @@ class BTAPProblem(ElementwiseProblem):
     # This is the method that runs each simulation.
     def _evaluate(
             self,
-            # x is the array of options represented as integers for this particular run created by pymoo.
+            # x is the list of options represented as integers for this particular run created by pymoo.
             x,
             # out is the placeholder for the fitness / goal functions to be minimized.
             out,
@@ -64,10 +56,8 @@ class BTAPProblem(ElementwiseProblem):
             **kwargs):
 
         # Converts discrete integers contains in x argument back into values that btap understands. So for example.,if
-        # x was an array of zeros, it would convert this to the dict of the first item in each list of the variables in
+        # x was a list of zeros, it would convert this to the dict of the first item in each list of the variables in
         # the building_options section of the input yml file.
-        testc = x
-        testd = x.tolist()
         run_options = self.btap_optimization.generate_run_option_file(x.tolist())
 
         # Run simulation
@@ -173,28 +163,21 @@ class BTAPOptimization(BTAPAnalysis):
                 self.pbar = pbar
                 # Create thread pool object.
                 with ThreadPool(self.batch.image_manager.get_threads()) as pool:
-                    # Create pymoo problem. Pass self for helper methods.
-                    problem = BTAPProblem(btap_optimization=self)
-
-                    # All discrete variables
-                    sampling = IntegerRandomSampling()
-                    crossover = TwoPointCrossover(prob=prob)
-                    mutation = BitflipMutation()
-                    
+                    # Create pymoo problem. Pass self for helper methods and set up a starmap multithread pool.
+                    problem = BTAPProblem(btap_optimization=self, runner=pool.starmap,
+                                          func_eval=starmap_parallelized_eval)
                     # configure the algorithm.
-                    method = NSGA2(
-                        pop_size=pop_size,
-                        sampling=sampling,
-                        crossover=crossover,
-                        mutation=mutation,
-                        eliminate_duplicates=True,
-                    )
-
+                    method = get_algorithm("nsga2",
+                                           pop_size=pop_size,
+                                           sampling=get_sampling("int_random"),
+                                           crossover=get_crossover("int_sbx", prob=prob, eta=eta),
+                                           mutation=get_mutation("int_pm", eta=eta),
+                                           eliminate_duplicates=True,
+                                           )
                     # set to optimize minimize the problem n_gen os the max number of generations before giving up.
                     self.res = minimize(problem,
                                         method,
-                                        termination=get_termination("n_gen", n_gen),
-                                        elementwise_runner=pool.starmap,
+                                        termination=('n_gen', n_gen),
                                         seed=1
                                         )
                     # Scatter().add(res.F).show()
