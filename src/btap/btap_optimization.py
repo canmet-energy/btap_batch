@@ -1,7 +1,11 @@
 from pymoo.optimize import minimize
 from pymoo.core.problem import ElementwiseProblem
-from pymoo.core.problem import starmap_parallelized_eval
-from pymoo.factory import get_algorithm, get_crossover, get_mutation, get_sampling
+from pymoo.core.problem import StarmapParallelization
+from pymoo.algorithms.moo.nsga2 import NSGA2
+from pymoo.operators.crossover.sbx import SBX
+from pymoo.operators.mutation.pm import PM
+from pymoo.operators.sampling.rnd import IntegerRandomSampling
+from pymoo.operators.repair.rounding import RoundingRepair
 from multiprocessing.pool import ThreadPool
 import botocore
 import time
@@ -17,10 +21,12 @@ from src.btap.btap_analysis import BTAPAnalysis
 class BTAPProblem(ElementwiseProblem):
     # Inspiration for this was drawn from examples:
     #   Discrete analysis https://pymoo.org/customization/discrete_problem.html
-    #   Stapmap Multi-threaded https://pymoo.org/problems/parallelization.html
+    #   Starmap Multi-threaded https://pymoo.org/problems/parallelization.html
     def __init__(self,
                  # Required btap object already initialized to help run the optimization.
                  btap_optimization=None,
+                 # Optional elementwise_runner for parallelization in pymoo 0.6.x
+                 elementwise_runner=None,
                  **kwargs):
         # Make analysis object visible throughout class.
         self.btap_optimization = btap_optimization
@@ -40,6 +46,8 @@ class BTAPProblem(ElementwiseProblem):
             xu=self.btap_optimization.x_u(),
             # Tell pymoo that the variables are discrete integers and not floats as is usually the default.
             type_var=int,
+            # Pass the elementwise_runner for parallelization support in pymoo 0.6.x
+            elementwise_runner=elementwise_runner,
             # options to parent class (not used)
             # Note if using a linter and get warning "Expected Dictionary and got Dict" This is a false positive.
             **kwargs)
@@ -163,17 +171,21 @@ class BTAPOptimization(BTAPAnalysis):
                 self.pbar = pbar
                 # Create thread pool object.
                 with ThreadPool(self.batch.image_manager.get_threads()) as pool:
-                    # Create pymoo problem. Pass self for helper methods and set up a starmap multithread pool.
-                    problem = BTAPProblem(btap_optimization=self, runner=pool.starmap,
-                                          func_eval=starmap_parallelized_eval)
-                    # configure the algorithm.
-                    method = get_algorithm("nsga2",
-                                           pop_size=pop_size,
-                                           sampling=get_sampling("int_random"),
-                                           crossover=get_crossover("int_sbx", prob=prob, eta=eta),
-                                           mutation=get_mutation("int_pm", eta=eta),
-                                           eliminate_duplicates=True,
-                                           )
+                    # Create StarmapParallelization runner for pymoo 0.6.x
+                    runner = StarmapParallelization(pool.starmap)
+                    
+                    # Create pymoo problem. Pass self for helper methods and set up elementwise runner for parallelization.
+                    problem = BTAPProblem(btap_optimization=self, elementwise_runner=runner)
+                    
+                    # configure the algorithm using the new direct imports
+                    # For discrete integer variables, we need to use SBX and PM with RoundingRepair
+                    method = NSGA2(
+                        pop_size=pop_size,
+                        sampling=IntegerRandomSampling(),
+                        crossover=SBX(prob=prob, eta=eta, vtype=float, repair=RoundingRepair()),
+                        mutation=PM(eta=eta, vtype=float, repair=RoundingRepair()),
+                        eliminate_duplicates=True,
+                    )
                     # set to optimize minimize the problem n_gen os the max number of generations before giving up.
                     self.res = minimize(problem,
                                         method,
