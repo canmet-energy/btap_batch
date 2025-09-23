@@ -72,6 +72,6 @@ and
 local_factors_path: resources\costing\costs_local_factors.csv
 ```
 
-Both paths are relative to where btap_batch is installed. If you want to include your own costs you can either modify the above files, or incule the path to your own files containing the appropriate information on the correct format.
+Both paths are relative to where btap_batch is installed. If you want to include your own costs you can either modify the above files, or include the path to your own costing files containing the appropriate information in the correct format.
 
 Note: &nbsp;&nbsp;If you are an NRCan employee, please contact the BTAP team for how to use NRCan costing information.
