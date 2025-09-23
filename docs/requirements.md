@@ -1,14 +1,14 @@
 ## Requirements
 * Windows 10 Professional version 1909 or greater 
 * [Docker](https://docs.docker.com/desktop/install/windows-install/) running on your computer. Ensure that you complete creating the docker-users group on your system.
-* [Python 3.9](https://www.python.org/ftp/python/3.9.13/python-3.9.13-amd64.exe) and Pip installed.  Ensure you check to install python in your PATH!
+* [Python 3.10](https://www.python.org/ftp/python/3.10.10/python-3.10.10-amd64.exe) and Pip installed.  Ensure you check to install python in your PATH!
 * [Git client](https://git-scm.com/downloads)
 * A high speed internet connection.
 * A github account and [git-token](https://docs.github.com/en/github/authenticating-to-github/creating-a-personal-access-token)
 * A computer with at least 8GB+ ram and 4 or more cores (8+ threads). Preferably a powerful multi-core computer to run simulations fast locally. (24 core/48 thread with 32GB+) 
-* [OpenStudio 3.7.0](https://github.com/NREL/OpenStudio/releases/tag/v3.7.0) (optional) Required to use the OpenStudio App to edit osm files.
-* [OpenStudio Application 1.7.0](https://github.com/openstudiocoalition/OpenStudioApplication/releases) (optional) Required to use the OpenStudio App to edit osm files.
-* If you would like to use costing and have an RSMeans account contact chris.kirney@nrcan-rncan.gc.ca for permissions to access canmet-energy repositories (For use of the btap_private_cli costing image.)
+* [OpenStudio 3.9.0](https://github.com/NREL/OpenStudio/releases/tag/v3.7.0) (optional) Required to use the OpenStudio App to edit osm files.
+* [OpenStudio Application 1.9.0](https://github.com/openstudiocoalition/OpenStudioApplication/releases/tag/v1.9.0) (optional) Required to use the OpenStudio App to edit osm files. Note that you will have to make a free account with the OpenStudio Coalition to access the installers.
+* Refer to the [costing documentation](costing.md) for how to use costing in BTAP.
 ### Amazon only:
 * [AWS CLI version 2 on Windows](https://docs.aws.amazon.com/cli/latest/userguide/install-cliv2-windows.html).
 * [Set Up AWS credentials file](https://docs.aws.amazon.com/cli/latest/userguide/cli-configure-files.html) . 
@@ -26,7 +26,7 @@ git --version
 
 You should get something like this. 
 ```
-git version 2.38.1.windows.1
+git version 2.51.0.windows.1
 ```
 
 ## Docker
@@ -72,9 +72,9 @@ To ensure that python is installed correctly, try to get the version of python v
 ```
 python --version
 ```
-You should get a result similar to. 
+You should get a result similar to: 
 ```
-Python 3.9.13
+Python 3.10.11
 ```
 ## AWS-CLI
 To ensure that you have installed AWS-CLI, try to get the version. 
@@ -83,7 +83,7 @@ To ensure that you have installed AWS-CLI, try to get the version.
 aws --version
 ```
 
-This should then show the version
+This should then show the version similar to: 
 
 ```
 aws-cli/2.13.22 Python/3.11.5 Windows/10 exe/AMD64 prompt/off
