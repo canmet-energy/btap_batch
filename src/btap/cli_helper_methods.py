@@ -560,6 +560,9 @@ def analysis(project_input_folder=None,
         prefix = os.path.join(user_name, analysis_config[':analysis_name'] + '/')
         print(f"Deleting old files in S3 folder {prefix}")
         S3().bulk_del_with_pbar(bucket=bucket, prefix=prefix)
+
+
+    if compute_environment == 'local' or compute_environment == 'local_managed_aws_workers':
         analysis_config[':compute_environment'] = compute_environment
 
         # Don't run a reference run on a reference analysis
@@ -629,7 +632,6 @@ def analysis(project_input_folder=None,
             exit(1)
 
         ba.run()
-
         print(f"Excel results file {ba.analysis_excel_results_path()}")
         if compute_environment == 'local':
             generate_btap_reports(data_file=ba.analysis_excel_results_path(), pdf_output_folder=ba.analysis_results_folder())
