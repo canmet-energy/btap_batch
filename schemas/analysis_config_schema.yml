@@ -345,8 +345,8 @@ This will select the algorithm to use in the analysis. \n\n
             - type: string
               enum:
                 - NECB_Default
-#                - add_daylighting_controls
-#                - none
+                - add_daylighting_controls
+                - none
 
       :ecm_system_name:
         description: "
