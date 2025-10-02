@@ -2,6 +2,7 @@ import pip_system_certs.wrapt_requests
 from src.btap.constants import WORKER_CONTAINER_MEMORY, WORKER_CONTAINER_VCPU
 from src.btap.constants import MANAGER_CONTAINER_VCPU, MANAGER_CONTAINER_MEMORY
 from src.btap.constants import MAX_AWS_VCPUS
+from src.btap.constants import RSMEANS_CURRENT_YEAR
 from src.btap.aws_batch import AWSBatch
 from src.btap.aws_credentials import AWSCredentials
 from src.btap.aws_compute_environment import AWSComputeEnvironment
@@ -237,6 +238,7 @@ def get_weather_locations(btap_weather: bool, weather_locations=[]) -> str:
 
 def build_and_configure_docker_and_aws(btap_batch_branch=None,
                                        enable_rsmeans=False,
+                                       rsmeans_year=None,
                                        local_costing_path='',
                                        local_factors_path='',
                                        compute_environment=None,
@@ -323,6 +325,7 @@ def build_and_configure_docker_and_aws(btap_batch_branch=None,
     # build args for aws and btap_cli container.
     build_args_btap_cli = {'OPENSTUDIO_VERSION': openstudio_version,
                            'ENABLE_RSMEANS' : 'True' if enable_rsmeans == True else '',
+                           'RSMEANS_YEAR' : str(rsmeans_year) if rsmeans_year else RSMEANS_CURRENT_YEAR,
                            'OS_STANDARDS_ORG': os_standards_org,
                            'OS_STANDARDS_BRANCH': os_standards_branch,
                            'WEATHER_FILES': weather_locations,
@@ -901,7 +904,7 @@ def generate_build_config(build_config_path = None):
 # This is the name of the build environment. This will prefix all images, s3 folders, and resources created on aws. Please ensure that it is 24 characters long or less, only uses numbers and lowercase letters, and includes no spaces or special characters aside from underscore. Use the underscore character instead of spaces.
 build_env_name: {USER.lower()}
 
-# Github Token. This must be set to build and run analyses. See the enable_rsmeans section below if you are NRCan staff and would to access RSMeans costing data. 
+# Github Token. This must be set to build and run analyses. 
 git_api_token: null
 
 # Compute Environment used to build and run analyses. Options are

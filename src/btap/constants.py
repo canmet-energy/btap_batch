@@ -62,3 +62,4 @@ BATCH_SERVICE_ROLE = 'arn:aws:iam::834599497928:role/service-role/AWSBatchServic
 AWS_MAX_RETRIES = 90
 # Dockerfile url location
 DOCKERFILE_URL = 'https://raw.githubusercontent.com/canmet-energy/btap_cli/dev/Dockerfile'
+RSMEANS_CURRENT_YEAR = '2024'
