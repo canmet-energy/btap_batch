@@ -522,6 +522,7 @@ def analysis(project_input_folder=None,
     if not os.path.isdir(project_input_folder):
         print(f"Folder does not exist at path {analysis_config_file}")
         exit(1)
+
     analysis_config, analysis_input_folder, analyses_folder = BTAPAnalysis.load_analysis_input_file(
         analysis_config_file=analysis_config_file)
     
@@ -577,7 +578,6 @@ def analysis(project_input_folder=None,
                 br = BTAPReference(analysis_config=ref_analysis_config,
                                    analysis_input_folder=analysis_input_folder,
                                    output_folder=os.path.join(output_folder))
-
                 br.run()
                 reference_run_df = br.btap_data_df
 
