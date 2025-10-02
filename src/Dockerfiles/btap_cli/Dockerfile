@@ -58,9 +58,9 @@ RUN if [ -n "$COPY_FACTORS_FILE" ] ; then \
 
 RUN if [ -n "$ENABLE_RSMEANS" ] ; then \
         echo "Overwriting placeholder costing data with RSMeans data (ENABLE_RSMEANS=$ENABLE_RSMEANS)" \
-        && curl -v -s https://$GIT_API_TOKEN:x-oauth-basic@raw.githubusercontent.com/canmet-energy/btap_costing_data_generation/refs/heads/main/resources/rsmeans_factors.csv \
+        && curl -v -s https://$GIT_API_TOKEN:x-oauth-basic@raw.githubusercontent.com/canmet-energy/btap_costing_data_generation/refs/heads/nrcan_467/resources/rsmeans_factors.csv \
                 -o /openstudio-standards/lib/openstudio-standards/btap/costing/common_resources/costs_local_factors.csv \
-        && curl -v -s https://$GIT_API_TOKEN:x-oauth-basic@raw.githubusercontent.com/canmet-energy/btap_costing_data_generation/refs/heads/main/output/$RSMEANS_YEAR/costs_rsmeans.csv \
+        && curl -v -s https://$GIT_API_TOKEN:x-oauth-basic@raw.githubusercontent.com/canmet-energy/btap_costing_data_generation/refs/heads/nrcan_467/output/$RSMEANS_YEAR/costs_rsmeans.csv \
                 -o /openstudio-standards/lib/openstudio-standards/btap/costing/common_resources/costs.csv; \
 fi
 
