@@ -59,9 +59,7 @@ class AWSBTAPJob(DockerBTAPJob):
     def _copy_files_to_run_location(self):
         logging.info(
             f"Copying from {self.source} to bucket {self.target}")
-        S3().copy_folder_to_s3(bucket_name=self.s3_bucket,
-                               source_folder=self.source,
-                               target_folder=self.target)
+        self.__copy_files_with_retry()
     def _get_job_results(self):
         # Gather results from S3
         s3_btap_data_path = os.path.join(self.s3_datapoint_output_folder, 'btap_data.json').replace('\\', '/')
@@ -146,6 +144,21 @@ class AWSBTAPJob(DockerBTAPJob):
             logging.warning(f"JobWrapper:Implementing exponential backoff for job {self.aws_job_name()} for {wait_time}s")
             time.sleep(wait_time)
             return self.__job_wrapper(n=n + 1)
+    def __copy_files_with_retry(self, n=0):
+        try:
+            S3().copy_folder_to_s3(bucket_name=self.s3_bucket,
+                                   source_folder=self.source,
+                                   target_folder=self.target)
+        except:
+            if n >= 5:
+                logging.error(
+                    f'Failed to copy files from {self.source} to bucket {self.s3_bucket} at {self.target} after 5 tries. Error was {sys.exc_info()[0]}')
+                raise
+            wait_time = 60
+            logging.warning(f"Copy failed, waiting {wait_time}s before retry {n + 1}/5 for copying from {self.source} to bucket {self.target}")
+            time.sleep(wait_time)
+            return self.__copy_files_with_retry(n=n + 1)
+
     def __get_job_status(self, n=0):
         try:
             batch_client = AWSCredentials().batch_client
