@@ -152,15 +152,15 @@ def download_analyses(bucket='834599497928',
 
 # download_analyses(bucket='834599497928',
 #                   # prefix='sgilani/',  # S3 prefix MUST have a trailing /
-#                   prefix='sgilani_oee_hist_weather/',
+#                   prefix='sgilani_oee_eplus_ddy_2/',
 #                   # target_path=r'C:/Users/sgilani/OneDrive - NRCan RNCan/Documents/BTAP/OEE-2024/Simulation/AWS-runs/FinalBaselines',  # Your local download folder.
-#                   target_path=r'D:/BTAP/OEE_Electrification/if-using-historic-weather',
+#                   target_path=r'D:/BTAP/OEE_Electrification/if-using-EPlusDDY-weather-V2/Hourly',
 #                   hourly_csv=False,  # download hourly.csv zip
 #                   in_osm=False,  # download osm zip
 #                   eplusout_sql=False,  # download sqlite files zip
 #                   eplustbl_htm=False,  # download e+ htm report zip
 #                   concat_excel_files=False,  # concat all output.xlsx files to a master.csv and parquet file
-#                   regex_filter='OEEelec_BL_Secondary*',#'OEEelec_SC_MURBElec_ElecResWH_Lowrise_\S\S\S_env_*',  # an example that gets MidriseApartment from Toronto except the vintage analyses
+#                   regex_filter='OEEelec_BL_Highrise*',#'OEEelec_SC_MURBElec_ElecResWH_Lowrise_\S\S\S_env_*',  # an example that gets MidriseApartment from Toronto except the vintage analyses
 #                   unzip_and_delete=False,  # This will unzip the zip files of all the above into a folder and delete the original zip file.
 #                   dry_run=False  # If set to true.. will do a dry run and not download anything. This is used to make sure your regex is working as intended.
 #                   )
@@ -195,7 +195,7 @@ ELECsystems_OEE = [
     # 'VRFElecBoiler_ElecResWH',
     # 'VRFMixedBoiler_ElecResWH',
     # 'VRFElecResBackup_ElecResWH',
-    #
+    # #
     # 'MURBElec_HPWH',
     # 'MURBMixed_HPWH',
     # 'MURBASHPElec_HPWH',
@@ -213,7 +213,7 @@ ELECsystems_OEE = [
     # 'VRFElecBoiler_HPWH',
     # 'VRFMixedBoiler_HPWH',
     # 'VRFElecResBackup_HPWH',
-    #
+    # #
     # 'MURBMixed_ElecResWH_5050',
     # 'MURBASHPMixed_ElecResWH_5050',
     # 'SchoolMixed_ElecResWH_5050',
@@ -230,7 +230,7 @@ ELECsystems_OEE = [
     # 'CAWASHPMixed_HPWH_5050',
     # 'CGSHPMixed_HPWH_5050',
     # 'VRFMixedBoiler_HPWH_5050',
-    #
+    # #
     # 'MURBMixed_ElecResWH_0199',
     # 'MURBASHPMixed_ElecResWH_0199',
     # 'SchoolMixed_ElecResWH_0199',
@@ -247,7 +247,7 @@ ELECsystems_OEE = [
     # 'CAWASHPMixed_HPWH_0199',
     # 'CGSHPMixed_HPWH_0199',
     # 'VRFMixedBoiler_HPWH_0199',
-    #
+    # #
     # 'VRFElecBoiler2_ElecResWH',
     # 'VRFElecBoiler2_HPWH',
     # 'CAWASHPElec2_ElecResWH',
@@ -255,7 +255,7 @@ ELECsystems_OEE = [
     ]
 epw_files = [
     # ['CAN_BC_Vancouver.Intl.AP.718920_NRCv12022_TMY_GW1.5_EPW.epw', 'YVR'],  # CZ 4
-    # ['CAN_BC_Victoria.Intl.AP.717990_NRCv12022_TMY_GW1.5_EPW.epw', 'YYJ'], # CZ 4
+    # # ['CAN_BC_Victoria.Intl.AP.717990_NRCv12022_TMY_GW1.5_EPW.epw', 'YYJ'], # CZ 4
     #
     # ['CAN_BC_Kelowna.Intl.AP.712030_NRCv12022_TMY_GW1.5_EPW.epw', 'YLW'],  # CZ 5
     # ['CAN_ON_Toronto-Pearson.Intl.AP.716240_NRCv12022_TMY_GW1.5_EPW.epw', 'YYZ'],  # CZ 5
@@ -266,7 +266,7 @@ epw_files = [
     # ['CAN_NL_St.Johns.Intl.AP.718010_NRCv12022_TMY_GW1.5_EPW.epw', 'YYT'],  # CZ 6
     # ['CAN_PE_Charlottetown.AP.717060_NRCv12022_TMY_GW1.5_EPW.epw', 'YYG'],  # CZ 6
     # ['CAN_NB_Fredericton.Intl.AP.717000_NRCv12022_TMY_GW1.5_EPW.epw', 'YFC'],  # CZ 6
-    # ['CAN_NB_Saint.John.AP.716090_NRCv12022_TMY_GW1.5_EPW.epw', 'YSJ'],  # CZ 6
+    # # ['CAN_NB_Saint.John.AP.716090_NRCv12022_TMY_GW1.5_EPW.epw', 'YSJ'],  # CZ 6
     #
     # ['CAN_AB_Calgary.Intl.AP.718770_NRCv12022_TMY_GW1.5_EPW.epw', 'YYC'],  # CZ 7A
     # ['CAN_AB_Edmonton.Intl.CS.711550_NRCv12022_TMY_GW1.5_EPW.epw', 'YEG'],  # CZ 7A
@@ -295,21 +295,21 @@ for scenario in ELECsystems_OEE:
         if scenario.startswith("School"):
             list_building_type = [
                 # 'PrimarySchool',
-                'SecondarySchool'
+                # 'SecondarySchool'
             ]
         elif scenario.startswith("MURB"):
             list_building_type = [
                 # 'LowriseApartment',
                 # 'MidriseApartment',
-                'HighriseApartment'
+                # 'HighriseApartment'
             ]
         else:
             list_building_type = [
                 # 'LowriseApartment',
                 # 'MidriseApartment',
-                'HighriseApartment',
+                # 'HighriseApartment',
                 # 'PrimarySchool',
-                'SecondarySchool'
+                # 'SecondarySchool'
             ]
 
         for building_type in list_building_type:
@@ -382,6 +382,31 @@ for analysis_name in list_analysis_name:
     # print('is_downloaded', is_downloaded)
     # if unzip_and_delete and is_downloaded:
     #     extraction_folder_suffix = 'eplusout.sql'
+    #     extraction_folder = os.path.join(target_path, analysis_name, extraction_folder_suffix)
+    #     print('extraction_folder', extraction_folder)
+    #     pathlib.Path(extraction_folder).mkdir(parents=True, exist_ok=True)
+    #     with zipfile.ZipFile(target_zip_basename, 'r') as zip_ref:
+    #         zip_ref.extractall(extraction_folder)
+    #         print(zip_ref)
+    #     pathlib.Path(target_zip_basename).unlink(missing_ok=True)
+
+
+
+    # ### Download 'eplusout.sql' files
+    # key = 'sgilani_oee_eplus_ddy_2/'
+    # bucket = '834599497928'
+    # target_path = r'D:/BTAP/OEE_Electrification/if-using-EPlusDDY-weather-V2/Hourly'
+    # filetype = 'hourly.csv.zip'
+    # source_zip_file = os.path.join(key, analysis_name, 'results', 'zips', filetype).replace('\\', '/')
+    # print('source_zip_file', source_zip_file)
+    # target_zip_basename = os.path.join(target_path, os.path.basename(os.path.dirname(key)) + "_" + filetype)
+    # # target_zip_basename = os.path.join(target_path, analysis_name, filetype).replace('\\', '/')
+    # print('target_zip_basename', target_zip_basename)
+    # unzip_and_delete = True
+    # is_downloaded = S3().download_file(s3_file=source_zip_file, bucket_name=bucket, target_path=target_zip_basename)
+    # print('is_downloaded', is_downloaded)
+    # if unzip_and_delete and is_downloaded:
+    #     extraction_folder_suffix = 'hourly.csv'
     #     extraction_folder = os.path.join(target_path, analysis_name, extraction_folder_suffix)
     #     print('extraction_folder', extraction_folder)
     #     pathlib.Path(extraction_folder).mkdir(parents=True, exist_ok=True)
