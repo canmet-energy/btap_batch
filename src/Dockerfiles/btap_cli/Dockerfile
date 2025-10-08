@@ -2,6 +2,7 @@ ARG OPENSTUDIO_VERSION='3.9.0'
 FROM canmet/os_sdk_container:$OPENSTUDIO_VERSION
 
 ARG ENABLE_RSMEANS=''
+ARG RSMEANS_YEAR=''
 ARG OS_STANDARDS_BRANCH='nrcan'
 ARG WEATHER_FILES=''
 ARG LOCALNRCAN=''
@@ -59,7 +60,7 @@ RUN if [ -n "$ENABLE_RSMEANS" ] ; then \
         echo "Overwriting placeholder costing data with RSMeans data (ENABLE_RSMEANS=$ENABLE_RSMEANS)" \
         && curl -v -s https://$GIT_API_TOKEN:x-oauth-basic@raw.githubusercontent.com/canmet-energy/btap_costing_data_generation/refs/heads/main/resources/rsmeans_factors.csv \
                 -o /openstudio-standards/lib/openstudio-standards/btap/costing/common_resources/costs_local_factors.csv \
-        && curl -v -s https://$GIT_API_TOKEN:x-oauth-basic@raw.githubusercontent.com/canmet-energy/btap_costing_data_generation/refs/heads/main/output/costs_rsmeans.csv \
+        && curl -v -s https://$GIT_API_TOKEN:x-oauth-basic@raw.githubusercontent.com/canmet-energy/btap_costing_data_generation/refs/heads/main/output/$RSMEANS_YEAR/costs_rsmeans.csv \
                 -o /openstudio-standards/lib/openstudio-standards/btap/costing/common_resources/costs.csv; \
 fi
 
