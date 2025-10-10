@@ -1,5 +1,5 @@
 import os
-BTAP_BATCH_VERSION = '1.0.005'
+BTAP_BATCH_VERSION = '1.1.000'
 
 # Maximum simulataneous simulations per analyses
 MAX_SIMULATIONS_PER_ANALYSIS = 500
@@ -14,9 +14,9 @@ WORKER_CONTAINER_MEMORY = 8000
 # Container Storage (GB)
 INSTANCE_STORAGE_SIZE_GB = 4000
 # Container allocated VCPU for AWS Batch
-MANAGER_CONTAINER_VCPU = 16
+MANAGER_CONTAINER_VCPU = 32
 # Container allocated Memory (MB) for AWS Batch
-MANAGER_CONTAINER_MEMORY = 64000
+MANAGER_CONTAINER_MEMORY = 128000
 
 # Volume Type
 AWS_VOLUME_TYPE = 'io2' # could be gp2,gp3,io1,io2
