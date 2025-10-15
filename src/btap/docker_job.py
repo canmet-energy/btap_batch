@@ -28,6 +28,10 @@ class DockerBTAPJob:
         job_data['run_options'] = yaml.dump(self.run_options)
         job_data['datapoint_output_url'] = self._job_url()
         self._copy_files_to_run_location()
+        test = str(self._job_url())
+        print()
+        print("############################# Starting run {test} ##############################")
+        print()
         try:
             self._run_container()
             # Update job_data with possible modifications to run_options.
@@ -36,6 +40,8 @@ class DockerBTAPJob:
             job_data['status'] = "SUCCEEDED"
             job_data['simulation_time'] = time.time() - start
             job_data.update(self._get_job_results())
+            print("############################# {test} Suceeded !!!! ##############################")
+            print("")
             return job_data
         except Exception as error:
             print(error)
@@ -44,7 +50,10 @@ class DockerBTAPJob:
             # Flag that is was failure and save container error.
             job_data['container_error'] = self._get_container_error()
             job_data['status'] = 'FAILED'
+            print("############################# {test} Failed !!!! ##############################")
+            print("")
             self._save_output_file(job_data)
+            print("############################# Saved error output file ##############################")
             return job_data
     #protected
     def _job_url(self):

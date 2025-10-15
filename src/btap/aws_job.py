@@ -144,18 +144,20 @@ class AWSBTAPJob(DockerBTAPJob):
             logging.warning(f"JobWrapper:Implementing exponential backoff for job {self.aws_job_name()} for {wait_time}s")
             time.sleep(wait_time)
             return self.__job_wrapper(n=n + 1)
+        
     def __copy_files_with_retry(self, n=0):
         try:
             S3().copy_folder_to_s3(bucket_name=self.s3_bucket,
                                    source_folder=self.source,
                                    target_folder=self.target)
         except:
-            if n >= 5:
-                logging.error(
-                    f'Failed to copy files from {self.source} to bucket {self.s3_bucket} at {self.target} after 5 tries. Error was {sys.exc_info()[0]}')
+            # Implementing exponential backoff
+            if n == 8:
+                logging.exception(
+                    f'Failed to copy files from {self.source} to bucket {self.s3_bucket} at {self.target} after 7 tries. Error was {sys.exc_info()[0]}')
                 raise
-            wait_time = 60
-            logging.warning(f"Copy failed, waiting {wait_time}s before retry {n + 1}/5 for copying from {self.source} to bucket {self.target}")
+            wait_time = 30 + random()
+            logging.warning(f"Copy failed, waiting {wait_time}s before retry {n + 1}/7 for copying from {self.source} to bucket {self.target}")
             time.sleep(wait_time)
             return self.__copy_files_with_retry(n=n + 1)
 
