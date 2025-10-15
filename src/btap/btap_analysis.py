@@ -307,20 +307,26 @@ class BTAPAnalysis():
         if job_data['status'] == 'SUCCEEDED':
             # If container completed with success don't save container output.
             job_data['container_output'] = None
+            print(f"job_data set to SUCEEDED")
             if job_data['eplus_fatals'] > 0:
                 # If we had fatal errors..the run was not successful after all.
                 job_data['status'] = 'FAILED'
+                print(f"job_data set to FAILED")
         # This method organizes the data structure of the dataframe to fit into a report table.
+        print("sort_results")
         df = self.sort_results(job_data)
         # Save job_data
         # to csv file.
         pathlib.Path(self.cp.analysis_database_folder()).mkdir(parents=True, exist_ok=True)
         df.to_csv(os.path.join(self.cp.analysis_database_folder(), f"{job_data[':datapoint_id']}.csv"))
+        print("csv saved")
 
         # Save failures to a folder as well.
 
         if job_data['status'] != 'SUCCEEDED':
+            print("Save failed data")
             df.to_csv(os.path.join(self.cp.analysis_failures_folder(), f"{job_data[':datapoint_id']}.csv"))
+            print("Failed job data saved")
         return job_data
 
     def sort_results(self, results):

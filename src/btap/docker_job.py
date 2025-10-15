@@ -30,7 +30,7 @@ class DockerBTAPJob:
         self._copy_files_to_run_location()
         test = str(self._job_url())
         print()
-        print("############################# Starting run {test} ##############################")
+        print(f"############################# Starting run {test} ##############################")
         print()
         try:
             self._run_container()
@@ -40,7 +40,7 @@ class DockerBTAPJob:
             job_data['status'] = "SUCCEEDED"
             job_data['simulation_time'] = time.time() - start
             job_data.update(self._get_job_results())
-            print("############################# {test} Suceeded !!!! ##############################")
+            print(f"############################# {test} Suceeded !!!! ##############################")
             print("")
             return job_data
         except Exception as error:
@@ -50,7 +50,7 @@ class DockerBTAPJob:
             # Flag that is was failure and save container error.
             job_data['container_error'] = self._get_container_error()
             job_data['status'] = 'FAILED'
-            print("############################# {test} Failed !!!! ##############################")
+            print(f"############################# {test} Failed !!!! ##############################")
             print("")
             self._save_output_file(job_data)
             print("############################# Saved error output file ##############################")
@@ -118,6 +118,8 @@ class DockerBTAPJob:
     def _save_output_file(self, job_data):
         # save btap_data json file.
         Path(os.path.dirname(self.local_json_file_path)).mkdir(parents=True, exist_ok=True)
+        outfile_path = str(self.local_json_file_path)
+        print(f"Output file: {outfile_path}")
         with open(self.local_json_file_path, 'w') as outfile:
             json.dump(job_data, outfile, indent=4)
     #private methods
