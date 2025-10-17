@@ -44,7 +44,7 @@ class DockerBTAPJob:
             print("")
             return job_data
         except Exception as error:
-            print(error)
+            print(f"The error is: {error}!!!!!!!!!!!")
             # Update job_data with possible modifications to run_options.
             job_data.update(self.run_options)
             # Flag that is was failure and save container error.
