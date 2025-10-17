@@ -15,7 +15,7 @@ python -m venv venv
 
 To enable your environment to issue commands simple type this command from within the btap_batch folder. You must do this for every new session of work with btap_batch
 ```bash
-venv\Scripts\activate.bat
+venv\Scripts\activate.ps1
 ```
 
 You also need to install python dependencies. You can do this by issuing the pip install command
