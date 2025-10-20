@@ -63,6 +63,7 @@ class AWSBTAPJob(DockerBTAPJob):
     def _get_job_results(self):
         # Gather results from S3
         s3_btap_data_path = os.path.join(self.s3_datapoint_output_folder, 'btap_data.json').replace('\\', '/')
+        print(f"File path: {s3_btap_data_path}!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!")
         logging.info(
             f"Getting data from S3 bucket {self.s3_bucket} at path {s3_btap_data_path}")
         content_object = boto3.resource('s3').Object(self.s3_bucket, s3_btap_data_path)
