@@ -33,7 +33,8 @@ class DockerBTAPJob:
         print(f"############################# Starting run {test} ##############################")
         print()
         try:
-            self._run_container()
+            run_result = self._run_container()
+            print(f"Result of Run: {run_result}!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!")
             # Update job_data with possible modifications to run_options.
             job_data.update(self.run_options)
         except Exception as error:
@@ -49,14 +50,20 @@ class DockerBTAPJob:
             print("############################# Saved error output file ##############################")
             return job_data
         else:
+            # Separate file copy error from openstudio-standards failure
             print(f"############################# {test} Suceeded !!!! ##############################")
             print("")
             # Only run _get_job_results() if _run_container suceeded
             # Flag that is was successful.
             job_data['status'] = "SUCCEEDED"
             job_data['simulation_time'] = time.time() - start
-            job_data.update(self._get_job_results())
-            return job_data
+            try:
+                results_error = job_data.update(self._get_job_results())
+                return job_data
+            except:
+                job_data['container_error'] = results_error
+                job_data['status'] = 'FAILED'
+                return job_data
     #protected
     def _job_url(self):
         return self.cp.local_job_url(job_id=self.job_id)
