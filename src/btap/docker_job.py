@@ -37,6 +37,7 @@ class DockerBTAPJob:
             print(f"Result of Run: {run_result}!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!")
             # Update job_data with possible modifications to run_options.
             job_data.update(self.run_options)
+            job_data['simulation_time'] = time.time() - start
         except Exception as error:
             print(f"The error is: {error}!!!!!!!!!!!")
             # Update job_data with possible modifications to run_options.
@@ -56,13 +57,12 @@ class DockerBTAPJob:
             # Only run _get_job_results() if _run_container suceeded
             # Flag that is was successful.
             job_data['status'] = "SUCCEEDED"
-            job_data['simulation_time'] = time.time() - start
             try:
-                results_error = job_data.update(self._get_job_results())
+                job_data.update(self._get_job_results())
                 return job_data
-            except:
-                job_data['container_error'] = results_error
-                job_data['status'] = 'FAILED'
+            except Exception as additional_error:
+                job_data['container_error'] = additional_error
+                job_data['status'] = "FAILED"
                 return job_data
     #protected
     def _job_url(self):
