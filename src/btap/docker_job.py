@@ -48,14 +48,15 @@ class DockerBTAPJob:
             self._save_output_file(job_data)
             print("############################# Saved error output file ##############################")
             return job_data
-        print(f"############################# {test} Suceeded !!!! ##############################")
-        print("")
-        # Only run _get_job_results() if _run_container suceeded
-        # Flag that is was successful.
-        job_data['status'] = "SUCCEEDED"
-        job_data['simulation_time'] = time.time() - start
-        job_data.update(self._get_job_results())
-        return job_data
+        else:
+            print(f"############################# {test} Suceeded !!!! ##############################")
+            print("")
+            # Only run _get_job_results() if _run_container suceeded
+            # Flag that is was successful.
+            job_data['status'] = "SUCCEEDED"
+            job_data['simulation_time'] = time.time() - start
+            job_data.update(self._get_job_results())
+            return job_data
     #protected
     def _job_url(self):
         return self.cp.local_job_url(job_id=self.job_id)
