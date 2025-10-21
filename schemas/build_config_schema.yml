@@ -82,6 +82,11 @@ properties:
     enum: 
       - 2024
 
+  enable_proprietary_carbon:
+    description: "**ADVANCED** for NRCan use only."
+    type: boolean
+    default: false
+
   local_costing_path:
     description: "Path to the local costs.csv costing file.  The default is '<this btap_batch local repository location>/resources/costing/costs.csv'. If you are using a custom costing file, you can set the path. here\n\n
     Ignore this if you are not using costing or are content with the default costing_database.json costing file.\n\n"

@@ -75,6 +75,7 @@ def build(**kwargs):
     btap_batch_branch = config['btap_batch_branch']
     enable_rsmeans = config.get('enable_rsmeans', False)
     rsmeans_year = config.get('rsmeans_year', None)
+    enable_proprietary_carbon = config.get('enable_proprietary_carbon', False)
     os_standards_org = config.get('os_standards_org', '')
     os_standards_branch = config['os_standards_branch']
     openstudio_version = config['openstudio_version']
@@ -92,6 +93,7 @@ def build(**kwargs):
     build_and_configure_docker_and_aws(btap_batch_branch=btap_batch_branch,
                                        enable_rsmeans=enable_rsmeans,
                                        rsmeans_year=rsmeans_year,
+                                       enable_proprietary_carbon=enable_proprietary_carbon,
                                        compute_environment=compute_environment,
                                        openstudio_version=openstudio_version,
                                        btap_weather=btap_weather,
