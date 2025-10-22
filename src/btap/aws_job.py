@@ -131,9 +131,11 @@ class AWSBTAPJob(DockerBTAPJob):
             print("Checking if datapoint exists!!!!!")
             s3_btap_data_path = os.path.join(self.s3_datapoint_output_folder, 'btap_data.json').replace('\\', '/')
             S3().s3client.meta.client.head_object(Bucket=self.s3_bucket,  Key=s3_btap_data_path)
+            print(f"Datapoint file exists:{s3_btap_data_path} !!!!!!!!!!!!!!!!!!!!!!!!!!!!")
             return True
-        except:
+        except Exception as error:
             print(f"Datapoint file does not exist:{s3_btap_data_path} !!!!!!!!!!!!!!!!!!!!!!!!!!!!")
+            print(f"Check error was: {error} !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!")
             return False
     
     # Private methods.
