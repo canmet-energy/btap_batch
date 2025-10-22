@@ -75,9 +75,15 @@ class AWSBTAPJob(DockerBTAPJob):
     def _get_container_error(self):
         # Get error message from error file from S3 and store it in the job_data list.
         s3_error_txt_path = os.path.join(self.s3_datapoint_output_folder, 'error.txt').replace('\\', '/')
-        content_object = boto3.resource('s3').Object(self.s3_bucket, s3_error_txt_path)
-        error_txt = content_object.get()['Body'].read().decode('utf-8')
-        return  str(error_txt)
+        print(f"Trying to copy: {s3_error_txt_path} !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!")
+        try:
+            content_object = boto3.resource('s3').Object(self.s3_bucket, s3_error_txt_path)
+            error_txt = content_object.get()['Body'].read().decode('utf-8')
+            print(f"The error message text is: {error_txt} !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!")
+            return str(error_txt)
+        except Exception as error:
+            print(f"Error handling error: {error} !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!")
+            return error
     
     def _run_container(self):
         # See https://boto3.amazonaws.com/v1/documentation/api/latest/reference/services/batch.html#Batch.Client.submit_job
