@@ -40,14 +40,14 @@ class DockerBTAPJob:
             # Flag that is was successful.
             job_data['status'] = "SUCCEEDED"
             job_data['simulation_time'] = time.time() - start
-            get_results_return = self._get_job_results()
-            if get_results_return == None:
-                job_data.update(get_results_return())
+            if self._was_datapoint_file_generated():
+                print("Datapoint exists!!!!!!!!!!!!!!!!!!!!!!")
+                job_data.update(self._get_job_results())
             else:
                 # The error is likely the btap_datapoint.json was not created and moved.  If that is the case then treat as a btap datapoint failure and not an analysis failure.
                 # Doing this to prevent issues with large simulations.
-                print(f"The error is: {get_results_return}!!!!!!!!!!!")
                 # Update job_data with possible modifications to run_options.
+                print("Datapoint does not exists!!!!!!!!!!!!!!!!!!!!!!")
                 job_data.update(self.run_options)
                 # Flag that is was failure and save container error.
                 job_data['container_error'] = self._get_container_error()
@@ -56,7 +56,6 @@ class DockerBTAPJob:
                 print("")
                 self._save_output_file(job_data)
                 print("############################# Saved handled error output file ##############################")
-                return job_data
         except Exception as error:
             print(f"The error is: {error}!!!!!!!!!!!")
             # Update job_data with possible modifications to run_options.
@@ -97,8 +96,8 @@ class DockerBTAPJob:
         return True
     def _get_job_results(self):
         # If file was not created...raise an error.
-        if not os.path.isfile(self.local_json_file_path):
-            raise FileNotFoundError(errno.ENOENT, os.strerror(errno.ENOENT), self.local_json_file_path)
+        #if not os.path.isfile(self.local_json_file_path):
+        #    raise FileNotFoundError(errno.ENOENT, os.strerror(errno.ENOENT), self.local_json_file_path)
         # Open the btap Data file in analysis dict.
         file = open(self.local_json_file_path, 'r')
         result_data = json.load(file)
@@ -148,6 +147,10 @@ class DockerBTAPJob:
                 'mode': 'rw'},
         }
         return volumes
-
-
-
+    
+    def _was_datapoint_file_generated(self):
+        try:
+            os.path.isfile(self.local_json_file_path)
+            return True
+        except:
+            return False

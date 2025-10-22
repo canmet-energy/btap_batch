@@ -66,14 +66,11 @@ class AWSBTAPJob(DockerBTAPJob):
         print(f"File path: {s3_btap_data_path}!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!")
         logging.info(
             f"Getting data from S3 bucket {self.s3_bucket} at path {s3_btap_data_path}")
-        try:
-            content_object = boto3.resource('s3').Object(self.s3_bucket, s3_btap_data_path)
-            result_data = json.loads(content_object.get()['Body'].read().decode('utf-8'))
-            # Adding simulation high level results from btap_data.json to df.
-            result_data = self._enumerate_eplus_warnings(job_data=result_data)
-            return result_data
-        except:
-            return result_data
+        content_object = boto3.resource('s3').Object(self.s3_bucket, s3_btap_data_path)
+        result_data = json.loads(content_object.get()['Body'].read().decode('utf-8'))
+        # Adding simulation high level results from btap_data.json to df.
+        result_data = self._enumerate_eplus_warnings(job_data=result_data)
+        return result_data
 
     def _get_container_error(self):
         # Get error message from error file from S3 and store it in the job_data list.
@@ -81,8 +78,8 @@ class AWSBTAPJob(DockerBTAPJob):
         content_object = boto3.resource('s3').Object(self.s3_bucket, s3_error_txt_path)
         error_txt = content_object.get()['Body'].read().decode('utf-8')
         return  str(error_txt)
+    
     def _run_container(self):
-
         # See https://boto3.amazonaws.com/v1/documentation/api/latest/reference/services/batch.html#Batch.Client.submit_job
         submitJobResponse = self.__job_wrapper()
         self.cloud_job_id = submitJobResponse['jobId']
@@ -122,6 +119,17 @@ class AWSBTAPJob(DockerBTAPJob):
                 AWSResultsTable().save_dict_result(self.run_options)
                 logging.info(message)
                 sys.stdout.flush()
+    
+    def _was_datapoint_file_generated(self):
+        try:
+            print("Checking if datapoint exists!!!!!")
+            s3_btap_data_path = os.path.join(self.s3_datapoint_output_folder, 'btap_data.json').replace('\\', '/')
+            S3().s3client.meta.client.head_object(Bucket=self.s3_bucket,  Key=s3_btap_data_path)
+            return True
+        except:
+            print(f"Datapoint file does not exist:{s3_btap_data_path} !!!!!!!!!!!!!!!!!!!!!!!!!!!!")
+            return False
+    
     # Private methods.
     def aws_job_name(self):
         return f"{self.job_id}"
