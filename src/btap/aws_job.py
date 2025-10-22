@@ -66,11 +66,15 @@ class AWSBTAPJob(DockerBTAPJob):
         print(f"File path: {s3_btap_data_path}!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!")
         logging.info(
             f"Getting data from S3 bucket {self.s3_bucket} at path {s3_btap_data_path}")
-        content_object = boto3.resource('s3').Object(self.s3_bucket, s3_btap_data_path)
-        result_data = json.loads(content_object.get()['Body'].read().decode('utf-8'))
-        # Adding simulation high level results from btap_data.json to df.
-        result_data = self._enumerate_eplus_warnings(job_data=result_data)
-        return result_data
+        try:
+            content_object = boto3.resource('s3').Object(self.s3_bucket, s3_btap_data_path)
+            result_data = json.loads(content_object.get()['Body'].read().decode('utf-8'))
+            # Adding simulation high level results from btap_data.json to df.
+            result_data = self._enumerate_eplus_warnings(job_data=result_data)
+            return result_data
+        except:
+            return result_data
+
     def _get_container_error(self):
         # Get error message from error file from S3 and store it in the job_data list.
         s3_error_txt_path = os.path.join(self.s3_datapoint_output_folder, 'error.txt').replace('\\', '/')

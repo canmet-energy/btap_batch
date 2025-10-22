@@ -37,7 +37,26 @@ class DockerBTAPJob:
             print(f"Result of Run: {run_result}!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!")
             # Update job_data with possible modifications to run_options.
             job_data.update(self.run_options)
+            # Flag that is was successful.
+            job_data['status'] = "SUCCEEDED"
             job_data['simulation_time'] = time.time() - start
+            get_results_return = self._get_job_results()
+            if get_results_return == None:
+                job_data.update(get_results_return())
+            else:
+                # The error is likely the btap_datapoint.json was not created and moved.  If that is the case then treat as a btap datapoint failure and not an analysis failure.
+                # Doing this to prevent issues with large simulations.
+                print(f"The error is: {get_results_return}!!!!!!!!!!!")
+                # Update job_data with possible modifications to run_options.
+                job_data.update(self.run_options)
+                # Flag that is was failure and save container error.
+                job_data['container_error'] = self._get_container_error()
+                job_data['status'] = 'FAILED'
+                print(f"############################# {test} Failed but handled !!!! ##############################")
+                print("")
+                self._save_output_file(job_data)
+                print("############################# Saved handled error output file ##############################")
+                return job_data
         except Exception as error:
             print(f"The error is: {error}!!!!!!!!!!!")
             # Update job_data with possible modifications to run_options.
@@ -50,20 +69,7 @@ class DockerBTAPJob:
             self._save_output_file(job_data)
             print("############################# Saved error output file ##############################")
             return job_data
-        else:
-            # Separate file copy error from openstudio-standards failure
-            print(f"############################# {test} Suceeded !!!! ##############################")
-            print("")
-            # Only run _get_job_results() if _run_container suceeded
-            # Flag that is was successful.
-            job_data['status'] = "SUCCEEDED"
-            try:
-                job_data.update(self._get_job_results())
-                return job_data
-            except Exception as additional_error:
-                job_data['container_error'] = additional_error
-                job_data['status'] = "FAILED"
-                return job_data
+        
     #protected
     def _job_url(self):
         return self.cp.local_job_url(job_id=self.job_id)
