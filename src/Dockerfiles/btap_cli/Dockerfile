@@ -8,10 +8,12 @@ ARG OS_STANDARDS_BRANCH='nrcan'
 ARG WEATHER_FILES=''
 ARG LOCALNRCAN=''
 ARG LOCALNRCAN_BRANCH='ruby_3.2'
-ARG LOCAL_COSTING_PATH='do_not_delete.txt'
-ARG LOCAL_FACTORS_PATH='do_not_delete.txt'
-ARG COPY_COSTING_FILE=''
-ARG COPY_FACTORS_FILE=''
+ARG LOCAL_COSTING_PATH=''
+ARG LOCAL_FACTORS_PATH=''
+ARG LOCAL_CARBON_OPAQUE_PATH=''
+ARG LOCAL_CARBON_GLAZING_PATH=''
+ARG LOCAL_CARBON_FRAME_PATH=''
+
 ARG GIT_API_TOKEN='nothing'
 ARG OS_STANDARDS_ORG='NREL'
 
@@ -40,11 +42,13 @@ RUN echo "Creating Public CLI" \
 
 WORKDIR /
 
-# Copy local costing file if LOCAL_COSTING_PATH is provided and the file exists
+# Copy the local database files using the * wildcard which copies the file and 
+# doesn't throw an error if the file does not exist
 COPY $LOCAL_COSTING_PATH* /openstudio-standards/lib/openstudio-standards/btap/common_resources/costs.csv
-
-# Copy local costing file if LOCAL_FACTORS_PATH is provided and the file exists
 COPY $LOCAL_FACTORS_PATH* /openstudio-standards/lib/openstudio-standards/btap/common_resources/costs_local_factors.csv
+COPY $LOCAL_CARBON_OPAQUE_PATH* /openstudio-standards/lib/openstudio-standards/btap/common_resources/carbon_opaque.csv
+COPY $LOCAL_CARBON_GLAZING_PATH* /openstudio-standards/lib/openstudio-standards/btap/common_resources/carbon_glazing.csv
+COPY $LOCAL_CARBON_FRAME_PATH* /openstudio-standards/lib/openstudio-standards/btap/common_resources/carbon_frame.csv
 
 RUN if [ -n "$ENABLE_RSMEANS" ] ; then \
         echo "Overwriting placeholder costing data with RSMeans data (ENABLE_RSMEANS=$ENABLE_RSMEANS)" \

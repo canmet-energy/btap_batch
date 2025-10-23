@@ -83,6 +83,9 @@ def build(**kwargs):
     weather_list = config['weather_list']
     local_costing_path = config.get('local_costing_path', '')
     local_factors_path = config.get('local_factors_path', '')
+    local_carbon_opaque_path = config.get('local_carbon_opaque_path', '')
+    local_carbon_glazing_path = config.get('local_carbon_glazing_path', '')
+    local_carbon_frame_path = config.get('local_carbon_frame_path', '')
     build_btap_cli = config['build_btap_cli']
     build_btap_batch = config['build_btap_batch']
     os.environ['BUILD_ENV_NAME'] = config['build_env_name']
@@ -102,6 +105,9 @@ def build(**kwargs):
                                        os_standards_branch=os_standards_branch,
                                        local_costing_path=local_costing_path,
                                        local_factors_path=local_factors_path,
+                                       local_carbon_opaque_path=local_carbon_opaque_path,
+                                       local_carbon_glazing_path=local_carbon_glazing_path,
+                                       local_carbon_frame_path=local_carbon_frame_path,
                                        build_btap_batch=build_btap_batch,
                                        build_btap_cli=build_btap_cli,
                                        local_nrcan=local_nrcan)

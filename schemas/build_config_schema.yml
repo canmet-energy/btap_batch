@@ -100,6 +100,27 @@ properties:
     type: string
     default: resources/costing/costs_local_factors.csv
 
+  local_carbon_opaque_path:
+    description: "Path to the local costs_local_factors.csv carbon database file.  The default is '<this btap_batch local repository location>/resources/carbon/carbon_opaque.csv'. If you are using\n\n
+    a custom carbon file, you can set the path here\n\n
+    Ignore this if you are not using embodied carbon or are content with the defaults.\n\n"
+    type: string
+    default: resources/carbon/carbon_opaque.csv
+
+  local_carbon_glazing_path:
+    description: "Path to the local costs_local_factors.csv costing localization factors file.  The default is '<this btap_batch local repository location>/resources/carbon/carbon_glazing.csv'. If you are using\n\n
+    a custom carbon file, you can set the path here\n\n
+    Ignore this if you are not using embodied carbon or are content with the defaults.\n\n"
+    type: string
+    default: resources/carbon/carbon_glazing.csv
+
+  local_carbon_frame_path:
+    description: "Path to the local costs_local_factors.csv costing localization factors file.  The default is '<this btap_batch local repository location>/resources/carbon/carbon_frame.csv'. If you are using\n\n
+    a custom carbon file, you can set the path here\n\n
+    Ignore this if you are not using embodied carbon or are content with the defaults.\n\n"
+    type: string
+    default: resources/carbon/carbon_frame.csv
+
   build_btap_cli:
     description: "**ADVANCED** Build most recent btap_cli always. Set to false to save time if standards and costing branches have not changed."
     type: boolean
