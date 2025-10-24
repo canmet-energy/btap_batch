@@ -40,14 +40,16 @@ class DockerBTAPJob:
             # Flag that is was successful.
             job_data['status'] = "SUCCEEDED"
             job_data['simulation_time'] = time.time() - start
-            if self._was_datapoint_file_generated():
-                print("Datapoint exists!!!!!!!!!!!!!!!!!!!!!!")
+            check_datapoint = self._was_datapoint_file_generated()
+            print(f"check_datapoint status: {check_datapoint} !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!")
+            if check_datapoint == True:
+                print("Datapoint found!!!!!!!!!!!!!!!!!!!!!!")
                 job_data.update(self._get_job_results())
             else:
                 # The error is likely the btap_datapoint.json was not created and moved.  If that is the case then treat as a btap datapoint failure and not an analysis failure.
                 # Doing this to prevent issues with large simulations.
                 # Update job_data with possible modifications to run_options.
-                print("Datapoint does not exists!!!!!!!!!!!!!!!!!!!!!!")
+                print("Datapoint does not exist!!!!!!!!!!!!!!!!!!!!!!")
                 job_data.update(self.run_options)
                 # Flag that is was failure and save container error.
                 job_data['container_error'] = self._get_container_error()
