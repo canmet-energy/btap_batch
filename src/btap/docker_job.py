@@ -45,6 +45,7 @@ class DockerBTAPJob:
             if check_datapoint == True:
                 print("Datapoint found!!!!!!!!!!!!!!!!!!!!!!")
                 job_data.update(self._get_job_results())
+                print(f"Status: {job_data['status']} for job: {job_data['cloud_job_name']} !!!!!!!!!!!!!!!!!!!!!!!!!!!!")
             else:
                 # The error is likely the btap_datapoint.json was not created and moved.  If that is the case then treat as a btap datapoint failure and not an analysis failure.
                 # Doing this to prevent issues with large simulations.
@@ -53,10 +54,11 @@ class DockerBTAPJob:
                 job_data.update(self.run_options)
                 # Flag that is was failure and save container error.
                 job_data['container_error'] = self._get_container_error()
-                job_data['status'] = 'FAILED'
+                job_data['status'] = "FAILED"
                 print(f"############################# {test} Failed but handled !!!! ##############################")
                 print("")
                 self._save_output_file(job_data)
+                print(f"Status: {job_data['status']} for job: {job_data['cloud_job_name']} !!!!!!!!!!!!!!!!!!!!!!!!!!!!!")
                 print("############################# Saved handled error output file ##############################")
         except Exception as error:
             print(f"The error is: {error}!!!!!!!!!!!")
@@ -64,10 +66,11 @@ class DockerBTAPJob:
             job_data.update(self.run_options)
             # Flag that is was failure and save container error.
             job_data['container_error'] = self._get_container_error()
-            job_data['status'] = 'FAILED'
+            job_data['status'] = "FAILED"
             print(f"############################# {test} Failed !!!! ##############################")
             print("")
             self._save_output_file(job_data)
+            print(f"Other status: {job_data['status']} for job: {job_data['cloud_job_name']} !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!")
             print("############################# Saved error output file ##############################")
             return job_data
         
