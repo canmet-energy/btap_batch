@@ -37,7 +37,6 @@ class DockerBTAPJob:
             print(f"Result is: {run_result} of job_id: {self.job_id} !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!")
             # Update job_data with possible modifications to run_options.
             job_data.update(self.run_options)
-            print(f"Result is: {run_result} of run: {job_data['cloud_job_name']} !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!")
             # Flag that is was successful.
             job_data['status'] = "SUCCEEDED"
             job_data['simulation_time'] = time.time() - start
@@ -46,7 +45,7 @@ class DockerBTAPJob:
             if check_datapoint == True:
                 print("Datapoint found!!!!!!!!!!!!!!!!!!!!!!")
                 job_data.update(self._get_job_results())
-                print(f"Status: {job_data['status']} for job: {job_data['cloud_job_name']} !!!!!!!!!!!!!!!!!!!!!!!!!!!!")
+                print(f"Status: {job_data['status']} for job: {self.job_id} !!!!!!!!!!!!!!!!!!!!!!!!!!!!")
             else:
                 # The error is likely the btap_datapoint.json was not created and moved.  If that is the case then treat as a btap datapoint failure and not an analysis failure.
                 # Doing this to prevent issues with large simulations.
@@ -59,7 +58,7 @@ class DockerBTAPJob:
                 print(f"############################# {test} Failed but handled !!!! ##############################")
                 print("")
                 self._save_output_file(job_data)
-                print(f"Status: {job_data['status']} for job: {job_data['cloud_job_name']} !!!!!!!!!!!!!!!!!!!!!!!!!!!!!")
+                print(f"Status: {job_data['status']} for job: {self.job_id} !!!!!!!!!!!!!!!!!!!!!!!!!!!!!")
                 print("############################# Saved handled error output file ##############################")
         except Exception as error:
             print(f"The error is: {error}!!!!!!!!!!!")
@@ -71,7 +70,7 @@ class DockerBTAPJob:
             print(f"############################# {test} Failed !!!! ##############################")
             print("")
             self._save_output_file(job_data)
-            print(f"Other status: {job_data['status']} for job: {job_data['cloud_job_name']} !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!")
+            print(f"Other status: {job_data['status']} for job: of job_id: {self.job_id} !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!")
             print("############################# Saved error output file ##############################")
             return job_data
         
