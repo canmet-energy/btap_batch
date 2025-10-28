@@ -34,7 +34,7 @@ class DockerBTAPJob:
         print()
         try:
             run_result = self._run_container()
-            #print(f"Result is: {run_result} of run: {job_data['cloud_job_name']} !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!")
+            print(f"Result is: {run_result} of job_id: {self.job_id} !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!")
             # Update job_data with possible modifications to run_options.
             job_data.update(self.run_options)
             print(f"Result is: {run_result} of run: {job_data['cloud_job_name']} !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!")
