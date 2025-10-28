@@ -123,6 +123,7 @@ class BTAPParametric(BTAPAnalysis):
                 for future in concurrent.futures.as_completed(futures):
                     # Save results to database.
                     job_data = future.result()
+                    print(f"Saving datapoint: {job_data['datapoint_id']} to database with status {job_data['status']}")
                     self.save_results_to_database(job_data)
 
                     # Track failures.
