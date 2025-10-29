@@ -5,6 +5,7 @@
 :output_variables: []
 :output_meters: []
 :enable_costing: true
+:enable_carbon: false
 :options:
   :adv_dx_units:
   - NECB_Default

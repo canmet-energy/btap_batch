@@ -3,14 +3,17 @@ FROM canmet/os_sdk_container:$OPENSTUDIO_VERSION
 
 ARG ENABLE_RSMEANS=''
 ARG RSMEANS_YEAR=''
+ARG ENABLE_PROPRIETARY_CARBON=''
 ARG OS_STANDARDS_BRANCH='nrcan'
 ARG WEATHER_FILES=''
 ARG LOCALNRCAN=''
 ARG LOCALNRCAN_BRANCH='ruby_3.2'
-ARG LOCAL_COSTING_PATH='do_not_delete.txt'
-ARG LOCAL_FACTORS_PATH='do_not_delete.txt'
-ARG COPY_COSTING_FILE=''
-ARG COPY_FACTORS_FILE=''
+ARG LOCAL_COSTING_PATH=''
+ARG LOCAL_FACTORS_PATH=''
+ARG LOCAL_CARBON_OPAQUE_PATH=''
+ARG LOCAL_CARBON_GLAZING_PATH=''
+ARG LOCAL_CARBON_FRAME_PATH=''
+
 ARG GIT_API_TOKEN='nothing'
 ARG OS_STANDARDS_ORG='NREL'
 
@@ -38,31 +41,32 @@ RUN echo "Creating Public CLI" \
     && git rev-parse --short HEAD;
 
 WORKDIR /
-# Copy local costing file if LOCAL_COSTING_PATH is provided and the file exists
-# If LOCAL_COSTING_PATH is not set, or there is an issue with the copy, it defaults to 'do_not_delete.txt' and the /tmp/costs.csv file is not copied
-COPY $LOCAL_COSTING_PATH /tmp/costs.csv
 
-RUN if [ -n "$COPY_COSTING_FILE" ] ; then \
-        echo "Using local costing file at $LOCAL_COSTING_PATH" \
-        && cp -f /tmp/costs.csv /openstudio-standards/lib/openstudio-standards/btap/costing/common_resources/costs.csv; \
-    fi
-
-# Copy local costing file if LOCAL_FACTORS_PATH is provided and the file exists
-# If LOCAL_FACTORS_PATH is not set, or there is an issue with the copy, it defaults to 'do_not_delete.txt' and the /tmp/costs_local_factors.csv file is not copied
-COPY $LOCAL_FACTORS_PATH /tmp/costs_local_factors.csv
-
-RUN if [ -n "$COPY_FACTORS_FILE" ] ; then \
-        echo "Using local costing factors file at $LOCAL_FACTORS_PATH" \
-        && cp -f /tmp/costs_local_factors.csv /openstudio-standards/lib/openstudio-standards/btap/costing/common_resources/costs_local_factors.csv; \
-    fi
+# Copy the local database files using the * wildcard which copies the file and 
+# doesn't throw an error if the file does not exist
+COPY $LOCAL_COSTING_PATH* /openstudio-standards/lib/openstudio-standards/btap/common_resources/costs.csv
+COPY $LOCAL_FACTORS_PATH* /openstudio-standards/lib/openstudio-standards/btap/common_resources/costs_local_factors.csv
+COPY $LOCAL_CARBON_OPAQUE_PATH* /openstudio-standards/lib/openstudio-standards/btap/common_resources/carbon_opaque.csv
+COPY $LOCAL_CARBON_GLAZING_PATH* /openstudio-standards/lib/openstudio-standards/btap/common_resources/carbon_glazing.csv
+COPY $LOCAL_CARBON_FRAME_PATH* /openstudio-standards/lib/openstudio-standards/btap/common_resources/carbon_frame.csv
 
 RUN if [ -n "$ENABLE_RSMEANS" ] ; then \
         echo "Overwriting placeholder costing data with RSMeans data (ENABLE_RSMEANS=$ENABLE_RSMEANS)" \
-        && curl -v -s https://$GIT_API_TOKEN:x-oauth-basic@raw.githubusercontent.com/canmet-energy/btap_costing_data_generation/refs/heads/main/resources/rsmeans_factors.csv \
-                -o /openstudio-standards/lib/openstudio-standards/btap/costing/common_resources/costs_local_factors.csv \
-        && curl -v -s https://$GIT_API_TOKEN:x-oauth-basic@raw.githubusercontent.com/canmet-energy/btap_costing_data_generation/refs/heads/main/output/$RSMEANS_YEAR/costs_rsmeans.csv \
-                -o /openstudio-standards/lib/openstudio-standards/btap/costing/common_resources/costs.csv; \
-fi
+        && curl -v https://$GIT_API_TOKEN:x-oauth-basic@raw.githubusercontent.com/canmet-energy/btap_costing_data_generation/refs/heads/main/resources/rsmeans_factors.csv \
+            -o /openstudio-standards/lib/openstudio-standards/btap/common_resources/costs_local_factors.csv \
+        && curl -v https://$GIT_API_TOKEN:x-oauth-basic@raw.githubusercontent.com/canmet-energy/btap_costing_data_generation/refs/heads/main/output/$RSMEANS_YEAR/costs_rsmeans.csv \
+            -o /openstudio-standards/lib/openstudio-standards/btap/common_resources/costs.csv; \
+    fi
+
+RUN if [ -n "$ENABLE_PROPRIETARY_CARBON" ] ; then \
+        echo "Overwriting placeholder costing data with RSMeans data (ENABLE_PROPRIETARY_CARBON=$ENABLE_PROPRIETARY_CARBON)" \
+        && curl -v https://$GIT_API_TOKEN:x-oauth-basic@raw.githubusercontent.com/canmet-energy/btap_costing_data_generation/refs/heads/nrcan_464/resources/carbon_opaque_proprietary.csv \
+            -o /openstudio-standards/lib/openstudio-standards/btap/common_resources/carbon_opaque.csv \
+        && curl -v https://$GIT_API_TOKEN:x-oauth-basic@raw.githubusercontent.com/canmet-energy/btap_costing_data_generation/refs/heads/nrcan_464/resources/carbon_glazing_proprietary.csv \
+            -o /openstudio-standards/lib/openstudio-standards/btap/common_resources/carbon_glazing.csv \
+        && curl -v https://$GIT_API_TOKEN:x-oauth-basic@raw.githubusercontent.com/canmet-energy/btap_costing_data_generation/refs/heads/nrcan_464/resources/carbon_frame_proprietary.csv \
+            -o /openstudio-standards/lib/openstudio-standards/btap/common_resources/carbon_frame.csv; \
+    fi
 
 # Make folders that will map to host drives.
 WORKDIR /openstudio-standards/utilities/btap_cli
@@ -73,9 +77,9 @@ RUN mkdir weather
 # Download non-standard weather files to the weather directory.
 WORKDIR /openstudio-standards/utilities/btap_cli/weather
 RUN if [ -n "$WEATHER_FILES" ] ; then \
-    echo "Downloading weather files." \
-    && wget --no-check-certificate $WEATHER_FILES; \
-fi
+        echo "Downloading weather files." \
+        && wget --no-check-certificate $WEATHER_FILES; \
+    fi
 WORKDIR /openstudio-standards/utilities/btap_cli
 CMD ["/bin/bash"]
 

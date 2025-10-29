@@ -75,6 +75,7 @@ def build(**kwargs):
     btap_batch_branch = config['btap_batch_branch']
     enable_rsmeans = config.get('enable_rsmeans', False)
     rsmeans_year = config.get('rsmeans_year', None)
+    enable_proprietary_carbon = config.get('enable_proprietary_carbon', False)
     os_standards_org = config.get('os_standards_org', '')
     os_standards_branch = config['os_standards_branch']
     openstudio_version = config['openstudio_version']
@@ -82,6 +83,9 @@ def build(**kwargs):
     weather_list = config['weather_list']
     local_costing_path = config.get('local_costing_path', '')
     local_factors_path = config.get('local_factors_path', '')
+    local_carbon_opaque_path = config.get('local_carbon_opaque_path', '')
+    local_carbon_glazing_path = config.get('local_carbon_glazing_path', '')
+    local_carbon_frame_path = config.get('local_carbon_frame_path', '')
     build_btap_cli = config['build_btap_cli']
     build_btap_batch = config['build_btap_batch']
     os.environ['BUILD_ENV_NAME'] = config['build_env_name']
@@ -92,6 +96,7 @@ def build(**kwargs):
     build_and_configure_docker_and_aws(btap_batch_branch=btap_batch_branch,
                                        enable_rsmeans=enable_rsmeans,
                                        rsmeans_year=rsmeans_year,
+                                       enable_proprietary_carbon=enable_proprietary_carbon,
                                        compute_environment=compute_environment,
                                        openstudio_version=openstudio_version,
                                        btap_weather=btap_weather,
@@ -100,6 +105,9 @@ def build(**kwargs):
                                        os_standards_branch=os_standards_branch,
                                        local_costing_path=local_costing_path,
                                        local_factors_path=local_factors_path,
+                                       local_carbon_opaque_path=local_carbon_opaque_path,
+                                       local_carbon_glazing_path=local_carbon_glazing_path,
+                                       local_carbon_frame_path=local_carbon_frame_path,
                                        build_btap_batch=build_btap_batch,
                                        build_btap_cli=build_btap_cli,
                                        local_nrcan=local_nrcan)
