@@ -46,6 +46,8 @@ class DockerBTAPJob:
                 print("Datapoint found!!!!!!!!!!!!!!!!!!!!!!")
                 job_data.update(self._get_job_results())
                 print(f"Status: {job_data['status']} for job: {self.job_id} !!!!!!!!!!!!!!!!!!!!!!!!!!!!")
+                print(f"############################# Completed run {test} ##############################")
+                return job_data
             else:
                 # The error is likely the btap_datapoint.json was not created and moved.  If that is the case then treat as a btap datapoint failure and not an analysis failure.
                 # Doing this to prevent issues with large simulations.
@@ -60,8 +62,8 @@ class DockerBTAPJob:
                 self._save_output_file(job_data)
                 print(f"Status: {job_data['status']} for job: {self.job_id} !!!!!!!!!!!!!!!!!!!!!!!!!!!!!")
                 print("############################# Saved handled error output file ##############################")
-            print(f"############################# Completed run {test} ##############################")
-            return job_data
+                print(f"############################# Completed run {test} ##############################")
+                return job_data
         except Exception as error:
             print(f"The error is: {error}!!!!!!!!!!!")
             # Update job_data with possible modifications to run_options.

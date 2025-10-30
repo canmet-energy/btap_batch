@@ -301,11 +301,11 @@ class BTAPAnalysis():
         # Submit Job to batch
         job = self.batch.create_job(job_id=job_id)
         job_data = job.submit_job(run_options=run_options)
-        
+
         return job_data
 
     def save_results_to_database(self, job_data):
-        print(f"Now saving datapoint: {job_data['datapoint_id']} to database with status {job_data['status']} !!!!!!!!!!!!!!!!!")
+        print(f"Now saving datapoint: {job_data[':datapoint_id']} to database with status {job_data['status']} !!!!!!!!!!!!!!!!!")
         if job_data['status'] == 'SUCCEEDED':
             # If container completed with success don't save container output.
             job_data['container_output'] = None
