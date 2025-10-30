@@ -110,6 +110,7 @@ class BTAPAnalysis():
         self.algorithm_lhs_random_seed = self.analysis_config.get(':algorithm_lhs_random_seed')
         self.compute_environment = self.analysis_config.get(':compute_environment')
         self.enable_costing = self.analysis_config.get(':enable_costing')
+        self.enable_carbon = self.analysis_config.get(':enable_carbon')
         self.options = self.analysis_config.get(':options')
 
         # Set common paths singleton.
@@ -279,6 +280,7 @@ class BTAPAnalysis():
         run_options[':output_variables'] = self.output_variables
         run_options[':output_meters'] = self.output_meters
         run_options[':enable_costing'] = self.enable_costing
+        run_options[':enable_carbon'] = self.enable_carbon
 
         # Local Paths
         local_datapoint_input_folder = os.path.join(self.cp.algorithm_folder(), job_id)

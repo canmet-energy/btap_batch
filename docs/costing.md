@@ -9,8 +9,6 @@ This file includes the costs for individual items used by BTAP to calculate cost
 
 When updating the costs.csv file with your own costing information, look for the id of the item in the costing files [here](https://github.com/NREL/openstudio-standards/tree/nrcan/lib/openstudio-standards/btap/costing/common_resources) to determine the units the costs are in. For the example above, the cost is for each item. However, for some itmes the costs are per linear foot, or 100 linear feet (if no unit is provided then assume it is for each item).
 
-If you are getting your costs from a commercial costing database such as RSMeans, then look up the item based on the description and inculde the costs for that item in the costs.csv file.
-
 ## [costs_local_factors.csv](../resources/costing/costs_local_factors.csv)  
 
 This file describes how to apply the costs to a given location. BTAP can apply costs in a couple of different ways. If you are doing an analysis on buildings in one location and have costs for specifically that location you can include those costs in the costs.csv file directly and ignore the costs_local_factors.csv file. However, if you have costs for locations across Canada then you can include average costs in the costs.csv file and then use the costs_local_factors.csv to localize those costs. For example, if you are looking at buildings in Moose Jaw, SK, Kinsgton, ON, and St. John, NB you could include an average Canadian cost in the costs.csv file. Then you could inculde factors in the cost_local_factors.csv file that will modify the average costs so that they estimate the costs you would find specifically in Moose Jaw, Kindston, and St. John.
@@ -56,7 +54,7 @@ cost = (4.84*111.4 + 209.5*98.8)/100 = $120.20
 ```
 cost = (4.84*87.8 + 209.5*97.5)/100 = $95.74
 ```
-Some commercial costing databases (e.g. RSMeans) provide these localization factors. If you have localization factors for a place not in the costs_local_factors.csv file, you can simply add a new row and include the costs. Make sure that the province_state and city match what is in the .epw file and that you ensure you include the factors for each code prefix.
+If you have localization factors for a place not in the costs_local_factors.csv file, you can simply add a new row and include the factors. Make sure that the province_state and city match what is in the .epw file and that you ensure you include the factors for each code prefix.
 
 ## Custom Costing File Locations 
 

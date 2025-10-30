@@ -5,3 +5,4 @@
 :output_variables: []
 :output_meters: []
 :enable_costing: true
+:enable_carbon: false

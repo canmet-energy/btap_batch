@@ -10,37 +10,39 @@
 - [8. Property `root > weather_list`](#weather_list)
 - [9. Property `root > enable_rsmeans`](#enable_rsmeans)
 - [10. Property `root > rsmeans_year`](#rsmeans_year)
-- [11. Property `root > local_costing_path`](#local_costing_path)
-- [12. Property `root > local_factors_path`](#local_factors_path)
-- [13. Property `root > build_btap_cli`](#build_btap_cli)
-- [14. Property `root > build_btap_batch`](#build_btap_batch)
-- [15. Property `root > local_nrcan`](#local_nrcan)
-- [16. Property `root > compute_environment`](#compute_environment)
+- [11. Property `root > enable_proprietary_carbon`](#enable_proprietary_carbon)
+- [12. Property `root > local_costing_path`](#local_costing_path)
+- [13. Property `root > local_factors_path`](#local_factors_path)
+- [14. Property `root > build_btap_cli`](#build_btap_cli)
+- [15. Property `root > build_btap_batch`](#build_btap_batch)
+- [16. Property `root > local_nrcan`](#local_nrcan)
+- [17. Property `root > compute_environment`](#compute_environment)
 
-|                           |                                                         |
-| ------------------------- | ------------------------------------------------------- |
-| **Type**                  | `object`                                                |
-| **Required**              | No                                                      |
-| **Additional properties** | [[Not allowed]](# "Additional Properties not allowed.") |
+|                           |             |
+| ------------------------- | ----------- |
+| **Type**                  | `object`    |
+| **Required**              | No          |
+| **Additional properties** | Not allowed |
 
-| Property                                       | Pattern | Type              | Deprecated | Definition | Title/Description                                                                                                                                                                                                                                                                                                                                                                                                                                      |
-| ---------------------------------------------- | ------- | ----------------- | ---------- | ---------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
-| + [build_env_name](#build_env_name )           | No      | string            | No         | -          | :Prefix used to identify images, folders and other items specific to a build environment. Only lowercase, numbers and underscore and <24 chars.                                                                                                                                                                                                                                                                                                        |
-| + [git_api_token](#git_api_token )             | No      | string            | No         | -          | The authorization token to access Github. You are required to have a github account and generate a classic personal access token. Instructions to generate one are [here](https://docs.github.com/en/authentication/keeping-your-account-and-data-secure/managing-your-personal-access-tokens)                                                                                                                                                         |
-| + [btap_batch_branch](#btap_batch_branch )     | No      | string            | No         | -          | Branch of btap_batch to use to build environment. For general users the 'main' branch should be used. You can review available branches [here](https://github.com/canmet-energy/btap_batch) if you are a developer.                                                                                                                                                                                                                                    |
-| - [os_standards_org](#os_standards_org )       | No      | string            | No         | -          | **ADVANCED** The GitHub organization name containing the OpenStudio-standards repository. This is the fork used to build the btap_cli environment. The default is NREL.                                                                                                                                                                                                                                                                                |
-| + [os_standards_branch](#os_standards_branch ) | No      | string            | No         | -          | Branch of NREL's Openstudio-standards repository to use to build environment. The default branch to use is 'nrcan' This branch is only accessible for authorized users. You can review available branches [here](https://github.com/nrel/openstudio-standards)                                                                                                                                                                                         |
-| + [openstudio_version](#openstudio_version )   | No      | enum (of string)  | No         | -          | Valid version of the OpenStudio SDK to build with.                                                                                                                                                                                                                                                                                                                                                                                                     |
-| - [btap_weather](#btap_weather )               | No      | boolean           | No         | -          | Location of weather files to download. If true, downloads from [btap_weather](https://github.com/canmet-energy/btap_weather). Else, downloads from Climate.OneBuilding.Org.                                                                                                                                                                                                                                                                            |
-| + [weather_list](#weather_list )               | No      | object            | No         | -          | List of Weather files to build included in the build environment. Only .epw files , and <100 files. Other weather locations are available. However, you have to define the ones you want to use when creating your environment.  The other locations that you can use can be found in [here](https://climate.onebuilding.org/)<br /><br /><br />Here is an example:<br /><br />                                                                        |
-| - [enable_rsmeans](#enable_rsmeans )           | No      | boolean           | No         | -          | **ADVANCED** for NRCan use only.                                                                                                                                                                                                                                                                                                                                                                                                                       |
-| - [rsmeans_year](#rsmeans_year )               | No      | enum (of integer) | No         | -          | **ADVANCED** for NRCan use only.                                                                                                                                                                                                                                                                                                                                                                                                                       |
-| - [local_costing_path](#local_costing_path )   | No      | string            | No         | -          | Path to the local costs.csv costing file.  The default is '<this btap_batch local repository location>/resources/costing/costs.csv'. If you are using a custom costing file, you can set the path. here<br /><br /> Ignore this if you are not using costing or are content with the default costing_database.json costing file.<br /><br />                                                                                                           |
-| - [local_factors_path](#local_factors_path )   | No      | string            | No         | -          | Path to the local costs_local_factors.csv costing localization factors file.  The default is '<this btap_batch local repository location>/resources/costing/costs_local_factors.csv'. If you are using<br /><br /> a custom costing localization factors file, you can set the path here<br /><br /> Ignore this if you are not using costing or are content with the default costing_local_factors.csv costing localization factors file.<br /><br /> |
-| + [build_btap_cli](#build_btap_cli )           | No      | boolean           | No         | -          | **ADVANCED** Build most recent btap_cli always. Set to false to save time if standards and costing branches have not changed.                                                                                                                                                                                                                                                                                                                          |
-| + [build_btap_batch](#build_btap_batch )       | No      | boolean           | No         | -          | **ADVANCED** Build most recent btap_batch always. Set to false to save time if standards and costing branches have not changed.                                                                                                                                                                                                                                                                                                                        |
-| + [local_nrcan](#local_nrcan )                 | No      | boolean           | No         | -          | **NRCan only** Set this to True if you intend to build your environment locally on a computer connected to the NRCan network.  Otherwise leave it as False.                                                                                                                                                                                                                                                                                            |
-| + [compute_environment](#compute_environment ) | No      | enum (of string)  | No         | -          | Select which environment to build and where to run analyses.<br /><br /> **local**: will use docker on your local computer.<br /><br /> **aws**: will manage and run eveything on AWS. You can turn off your local computer after the analysis is submitted<br /><br /> **local_managed_aws_workers**: **ADVANCED** will manage the analysis on a local computer and run the simulations on aws.<br /><br />                                           |
+| Property                                                   | Pattern | Type              | Deprecated | Definition | Title/Description                                                                                                                                                                                                                                                                                                                                                                                                                                      |
+| ---------------------------------------------------------- | ------- | ----------------- | ---------- | ---------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| + [build_env_name](#build_env_name )                       | No      | string            | No         | -          | :Prefix used to identify images, folders and other items specific to a build environment. Only lowercase, numbers and underscore and <24 chars.                                                                                                                                                                                                                                                                                                        |
+| + [git_api_token](#git_api_token )                         | No      | string            | No         | -          | The authorization token to access Github. You are required to have a github account and generate a classic personal access token. Instructions to generate one are [here](https://docs.github.com/en/authentication/keeping-your-account-and-data-secure/managing-your-personal-access-tokens)                                                                                                                                                         |
+| + [btap_batch_branch](#btap_batch_branch )                 | No      | string            | No         | -          | Branch of btap_batch to use to build environment. For general users the 'main' branch should be used. You can review available branches [here](https://github.com/canmet-energy/btap_batch) if you are a developer.                                                                                                                                                                                                                                    |
+| - [os_standards_org](#os_standards_org )                   | No      | string            | No         | -          | **ADVANCED** The GitHub organization name containing the OpenStudio-standards repository. This is the fork used to build the btap_cli environment. The default is NREL.                                                                                                                                                                                                                                                                                |
+| + [os_standards_branch](#os_standards_branch )             | No      | string            | No         | -          | Branch of NREL's Openstudio-standards repository to use to build environment. The default branch to use is 'nrcan' This branch is only accessible for authorized users. You can review available branches [here](https://github.com/nrel/openstudio-standards)                                                                                                                                                                                         |
+| + [openstudio_version](#openstudio_version )               | No      | enum (of string)  | No         | -          | Valid version of the OpenStudio SDK to build with.                                                                                                                                                                                                                                                                                                                                                                                                     |
+| - [btap_weather](#btap_weather )                           | No      | boolean           | No         | -          | Location of weather files to download. If true, downloads from [btap_weather](https://github.com/canmet-energy/btap_weather). Else, downloads from Climate.OneBuilding.Org.                                                                                                                                                                                                                                                                            |
+| + [weather_list](#weather_list )                           | No      | object            | No         | -          | List of Weather files to build included in the build environment. Only .epw files , and <100 files. Other weather locations are available. However, you have to define the ones you want to use when creating your environment.  The other locations that you can use can be found in [here](https://climate.onebuilding.org/)<br /><br /><br />Here is an example:<br /><br />                                                                        |
+| - [enable_rsmeans](#enable_rsmeans )                       | No      | boolean           | No         | -          | **ADVANCED** for NRCan use only.                                                                                                                                                                                                                                                                                                                                                                                                                       |
+| - [rsmeans_year](#rsmeans_year )                           | No      | enum (of integer) | No         | -          | **ADVANCED** for NRCan use only.                                                                                                                                                                                                                                                                                                                                                                                                                       |
+| - [enable_proprietary_carbon](#enable_proprietary_carbon ) | No      | boolean           | No         | -          | **ADVANCED** for NRCan use only.                                                                                                                                                                                                                                                                                                                                                                                                                       |
+| - [local_costing_path](#local_costing_path )               | No      | string            | No         | -          | Path to the local costs.csv costing file.  The default is '<this btap_batch local repository location>/resources/costing/costs.csv'. If you are using a custom costing file, you can set the path. here<br /><br /> Ignore this if you are not using costing or are content with the default costing_database.json costing file.<br /><br />                                                                                                           |
+| - [local_factors_path](#local_factors_path )               | No      | string            | No         | -          | Path to the local costs_local_factors.csv costing localization factors file.  The default is '<this btap_batch local repository location>/resources/costing/costs_local_factors.csv'. If you are using<br /><br /> a custom costing localization factors file, you can set the path here<br /><br /> Ignore this if you are not using costing or are content with the default costing_local_factors.csv costing localization factors file.<br /><br /> |
+| + [build_btap_cli](#build_btap_cli )                       | No      | boolean           | No         | -          | **ADVANCED** Build most recent btap_cli always. Set to false to save time if standards and costing branches have not changed.                                                                                                                                                                                                                                                                                                                          |
+| + [build_btap_batch](#build_btap_batch )                   | No      | boolean           | No         | -          | **ADVANCED** Build most recent btap_batch always. Set to false to save time if standards and costing branches have not changed.                                                                                                                                                                                                                                                                                                                        |
+| + [local_nrcan](#local_nrcan )                             | No      | boolean           | No         | -          | **NRCan only** Set this to True if you intend to build your environment locally on a computer connected to the NRCan network.  Otherwise leave it as False.                                                                                                                                                                                                                                                                                            |
+| + [compute_environment](#compute_environment )             | No      | enum (of string)  | No         | -          | Select which environment to build and where to run analyses.<br /><br /> **local**: will use docker on your local computer.<br /><br /> **aws**: will manage and run eveything on AWS. You can turn off your local computer after the analysis is submitted<br /><br /> **local_managed_aws_workers**: **ADVANCED** will manage the analysis on a local computer and run the simulations on aws.<br /><br />                                           |
 
 ## <a name="build_env_name"></a>1. Property `root > build_env_name`
 
@@ -121,17 +123,17 @@ Must be one of:
 
 ## <a name="weather_list"></a>8. Property `root > weather_list`
 
-|                           |                                                                           |
-| ------------------------- | ------------------------------------------------------------------------- |
-| **Type**                  | `object`                                                                  |
-| **Required**              | Yes                                                                       |
-| **Additional properties** | [[Any type: allowed]](# "Additional Properties of any type are allowed.") |
+|                           |                  |
+| ------------------------- | ---------------- |
+| **Type**                  | `object`         |
+| **Required**              | Yes              |
+| **Additional properties** | Any type allowed |
 
 **Description:** List of Weather files to build included in the build environment. Only .epw files , and <100 files. Other weather locations are available. However, you have to define the ones you want to use when creating your environment.  The other locations that you can use can be found in [here](https://climate.onebuilding.org/)
 
 Here is an example:
 
-**Example:** 
+**Example:**
 
 ```yaml
 weather_list:
@@ -168,7 +170,17 @@ weather_list:
 Must be one of:
 * 2024
 
-## <a name="local_costing_path"></a>11. Property `root > local_costing_path`
+## <a name="enable_proprietary_carbon"></a>11. Property `root > enable_proprietary_carbon`
+
+|              |           |
+| ------------ | --------- |
+| **Type**     | `boolean` |
+| **Required** | No        |
+| **Default**  | `false`   |
+
+**Description:** **ADVANCED** for NRCan use only.
+
+## <a name="local_costing_path"></a>12. Property `root > local_costing_path`
 
 |              |                                 |
 | ------------ | ------------------------------- |
@@ -180,7 +192,7 @@ Must be one of:
 
  Ignore this if you are not using costing or are content with the default costing_database.json costing file.
 
-## <a name="local_factors_path"></a>12. Property `root > local_factors_path`
+## <a name="local_factors_path"></a>13. Property `root > local_factors_path`
 
 |              |                                               |
 | ------------ | --------------------------------------------- |
@@ -194,7 +206,7 @@ Must be one of:
 
  Ignore this if you are not using costing or are content with the default costing_local_factors.csv costing localization factors file.
 
-## <a name="build_btap_cli"></a>13. Property `root > build_btap_cli`
+## <a name="build_btap_cli"></a>14. Property `root > build_btap_cli`
 
 |              |           |
 | ------------ | --------- |
@@ -204,7 +216,7 @@ Must be one of:
 
 **Description:** **ADVANCED** Build most recent btap_cli always. Set to false to save time if standards and costing branches have not changed.
 
-## <a name="build_btap_batch"></a>14. Property `root > build_btap_batch`
+## <a name="build_btap_batch"></a>15. Property `root > build_btap_batch`
 
 |              |           |
 | ------------ | --------- |
@@ -214,7 +226,7 @@ Must be one of:
 
 **Description:** **ADVANCED** Build most recent btap_batch always. Set to false to save time if standards and costing branches have not changed.
 
-## <a name="local_nrcan"></a>15. Property `root > local_nrcan`
+## <a name="local_nrcan"></a>16. Property `root > local_nrcan`
 
 |              |           |
 | ------------ | --------- |
@@ -224,7 +236,7 @@ Must be one of:
 
 **Description:** **NRCan only** Set this to True if you intend to build your environment locally on a computer connected to the NRCan network.  Otherwise leave it as False.
 
-## <a name="compute_environment"></a>16. Property `root > compute_environment`
+## <a name="compute_environment"></a>17. Property `root > compute_environment`
 
 |              |                    |
 | ------------ | ------------------ |
@@ -245,4 +257,4 @@ Must be one of:
 * "aws"
 
 ----------------------------------------------------------------------------------------------------------------------------
-Generated using [json-schema-for-humans](https://github.com/coveooss/json-schema-for-humans) on 2025-10-01 at 09:46:57 -0400
+Generated using [json-schema-for-humans](https://github.com/coveooss/json-schema-for-humans) on 2025-10-21 at 14:09:16 -0400
