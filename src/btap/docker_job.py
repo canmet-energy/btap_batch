@@ -60,6 +60,8 @@ class DockerBTAPJob:
                 self._save_output_file(job_data)
                 print(f"Status: {job_data['status']} for job: {self.job_id} !!!!!!!!!!!!!!!!!!!!!!!!!!!!!")
                 print("############################# Saved handled error output file ##############################")
+            print(f"############################# Completed run {test} ##############################")
+            return job_data
         except Exception as error:
             print(f"The error is: {error}!!!!!!!!!!!")
             # Update job_data with possible modifications to run_options.
