@@ -301,6 +301,7 @@ class BTAPAnalysis():
         # Submit Job to batch
         job = self.batch.create_job(job_id=job_id)
         job_data = job.submit_job(run_options=run_options)
+        
         return job_data
 
     def save_results_to_database(self, job_data):

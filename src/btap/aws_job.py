@@ -24,9 +24,7 @@ class AWSBTAPJob(DockerBTAPJob):
         # update run_options
         self.s3_bucket = AWSCredentials().account_id
         self._set_paths()
-        self.number_of_passed = 0
-        self.number_of_failed = 0
-        self.number_of_error = 0
+ 
     #Overridden methods
     def _job_url(self):
         return self.cp.s3_job_url(job_id=self.job_id)
@@ -74,8 +72,6 @@ class AWSBTAPJob(DockerBTAPJob):
         # Adding simulation high level results from btap_data.json to df.
         result_data = self._enumerate_eplus_warnings(job_data=result_data)
         print(f"Copied and updated {s3_btap_data_path}!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!")
-        self.number_of_passed += 1
-        print(f"Number of successful times btap_datapoint.json found: {self.number_of_passed} !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!")
         return result_data
 
     def _get_container_error(self):
@@ -86,12 +82,8 @@ class AWSBTAPJob(DockerBTAPJob):
             content_object = boto3.resource('s3').Object(self.s3_bucket, s3_error_txt_path)
             error_txt = content_object.get()['Body'].read().decode('utf-8')
             print(f"The error message text is: {error_txt} !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!")
-            self.number_of_error += 1
-            print(f"Number of error.txt files copied: {self.number_of_error}!!!!!!!!!!!!!!!!!!!!!")
             return str(error_txt)
         except Exception as error:
-            self.number_of_failed += 1
-            print(f"Number of failed error.txt files copied: {self.number_of_failed}!!!!!!!!!!!!!!!!!!!!!")
             print(f"Error handling error: {error} !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!")
             return error
     
