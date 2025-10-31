@@ -160,7 +160,7 @@ def download_analyses(bucket='834599497928',
 #                   eplusout_sql=False,  # download sqlite files zip
 #                   eplustbl_htm=False,  # download e+ htm report zip
 #                   concat_excel_files=False,  # concat all output.xlsx files to a master.csv and parquet file
-#                   regex_filter='OEEelec_BL_Lowrise*',#'OEEelec_SC_MURBElec_ElecResWH_Lowrise_\S\S\S_env_*',  # an example that gets MidriseApartment from Toronto except the vintage analyses
+#                   regex_filter='OEEelec_BL2_Lowrise*',#'OEEelec_SC_MURBElec_ElecResWH_Lowrise_\S\S\S_env_*',  # an example that gets MidriseApartment from Toronto except the vintage analyses
 #                   unzip_and_delete=True,  # This will unzip the zip files of all the above into a folder and delete the original zip file.
 #                   dry_run=False  # If set to true.. will do a dry run and not download anything. This is used to make sure your regex is working as intended.
 #                   )
@@ -431,7 +431,7 @@ for analysis_name in list_analysis_name:
 #             building_name = building_type#.replace('Apartment', '')
 #
 #         for envelope in ENVELOPE:
-#             analysis_name = f"OEEelec_BL_{building_name}_{epw_file[1]}_{envelope}"
+#             analysis_name = f"OEEelec_BL2_{building_name}_{epw_file[1]}_{envelope}"
 #             list_analysis_name.append(analysis_name)
 # print(list_analysis_name)
 # print(len(list_analysis_name))
