@@ -453,7 +453,7 @@ class BTAPAnalysis():
             folders = ['in.osm',
                       'eplustbl.htm',
                       'hourly.csv',
-                      'eplusout.sql'
+                      'eplusout.sql',
                       'failures']
         else:
             folders = ['in.osm',
