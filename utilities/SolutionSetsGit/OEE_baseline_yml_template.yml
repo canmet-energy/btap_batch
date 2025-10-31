@@ -129,5 +129,7 @@
   - NECB_Default
   :template:
   - NECB2020
+  :utility_pricing_year:
+  - 2030
 :output_meters: []
 :output_variables: []
