@@ -24,8 +24,8 @@ def git_solution_sets():
     ]
     ENVELOPE = [
         'env_necb',
-        'env_necb_15',
-        'env_necb_30'
+        # 'env_necb_15',
+        # 'env_necb_30'
     ]
     ELECsystems_OEE = [
         # 'MURBElec_ElecResWH',
@@ -46,20 +46,20 @@ def git_solution_sets():
         # 'VRFMixedBoiler_ElecResWH',
         # 'VRFElecResBackup_ElecResWH',
         #
-        'MURBElec_HPWH',
-        'MURBMixed_HPWH',
-        'MURBASHPElec_HPWH',
-        'MURBASHPMixed_HPWH',
-        'SchoolElec_HPWH',
-        'SchoolMixed_HPWH',
-        'SchoolASHPElec_HPWH',
-        'SchoolASHPMixed_HPWH',
+        # 'MURBElec_HPWH',
+        # 'MURBMixed_HPWH',
+        # 'MURBASHPElec_HPWH',
+        # 'MURBASHPMixed_HPWH',
+        # 'SchoolElec_HPWH',
+        # 'SchoolMixed_HPWH',
+        # 'SchoolASHPElec_HPWH',
+        # 'SchoolASHPMixed_HPWH',
         # 'CAWHPElec_HPWH',
         # 'CAWHPMixed_HPWH',
         # 'CAWASHPElec_HPWH',
         # 'CAWASHPMixed_HPWH',
-        'CGSHPElec_HPWH',
-        'CGSHPMixed_HPWH',
+        # 'CGSHPElec_HPWH',
+        # 'CGSHPMixed_HPWH',
         # 'VRFElecBoiler_HPWH',
         # 'VRFMixedBoiler_HPWH',
         # 'VRFElecResBackup_HPWH',
@@ -72,13 +72,13 @@ def git_solution_sets():
         # 'CAWASHPMixed_ElecResWH_5050',
         # 'CGSHPMixed_ElecResWH_5050',
         # 'VRFMixedBoiler_ElecResWH_5050',
-        'MURBMixed_HPWH_5050',
-        'MURBASHPMixed_HPWH_5050',
-        'SchoolMixed_HPWH_5050',
-        'SchoolASHPMixed_HPWH_5050',
+        # 'MURBMixed_HPWH_5050',
+        # 'MURBASHPMixed_HPWH_5050',
+        # 'SchoolMixed_HPWH_5050',
+        # 'SchoolASHPMixed_HPWH_5050',
         # 'CAWHPMixed_HPWH_5050',
         # 'CAWASHPMixed_HPWH_5050',
-        'CGSHPMixed_HPWH_5050',
+        # 'CGSHPMixed_HPWH_5050',
         # 'VRFMixedBoiler_HPWH_5050',
         #
         # 'MURBMixed_ElecResWH_0199',
@@ -89,13 +89,13 @@ def git_solution_sets():
         # 'CAWASHPMixed_ElecResWH_0199',
         # 'CGSHPMixed_ElecResWH_0199',
         # 'VRFMixedBoiler_ElecResWH_0199',
-        'MURBMixed_HPWH_0199',
-        'MURBASHPMixed_HPWH_0199',
-        'SchoolMixed_HPWH_0199',
-        'SchoolASHPMixed_HPWH_0199',
+        # 'MURBMixed_HPWH_0199',
+        # 'MURBASHPMixed_HPWH_0199',
+        # 'SchoolMixed_HPWH_0199',
+        # 'SchoolASHPMixed_HPWH_0199',
         # 'CAWHPMixed_HPWH_0199',
         # 'CAWASHPMixed_HPWH_0199',
-        'CGSHPMixed_HPWH_0199',
+        # 'CGSHPMixed_HPWH_0199',
         # 'VRFMixedBoiler_HPWH_0199',
         #
         # 'VRFElecBoiler2_ElecResWH',
@@ -120,7 +120,7 @@ def git_solution_sets():
     SENSITIVITY_PRIMARY_FUELS_PIVOT_OEE = [
         'NaturalGas'
         ]
-    SCENARIO_RUNS_OEE = True
+    SCENARIO_RUNS_OEE = False
     Baseline_RUNS_OEE = True
     OPTIMIZATION_RUNS = False
     OPTIMIZATION_PRIMARY_FUELS_PIVOT = [
@@ -251,8 +251,8 @@ def git_solution_sets():
 
     if OEE:
         epw_files_cz4 = [
-            # ['CAN_BC_Vancouver.Intl.AP.718920_NRCv12022_TMY_GW1.5_EPW.epw', 'YVR'],  # CZ 4
-            ['CAN_BC_Victoria.Intl.AP.717990_NRCv12022_TMY_GW1.5_EPW.epw', 'YYJ'], # CZ 4
+            ['CAN_BC_Vancouver.Intl.AP.718920_NRCv12022_TMY_GW1.5_EPW.epw', 'YVR'],  # CZ 4
+            # ['CAN_BC_Victoria.Intl.AP.717990_NRCv12022_TMY_GW1.5_EPW.epw', 'YYJ'], # CZ 4
 
             ## Historic weather files
             # ['CAN_BC_Vancouver.Intl.AP.718920_CWEC2020.epw', 'YVR']
@@ -273,8 +273,8 @@ def git_solution_sets():
             ['CAN_NS_Halifax-Stanfield.Intl.AP.713950_NRCv12022_TMY_GW1.5_EPW.epw', 'YHZ'],  # CZ 6
             ['CAN_NL_St.Johns.Intl.AP.718010_NRCv12022_TMY_GW1.5_EPW.epw', 'YYT'],  # CZ 6
             ['CAN_PE_Charlottetown.AP.717060_NRCv12022_TMY_GW1.5_EPW.epw', 'YYG'],  # CZ 6
-            # ['CAN_NB_Fredericton.Intl.AP.717000_NRCv12022_TMY_GW1.5_EPW.epw', 'YFC'],  # CZ 6
-            ['CAN_NB_Saint.John.AP.716090_NRCv12022_TMY_GW1.5_EPW.epw', 'YSJ'],  # CZ 6
+            ['CAN_NB_Fredericton.Intl.AP.717000_NRCv12022_TMY_GW1.5_EPW.epw', 'YFC'],  # CZ 6
+            # ['CAN_NB_Saint.John.AP.716090_NRCv12022_TMY_GW1.5_EPW.epw', 'YSJ'],  # CZ 6
 
             ## Historic weather files
             # ['CAN_ON_Ottawa.Intl.AP.716280_CWEC2020.epw', 'YOW'],
@@ -731,9 +731,9 @@ def git_solution_sets():
             for epw_file in epw_files:
                 list_building_type = [
                     # 'PrimarySchool',
-                    'SecondarySchool',
-                    # 'LowriseApartment',
-                    # 'MidriseApartment',
+                    # 'SecondarySchool',
+                    'LowriseApartment',
+                    'MidriseApartment',
                     'HighriseApartment'
                 ]
 
@@ -760,7 +760,7 @@ def git_solution_sets():
                         analysis_configuration[':reference_run'] = False
                         analysis_configuration[':output_meters'] = HOURLY_OUTPUT_METERS
 
-                        analysis_configuration[':analysis_name'] = f"OEEelec_BL_{building_type}_{epw_file[1]}_{envelope}"
+                        analysis_configuration[':analysis_name'] = f"OEEelec_BL2_{building_type}_{epw_file[1]}_{envelope}" #OEEelec_BL_ when ghg is calculated for default year (2020),OEEelec_BL2_ when ghg is calculated for year 2030.
                         analysis_folder = os.path.join(projects_folder, analysis_configuration[':analysis_name'])
                         pathlib.Path(analysis_folder).mkdir(parents=True, exist_ok=True)
                         f = open(os.path.join(analysis_folder, "input.yml"), 'w')
