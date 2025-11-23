@@ -54,17 +54,17 @@ RUN if [ -n "$ENABLE_RSMEANS" ] ; then \
         echo "Overwriting placeholder costing data with RSMeans data (ENABLE_RSMEANS=$ENABLE_RSMEANS)" \
         && curl -v https://$GIT_API_TOKEN:x-oauth-basic@raw.githubusercontent.com/canmet-energy/btap_costing_data_generation/refs/heads/main/resources/rsmeans_factors.csv \
             -o /openstudio-standards/lib/openstudio-standards/btap/common_resources/costs_local_factors.csv \
-        && curl -v https://$GIT_API_TOKEN:x-oauth-basic@raw.githubusercontent.com/canmet-energy/btap_costing_data_generation/refs/heads/main/output/$RSMEANS_YEAR/costs_rsmeans.csv \
+        && curl -v https://$GIT_API_TOKEN:x-oauth-basic@raw.githubusercontent.com/canmet-energy/btap_costing_data_generation/refs/heads/main/output/costing/$RSMEANS_YEAR/costs_rsmeans.csv \
             -o /openstudio-standards/lib/openstudio-standards/btap/common_resources/costs.csv; \
     fi
 
 RUN if [ -n "$ENABLE_PROPRIETARY_CARBON" ] ; then \
         echo "Overwriting placeholder costing data with RSMeans data (ENABLE_PROPRIETARY_CARBON=$ENABLE_PROPRIETARY_CARBON)" \
-        && curl -v https://$GIT_API_TOKEN:x-oauth-basic@raw.githubusercontent.com/canmet-energy/btap_costing_data_generation/refs/heads/nrcan_464/resources/carbon_opaque_proprietary.csv \
+        && curl -v https://$GIT_API_TOKEN:x-oauth-basic@raw.githubusercontent.com/canmet-energy/btap_costing_data_generation/refs/heads/main/resources/carbon_opaque_proprietary.csv \
             -o /openstudio-standards/lib/openstudio-standards/btap/common_resources/carbon_opaque.csv \
-        && curl -v https://$GIT_API_TOKEN:x-oauth-basic@raw.githubusercontent.com/canmet-energy/btap_costing_data_generation/refs/heads/nrcan_464/resources/carbon_glazing_proprietary.csv \
+        && curl -v https://$GIT_API_TOKEN:x-oauth-basic@raw.githubusercontent.com/canmet-energy/btap_costing_data_generation/refs/heads/main/resources/carbon_glazing_proprietary.csv \
             -o /openstudio-standards/lib/openstudio-standards/btap/common_resources/carbon_glazing.csv \
-        && curl -v https://$GIT_API_TOKEN:x-oauth-basic@raw.githubusercontent.com/canmet-energy/btap_costing_data_generation/refs/heads/nrcan_464/resources/carbon_frame_proprietary.csv \
+        && curl -v https://$GIT_API_TOKEN:x-oauth-basic@raw.githubusercontent.com/canmet-energy/btap_costing_data_generation/refs/heads/main/resources/carbon_frame_proprietary.csv \
             -o /openstudio-standards/lib/openstudio-standards/btap/common_resources/carbon_frame.csv; \
     fi
 
