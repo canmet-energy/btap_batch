@@ -311,26 +311,20 @@ class BTAPAnalysis():
         if job_data['status'] == 'SUCCEEDED':
             # If container completed with success don't save container output.
             job_data['container_output'] = None
-            print(f"job_data set to SUCEEDED")
             if job_data['eplus_fatals'] > 0:
                 # If we had fatal errors..the run was not successful after all.
                 job_data['status'] = 'FAILED'
-                print(f"job_data set to FAILED")
         # This method organizes the data structure of the dataframe to fit into a report table.
-        print("sort_results")
         df = self.sort_results(job_data)
         # Save job_data
         # to csv file.
         pathlib.Path(self.cp.analysis_database_folder()).mkdir(parents=True, exist_ok=True)
         df.to_csv(os.path.join(self.cp.analysis_database_folder(), f"{job_data[':datapoint_id']}.csv"))
-        print("csv saved")
 
         # Save failures to a folder as well.
 
         if job_data['status'] != 'SUCCEEDED':
-            print("Save failed data")
             df.to_csv(os.path.join(self.cp.analysis_failures_folder(), f"{job_data[':datapoint_id']}.csv"))
-            print("Failed job data saved")
         return job_data
 
     def sort_results(self, results):
@@ -439,6 +433,7 @@ class BTAPAnalysis():
 
     def generate_output_file(self, baseline_results=None):
         # Process csv file to create single dataframe with all simulation results
+        print("Start post processing results !!!!!!!!!!!!!!!!!!")
         ppr = PostProcessResults(baseline_results=baseline_results,
                                  database_folder=self.cp.analysis_database_folder(),
                                  results_folder=self.cp.analysis_results_folder(),
@@ -450,12 +445,14 @@ class BTAPAnalysis():
 
         number_of_failed_runs = self.get_num_of_runs_failed()
         if number_of_failed_runs > 0:
+            print(f"Number of failed runs: {number_of_failed_runs} !!!!!!!!!!!!!!!!!!!!!!!!!!")
             folders = ['in.osm',
                       'eplustbl.htm',
                       'hourly.csv',
                       'eplusout.sql',
                       'failures']
         else:
+            print("No failed runs !!!!!!!!!!!!!!!!!!!!!!!!!!!")
             folders = ['in.osm',
                        'eplustbl.htm',
                        'hourly.csv',

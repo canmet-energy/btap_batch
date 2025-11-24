@@ -115,22 +115,12 @@ class BTAPParametric(BTAPAnalysis):
                 futures = []
                 # go through each option scenario
                 for run_options in self.scenarios:
-                    # Create an options hash to store the options
-                    print(f"Submitting datapoint with options: {str(run_options)} to thread pool !!!!!!!!!!!!!!!!!!!!!!!!!!!!!")
-
                     # Executes docker simulation in a thread
                     futures.append(executor.submit(self.run_datapoint, run_options=run_options))
                 # Bring simulation thread back to main thread
                 for future in concurrent.futures.as_completed(futures):
                     # Save results to database.
                     job_data = future.result()
-                    print("")
-                    print("############################# Job data output ##############################")
-                    print(f"Job data output: {str(job_data)} !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!")
-                    print("############################################################################")
-                    print("")
-                    #print(f"Saving datapoint: {job_data.job_id } to database with status {job_data.status} !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!")
-                    #print("")
                     self.save_results_to_database(job_data)
 
                     # Track failures.

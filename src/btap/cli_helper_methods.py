@@ -570,14 +570,12 @@ def analysis(project_input_folder=None,
                                   analysis_input_folder=analysis_input_folder,
                                   output_folder=output_folder,
                                   reference_run_df=reference_run_df)
-            print("Created Optimization !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!")
         # parametric
         elif analysis_config[':algorithm_type'] == 'parametric':
             ba = BTAPParametric(analysis_config=analysis_config,
                                 analysis_input_folder=analysis_input_folder,
                                 output_folder=os.path.join(output_folder),
                                 reference_run_df=reference_run_df)
-            print("Created Parametric !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!")
 
         # parametric
         elif analysis_config[':algorithm_type'] == 'elimination':
@@ -585,43 +583,36 @@ def analysis(project_input_folder=None,
                                  analysis_input_folder=analysis_input_folder,
                                  output_folder=output_folder,
                                  reference_run_df=reference_run_df)
-            print("Created Elimination !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!")
 
         elif analysis_config[':algorithm_type'] == 'sampling-lhs':
             ba = BTAPSamplingLHS(analysis_config=analysis_config,
                                  analysis_input_folder=analysis_input_folder,
                                  output_folder=output_folder,
                                  reference_run_df=reference_run_df)
-            print("Created Sample LHS !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!")
 
         elif analysis_config[':algorithm_type'] == 'sensitivity':
             ba = BTAPSensitivity(analysis_config=analysis_config,
                                  analysis_input_folder=analysis_input_folder,
                                  output_folder=output_folder,
                                  reference_run_df=reference_run_df)
-            print("Created Sensitivity !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!")
 
         elif analysis_config[':algorithm_type'] == 'reference':
             ba = BTAPReference(analysis_config=analysis_config,
                                analysis_input_folder=analysis_input_folder,
                                output_folder=output_folder)
-            print("Created Reference !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!")
 
         elif analysis_config[':algorithm_type'] == 'batch':
             ba = BTAPBatchAnalysis(analysis_config=analysis_config,
                                    analysis_input_folder=analysis_input_folder,
                                    output_folder=output_folder)
-            print("Created Batch !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!")
 
 
         else:
             print(f"Error:Analysis type {analysis_config[':algorithm_type']} not supported. Exiting.")
             exit(1)
 
-        print("Start Analysis !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!")
         ba.run()
-        print("Finished Analysis !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!")
-        print(f"Excel results file {ba.analysis_excel_results_path()}")
+        print(f"Excel results file: {ba.analysis_excel_results_path()}")
         if compute_environment == 'local':
             generate_btap_reports(data_file=ba.analysis_excel_results_path(), pdf_output_folder=ba.analysis_results_folder())
 
