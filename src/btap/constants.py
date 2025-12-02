@@ -31,13 +31,12 @@ AWS_BATCH_ALLOCATION_STRATEGY = 'BEST_FIT_PROGRESSIVE'
 AWS_BATCH_COMPUTE_INSTANCE_TYPES = ['m6idn.32xlarge',
                                     'm6idn.24xlarge',
                                     'm6idn.16xlarge',
-                                    'm5dn.24xlarge',
-                                    'm5dn.16xlarge']
+                                    'm5d.24xlarge',
+                                    'm5d.16xlarge']
 # Using the public Amazon Linux 2 AMI to make use of overlay disk storage. Has all aws goodies already installed,
 # makeing secure session manager possible, and has docker pre-installed.
 # AWS_BATCH_DEFAULT_IMAGE = 'ami-0a06b44c462364156'
 AWS_BATCH_DEFAULT_IMAGE = 'ami-0bef328bf875aa381'
-
 # Location of Docker folder that contains information to build the btap image locally and on aws.
 DOCKERFILES_FOLDER = os.path.join(os.path.dirname(os.path.realpath(__file__)), 'Dockerfiles')
 # Location of previously run baseline simulations to compare with design scenarios
