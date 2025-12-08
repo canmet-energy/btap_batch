@@ -15,7 +15,7 @@ RUN echo "Cloning btap_batch"
 RUN git clone https://$GIT_API_TOKEN:x-oauth-basic@github.com/canmet-energy/btap_batch.git --depth 1 --branch ${BTAP_BATCH_BRANCH} --single-branch /btap_batch
 RUN cd /btap_batch && echo 'btap_batch revision' && git rev-parse --short HEAD
 RUN cd /btap_batch && pip install --upgrade pip
-RUN cd /btap_batch && pip install -r requirements.txt > pip_install.log
+RUN cd /btap_batch && pip install -r requirements.txt
 #RUN apt-get -y install docker
 #RUN apt-get -y install ./docker-desktop-amd64.deb
 # Install Docker
