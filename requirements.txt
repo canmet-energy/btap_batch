@@ -5,7 +5,7 @@ pyyaml
 boto3
 pandas
 scikit-optimize
-openstudio
+openstudio==3.9.0
 numpy
 tqdm
 numpy_financial
