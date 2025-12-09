@@ -112,35 +112,28 @@ class BTAPParametric(BTAPAnalysis):
         time.sleep(0.01)
         with tqdm.tqdm(desc=f"Failed:{self.get_num_of_runs_failed()}: Progress Bar", total=len(self.scenarios),
                        colour='green') as pbar:
-            try:
-                with concurrent.futures.ThreadPoolExecutor(self.batch.image_manager.get_threads()) as executor:
-                    futures = []
-                    # go through each option scenario
-                    for run_options in self.scenarios:
-                        # Executes docker simulation in a thread 
-                        time.sleep(5+random())  # slight delay to avoid overwhelming system
-                        futures.append(executor.submit(self.run_datapoint, run_options=run_options))
-                    # Bring simulation thread back to main thread
-                    for future in concurrent.futures.as_completed(futures):
-                        # Save results to database.
-                        job_data = future.result()
-                        self.save_results_to_database(job_data)
+            with concurrent.futures.ThreadPoolExecutor(self.batch.image_manager.get_threads()) as executor:
+                futures = []
+                # go through each option scenario
+                for run_options in self.scenarios:
+                    # Executes docker simulation in a thread 
+                    time.sleep(1+random())  # slight delay to avoid overwhelming system
+                    futures.append(executor.submit(self.run_datapoint, run_options=run_options))
+                # Bring simulation thread back to main thread
+                for future in concurrent.futures.as_completed(futures):
+                    # Save results to database.
+                    job_data = future.result()
+                    self.save_results_to_database(job_data)
+                    # Track failures.
+                    if not job_data['status'] != 'SUCCESS':
+                        failed_datapoints += 1
 
-                        # Track failures.
-                        if not job_data['status'] != 'SUCCESS':
-                            failed_datapoints += 1
-
-                        # Update user.
-                        message = f'TotalRuns:{self.file_number}\tCompleted:{self.get_num_of_runs_completed()}' \
-                                  f'\tFailed:{self.get_num_of_runs_failed()}' \
-                                  f'\tElapsed Time: {str(datetime.timedelta(seconds=round(time.time() - threaded_start)))}'
-                        logging.info(message)
-                        pbar.update(1)
-            except Exception as e:
-                message = f"An error occurred during parametric runs: {e}"
-                print(message)
-                logging.error(message)
-        
+                    # Update user.
+                    message = f'TotalRuns:{self.file_number}\tCompleted:{self.get_num_of_runs_completed()}' \
+                                f'\tFailed:{self.get_num_of_runs_failed()}' \
+                                f'\tElapsed Time: {str(datetime.timedelta(seconds=round(time.time() - threaded_start)))}'
+                    logging.info(message)
+                    pbar.update(1)
 
         # At end of runs update for users.
         message = f'{self.file_number} Simulations completed. No. of failures = {self.get_num_of_runs_failed()} ' \
