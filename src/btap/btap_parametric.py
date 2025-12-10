@@ -117,7 +117,7 @@ class BTAPParametric(BTAPAnalysis):
                 # go through each option scenario
                 for run_options in self.scenarios:
                     # Executes docker simulation in a thread 
-                    time.sleep(1+random())  # slight delay to avoid overwhelming system
+                    time.sleep(5+random())  # slight delay to avoid overwhelming system
                     futures.append(executor.submit(self.run_datapoint, run_options=run_options))
                 # Bring simulation thread back to main thread
                 for future in concurrent.futures.as_completed(futures):
