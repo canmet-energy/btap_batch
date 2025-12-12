@@ -307,7 +307,6 @@ class BTAPAnalysis():
         return job_data
 
     def save_results_to_database(self, job_data):
-        print(f"Now saving datapoint: {job_data[':datapoint_id']} to database with status {job_data['status']} !!!!!!!!!!!!!!!!!")
         if job_data['status'] == 'SUCCEEDED':
             # If container completed with success don't save container output.
             job_data['container_output'] = None
@@ -433,7 +432,6 @@ class BTAPAnalysis():
 
     def generate_output_file(self, baseline_results=None):
         # Process csv file to create single dataframe with all simulation results
-        print("Start post processing results !!!!!!!!!!!!!!!!!!")
         ppr = PostProcessResults(baseline_results=baseline_results,
                                  database_folder=self.cp.analysis_database_folder(),
                                  results_folder=self.cp.analysis_results_folder(),
@@ -445,14 +443,12 @@ class BTAPAnalysis():
 
         number_of_failed_runs = self.get_num_of_runs_failed()
         if number_of_failed_runs > 0:
-            print(f"Number of failed runs: {number_of_failed_runs} !!!!!!!!!!!!!!!!!!!!!!!!!!")
             folders = ['in.osm',
                       'eplustbl.htm',
                       'hourly.csv',
                       'eplusout.sql',
                       'failures']
         else:
-            print("No failed runs !!!!!!!!!!!!!!!!!!!!!!!!!!!")
             folders = ['in.osm',
                        'eplustbl.htm',
                        'hourly.csv',
