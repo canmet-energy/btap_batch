@@ -443,6 +443,7 @@ class BTAPAnalysis():
 
         number_of_failed_runs = self.get_num_of_runs_failed()
         if number_of_failed_runs > 0:
+            print(f"Number of failed runs: {number_of_failed_runs}. Check failures folder for more information.")
             folders = ['in.osm',
                       'eplustbl.htm',
                       'hourly.csv',

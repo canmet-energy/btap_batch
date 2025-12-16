@@ -80,6 +80,7 @@ class AWSBTAPJob(DockerBTAPJob):
             error_txt = content_object.get()['Body'].read().decode('utf-8')
             return str(error_txt)
         except Exception as error:
+            print(f"Could not retrieve error.txt from S3 at {s3_error_txt_path}. Error was {error}")
             return error
     
     def _run_container(self):

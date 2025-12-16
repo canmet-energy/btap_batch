@@ -37,6 +37,7 @@ class DockerBTAPJob:
             check_datapoint = self._was_datapoint_file_generated()
             if check_datapoint == True:
                 job_data.update(self._get_job_results())
+                print(f"Job {self.job_id} completed successfully.")
                 return job_data
             else:
                 # The error is likely the btap_datapoint.json was not created and moved.  If that is the case then treat as a btap datapoint failure and not an analysis failure.
@@ -44,6 +45,7 @@ class DockerBTAPJob:
                 # Update job_data with possible modifications to run_options.
                 job_data.update(self.run_options)
                 # Flag that is was failure and save container error.
+                print (f"A container error was generated for job id {self.job_id}.  The container error is: {self._get_container_error()}.")
                 job_data['container_error'] = self._get_container_error()
                 job_data['status'] = "FAILED"
                 self._save_output_file(job_data)
@@ -52,6 +54,7 @@ class DockerBTAPJob:
             # Update job_data with possible modifications to run_options.
             job_data.update(self.run_options)
             # Flag that is was failure and save container error.
+            print (f"An unhandled container error was generated for job id {self.job_id}.  The container error is: {error}.")
             job_data['container_error'] = self._get_container_error()
             job_data['status'] = "FAILED"
             self._save_output_file(job_data)
@@ -120,8 +123,6 @@ class DockerBTAPJob:
     def _save_output_file(self, job_data):
         # save btap_data json file.
         Path(os.path.dirname(self.local_json_file_path)).mkdir(parents=True, exist_ok=True)
-        outfile_path = str(self.local_json_file_path)
-        print(f"Output file: {outfile_path}")
         with open(self.local_json_file_path, 'w') as outfile:
             json.dump(job_data, outfile, indent=4)
     #private methods
