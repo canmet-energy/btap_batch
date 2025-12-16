@@ -29,6 +29,7 @@ class DockerBTAPJob:
         job_data['datapoint_output_url'] = self._job_url()
         self._copy_files_to_run_location()
         try:
+            self._run_container()
             # Update job_data with possible modifications to run_options.
             job_data.update(self.run_options)
             # Flag that is was successful.
