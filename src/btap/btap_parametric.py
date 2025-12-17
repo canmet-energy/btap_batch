@@ -5,6 +5,7 @@ import tqdm
 import itertools
 import concurrent.futures
 import datetime
+from random import random
 from src.btap.exceptions import FailedSimulationException
 from src.btap.btap_analysis import BTAPAnalysis
 
@@ -115,24 +116,23 @@ class BTAPParametric(BTAPAnalysis):
                 futures = []
                 # go through each option scenario
                 for run_options in self.scenarios:
-                    # Create an options hash to store the options
-
-                    # Executes docker simulation in a thread
+                    # Executes docker simulation in a thread 
+                    if (self.file_number > 500) and (self.compute_environment == 'local_managed_aws_workers'):
+                        time.sleep(4+random())  # slight delay to avoid overwhelming system
                     futures.append(executor.submit(self.run_datapoint, run_options=run_options))
                 # Bring simulation thread back to main thread
                 for future in concurrent.futures.as_completed(futures):
                     # Save results to database.
                     job_data = future.result()
                     self.save_results_to_database(job_data)
-
                     # Track failures.
                     if not job_data['status'] != 'SUCCESS':
                         failed_datapoints += 1
 
                     # Update user.
                     message = f'TotalRuns:{self.file_number}\tCompleted:{self.get_num_of_runs_completed()}' \
-                              f'\tFailed:{self.get_num_of_runs_failed()}' \
-                              f'\tElapsed Time: {str(datetime.timedelta(seconds=round(time.time() - threaded_start)))}'
+                                f'\tFailed:{self.get_num_of_runs_failed()}' \
+                                f'\tElapsed Time: {str(datetime.timedelta(seconds=round(time.time() - threaded_start)))}'
                     logging.info(message)
                     pbar.update(1)
 

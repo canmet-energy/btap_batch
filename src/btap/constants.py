@@ -1,5 +1,5 @@
 import os
-BTAP_BATCH_VERSION = '1.0.005'
+BTAP_BATCH_VERSION = '1.1.000'
 
 # Maximum simulataneous simulations per analyses
 MAX_SIMULATIONS_PER_ANALYSIS = 500
@@ -14,9 +14,9 @@ WORKER_CONTAINER_MEMORY = 8000
 # Container Storage (GB)
 INSTANCE_STORAGE_SIZE_GB = 4000
 # Container allocated VCPU for AWS Batch
-MANAGER_CONTAINER_VCPU = 16
+MANAGER_CONTAINER_VCPU = 32
 # Container allocated Memory (MB) for AWS Batch
-MANAGER_CONTAINER_MEMORY = 64000
+MANAGER_CONTAINER_MEMORY = 128000
 
 # Volume Type
 AWS_VOLUME_TYPE = 'io2' # could be gp2,gp3,io1,io2
@@ -28,17 +28,15 @@ IOPS_VALUE = 10000 #Only used for io2 volumes.
 AWS_BATCH_ALLOCATION_STRATEGY = 'BEST_FIT_PROGRESSIVE'
 # AWS Compute instances types..setting to optimal to let AWS figure it out for me.
 # https://docs.aws.amazon.com/batch/latest/userguide/create-compute-environment.html
-AWS_BATCH_COMPUTE_INSTANCE_TYPES = ['m6i.32xlarge',
-                                    'm6i.24xlarge',
-                                    'm6i.16xlarge',
-                                    'm5.24xlarge',
-                                    'm5.16xlarge',
-                                    'm4.16xlarge',
-                                    'm5.16xlarge']
+AWS_BATCH_COMPUTE_INSTANCE_TYPES = ['m6idn.32xlarge',
+                                    'm6idn.24xlarge',
+                                    'm6idn.16xlarge',
+                                    'm5d.24xlarge',
+                                    'm5d.16xlarge']
 # Using the public Amazon Linux 2 AMI to make use of overlay disk storage. Has all aws goodies already installed,
 # makeing secure session manager possible, and has docker pre-installed.
 AWS_BATCH_DEFAULT_IMAGE = 'ami-0a06b44c462364156'
-
+# AWS_BATCH_DEFAULT_IMAGE = 'ami-0bef328bf875aa381'
 # Location of Docker folder that contains information to build the btap image locally and on aws.
 DOCKERFILES_FOLDER = os.path.join(os.path.dirname(os.path.realpath(__file__)), 'Dockerfiles')
 # Location of previously run baseline simulations to compare with design scenarios

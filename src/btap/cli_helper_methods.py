@@ -612,7 +612,7 @@ def analysis(project_input_folder=None,
             exit(1)
 
         ba.run()
-        print(f"Excel results file {ba.analysis_excel_results_path()}")
+        print(f"Excel results file: {ba.analysis_excel_results_path()}")
         if compute_environment == 'local':
             generate_btap_reports(data_file=ba.analysis_excel_results_path(), pdf_output_folder=ba.analysis_results_folder())
 

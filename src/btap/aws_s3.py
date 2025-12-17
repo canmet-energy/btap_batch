@@ -86,7 +86,6 @@ class S3:
     # Copy folder to S3. Single thread.
     def copy_folder_to_s3(self, bucket_name, source_folder, target_folder):
         # Get files in folder.
-        # print(f"Uploading {source_folder} to S3 {target_folder}")
         files = glob.glob(source_folder + '/**/*', recursive=True)
 
         # Go through all files recursively.

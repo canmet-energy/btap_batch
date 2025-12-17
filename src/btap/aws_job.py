@@ -24,6 +24,7 @@ class AWSBTAPJob(DockerBTAPJob):
         # update run_options
         self.s3_bucket = AWSCredentials().account_id
         self._set_paths()
+ 
     #Overridden methods
     def _job_url(self):
         return self.cp.s3_job_url(job_id=self.job_id)
@@ -70,14 +71,19 @@ class AWSBTAPJob(DockerBTAPJob):
         # Adding simulation high level results from btap_data.json to df.
         result_data = self._enumerate_eplus_warnings(job_data=result_data)
         return result_data
+
     def _get_container_error(self):
         # Get error message from error file from S3 and store it in the job_data list.
         s3_error_txt_path = os.path.join(self.s3_datapoint_output_folder, 'error.txt').replace('\\', '/')
-        content_object = boto3.resource('s3').Object(self.s3_bucket, s3_error_txt_path)
-        error_txt = content_object.get()['Body'].read().decode('utf-8')
-        return  str(error_txt)
+        try:
+            content_object = boto3.resource('s3').Object(self.s3_bucket, s3_error_txt_path)
+            error_txt = content_object.get()['Body'].read().decode('utf-8')
+            return str(error_txt)
+        except Exception as error:
+            print(f"Could not retrieve error.txt from S3 at {s3_error_txt_path}. Error was {error}")
+            return error
+    
     def _run_container(self):
-
         # See https://boto3.amazonaws.com/v1/documentation/api/latest/reference/services/batch.html#Batch.Client.submit_job
         submitJobResponse = self.__job_wrapper()
         self.cloud_job_id = submitJobResponse['jobId']
@@ -117,6 +123,15 @@ class AWSBTAPJob(DockerBTAPJob):
                 AWSResultsTable().save_dict_result(self.run_options)
                 logging.info(message)
                 sys.stdout.flush()
+    
+    def _was_datapoint_file_generated(self):
+        try:
+            s3_btap_data_path = os.path.join(self.s3_datapoint_output_folder, 'btap_data.json').replace('\\', '/')
+            S3().s3client.head_object(Bucket=self.s3_bucket,  Key=s3_btap_data_path)
+            return True
+        except Exception as error:
+            return False
+    
     # Private methods.
     def aws_job_name(self):
         return f"{self.job_id}"
@@ -144,18 +159,20 @@ class AWSBTAPJob(DockerBTAPJob):
             logging.warning(f"JobWrapper:Implementing exponential backoff for job {self.aws_job_name()} for {wait_time}s")
             time.sleep(wait_time)
             return self.__job_wrapper(n=n + 1)
+        
     def __copy_files_with_retry(self, n=0):
         try:
             S3().copy_folder_to_s3(bucket_name=self.s3_bucket,
                                    source_folder=self.source,
                                    target_folder=self.target)
         except:
-            if n >= 5:
-                logging.error(
-                    f'Failed to copy files from {self.source} to bucket {self.s3_bucket} at {self.target} after 5 tries. Error was {sys.exc_info()[0]}')
+            # Implementing exponential backoff
+            if n == 8:
+                logging.exception(
+                    f'Failed to copy files from {self.source} to bucket {self.s3_bucket} at {self.target} after 7 tries. Error was {sys.exc_info()[0]}')
                 raise
-            wait_time = 60
-            logging.warning(f"Copy failed, waiting {wait_time}s before retry {n + 1}/5 for copying from {self.source} to bucket {self.target}")
+            wait_time = 30 + random()
+            logging.warning(f"Copy failed, waiting {wait_time}s before retry {n + 1}/7 for copying from {self.source} to bucket {self.target}")
             time.sleep(wait_time)
             return self.__copy_files_with_retry(n=n + 1)
 
