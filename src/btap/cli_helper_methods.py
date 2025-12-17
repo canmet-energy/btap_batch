@@ -22,7 +22,8 @@ from src.btap.aws_s3 import S3
 from src.btap.common_paths import CommonPaths, SCHEMA_FOLDER, HISTORIC_WEATHER_LIST, \
     FUTURE_WEATHER_LIST, HISTORIC_WEATHER_REPO, FUTURE_WEATHER_REPO, HISTORIC_WEATHER_LIST_BTAP, \
     FUTURE_WEATHER_LIST_BTAP, HISTORIC_WEATHER_REPO_BTAP, FUTURE_WEATHER_REPO_BTAP, USER, \
-    CLIMATE_ONEBUILDING_FOLDER, CLIMATE_ONEBUILDING_MAP, CLIMATE_ONEBUILDING_URL, PROJECT_FOLDER
+    CLIMATE_ONEBUILDING_FOLDER, CLIMATE_ONEBUILDING_MAP, CLIMATE_ONEBUILDING_URL, PROJECT_FOLDER, \
+    DOCKERFILES_FOLDER
 import os
 import pandas as pd
 from src.btap.aws_s3 import S3
@@ -236,11 +237,69 @@ def get_weather_locations(btap_weather: bool, weather_locations=[]) -> str:
     # Return a single string from the list separated by a space.
     return  " ".join(custom_weather_list)
 
+def process_local_database_path(data_path: str) -> str:
+    # Helper used to validate the database files by ensuring the path exists,
+    # that the file is readable and not empty, and then copies it into the build
+    # context.
+    
+    # Parameters:
+    #   data_path: Path of the file
+    
+    # Returns the new path located in the Dockerfile build context.
+
+    copy_file = True if data_path else False  # Copy the path if it's non-empty
+
+    if copy_file:
+
+        # If path is relative, make it absolute
+        if os.path.isabs(data_path):
+            local_path = os.path.join(PROJECT_FOLDER, data_path)
+        
+        if not os.path.isfile(data_path):
+            raise Exception(f"Error: Local database file located {data_path}"
+                            f"could not be found.")
+
+        if not os.access(data_path, os.R_OK):
+            raise Exception(f"Error: Local database file located {data_path}"
+                            f"is inaccessible.")
+            
+        # Copy the database file to the Dockerfile build context
+        filename = os.path.basename(data_path)
+        build_context_file_path = os.path.join(DOCKERFILES_FOLDER, 'btap_cli', filename)
+        
+        try:
+            shutil.copy2(data_path, build_context_file_path)
+            copy_file = True  # Use the database file in the Docker build
+            print(f"Copied database file from {data_path} to {build_context_file_path}")
+            return filename
+        except Exception as e:
+            raise Exception(f"Error: Could not copy database file located"
+                            f"{local_path} to the build context: {e}")
+
+    else:  # If the path is empty
+        raise Exception(f"Error: Local database file located {data_path} is empty")
+
+def clean_up_local_database_file(filename: str) -> None:
+    # Helper function for cleaning up the database files copied to the build
+    # context.
+
+    build_context_file_path = os.path.join(DOCKERFILES_FOLDER, 'btap_cli', filename)
+    try:
+        if os.path.exists(build_context_file_path):
+            os.remove(build_context_file_path)
+            print(f"Cleaned up database file from build context: {build_context_file_path}")
+    except Exception as e:
+        print(f"Warning: Could not clean up costing file: {e}")
+
 def build_and_configure_docker_and_aws(btap_batch_branch=None,
                                        enable_rsmeans=False,
                                        rsmeans_year=None,
+                                       enable_proprietary_carbon=False,
                                        local_costing_path='',
                                        local_factors_path='',
+                                       local_carbon_opaque_path='',
+                                       local_carbon_glazing_path='',
+                                       local_carbon_frame_path='',
                                        compute_environment=None,
                                        openstudio_version=None,
                                        os_standards_org=None,
@@ -256,84 +315,32 @@ def build_and_configure_docker_and_aws(btap_batch_branch=None,
     # Get the weather locations from the weather list
     weather_locations = get_weather_locations(btap_weather, weather_list)
 
-    # Check if the local_costing_path file exists and convert to absolute path if relative
-    dockerfile_costing_path = 'do_not_delete.txt'  # Dummy path relative to the Dockerfile build context
-    dockerfile_factors_path = 'do_not_delete.txt'  # Dummy path relative to the Dockerfile build context
-    copy_costing_file = False  # Do not use the costing file in the Docker build by default
-    if local_costing_path != '':
-        copy_costing_file = True  # Default to copying the costing file
-
-    if local_factors_path != '':
-        copy_factors_file = True  # Default to copying the factors file
-
-    # Copy custom costing file to the Dockerfile build context if it exists
-    if copy_costing_file:
-        # If path is relative, make it absolute
-        if not os.path.isabs(local_costing_path):
-            local_costing_path = os.path.join(PROJECT_FOLDER, local_costing_path)
-        
-        # Check if the file actually exists, has a size greater than 0, and is readable
-        if os.path.isfile(local_costing_path) and os.path.getsize(local_costing_path) > 0 and os.access(local_costing_path, os.R_OK):
-            # Copy the costing file to the Dockerfile build context
-            dockerfile_folder = os.path.join(PROJECT_FOLDER, 'src', 'Dockerfiles', 'btap_cli')
-            dockerfile_costing_path = 'costs.csv'  # Relative path in build context
-            target_path = os.path.join(dockerfile_folder, dockerfile_costing_path)
-            
-            try:
-                shutil.copy2(local_costing_path, target_path)
-                copy_costing_file = True  # Use the costing file in the Docker build
-                print(f"Copied costing file from {local_costing_path} to {target_path}")
-            except Exception as e:
-                print(f"Warning: Could not copy costing file: {e}")
-                dockerfile_costing_path = 'do_not_delete.txt'  # Placeholder if copy fails
-                copy_costing_file = False  # Do not use the costing file in the Docker build if copy fails
-        else:
-            print(f"Warning: Local costing file not found at {local_costing_path}")
-            dockerfile_costing_path = 'do_not_delete.txt'  # Placeholder if file does not exist
-            copy_costing_file = False  # Do not use the costing file in the Docker build if the costing file does not exist
-
-    # Copy custom costing localization factors file to the Dockerfile build context if it exists
-    if copy_factors_file:
-        # If path is relative, make it absolute
-        if not os.path.isabs(local_factors_path):
-            local_factors_path = os.path.join(PROJECT_FOLDER, local_factors_path)
-
-        # Check if the file actually exists, has a size greater than 0, and is readable
-        if os.path.isfile(local_factors_path) and os.path.getsize(local_factors_path) > 0 and os.access(local_factors_path, os.R_OK):
-            # Copy the factors file to the Dockerfile build context
-            dockerfile_folder = os.path.join(PROJECT_FOLDER, 'src', 'Dockerfiles', 'btap_cli')
-            dockerfile_factors_path = 'costs_local_factors.csv'  # Relative path in build context
-            target_path = os.path.join(dockerfile_folder, dockerfile_factors_path)
-
-            try:
-                shutil.copy2(local_factors_path, target_path)
-                copy_factors_file = True  # Use the factors file in the Docker build
-                print(f"Copied costing localization factors file from {local_factors_path} to {target_path}")
-            except Exception as e:
-                print(f"Warning: Could not copy factors file: {e}")
-                dockerfile_factors_path = 'do_not_delete.txt'  # Placeholder if copy fails
-                copy_factors_file = False  # Do not use the factors file in the Docker build if copy fails
-        else:
-            print(f"Warning: Local factors file not found at {local_factors_path}")
-            dockerfile_factors_path = 'do_not_delete.txt'  # Placeholder if file does not exist
-            copy_factors_file = False  # Do not use the factors file in the Docker build if the factors file does not exist
+    local_costing_path        = process_local_database_path(local_costing_path)
+    local_factors_path        = process_local_database_path(local_factors_path)
+    local_carbon_opaque_path  = process_local_database_path(local_carbon_opaque_path)
+    local_carbon_glazing_path = process_local_database_path(local_carbon_glazing_path)
+    local_carbon_frame_path   = process_local_database_path(local_carbon_frame_path)
 
     # Set os_standards_org to NREL if not provided
     if os_standards_org == '':
         os_standards_org = 'NREL'
 
     # build args for aws and btap_cli container.
-    build_args_btap_cli = {'OPENSTUDIO_VERSION': openstudio_version,
-                           'ENABLE_RSMEANS' : 'True' if enable_rsmeans == True else '',
-                           'RSMEANS_YEAR' : str(rsmeans_year) if rsmeans_year else RSMEANS_CURRENT_YEAR,
-                           'OS_STANDARDS_ORG': os_standards_org,
-                           'OS_STANDARDS_BRANCH': os_standards_branch,
-                           'WEATHER_FILES': weather_locations,
-                           'LOCAL_COSTING_PATH': dockerfile_costing_path,  # Use the relative path in build context
-                           'COPY_COSTING_FILE': 'True' if copy_costing_file == True else '',
-                           'LOCAL_FACTORS_PATH': dockerfile_factors_path,  # Use the relative path in build context
-                           'COPY_FACTORS_FILE': 'True' if copy_factors_file == True else '',
-                           'LOCALNRCAN': ''}
+    build_args_btap_cli = {
+        'OPENSTUDIO_VERSION': openstudio_version,
+        'ENABLE_RSMEANS': 'True' if enable_rsmeans == True else '',
+        'RSMEANS_YEAR': str(rsmeans_year) if rsmeans_year else RSMEANS_CURRENT_YEAR,
+        'ENABLE_PROPRIETARY_CARBON': 'True' if enable_proprietary_carbon == True else '',
+        'OS_STANDARDS_ORG': os_standards_org,
+        'OS_STANDARDS_BRANCH': os_standards_branch,
+        'WEATHER_FILES': weather_locations,
+        'LOCAL_COSTING_PATH': local_costing_path,  
+        'LOCAL_FACTORS_PATH': local_factors_path,  
+        'LOCAL_CARBON_OPAQUE_PATH': local_carbon_opaque_path,
+        'LOCAL_CARBON_GLAZING_PATH': local_carbon_glazing_path,
+        'LOCAL_CARBON_FRAME_PATH': local_carbon_frame_path,
+        'LOCALNRCAN': ''
+    }
     # build args for btap_batch container.
     build_args_btap_batch = {'BTAP_BATCH_BRANCH': btap_batch_branch}
 
@@ -356,32 +363,16 @@ def build_and_configure_docker_and_aws(btap_batch_branch=None,
         ace_worker = AWSComputeEnvironment(name='btap_cli')
         ace_worker.setup(maxvCpus=math.floor(MAX_AWS_VCPUS * 0.95))
 
-
-
         if build_btap_cli:
             print('Building btap_cli on aws..')
             image_worker.build_image(build_args=build_args_btap_cli)
             
-            # Clean up: Remove the copied costing file from the build context
-            if copy_costing_file == True and dockerfile_costing_path != 'do_not_delete.txt':
-                dockerfile_folder = os.path.join(PROJECT_FOLDER, 'src', 'Dockerfiles', 'btap_cli')
-                target_path = os.path.join(dockerfile_folder, dockerfile_costing_path)
-                try:
-                    if os.path.exists(target_path):
-                        os.remove(target_path)
-                        print(f"Cleaned up costing file from build context: {target_path}")
-                except Exception as e:
-                    print(f"Warning: Could not clean up costing file: {e}")
+        clean_up_local_database_file(local_costing_path)
+        clean_up_local_database_file(local_factors_path)
+        clean_up_local_database_file(local_carbon_opaque_path)
+        clean_up_local_database_file(local_carbon_glazing_path)
+        clean_up_local_database_file(local_carbon_frame_path)
 
-            if copy_factors_file == True and dockerfile_factors_path != 'do_not_delete.txt':
-                dockerfile_folder = os.path.join(PROJECT_FOLDER, 'src', 'Dockerfiles', 'btap_cli')
-                target_path = os.path.join(dockerfile_folder, dockerfile_factors_path)
-                try:
-                    if os.path.exists(target_path):
-                        os.remove(target_path)
-                        print(f"Cleaned up costing factors file from build context: {target_path}")
-                except Exception as e:
-                    print(f"Warning: Could not clean up costing factors file: {e}")
 
         # Create Job description and queues for workers.
         batch_cli = AWSBatch(image_manager=image_worker,
@@ -420,30 +411,16 @@ def build_and_configure_docker_and_aws(btap_batch_branch=None,
         if build_btap_cli:
             print('Building btap_cli image')
             image_worker.build_image(build_args=build_args_btap_cli)
-            
-            # Clean up: Remove the copied costing file from the build context
-            if copy_costing_file == True and dockerfile_costing_path != 'do_not_delete.txt':
-                dockerfile_folder = os.path.join(PROJECT_FOLDER, 'src', 'Dockerfiles', 'btap_cli')
-                target_path = os.path.join(dockerfile_folder, dockerfile_costing_path)
-                try:
-                    if os.path.exists(target_path):
-                        os.remove(target_path)
-                        print(f"Cleaned up costing file from build context: {target_path}")
-                except Exception as e:
-                    print(f"Warning: Could not clean up costing file: {e}")
-
-            if copy_factors_file == True and dockerfile_factors_path != 'do_not_delete.txt':
-                dockerfile_folder = os.path.join(PROJECT_FOLDER, 'src', 'Dockerfiles', 'btap_cli')
-                target_path = os.path.join(dockerfile_folder, dockerfile_factors_path)
-                try:
-                    if os.path.exists(target_path):
-                        os.remove(target_path)
-                        print(f"Cleaned up costing factors file from build context: {target_path}")
-                except Exception as e:
-                    print(f"Warning: Could not clean up costing factors file: {e}")
-
+        
         else:
             print("Skipping building btap_cli image at users request.")
+
+        # Clean up: Remove the database files from the build context
+        clean_up_local_database_file(local_costing_path)
+        clean_up_local_database_file(local_factors_path)
+        clean_up_local_database_file(local_carbon_opaque_path)
+        clean_up_local_database_file(local_carbon_glazing_path)
+        clean_up_local_database_file(local_carbon_frame_path)
 
 
 def delete_aws_build_env(build_env_name = None):
@@ -635,7 +612,7 @@ def analysis(project_input_folder=None,
             exit(1)
 
         ba.run()
-        print(f"Excel results file {ba.analysis_excel_results_path()}")
+        print(f"Excel results file: {ba.analysis_excel_results_path()}")
         if compute_environment == 'local':
             generate_btap_reports(data_file=ba.analysis_excel_results_path(), pdf_output_folder=ba.analysis_results_folder())
 
@@ -953,6 +930,11 @@ local_costing_path: resources\costing\costs.csv
 # Path to the local costs_local_factors.csv costing localization factors file.  The default is 'resources\costing\costs_local_factors.csv'. If you are using a custom costing localization factors file, you can set the path here.
 # All relative paths are relative to the root of the btap_batch repository you are using. Ignore this if you are not using local costing localization factors or content with the default costs_local_factors.csv costing localization factors file."
 local_factors_path: resources\costing\costs_local_factors.csv
+
+# Paths to the local embodied carbon database files. 
+local_carbon_opaque_path: resources\carbon\carbon_opaque.csv
+local_carbon_glazing_path: resources\carbon\carbon_glazing.csv
+local_carbon_frame_path: resources\carbon\carbon_frame.csv
 
 # Rebuild btap_cli image
 build_btap_cli: True

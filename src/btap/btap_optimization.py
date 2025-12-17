@@ -1,6 +1,6 @@
 from pymoo.optimize import minimize
 from pymoo.core.problem import ElementwiseProblem
-from pymoo.core.problem import StarmapParallelization
+from pymoo.parallelization.starmap import StarmapParallelization
 from pymoo.algorithms.moo.nsga2 import NSGA2
 from pymoo.operators.crossover.sbx import SBX
 from pymoo.operators.mutation.pm import PM

@@ -110,6 +110,7 @@ class BTAPAnalysis():
         self.algorithm_lhs_random_seed = self.analysis_config.get(':algorithm_lhs_random_seed')
         self.compute_environment = self.analysis_config.get(':compute_environment')
         self.enable_costing = self.analysis_config.get(':enable_costing')
+        self.enable_carbon = self.analysis_config.get(':enable_carbon')
         self.options = self.analysis_config.get(':options')
 
         # Set common paths singleton.
@@ -279,6 +280,7 @@ class BTAPAnalysis():
         run_options[':output_variables'] = self.output_variables
         run_options[':output_meters'] = self.output_meters
         run_options[':enable_costing'] = self.enable_costing
+        run_options[':enable_carbon'] = self.enable_carbon
 
         # Local Paths
         local_datapoint_input_folder = os.path.join(self.cp.algorithm_folder(), job_id)
@@ -301,6 +303,7 @@ class BTAPAnalysis():
         # Submit Job to batch
         job = self.batch.create_job(job_id=job_id)
         job_data = job.submit_job(run_options=run_options)
+
         return job_data
 
     def save_results_to_database(self, job_data):
@@ -438,10 +441,19 @@ class BTAPAnalysis():
         # Store post process run into analysis object. Will need it later.
         self.btap_data_df = ppr.run()
 
-        folders = ['in.osm',
-                   'eplustbl.htm',
-                   'hourly.csv',
-                   'eplusout.sql']
+        number_of_failed_runs = self.get_num_of_runs_failed()
+        if number_of_failed_runs > 0:
+            print(f"Number of failed runs: {number_of_failed_runs}. Check failures folder for more information.")
+            folders = ['in.osm',
+                      'eplustbl.htm',
+                      'hourly.csv',
+                      'eplusout.sql',
+                      'failures']
+        else:
+            folders = ['in.osm',
+                       'eplustbl.htm',
+                       'hourly.csv',
+                       'eplusout.sql']
 
 
         if self.compute_environment != 'local':

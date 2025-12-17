@@ -9,7 +9,6 @@ ENV BTAP_BATCH_BRANCH=$BTAP_BATCH_BRANCH
 ENV PYTHONPATH=/btap_batch
 
 RUN apt-get -y update
-RUN apt-get install -y python3.9
 RUN apt-get install -y python3-pip
 RUN apt-get install -y git
 RUN echo "Cloning btap_batch"

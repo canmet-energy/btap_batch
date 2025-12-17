@@ -35,17 +35,32 @@ class DockerBTAPJob:
             # Flag that is was successful.
             job_data['status'] = "SUCCEEDED"
             job_data['simulation_time'] = time.time() - start
-            job_data.update(self._get_job_results())
-            return job_data
+            check_datapoint = self._was_datapoint_file_generated()
+            if check_datapoint == True:
+                job_data.update(self._get_job_results())
+                print(f"Job {self.job_id} completed successfully.")
+                return job_data
+            else:
+                # The error is likely the btap_datapoint.json was not created and moved.  If that is the case then treat as a btap datapoint failure and not an analysis failure.
+                # Doing this to prevent issues with large simulations.
+                # Update job_data with possible modifications to run_options.
+                job_data.update(self.run_options)
+                # Flag that is was failure and save container error.
+                print (f"A container error was generated for job id {self.job_id}.  The container error is: {self._get_container_error()}.")
+                job_data['container_error'] = self._get_container_error()
+                job_data['status'] = "FAILED"
+                self._save_output_file(job_data)
+                return job_data
         except Exception as error:
-            print(error)
             # Update job_data with possible modifications to run_options.
             job_data.update(self.run_options)
             # Flag that is was failure and save container error.
+            print (f"An unhandled container error was generated for job id {self.job_id}.  The container error is: {error}.")
             job_data['container_error'] = self._get_container_error()
-            job_data['status'] = 'FAILED'
+            job_data['status'] = "FAILED"
             self._save_output_file(job_data)
             return job_data
+        
     #protected
     def _job_url(self):
         return self.cp.local_job_url(job_id=self.job_id)
@@ -73,8 +88,8 @@ class DockerBTAPJob:
         return True
     def _get_job_results(self):
         # If file was not created...raise an error.
-        if not os.path.isfile(self.local_json_file_path):
-            raise FileNotFoundError(errno.ENOENT, os.strerror(errno.ENOENT), self.local_json_file_path)
+        #if not os.path.isfile(self.local_json_file_path):
+        #    raise FileNotFoundError(errno.ENOENT, os.strerror(errno.ENOENT), self.local_json_file_path)
         # Open the btap Data file in analysis dict.
         file = open(self.local_json_file_path, 'r')
         result_data = json.load(file)
@@ -122,6 +137,10 @@ class DockerBTAPJob:
                 'mode': 'rw'},
         }
         return volumes
-
-
-
+    
+    def _was_datapoint_file_generated(self):
+        try:
+            os.path.isfile(self.local_json_file_path)
+            return True
+        except:
+            return False
