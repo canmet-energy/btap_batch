@@ -114,13 +114,12 @@ class AWSBTAPJob(DockerBTAPJob):
                     or status == 'STARTING':
                 message = f"{status} - Job [{self.aws_job_name()} - {self.job_id} - {self.cloud_job_id}]"
                 self.run_options['status'] = status
-                AWSResultsTable().save_dict_result(self.run_options)
+                self.__save_dict_result_retry(self.run_options)
                 logging.info(message)
-
             else:
                 message = 'UNKNOWN - Job [%s - %s] is %-9s' % (self.aws_job_name(), self.cloud_job_id, status)
                 self.run_options['status'] = status
-                AWSResultsTable().save_dict_result(self.run_options)
+                self.__save_dict_result_retry(self.run_options)
                 logging.info(message)
                 sys.stdout.flush()
     
@@ -188,3 +187,14 @@ class AWSBTAPJob(DockerBTAPJob):
             logging.warning(f"Status:Implementing exponential backoff for job {self.cloud_job_id} for {wait_time}s")
             time.sleep(wait_time)
             return self.__get_job_status(n=n + 1)
+        
+    def __save_dict_result_retry(self, try_options, n=0):
+        try:
+            AWSResultsTable().save_dict_result(try_options)
+        except:
+            if n == 8:
+                raise (f'Failed to save dict result for job {self.cloud_job_id} in 7 tries while using exponential backoff.')
+            wait_time = 2 ** n + random()
+            logging.warning(f"SaveDictResult:Implementing exponential backoff for job {self.cloud_job_id} for {wait_time}s")
+            time.sleep(wait_time)
+            return self.__save_dict_result_retry(try_options, n=n + 1)
