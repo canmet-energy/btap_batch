@@ -118,9 +118,9 @@ class BTAPParametric(BTAPAnalysis):
                 # go through each option scenario
                 for index, run_options in enumerate(self.scenarios):
                     # Executes docker simulation in a thread 
-                    if (staggered and index % 15 == 0):
+                    if (staggered and index % 500 == 0):
                         # Sleep each 15 submissions to avoid overwhelming AWS during large analyses
-                        time.sleep(5)
+                        time.sleep(60)
                     futures.append(executor.submit(self.run_datapoint, run_options=run_options))
                 # Bring simulation thread back to main thread
                 for future in concurrent.futures.as_completed(futures):
