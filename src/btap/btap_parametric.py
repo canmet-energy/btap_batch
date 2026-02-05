@@ -114,13 +114,9 @@ class BTAPParametric(BTAPAnalysis):
                        colour='green') as pbar:
             with concurrent.futures.ThreadPoolExecutor(self.batch.image_manager.get_threads()) as executor:
                 futures = []
-                staggered = self.file_number > 500 and self.compute_environment == 'local_managed_aws_workers'
                 # go through each option scenario
-                for index, run_options in enumerate(self.scenarios):
+                for run_options in self.scenarios:
                     # Executes docker simulation in a thread 
-                    if (staggered and index % 500 == 0):
-                        # Sleep each 15 submissions to avoid overwhelming AWS during large analyses
-                        time.sleep(60)
                     futures.append(executor.submit(self.run_datapoint, run_options=run_options))
                 # Bring simulation thread back to main thread
                 for future in concurrent.futures.as_completed(futures):

@@ -94,7 +94,7 @@ class AWSBTAPJob(DockerBTAPJob):
         # Set initial state of status variables
         while True:
             # Don't hammer AWS.. make queries every minute for the run status
-            time.sleep(60 + random())
+            time.sleep(60 + random() * 60)
             describeJobsResponse = self.__get_job_status()
             status = describeJobsResponse['jobs'][0]['status']
             if status == 'SUCCEEDED':
