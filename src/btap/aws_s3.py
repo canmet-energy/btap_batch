@@ -1,7 +1,7 @@
 import botocore
 import logging
 import glob
-from src.btap.aws_credentials import AWSCredentials
+from src.btap.aws_credentials import aws_credentials
 from cloudpathlib import CloudPath
 import pathlib
 from concurrent.futures import FIRST_EXCEPTION, ThreadPoolExecutor, wait
@@ -24,13 +24,10 @@ class S3:
         with CloudPath(s3_path).open("r") as f:
             return  yaml.safe_load(f)
 
-
-
-
     # Constructor
     def __init__(self):
         # Create the s3 client.
-        self.s3client = AWSCredentials().s3_client
+        self.s3client = aws_credentials.s3_client
 
     # Method to delete a bucket. Not used
     def delete_bucket(self, bucket_name):
@@ -80,7 +77,7 @@ class S3:
 
     # Delete S3 folder.
     def delete_s3_folder(self, bucket, folder):
-        bucket = AWSCredentials().s3_resource.Bucket(bucket)
+        bucket = aws_credentials.s3_resource.Bucket(bucket)
         bucket.objects.filter(Prefix=folder).delete()
 
     # Copy folder to S3. Single thread.

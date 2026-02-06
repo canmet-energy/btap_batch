@@ -5,7 +5,7 @@ import sys
 import time
 import logging
 from random import random
-from src.btap.aws_credentials import AWSCredentials
+from src.btap.aws_credentials import aws_credentials
 from src.btap.common_paths import CommonPaths
 import re
 from icecream import ic
@@ -17,7 +17,7 @@ class AWSAnalysisJob():
         self.cloud_job_id = None  # Set by AWS when job is submitted.
         self.job_id = job_id
         # update run_options
-        self.s3_bucket = AWSCredentials().account_id
+        self.s3_bucket = aws_credentials.account_id
         self.set_paths()
         self.batch = batch
         self.reference_run = reference_run
@@ -55,7 +55,7 @@ class AWSAnalysisJob():
         # ic(self.batch.job_queue_name)
         # ic(self.batch.job_def_name)
         # ic(self.container_command())
-        batch_client = AWSCredentials().batch_client
+        batch_client = aws_credentials.batch_client
         if len(self.aws_job_name()) > 128 or not re.match('^[\w-]+$', self.aws_job_name()):
             print(f"aws_job_name:{self.aws_job_name()} is either longer than 128 char or does not only contain alphanumeric, _ and - charecters.")
             exit(1)

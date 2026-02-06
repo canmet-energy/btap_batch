@@ -8,12 +8,12 @@ import pandas as pd
 import shutil
 from sklearn import preprocessing
 from src.btap.exceptions import OSMErrorException
-from src.btap.aws_credentials import AWSCredentials
 from src.btap.aws_s3 import S3
 from src.btap.constants import NECB2011_SPACETYPE_PATH
 from src.btap.btap_postprocess_analysis import PostProcessResults
 from src.btap.docker_image_manager import DockerImageManager
 from src.btap.aws_image_manager import AWSImageManager
+from src.btap.aws_credentials import aws_credentials
 from src.btap.common_paths import CommonPaths
 from src.btap.aws_compute_environment import AWSComputeEnvironment
 from src.btap.common_paths  import SCHEMA_FOLDER
@@ -137,7 +137,6 @@ class BTAPAnalysis():
 
             self.image_manager = AWSImageManager(image_name=self.image_name,
                                                  compute_environment=AWSComputeEnvironment())
-            self.credentials = AWSCredentials()
         else:
             logging.error(f"Unknown image {self.image_name}")
             exit(1)
@@ -455,7 +454,6 @@ class BTAPAnalysis():
                        'hourly.csv',
                        'eplusout.sql']
 
-
         if self.compute_environment != 'local':
             #Create Zip Files.
             for folder in folders:
@@ -467,20 +465,12 @@ class BTAPAnalysis():
                 # Create zip
                 shutil.make_archive(source_zip, 'zip', source_folder)
 
-
-
-
-
-
-
-
         # If this is an local_managed_aws_workers run, copy the excel file to s3 for storage.
         if self.compute_environment == 'local_managed_aws_workers':
-            self.credentials = AWSCredentials()
             message = "Uploading %s..." % self.cp.s3_analysis_excel_output_path()
             logging.info(message)
             S3().upload_file(self.cp.analysis_excel_results_path(),
-                             self.credentials.account_id,
+                             aws_credentials.account_id,
                              self.cp.s3_analysis_excel_output_path())
 
             # now copy results to s3
@@ -489,20 +479,14 @@ class BTAPAnalysis():
                 print(f"Uploading {folder} to S3 results")
                 source_folder = os.path.join(self.analysis_results_folder(), folder)
                 target_folder = os.path.join(self.cp.s3_analysis_results_folder(),folder).replace('\\', '/')
-                S3().copy_folder_to_s3(bucket_name=self.credentials.account_id,
+                S3().copy_folder_to_s3(bucket_name=aws_credentials.account_id,
                                        source_folder=source_folder,
                                        target_folder=target_folder)
                 # Upload Zip files of results.
                 source_zip = os.path.join(self.analysis_results_folder(), 'zips', folder + '.zip' )
                 s3_target_zip = os.path.join(self.cp.s3_analysis_results_folder(), 'zips', folder + '.zip').replace('\\', '/')
-                S3().upload_file(source_zip, self.credentials.account_id, s3_target_zip)
-
-
+                S3().upload_file(source_zip, aws_credentials.account_id, s3_target_zip)
             print("Data upload to S3 Complete")
-
-
-
-
         return
 
     @staticmethod

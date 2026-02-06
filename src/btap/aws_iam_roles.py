@@ -1,12 +1,11 @@
 import logging
 import json
 from icecream import ic
-from src.btap.aws_credentials import AWSCredentials
+from src.btap.aws_credentials import aws_credentials
 from src.btap.common_paths import CommonPaths
 
 class IAMRoles():
     def __init__(self, build_env_name = None):
-        self.credentials = self.get_credentials()
         self.path = '/service-role/'
         self.role_name = ""
         self.max_duration = 43200
@@ -16,7 +15,7 @@ class IAMRoles():
         self.build_env_name = build_env_name
 
     def arn(self):
-        iam_res = AWSCredentials().iam_resource
+        iam_res = aws_credentials.iam_resource
         role = iam_res.Role(self.full_role_name())
         role.load()
         return role.arn
@@ -30,8 +29,8 @@ class IAMRoles():
     def create_role(self):
         # delete if it already exists.
         self.delete()
-        iam_client = AWSCredentials().iam_client
-        iam_res = AWSCredentials().iam_resource
+        iam_client = aws_credentials.iam_client
+        iam_res = aws_credentials.iam_resource
         iam_client.create_role(
             Path=self.path,
             RoleName=self.full_role_name(),
@@ -48,7 +47,7 @@ class IAMRoles():
         logging.info(f'{self.full_role_name()} iam role has been created')
 
     def delete(self):
-        iam = AWSCredentials().iam_client
+        iam = aws_credentials.iam_client
         try:
             for mp in self.managed_policies:
                 iam.detach_role_policy(
@@ -63,14 +62,9 @@ class IAMRoles():
             print(f'iam_role {self.full_role_name()} did not exist. So not deleting.')
         logging.info(f'iam_role {self.full_role_name()} deleted.')
 
-    def get_credentials(self):
-        credentials = AWSCredentials()
-        return credentials
-
 class IAMCodeBuildRole(IAMRoles):
     def __init__(self, build_env_name = None):
         self.build_env_name = build_env_name
-        self.credentials = self.get_credentials()
         self.path = '/service-role/'
         self.role_name = "code_build"
         self.max_duration = 43200
@@ -97,7 +91,6 @@ class IAMCodeBuildRole(IAMRoles):
 class IAMBatchJobRole(IAMRoles):
     def __init__(self, build_env_name = None):
         self.build_env_name = build_env_name
-        self.credentials = self.get_credentials()
         self.path = '/service-role/'
         self.role_name = "batch_job_role"
         self.max_duration = 43200
@@ -138,7 +131,6 @@ class IAMBatchJobRole(IAMRoles):
 class IAMBatchServiceRole(IAMRoles):
     def __init__(self, build_env_name = None):
         self.build_env_name = build_env_name
-        self.credentials = self.get_credentials()
         self.path = '/service-role/'
         self.role_name = "batch_service_role"
         self.max_duration = 43200

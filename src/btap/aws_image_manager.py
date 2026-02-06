@@ -1,4 +1,4 @@
-from src.btap.aws_credentials import AWSCredentials
+from src.btap.aws_credentials import aws_credentials
 from src.btap.constants import MAX_AWS_VCPUS, MAX_SIMULATIONS_PER_ANALYSIS
 from src.btap.docker_image_manager import DockerImageManager
 from src.btap.aws_s3 import S3
@@ -12,9 +12,6 @@ from icecream import ic
 
 class AWSImageManager(DockerImageManager):
 
-    def __aws_credentials(self):
-        return AWSCredentials()
-
     def __init__(self,
                  build_env_name=None,
                  image_name=None,
@@ -22,14 +19,13 @@ class AWSImageManager(DockerImageManager):
                  ):
         super().__init__(image_name=image_name)
         self.build_env_name = build_env_name
-        self.credentials = self.__aws_credentials()
-        self.bucket = self.credentials.account_id
-        self.region = self.credentials.region_name
+        self.bucket = aws_credentials.account_id
+        self.region = aws_credentials.region_name
         self.compute_environment = compute_environment
         self.image_tag = 'latest'
 
     def get_image_uri(self):
-        return f"{self.credentials.account_id}.dkr.ecr.{self.credentials.region_name}.amazonaws.com/{self.get_full_image_name()}:{self.image_tag}"
+        return f"{aws_credentials.account_id}.dkr.ecr.{aws_credentials.region_name}.amazonaws.com/{self.get_full_image_name()}:{self.image_tag}"
 
     def get_threads(self):
         if MAX_AWS_VCPUS > MAX_SIMULATIONS_PER_ANALYSIS:
@@ -54,7 +50,7 @@ class AWSImageManager(DockerImageManager):
         logging.info(message)
         print(message)
         # Codebuild image.
-        codebuild = AWSCredentials().codebuild_client
+        codebuild = aws_credentials.codebuild_client
 
         # Upload files to S3 using custom s3 class to a user folder.
         s3 = S3()
@@ -73,11 +69,11 @@ class AWSImageManager(DockerImageManager):
         environment_vars = [
                                {
                                    "name": "AWS_DEFAULT_REGION",
-                                   "value": self.credentials.region_name
+                                   "value": aws_credentials.region_name
                                },
                                {
                                    "name": "AWS_ACCOUNT_ID",
-                                   "value": self.credentials.account_id
+                                   "value": aws_credentials.account_id
                                }
                            ] + [{"name": k, "value": v} for k, v in self._get_image_build_args().items()]
 
@@ -108,7 +104,7 @@ class AWSImageManager(DockerImageManager):
 
         # Start building image.
         start = time.time()
-        url = f"https://{self.credentials.region_name}.console.aws.amazon.com/codesuite/codebuild"
+        url = f"https://{aws_credentials.region_name}.console.aws.amazon.com/codesuite/codebuild"
         message = f'Building Image {self.get_full_image_name()} on {url}, will take ~10m'
         print(message)
         logging.info(message)
@@ -152,7 +148,7 @@ class AWSImageManager(DockerImageManager):
 
 
     def _create_image_repository(self, repository_name=None):
-        ecr = AWSCredentials().ecr_client
+        ecr = aws_credentials.ecr_client
         repositories = ecr.describe_repositories()['repositories']
         if next((item for item in repositories if item["repositoryName"] == repository_name), None) == None:
             message = f"Creating repository {repository_name}"
@@ -175,7 +171,7 @@ class AWSImageManager(DockerImageManager):
         ecr = boto3.client('ecr', config=aws_config)
         # Initialize the object count
         object_count = 0
-        ecr = AWSCredentials().ecr_client
+        ecr = aws_credentials.ecr_client
 
         repositories = []
         describe_repo_paginator = ecr.get_paginator('describe_repositories')
@@ -191,7 +187,7 @@ class AWSImageManager(DockerImageManager):
         return build_env_names
 
     def _delete_image_repository(self, repository_name=None):
-        ecr = AWSCredentials().ecr_client
+        ecr = aws_credentials.ecr_client
         repositories = ecr.describe_repositories()['repositories']
         if not next((item for item in repositories if item["repositoryName"] == repository_name), None) == None:
             message = f"Deleting repository {repository_name}"
@@ -205,14 +201,14 @@ class AWSImageManager(DockerImageManager):
 
     def get_image(self, image_name=None, image_tag='latest'):
         image = None
-        ecr = AWSCredentials().ecr_client
+        ecr = aws_credentials.ecr_client
         # Get list of tags for image name on aws.
         available_tags = sum(
             [d.get('imageTags', [None]) for d in
              ecr.describe_images(repositoryName=image_name)['imageDetails']],
             [])
         if image_tag in available_tags:
-            image = f'{self.credentials.account_id}.dkr.ecr.{self.credentials.region_name}.amazonaws.com/' + image_name + ':' + image_tag
+            image = f'{aws_credentials.account_id}.dkr.ecr.{aws_credentials.region_name}.amazonaws.com/' + image_name + ':' + image_tag
         else:
             image = None
         return image
