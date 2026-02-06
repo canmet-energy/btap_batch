@@ -61,3 +61,4 @@ class AWSCredentials:
         # AWS Region name.
         self.region_name = boto3.Session().region_name
 
+aws_credentials = AWSCredentials()

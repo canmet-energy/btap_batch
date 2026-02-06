@@ -8,7 +8,7 @@ import pandas
 import pathlib
 import plotly.express as px
 from icecream import ic
-from src.btap.aws_credentials import AWSCredentials
+from src.btap.aws_credentials import aws_credentials
 
 
 class AWSResultsTable():
@@ -26,9 +26,9 @@ class AWSResultsTable():
         self.billing_mode = "PAY_PER_REQUEST"
 
     def create_table(self):
-        if not self.table_name in AWSCredentials().dynamodb_client.list_tables()['TableNames']:
+        if not self.table_name in aws_credentials.dynamodb_client.list_tables()['TableNames']:
             try:
-                table = AWSCredentials().dynamodb_resource.create_table(
+                table = aws_credentials.dynamodb_resource.create_table(
                     TableName=self.table_name,
                     KeySchema=self.key_schema,
                     AttributeDefinitions=self.attribute_defs,
@@ -44,20 +44,20 @@ class AWSResultsTable():
                 return self.table
 
     def delete_table(self):
-        if self.table_name in AWSCredentials().dynamodb_client.list_tables()['TableNames']:
-            table = AWSCredentials().dynamodb_resource.Table(self.table_name)
+        if self.table_name in aws_credentials.dynamodb_client.list_tables()['TableNames']:
+            table = aws_credentials.dynamodb_resource.Table(self.table_name)
             table.delete()
             print(f"Deleting {table.name}...")
             table.wait_until_not_exists()
 
     def save_results(self, dataframe):
-        table = AWSCredentials().dynamodb_resource.Table(self.table_name)
+        table = aws_credentials.dynamodb_resource.Table(self.table_name)
         with table.batch_writer() as batch:
             for index, row in dataframe.iterrows():
                 batch.put_item(json.loads(row.to_json(), parse_float=Decimal))
 
     def save_dict_result(self, run_options):
-        table = AWSCredentials().dynamodb_resource.Table(self.table_name)
+        table = aws_credentials.dynamodb_resource.Table(self.table_name)
         with table.batch_writer() as batch:
             batch.put_item(json.loads(json.dumps(run_options), parse_float=Decimal))
 
@@ -65,7 +65,7 @@ class AWSResultsTable():
         filepath = pathlib.Path(os.path.join(folder_path, f"database.{type}"))
         failed_filepath = pathlib.Path(os.path.join(folder_path, f"database_failed.{type}"))
         filepath.parent.mkdir(parents=True, exist_ok=True)
-        table = AWSCredentials().dynamodb_resource.Table(self.table_name)
+        table = aws_credentials.dynamodb_resource.Table(self.table_name)
         response = table.scan()
         data = response['Items']
         while 'LastEvaluatedKey' in response:
@@ -95,7 +95,7 @@ class AWSResultsTable():
         return df
 
     def aws_db_analyses_status(self):
-        table = AWSCredentials().dynamodb_resource.Table(self.table_name)
+        table = aws_credentials.dynamodb_resource.Table(self.table_name)
         response = table.scan()
         data = response['Items']
         while 'LastEvaluatedKey' in response:
@@ -128,7 +128,7 @@ class AWSResultsTable():
         return result
 
     def aws_db_failures(self, analysis_name=None):
-        table = AWSCredentials().dynamodb_resource.Table(self.table_name)
+        table = aws_credentials.dynamodb_resource.Table(self.table_name)
         response = table.scan()
         data = response['Items']
         while 'LastEvaluatedKey' in response:
@@ -155,7 +155,7 @@ class AWSResultsTable():
                                       color=None,
                                       size=None,
                                       hover_data=[':datapoint_id']):
-        table = AWSCredentials().dynamodb_resource.Table(self.table_name)
+        table = aws_credentials.dynamodb_resource.Table(self.table_name)
         response = table.scan()
         data = response['Items']
         while 'LastEvaluatedKey' in response:

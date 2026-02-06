@@ -10,7 +10,7 @@ from functools import partial
 from concurrent.futures import ThreadPoolExecutor, as_completed
 import shutil
 import re
-from src.btap.aws_credentials import AWSCredentials
+from src.btap.aws_credentials import aws_credentials
 from src.btap.aws_dynamodb import AWSResultsTable
 from src.btap.aws_s3 import S3
 from src.btap.constants import BASELINE_RESULTS
@@ -171,7 +171,7 @@ class PostProcessResults():
             # message = "Uploading %s..." % target_path_on_aws
             # print(message)
             # logging.info(message)
-            # S3().upload_file(target_on_local, AWSCredentials().account_id, target_path_on_aws)
+            # S3().upload_file(target_on_local, aws_credentials.account_id, target_path_on_aws)
 
     def save_excel_output(self):
         # Create excel object
@@ -278,7 +278,7 @@ class PostProcessResults():
                         message = "Uploading %s..." % target_path_on_aws
                         print(message)
                         logging.info(message)
-                        S3().upload_file(file=sum_hourly_res_path, bucket_name=AWSCredentials().account_id, target_path=target_path_on_aws)
+                        S3().upload_file(file=sum_hourly_res_path, bucket_name=aws_credentials.account_id, target_path=target_path_on_aws)
 
 
     def reference_comparisons(self):

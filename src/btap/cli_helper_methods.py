@@ -4,7 +4,7 @@ from src.btap.constants import MANAGER_CONTAINER_VCPU, MANAGER_CONTAINER_MEMORY
 from src.btap.constants import MAX_AWS_VCPUS
 from src.btap.constants import RSMEANS_CURRENT_YEAR
 from src.btap.aws_batch import AWSBatch
-from src.btap.aws_credentials import AWSCredentials
+from src.btap.aws_credentials import aws_credentials
 from src.btap.aws_compute_environment import AWSComputeEnvironment
 from src.btap.aws_image_manager import AWSImageManager
 from src.btap.docker_image_manager import DockerImageManager
@@ -531,7 +531,7 @@ def analysis(project_input_folder=None,
 
     # delete output from previous run if present on s3
     if compute_environment == 'local_managed_aws_workers' or compute_environment == 'aws':
-        bucket = AWSCredentials().account_id
+        bucket = aws_credentials.account_id
         user_name = os.environ.get('BUILD_ENV_NAME').replace('.', '_')
         # Check if aws build_env_name exists
         if not user_name in AWSImageManager.get_existing_build_env_names():
@@ -858,7 +858,7 @@ def get_number_of_failures(job_queue_name='btap_cli'):
                               compute_environment=AWSComputeEnvironment(name=job_queue_name)
                               )
     # Connect to AWS Batch
-    client = AWSCredentials().batch_client
+    client = aws_credentials.batch_client
 
     # Initialize the object count
     object_count = 0
