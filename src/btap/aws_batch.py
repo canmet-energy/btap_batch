@@ -4,7 +4,7 @@ from src.btap.constants import INSTANCE_STORAGE_SIZE_GB
 import time
 import logging
 from random import random
-from src.btap.aws_credentials import AWSCredentials
+from src.btap.aws_credentials import aws_credentials
 from src.btap.aws_iam_roles import IAMBatchJobRole
 from src.btap.aws_job import AWSBTAPJob
 from src.btap.aws_analysis_job import AWSAnalysisJob
@@ -41,10 +41,6 @@ class AWSBatch:
         self.__deregister_job_definition()
         self.__delete_job_queue()
 
-
-    def __aws_credentials(self):
-        return AWSCredentials()
-
     def _build_env_name(self):
         if self.build_env_name is None:
             return CommonPaths().get_build_env_name().replace('.', '_')
@@ -54,7 +50,7 @@ class AWSBatch:
 
 
     def __describe_job_queues(self, job_queue_name, n=0):
-        batch_client = AWSCredentials().batch_client
+        batch_client = aws_credentials.batch_client
         try:
             # See https://boto3.amazonaws.com/v1/documentation/api/latest/reference/services/batch.html#Batch.Client.describe_job_queues
             return batch_client.describe_job_queues(jobQueues=[job_queue_name])
@@ -73,7 +69,7 @@ class AWSBatch:
         logging.info(message)
         print(message)
 
-        batch_client = AWSCredentials().batch_client
+        batch_client = aws_credentials.batch_client
 
         response = batch_client.create_job_queue(jobQueueName=self.job_queue_name,
                                                  priority=100,
@@ -112,7 +108,7 @@ class AWSBatch:
         message = f'Creating Job Definition {self.job_def_name}'
         logging.info(message)
         print(message)
-        batch_client = AWSCredentials().batch_client
+        batch_client = aws_credentials.batch_client
 
         response = batch_client.register_job_definition(jobDefinitionName=self.job_def_name,
                                                         type='container',
@@ -129,7 +125,7 @@ class AWSBatch:
 
 
     def __deregister_job_definition(self):
-        batch_client = AWSCredentials().batch_client
+        batch_client = aws_credentials.batch_client
 
         describe = batch_client.describe_job_definitions(jobDefinitionName=self.job_def_name)
         if len(describe['jobDefinitions']) != 0:
@@ -151,7 +147,7 @@ class AWSBatch:
         describe = self.__describe_job_queues(self.job_queue_name)
         if len(describe['jobQueues']) != 0:
 
-            batch_client = AWSCredentials().batch_client
+            batch_client = aws_credentials.batch_client
             # Disable Queue
             # Tell user
             message = f'Disable Job Queue {self.job_queue_name}'
@@ -205,7 +201,7 @@ class AWSBatch:
     def get_active_jobs(self):
 
         # Connect to AWS Batch
-        client = AWSCredentials().batch_client
+        client = aws_credentials.batch_client
 
         jobs = []
             # Make into a list
@@ -247,7 +243,7 @@ class AWSBatch:
                     # Get a message to submit as justfication for the failure
                     cancel_msg = "Cancelled by user\n"
                     # Connect to AWS Batch
-                    client = AWSCredentials().batch_client
+                    client = aws_credentials.batch_client
                     client.cancel_job(jobId=j["jobId"], reason=cancel_msg)
                     client.terminate_job(jobId=j["jobId"], reason=cancel_msg)
 
