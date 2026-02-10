@@ -81,6 +81,7 @@ properties:
     type: integer
     enum: 
       - 2024
+      - 2025
 
   enable_proprietary_carbon:
     description: "**ADVANCED** for NRCan use only."

@@ -13,10 +13,13 @@
 - [11. Property `root > enable_proprietary_carbon`](#enable_proprietary_carbon)
 - [12. Property `root > local_costing_path`](#local_costing_path)
 - [13. Property `root > local_factors_path`](#local_factors_path)
-- [14. Property `root > build_btap_cli`](#build_btap_cli)
-- [15. Property `root > build_btap_batch`](#build_btap_batch)
-- [16. Property `root > local_nrcan`](#local_nrcan)
-- [17. Property `root > compute_environment`](#compute_environment)
+- [14. Property `root > local_carbon_opaque_path`](#local_carbon_opaque_path)
+- [15. Property `root > local_carbon_glazing_path`](#local_carbon_glazing_path)
+- [16. Property `root > local_carbon_frame_path`](#local_carbon_frame_path)
+- [17. Property `root > build_btap_cli`](#build_btap_cli)
+- [18. Property `root > build_btap_batch`](#build_btap_batch)
+- [19. Property `root > local_nrcan`](#local_nrcan)
+- [20. Property `root > compute_environment`](#compute_environment)
 
 |                           |             |
 | ------------------------- | ----------- |
@@ -39,6 +42,9 @@
 | - [enable_proprietary_carbon](#enable_proprietary_carbon ) | No      | boolean           | No         | -          | **ADVANCED** for NRCan use only.                                                                                                                                                                                                                                                                                                                                                                                                                       |
 | - [local_costing_path](#local_costing_path )               | No      | string            | No         | -          | Path to the local costs.csv costing file.  The default is '<this btap_batch local repository location>/resources/costing/costs.csv'. If you are using a custom costing file, you can set the path. here<br /><br /> Ignore this if you are not using costing or are content with the default costing_database.json costing file.<br /><br />                                                                                                           |
 | - [local_factors_path](#local_factors_path )               | No      | string            | No         | -          | Path to the local costs_local_factors.csv costing localization factors file.  The default is '<this btap_batch local repository location>/resources/costing/costs_local_factors.csv'. If you are using<br /><br /> a custom costing localization factors file, you can set the path here<br /><br /> Ignore this if you are not using costing or are content with the default costing_local_factors.csv costing localization factors file.<br /><br /> |
+| - [local_carbon_opaque_path](#local_carbon_opaque_path )   | No      | string            | No         | -          | Path to the local costs_local_factors.csv carbon database file.  The default is '<this btap_batch local repository location>/resources/carbon/carbon_opaque.csv'. If you are using<br /><br /> a custom carbon file, you can set the path here<br /><br /> Ignore this if you are not using embodied carbon or are content with the defaults.<br /><br />                                                                                              |
+| - [local_carbon_glazing_path](#local_carbon_glazing_path ) | No      | string            | No         | -          | Path to the local costs_local_factors.csv costing localization factors file.  The default is '<this btap_batch local repository location>/resources/carbon/carbon_glazing.csv'. If you are using<br /><br /> a custom carbon file, you can set the path here<br /><br /> Ignore this if you are not using embodied carbon or are content with the defaults.<br /><br />                                                                                |
+| - [local_carbon_frame_path](#local_carbon_frame_path )     | No      | string            | No         | -          | Path to the local costs_local_factors.csv costing localization factors file.  The default is '<this btap_batch local repository location>/resources/carbon/carbon_frame.csv'. If you are using<br /><br /> a custom carbon file, you can set the path here<br /><br /> Ignore this if you are not using embodied carbon or are content with the defaults.<br /><br />                                                                                  |
 | + [build_btap_cli](#build_btap_cli )                       | No      | boolean           | No         | -          | **ADVANCED** Build most recent btap_cli always. Set to false to save time if standards and costing branches have not changed.                                                                                                                                                                                                                                                                                                                          |
 | + [build_btap_batch](#build_btap_batch )                   | No      | boolean           | No         | -          | **ADVANCED** Build most recent btap_batch always. Set to false to save time if standards and costing branches have not changed.                                                                                                                                                                                                                                                                                                                        |
 | + [local_nrcan](#local_nrcan )                             | No      | boolean           | No         | -          | **NRCan only** Set this to True if you intend to build your environment locally on a computer connected to the NRCan network.  Otherwise leave it as False.                                                                                                                                                                                                                                                                                            |
@@ -169,6 +175,7 @@ weather_list:
 
 Must be one of:
 * 2024
+* 2025
 
 ## <a name="enable_proprietary_carbon"></a>11. Property `root > enable_proprietary_carbon`
 
@@ -206,7 +213,49 @@ Must be one of:
 
  Ignore this if you are not using costing or are content with the default costing_local_factors.csv costing localization factors file.
 
-## <a name="build_btap_cli"></a>14. Property `root > build_btap_cli`
+## <a name="local_carbon_opaque_path"></a>14. Property `root > local_carbon_opaque_path`
+
+|              |                                        |
+| ------------ | -------------------------------------- |
+| **Type**     | `string`                               |
+| **Required** | No                                     |
+| **Default**  | `"resources/carbon/carbon_opaque.csv"` |
+
+**Description:** Path to the local costs_local_factors.csv carbon database file.  The default is '<this btap_batch local repository location>/resources/carbon/carbon_opaque.csv'. If you are using
+
+ a custom carbon file, you can set the path here
+
+ Ignore this if you are not using embodied carbon or are content with the defaults.
+
+## <a name="local_carbon_glazing_path"></a>15. Property `root > local_carbon_glazing_path`
+
+|              |                                         |
+| ------------ | --------------------------------------- |
+| **Type**     | `string`                                |
+| **Required** | No                                      |
+| **Default**  | `"resources/carbon/carbon_glazing.csv"` |
+
+**Description:** Path to the local costs_local_factors.csv costing localization factors file.  The default is '<this btap_batch local repository location>/resources/carbon/carbon_glazing.csv'. If you are using
+
+ a custom carbon file, you can set the path here
+
+ Ignore this if you are not using embodied carbon or are content with the defaults.
+
+## <a name="local_carbon_frame_path"></a>16. Property `root > local_carbon_frame_path`
+
+|              |                                       |
+| ------------ | ------------------------------------- |
+| **Type**     | `string`                              |
+| **Required** | No                                    |
+| **Default**  | `"resources/carbon/carbon_frame.csv"` |
+
+**Description:** Path to the local costs_local_factors.csv costing localization factors file.  The default is '<this btap_batch local repository location>/resources/carbon/carbon_frame.csv'. If you are using
+
+ a custom carbon file, you can set the path here
+
+ Ignore this if you are not using embodied carbon or are content with the defaults.
+
+## <a name="build_btap_cli"></a>17. Property `root > build_btap_cli`
 
 |              |           |
 | ------------ | --------- |
@@ -216,7 +265,7 @@ Must be one of:
 
 **Description:** **ADVANCED** Build most recent btap_cli always. Set to false to save time if standards and costing branches have not changed.
 
-## <a name="build_btap_batch"></a>15. Property `root > build_btap_batch`
+## <a name="build_btap_batch"></a>18. Property `root > build_btap_batch`
 
 |              |           |
 | ------------ | --------- |
@@ -226,7 +275,7 @@ Must be one of:
 
 **Description:** **ADVANCED** Build most recent btap_batch always. Set to false to save time if standards and costing branches have not changed.
 
-## <a name="local_nrcan"></a>16. Property `root > local_nrcan`
+## <a name="local_nrcan"></a>19. Property `root > local_nrcan`
 
 |              |           |
 | ------------ | --------- |
@@ -236,7 +285,7 @@ Must be one of:
 
 **Description:** **NRCan only** Set this to True if you intend to build your environment locally on a computer connected to the NRCan network.  Otherwise leave it as False.
 
-## <a name="compute_environment"></a>17. Property `root > compute_environment`
+## <a name="compute_environment"></a>20. Property `root > compute_environment`
 
 |              |                    |
 | ------------ | ------------------ |
@@ -257,4 +306,4 @@ Must be one of:
 * "aws"
 
 ----------------------------------------------------------------------------------------------------------------------------
-Generated using [json-schema-for-humans](https://github.com/coveooss/json-schema-for-humans) on 2025-10-21 at 14:09:16 -0400
+Generated using [json-schema-for-humans](https://github.com/coveooss/json-schema-for-humans) on 2026-02-10 at 13:25:00 -0500
