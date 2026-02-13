@@ -1,4 +1,4 @@
-FROM public.ecr.aws/ubuntu/ubuntu:22.04
+FROM public.ecr.aws/ubuntu/ubuntu:24.04
 ARG BTAP_BATCH_BRANCH
 ARG GIT_API_TOKEN
 ARG BUILD_ENV_NAME
