@@ -81,7 +81,7 @@ class AWSAnalysisJob():
             return self.job_wrapper(n=n + 1)
 
     def container_command(self):
-        command = ["python3",
+        command = ["/btap_batch/venv/bin/python3",
                    "/btap_batch/bin/btap_batch.py",
                    "run",
                    "--project_folder",

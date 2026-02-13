@@ -1,12 +1,9 @@
 FROM public.ecr.aws/ubuntu/ubuntu:24.04
 ARG BTAP_BATCH_BRANCH
 ARG GIT_API_TOKEN
-ARG BUILD_ENV_NAME
 
-ENV BUILD_ENV_NAME=$BUILD_ENV_NAME
-ENV GIT_API_TOKEN=$GIT_API_TOKEN
 ENV BTAP_BATCH_BRANCH=$BTAP_BATCH_BRANCH
-ENV PYTHONPATH=/btap_batch
+ENV GIT_API_TOKEN=$GIT_API_TOKEN
 
 # Install BTAP Batch, python, git, and network related packages.
 RUN apt-get -y update
@@ -14,9 +11,8 @@ RUN apt-get install -y python3-pip python3-venv git ca-certificates curl wget
 RUN echo "Cloning btap_batch"
 RUN git clone https://$GIT_API_TOKEN:x-oauth-basic@github.com/canmet-energy/btap_batch.git --depth 1 --branch ${BTAP_BATCH_BRANCH} --single-branch /btap_batch
 RUN cd /btap_batch && echo 'btap_batch revision' && git rev-parse --short HEAD
-RUN python3 -m venv ./venv
-RUN source ./venv/bin/activate
-RUN pip install -r requirements.txt
+RUN python3 -m venv /btap_batch/venv
+RUN /btap_batch/venv/bin/pip install -r /btap_batch/requirements.txt
 
 # Install Docker-related packages by retrieving and signing the appropriate
 # package list.
@@ -37,7 +33,6 @@ CMD ["/bin/bash"]
 # docker build -t --no-cache --build-arg GIT_API_TOKEN=$GIT_API_TOKEN --build-arg BUILD_ENV_NAME=$BUILD_ENV_NAME --build-arg  BTAP_BATCH_BRANCH=$BTAP_BATCH_BRANCH .
 # Test locally.
 # docker run -it --rm -v "//var/run/docker.sock:/var/run/docker.sock" -v "//c/Users/plopez/.aws:/root/.aws"  btap_batch /bin/bash
-# PYTHONPATH=/btap_batch python3 /btap_batch/examples/optimization/new_run.py
 
 # docker run -it --rm -v "//var/run/docker.sock:/var/run/docker.sock" -v "//c/Users/plopez/.aws:/root/.aws"  834599497928.dkr.ecr.ca-central-1.amazonaws.com/phylroy_lopez_btap_batch  /bin/bash
 
