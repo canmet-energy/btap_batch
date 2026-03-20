@@ -38,6 +38,17 @@ class DockerBTAPJob:
             check_datapoint = self._was_datapoint_file_generated()
             if check_datapoint == True:
                 job_data.update(self._get_job_results())
+
+                # If BTAP Costing was done, sometimes assemblies might exceed
+                # the maximum conductance assemblies we have. Mark the
+                # simulation as a failure if that occured.
+                if job_data["unrealistic_assemblies"] == True:
+                    job_data['container_error'] = "Unrealistic assembly: BTAP Costing could not realistically cost " \
+                                                  "some constructions due to conductances being too low/high."
+                    job_data['status'] = "FAILED"
+                    self._save_output_file(job_data)
+                    return job_data
+
                 print(f"Job {self.job_id} completed successfully.")
                 return job_data
             else:
