@@ -14,7 +14,7 @@ from src.btap.btap_postprocess_analysis import PostProcessResults
 from src.btap.docker_image_manager import DockerImageManager
 from src.btap.aws_image_manager import AWSImageManager
 from src.btap.aws_credentials import aws_credentials
-from src.btap.common_paths import CommonPaths
+from src.btap.common_paths import common_paths
 from src.btap.aws_compute_environment import AWSComputeEnvironment
 from src.btap.common_paths  import SCHEMA_FOLDER
 import jsonschema
@@ -113,10 +113,8 @@ class BTAPAnalysis():
         self.enable_carbon = self.analysis_config.get(':enable_carbon')
         self.options = self.analysis_config.get(':options')
 
-        # Set common paths singleton.
-        self.cp = CommonPaths()
         # Setting paths to current context.
-        self.cp.set_analysis_info(analysis_id=self.analysis_id,
+        common_paths.set_analysis_info(analysis_id=self.analysis_id,
                                   analysis_name=self.analysis_name,
                                   local_output_folder=self.output_folder,
                                   project_input_folder=self.analysis_input_folder,
@@ -152,8 +150,8 @@ class BTAPAnalysis():
     def create_paths_folders(self):
 
         # Create analysis folder
-        print(f'analyses_folder is:{self.cp.output_folder()}')
-        os.makedirs(self.cp.output_folder(), exist_ok=True)
+        print(f'analyses_folder is:{common_paths.output_folder()}')
+        os.makedirs(common_paths.output_folder(), exist_ok=True)
 
         # Tell user and logger id and names
         print(f'analysis_id is: {self.analysis_id}')
@@ -166,14 +164,14 @@ class BTAPAnalysis():
         logging.info(f'analysis_output_folder:{self.analysis_output_folder()}')
 
         # Tell log we are deleting previous runs.
-        message = f'Deleting previous runs from: {self.cp.algorithm_folder()}'
+        message = f'Deleting previous runs from: {common_paths.algorithm_folder()}'
         logging.info(message)
         print(message)
         # Check if folder exists
-        if os.path.isdir(self.cp.algorithm_folder()):
+        if os.path.isdir(common_paths.algorithm_folder()):
             # Remove old folder
             try:
-                shutil.rmtree(self.cp.algorithm_folder())
+                shutil.rmtree(common_paths.algorithm_folder())
             except PermissionError:
                 message = f'Could not delete {self.analysis_name_folder()}. Do you have a file open in that folder? Exiting'
                 print(message)
@@ -186,36 +184,36 @@ class BTAPAnalysis():
         # create local input and output folders
 
         # Make input / output folder for mounting to container.
-        os.makedirs(self.cp.algorithm_folder(), exist_ok=True)
-        os.makedirs(self.cp.analysis_results_folder(), exist_ok=True)
-        os.makedirs(self.cp.analysis_database_folder(), exist_ok=True)
-        os.makedirs(self.cp.analysis_failures_folder(), exist_ok=True)
-        logging.info(f"local mounted input folder:{self.cp.algorithm_folder()}")
-        logging.info(f"local mounted output folder:{self.cp.algorithm_folder()}")
-        logging.info(f"local mounted results_folder folder:{self.cp.analysis_results_folder()}")
-        logging.info(f"local mounted database_folder folder:{self.cp.analysis_database_folder()}")
-        logging.info(f"local mounted failures_folder folder:{self.cp.analysis_failures_folder()}")
+        os.makedirs(common_paths.algorithm_folder(), exist_ok=True)
+        os.makedirs(common_paths.analysis_results_folder(), exist_ok=True)
+        os.makedirs(common_paths.analysis_database_folder(), exist_ok=True)
+        os.makedirs(common_paths.analysis_failures_folder(), exist_ok=True)
+        logging.info(f"local mounted input folder:{common_paths.algorithm_folder()}")
+        logging.info(f"local mounted output folder:{common_paths.algorithm_folder()}")
+        logging.info(f"local mounted results_folder folder:{common_paths.analysis_results_folder()}")
+        logging.info(f"local mounted database_folder folder:{common_paths.analysis_database_folder()}")
+        logging.info(f"local mounted failures_folder folder:{common_paths.analysis_failures_folder()}")
 
     def algorithm_folder(self):
-        return self.cp.algorithm_folder()
+        return common_paths.algorithm_folder()
 
     def analysis_name_folder(self):
-        return self.cp.project_output_folder()
+        return common_paths.project_output_folder()
 
     def analysis_output_folder(self):
-        return self.cp.algorithm_folder()
+        return common_paths.algorithm_folder()
 
     def analysis_results_folder(self):
-        return self.cp.analysis_results_folder()
+        return common_paths.analysis_results_folder()
 
     def analysis_excel_results_path(self):
-        return self.cp.analysis_excel_results_path()
+        return common_paths.analysis_excel_results_path()
 
     def analysis_failures_folder(self):
-        return self.cp.analysis_failures_folder()
+        return common_paths.analysis_failures_folder()
 
     def analysis_database_folder(self):
-        return self.cp.analysis_database_folder()
+        return common_paths.analysis_database_folder()
 
     @staticmethod
     def load_analysis_input_file(analysis_config_file=None):
@@ -282,11 +280,11 @@ class BTAPAnalysis():
         run_options[':enable_carbon'] = self.enable_carbon
 
         # Local Paths
-        local_datapoint_input_folder = os.path.join(self.cp.algorithm_folder(), job_id)
-        local_run_option_file = os.path.join(self.cp.analysis_job_id_folder(job_id=job_id), 'run_options.yml')
+        local_datapoint_input_folder = os.path.join(common_paths.algorithm_folder(), job_id)
+        local_run_option_file = os.path.join(common_paths.analysis_job_id_folder(job_id=job_id), 'run_options.yml')
 
         # Save run_option file for this simulation.
-        os.makedirs(self.cp.analysis_job_id_folder(job_id=job_id), exist_ok=True)
+        os.makedirs(common_paths.analysis_job_id_folder(job_id=job_id), exist_ok=True)
         logging.info(f'saving simulation input file here:{local_run_option_file}')
         with open(local_run_option_file, 'w') as outfile:
             yaml.dump(run_options, outfile, encoding=('utf-8'))
@@ -295,9 +293,9 @@ class BTAPAnalysis():
         local_osm_dict = self.get_local_osm_files()
         if run_options[':building_type'] in local_osm_dict:
             shutil.copy(local_osm_dict[run_options[':building_type']],
-                        self.cp.analysis_job_id_folder(job_id=job_id))
+                        common_paths.analysis_job_id_folder(job_id=job_id))
             logging.info(
-                f"Copying osm file from {local_osm_dict[run_options[':building_type']]} to {self.cp.analysis_job_id_folder(job_id=job_id)}")
+                f"Copying osm file from {local_osm_dict[run_options[':building_type']]} to {common_paths.analysis_job_id_folder(job_id=job_id)}")
 
         # Submit Job to batch
         job = self.batch.create_job(job_id=job_id)
@@ -316,13 +314,13 @@ class BTAPAnalysis():
         df = self.sort_results(job_data)
         # Save job_data
         # to csv file.
-        pathlib.Path(self.cp.analysis_database_folder()).mkdir(parents=True, exist_ok=True)
-        df.to_csv(os.path.join(self.cp.analysis_database_folder(), f"{job_data[':datapoint_id']}.csv"))
+        pathlib.Path(common_paths.analysis_database_folder()).mkdir(parents=True, exist_ok=True)
+        df.to_csv(os.path.join(common_paths.analysis_database_folder(), f"{job_data[':datapoint_id']}.csv"))
 
         # Save failures to a folder as well.
 
         if job_data['status'] != 'SUCCEEDED':
-            df.to_csv(os.path.join(self.cp.analysis_failures_folder(), f"{job_data[':datapoint_id']}.csv"))
+            df.to_csv(os.path.join(common_paths.analysis_failures_folder(), f"{job_data[':datapoint_id']}.csv"))
         return job_data
 
     def sort_results(self, results):
@@ -432,11 +430,11 @@ class BTAPAnalysis():
     def generate_output_file(self, baseline_results=None):
         # Process csv file to create single dataframe with all simulation results
         ppr = PostProcessResults(baseline_results=baseline_results,
-                                 database_folder=self.cp.analysis_database_folder(),
-                                 results_folder=self.cp.analysis_results_folder(),
+                                 database_folder=common_paths.analysis_database_folder(),
+                                 results_folder=common_paths.analysis_results_folder(),
                                  compute_environment=self.compute_environment,
                                  output_variables=self.output_variables,
-                                 username=self.cp.get_build_env_name())
+                                 username=common_paths.get_build_env_name())
         # Store post process run into analysis object. Will need it later.
         self.btap_data_df = ppr.run()
 
@@ -467,24 +465,24 @@ class BTAPAnalysis():
 
         # If this is an local_managed_aws_workers run, copy the excel file to s3 for storage.
         if self.compute_environment == 'local_managed_aws_workers':
-            message = "Uploading %s..." % self.cp.s3_analysis_excel_output_path()
+            message = "Uploading %s..." % common_paths.s3_analysis_excel_output_path()
             logging.info(message)
-            S3().upload_file(self.cp.analysis_excel_results_path(),
+            S3().upload_file(common_paths.analysis_excel_results_path(),
                              aws_credentials.account_id,
-                             self.cp.s3_analysis_excel_output_path())
+                             common_paths.s3_analysis_excel_output_path())
 
             # now copy results to s3
 
             for folder in folders:
                 print(f"Uploading {folder} to S3 results")
                 source_folder = os.path.join(self.analysis_results_folder(), folder)
-                target_folder = os.path.join(self.cp.s3_analysis_results_folder(),folder).replace('\\', '/')
+                target_folder = os.path.join(common_paths.s3_analysis_results_folder(),folder).replace('\\', '/')
                 S3().copy_folder_to_s3(bucket_name=aws_credentials.account_id,
                                        source_folder=source_folder,
                                        target_folder=target_folder)
                 # Upload Zip files of results.
                 source_zip = os.path.join(self.analysis_results_folder(), 'zips', folder + '.zip' )
-                s3_target_zip = os.path.join(self.cp.s3_analysis_results_folder(), 'zips', folder + '.zip').replace('\\', '/')
+                s3_target_zip = os.path.join(common_paths.s3_analysis_results_folder(), 'zips', folder + '.zip').replace('\\', '/')
                 S3().upload_file(source_zip, aws_credentials.account_id, s3_target_zip)
             print("Data upload to S3 Complete")
         return

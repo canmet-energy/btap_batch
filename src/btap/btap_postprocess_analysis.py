@@ -43,7 +43,6 @@ class PostProcessResults():
         filepaths = [os.path.join(database_folder, f) for f in os.listdir(database_folder) if f.endswith('.csv')]
         btap_data_df = pd.concat(map(pd.read_csv, filepaths))
         btap_data_df.reset_index()
-
         # the primary fuel type should be set to the correct baseline if a HP is set in the :ecm_system_name. The exception in sensitivity.
         def primary_fuel(row):
             if isinstance(row[':ecm_system_name'],str):

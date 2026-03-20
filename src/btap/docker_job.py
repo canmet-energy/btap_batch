@@ -4,7 +4,7 @@ import yaml
 import time
 from pathlib import Path
 import errno
-from src.btap.common_paths import CommonPaths
+from src.btap.common_paths import common_paths
 from icecream import ic
 
 class DockerBTAPJob:
@@ -63,14 +63,12 @@ class DockerBTAPJob:
         
     #protected
     def _job_url(self):
-        return self.cp.local_job_url(job_id=self.job_id)
+        return common_paths.local_job_url(job_id=self.job_id)
     def _set_paths(self):
-        # Common object for paths.
-        self.cp = CommonPaths()
-        self.analysis_output_folder = self.cp.algorithm_run_folder()
-        self.analysis_output_job_id_folder = self.cp.analysis_job_id_folder(job_id=self.job_id)
-        self.analysis_input_job_id_folder = self.cp.analysis_job_id_folder(job_id=self.job_id)
-        self.local_json_file_path = self.cp.analysis_output_job_id_btap_json_path(job_id=self.job_id)
+        self.analysis_output_folder = common_paths.algorithm_run_folder()
+        self.analysis_output_job_id_folder = common_paths.analysis_job_id_folder(job_id=self.job_id)
+        self.analysis_input_job_id_folder = common_paths.analysis_job_id_folder(job_id=self.job_id)
+        self.local_json_file_path = common_paths.analysis_output_job_id_btap_json_path(job_id=self.job_id)
 
     def _command_args(self):
         args = []

@@ -9,7 +9,7 @@ from random import random
 from src.btap.docker_job import DockerBTAPJob
 from src.btap.aws_credentials import aws_credentials
 from src.btap.aws_dynamodb import AWSResultsTable
-from src.btap.common_paths import CommonPaths
+from src.btap.common_paths import common_paths
 import re
 from icecream import ic
 
@@ -27,22 +27,20 @@ class AWSBTAPJob(DockerBTAPJob):
  
     #Overridden methods
     def _job_url(self):
-        return self.cp.s3_job_url(job_id=self.job_id)
+        return common_paths.s3_job_url(job_id=self.job_id)
 
     def _set_paths(self):
         # set for  container command used in btap_cli ruby code.
-        # Common object for paths.
-        self.cp = CommonPaths()
-        self.input_f = self.cp.s3_btap_cli_container_input_path(self.job_id)
-        self.output_f = self.cp.s3_btap_cli_container_output_path().replace('\\', '/')
+        self.input_f = common_paths.s3_btap_cli_container_input_path(self.job_id)
+        self.output_f = common_paths.s3_btap_cli_container_output_path().replace('\\', '/')
         # Used for copy_folder_to_s3
-        self.source = self.cp.analysis_job_id_folder(job_id=self.job_id)
-        self.target = self.cp.s3_datapoint_input_folder(job_id=self.job_id)
+        self.source = common_paths.analysis_job_id_folder(job_id=self.job_id)
+        self.target = common_paths.s3_datapoint_input_folder(job_id=self.job_id)
         # Local json file location
-        self.local_json_file_path = self.cp.analysis_output_job_id_btap_json_path(job_id=self.job_id)
-        self.local_output_job_folder = self.cp.analysis_job_id_folder(job_id=self.job_id)
+        self.local_json_file_path = common_paths.analysis_output_job_id_btap_json_path(job_id=self.job_id)
+        self.local_output_job_folder = common_paths.analysis_job_id_folder(job_id=self.job_id)
         # Used in postprocessing successful run from S3 and http url path construction.
-        self.s3_datapoint_output_folder = self.cp.s3_datapoint_output_folder(job_id=self.job_id)
+        self.s3_datapoint_output_folder = common_paths.s3_datapoint_output_folder(job_id=self.job_id)
     def _command_args(self):
         args = [f"--input_path {self.input_f} ",
                 f"--output_path {self.output_f} "

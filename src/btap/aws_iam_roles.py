@@ -2,7 +2,7 @@ import logging
 import json
 from icecream import ic
 from src.btap.aws_credentials import aws_credentials
-from src.btap.common_paths import CommonPaths
+from src.btap.common_paths import common_paths
 
 class IAMRoles():
     def __init__(self, build_env_name = None):
@@ -22,7 +22,7 @@ class IAMRoles():
 
     def full_role_name(self):
         if self.build_env_name is None:
-            return f"{CommonPaths().get_build_env_name().replace('.', '-')}-{self.role_name}"
+            return f"{common_paths.get_build_env_name().replace('.', '-')}-{self.role_name}"
         else:
             return f"{self.build_env_name.replace('.', '-')}-{self.role_name}"
 

@@ -19,7 +19,7 @@ from src.btap.btap_sensitivity import BTAPSensitivity
 from src.btap.btap_batch_analysis import BTAPBatchAnalysis
 from src.btap.reports import generate_btap_reports
 from src.btap.aws_s3 import S3
-from src.btap.common_paths import CommonPaths, SCHEMA_FOLDER, HISTORIC_WEATHER_LIST, \
+from src.btap.common_paths import common_paths, SCHEMA_FOLDER, HISTORIC_WEATHER_LIST, \
     FUTURE_WEATHER_LIST, HISTORIC_WEATHER_REPO, FUTURE_WEATHER_REPO, HISTORIC_WEATHER_LIST_BTAP, \
     FUTURE_WEATHER_LIST_BTAP, HISTORIC_WEATHER_REPO_BTAP, FUTURE_WEATHER_REPO_BTAP, USER, \
     CLIMATE_ONEBUILDING_FOLDER, CLIMATE_ONEBUILDING_MAP, CLIMATE_ONEBUILDING_URL, PROJECT_FOLDER, \
@@ -347,6 +347,7 @@ def build_and_configure_docker_and_aws(btap_batch_branch=None,
 
 
     if compute_environment in ['local_managed_aws_workers', 'aws']:
+        aws_credentials.set_credentials()
         delete_aws_build_env(os.environ['BUILD_ENV_NAME'])
 
         # # Create new
@@ -514,7 +515,7 @@ def analysis(project_input_folder=None,
         compute_environment = analysis_config['compute_environment']
 
     if compute_environment == None:
-        raise("Computer environment was not defined")
+        raise Exception("Computer environment was not defined")
 
     reference_run = analysis_config[':reference_run']
     # delete output from previous run if present locally
@@ -606,7 +607,6 @@ def analysis(project_input_folder=None,
                                    analysis_input_folder=analysis_input_folder,
                                    output_folder=output_folder)
 
-
         else:
             print(f"Error:Analysis type {analysis_config[':algorithm_type']} not supported. Exiting.")
             exit(1)
@@ -619,13 +619,6 @@ def analysis(project_input_folder=None,
 
     elif compute_environment == 'aws':
         analysis_name = analysis_config[':analysis_name']
-        # Set common paths singleton.
-        cp = CommonPaths()
-        # Setting paths to current context.
-        cp.set_analysis_info(analysis_id=str(uuid.uuid4()),
-                             analysis_name=analysis_name,
-                             local_output_folder=output_folder,
-                             project_input_folder=analysis_input_folder)
         # Gets an AWSAnalysisJob from AWSBatch
         batch = AWSBatch(image_manager=AWSImageManager(image_name='btap_batch'),
                          compute_environment=AWSComputeEnvironment(name='btap_batch')

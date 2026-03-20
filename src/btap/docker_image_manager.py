@@ -3,7 +3,7 @@ from docker.errors import DockerException, BuildError
 import os
 import logging
 from src.btap.docker_batch import DockerBatch
-from src.btap.common_paths import CommonPaths
+from src.btap.common_paths import common_paths
 import time
 import subprocess
 from icecream import ic
@@ -12,7 +12,7 @@ from icecream import ic
 class DockerImageManager:
 
     def get_build_env_name(self):
-        return CommonPaths().get_build_env_name()
+        return common_paths.get_build_env_name()
 
     def __init__(self,
                  build_env_name = None,
@@ -42,7 +42,7 @@ class DockerImageManager:
     def _get_image_build_args(self):
         build_args = self.build_args
         build_args['GIT_API_TOKEN'] = os.environ['GIT_API_TOKEN']
-        build_args['BUILD_ENV_NAME'] = CommonPaths().get_build_env_name()
+        build_args['BUILD_ENV_NAME'] = common_paths.get_build_env_name()
         return build_args
 
     def get_image(self):
@@ -66,7 +66,7 @@ class DockerImageManager:
         temp_string = ''
         for key, value in self._get_image_build_args().items():
             temp_string += f"--build-arg {key}={value} "
-        docker_build_command = f"{self.cli_build_command} -t {self.get_full_image_name()} {temp_string} {CommonPaths().get_dockerfile_folder_path(image_name=self.image_name)}"
+        docker_build_command = f"{self.cli_build_command} -t {self.get_full_image_name()} {temp_string} {common_paths.get_dockerfile_folder_path(image_name=self.image_name)}"
         return docker_build_command
 
     # Common
@@ -78,7 +78,7 @@ class DockerImageManager:
         try:
             image, json_log = container_client.images.build(
                 # Path to docker file.
-                path=CommonPaths().get_dockerfile_folder_path(image_name=self.image_name),
+                path=common_paths.get_dockerfile_folder_path(image_name=self.image_name),
                 # Image name
                 tag=self.get_full_image_name(),
                 # nocache flag to build use cache or build from scratch.
