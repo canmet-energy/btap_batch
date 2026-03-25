@@ -44,7 +44,7 @@ class DockerBTAPJob:
                 # simulation as a failure if that occured.
                 if job_data["unrealistic_assemblies"] == True:
                     job_data['container_error'] = "Unrealistic assembly: BTAP Costing could not realistically cost " \
-                                                  "some constructions due to conductances being too low/high."
+                                                  "some constructions due to conductances being too high."
                     job_data['status'] = "FAILED"
                     self._save_output_file(job_data)
                     return job_data
