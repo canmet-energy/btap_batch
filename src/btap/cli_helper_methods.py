@@ -466,6 +466,7 @@ def analysis(project_input_folder=None,
 
     # If project folder is on S3.  Download the folder to work on it locally.
     if project_input_folder.startswith('s3:'):
+        aws_credentials.set_credentials()
         # download project to local temp folder.
         local_dir = os.path.join(str(Path.home()), 'temp_analysis_folder')
         # Check if folder exists
