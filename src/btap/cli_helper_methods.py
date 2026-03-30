@@ -532,6 +532,7 @@ def analysis(project_input_folder=None,
 
     # delete output from previous run if present on s3
     if compute_environment == 'local_managed_aws_workers' or compute_environment == 'aws':
+        aws_credentials.set_credentials()
         bucket = aws_credentials.account_id
         user_name = os.environ.get('BUILD_ENV_NAME').replace('.', '_')
         # Check if aws build_env_name exists
@@ -619,6 +620,13 @@ def analysis(project_input_folder=None,
 
     elif compute_environment == 'aws':
         analysis_name = analysis_config[':analysis_name']
+
+        # Setting paths to current context.
+        common_paths.set_analysis_info(analysis_id=str(uuid.uuid4()),
+                             analysis_name=analysis_name,
+                             local_output_folder=output_folder,
+                             project_input_folder=analysis_input_folder)
+
         # Gets an AWSAnalysisJob from AWSBatch
         batch = AWSBatch(image_manager=AWSImageManager(image_name='btap_batch'),
                          compute_environment=AWSComputeEnvironment(name='btap_batch')
