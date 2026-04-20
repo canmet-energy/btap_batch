@@ -27,7 +27,7 @@ that have energy impact. It will, for example, cost the wall construction layers
 Some items that BTAP costs are:
 * Labour, Overhead
 * Layer Materials in Constructions and fenestration.
-* Piping, Ductworks, Headers based on actual geometry of the building. This is required when evaluating forces air vs hydronic solutions. 
+* Piping, Ductworks, Headers based on actual geometry of the building. This is required when evaluating forced air vs hydronic solutions. 
 * Standard HVAC Equipment, Boilers, Chillers, HeatPumps, Service Hot Water. 
 
 Some examples of items it will not cost are:
