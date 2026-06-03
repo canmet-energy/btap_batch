@@ -116,6 +116,7 @@ Must be one of:
 * "3.6.1"
 * "3.7.0"
 * "3.9.0"
+* "3.11.0"
 
 ## <a name="btap_weather"></a>7. Property `root > btap_weather`
 

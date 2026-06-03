@@ -11,7 +11,7 @@ import pandas as pd
 
 class BTAPBatchAnalysis(BTAPParametric):
     def compute_scenarios(self):
-        run_options_folder = os.path.join(self.cp.project_input_folder, 'run_options_folder')
+        run_options_folder = os.path.join(common_paths.project_input_folder, 'run_options_folder')
 
         yml_files = glob.glob(os.path.join(run_options_folder, '*.yml'))
         for file in yml_files:

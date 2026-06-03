@@ -6,7 +6,7 @@ import time
 import logging
 from random import random
 from src.btap.aws_credentials import aws_credentials
-from src.btap.common_paths import CommonPaths
+from src.btap.common_paths import common_paths
 import re
 from icecream import ic
 
@@ -23,11 +23,9 @@ class AWSAnalysisJob():
         self.reference_run = reference_run
 
     def set_paths(self):
-        # Common object for paths.
-        self.cp = CommonPaths()
         # Used for copy_folder_to_s3
-        self.source = self.cp.get_project_input_folder()
-        self.target = self.cp.s3_analysis_name_folder()
+        self.source = common_paths.get_project_input_folder()
+        self.target = common_paths.s3_analysis_name_folder()
 
     def submit_job(self):
         # Timer start.
@@ -81,11 +79,11 @@ class AWSAnalysisJob():
             return self.job_wrapper(n=n + 1)
 
     def container_command(self):
-        command = ["python3",
+        command = ["/btap_batch/venv/bin/python3",
                    "/btap_batch/bin/btap_batch.py",
                    "run",
                    "--project_folder",
-                   self.cp.s3_btap_batch_container_input_path(),
+                   common_paths.s3_btap_batch_container_input_path(),
                    "--compute_environment",
                    "local_managed_aws_workers"
                    ]

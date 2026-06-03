@@ -11,7 +11,7 @@ import logging
 from random import random
 from src.btap.aws_iam_roles import IAMBatchServiceRole
 from src.btap.aws_ec2_info import AWS_EC2Info
-from src.btap.common_paths import CommonPaths
+from src.btap.common_paths import common_paths
 from src.btap.aws_credentials import aws_credentials
 from icecream import ic
 
@@ -24,7 +24,7 @@ BATCH_SERVICE_ROLE = 'arn:aws:iam::834599497928:role/service-role/AWSBatchServic
 class AWSComputeEnvironment:
     def __init__(self, build_env_name = None, name =''):
         if build_env_name is None:
-            build_env_name = CommonPaths().get_build_env_name().replace('.', '_')
+            build_env_name = common_paths.get_build_env_name().replace('.', '_')
         self._compute_environment_name = f"{build_env_name}_{name}_compute_environment"
         self.launch_template_name = f'{build_env_name}_{name}_storage_template'
 

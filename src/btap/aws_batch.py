@@ -8,7 +8,7 @@ from src.btap.aws_credentials import aws_credentials
 from src.btap.aws_iam_roles import IAMBatchJobRole
 from src.btap.aws_job import AWSBTAPJob
 from src.btap.aws_analysis_job import AWSAnalysisJob
-from src.btap.common_paths import CommonPaths
+from src.btap.common_paths import common_paths
 from icecream import ic
 
 # Role to give permissions to jobs to run.
@@ -43,7 +43,7 @@ class AWSBatch:
 
     def _build_env_name(self):
         if self.build_env_name is None:
-            return CommonPaths().get_build_env_name().replace('.', '_')
+            return common_paths.get_build_env_name().replace('.', '_')
         else:
             return self.build_env_name
 

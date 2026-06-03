@@ -19,7 +19,7 @@ from src.btap.btap_sensitivity import BTAPSensitivity
 from src.btap.btap_batch_analysis import BTAPBatchAnalysis
 from src.btap.reports import generate_btap_reports
 from src.btap.aws_s3 import S3
-from src.btap.common_paths import CommonPaths, SCHEMA_FOLDER, HISTORIC_WEATHER_LIST, \
+from src.btap.common_paths import common_paths, SCHEMA_FOLDER, HISTORIC_WEATHER_LIST, \
     FUTURE_WEATHER_LIST, HISTORIC_WEATHER_REPO, FUTURE_WEATHER_REPO, HISTORIC_WEATHER_LIST_BTAP, \
     FUTURE_WEATHER_LIST_BTAP, HISTORIC_WEATHER_REPO_BTAP, FUTURE_WEATHER_REPO_BTAP, USER, \
     CLIMATE_ONEBUILDING_FOLDER, CLIMATE_ONEBUILDING_MAP, CLIMATE_ONEBUILDING_URL, PROJECT_FOLDER, \
@@ -347,6 +347,7 @@ def build_and_configure_docker_and_aws(btap_batch_branch=None,
 
 
     if compute_environment in ['local_managed_aws_workers', 'aws']:
+        aws_credentials.set_credentials()
         delete_aws_build_env(os.environ['BUILD_ENV_NAME'])
 
         # # Create new
@@ -465,6 +466,7 @@ def analysis(project_input_folder=None,
 
     # If project folder is on S3.  Download the folder to work on it locally.
     if project_input_folder.startswith('s3:'):
+        aws_credentials.set_credentials()
         # download project to local temp folder.
         local_dir = os.path.join(str(Path.home()), 'temp_analysis_folder')
         # Check if folder exists
@@ -514,7 +516,7 @@ def analysis(project_input_folder=None,
         compute_environment = analysis_config['compute_environment']
 
     if compute_environment == None:
-        raise("Computer environment was not defined")
+        raise Exception("Computer environment was not defined")
 
     reference_run = analysis_config[':reference_run']
     # delete output from previous run if present locally
@@ -531,6 +533,7 @@ def analysis(project_input_folder=None,
 
     # delete output from previous run if present on s3
     if compute_environment == 'local_managed_aws_workers' or compute_environment == 'aws':
+        aws_credentials.set_credentials()
         bucket = aws_credentials.account_id
         user_name = os.environ.get('BUILD_ENV_NAME').replace('.', '_')
         # Check if aws build_env_name exists
@@ -606,7 +609,6 @@ def analysis(project_input_folder=None,
                                    analysis_input_folder=analysis_input_folder,
                                    output_folder=output_folder)
 
-
         else:
             print(f"Error:Analysis type {analysis_config[':algorithm_type']} not supported. Exiting.")
             exit(1)
@@ -619,13 +621,13 @@ def analysis(project_input_folder=None,
 
     elif compute_environment == 'aws':
         analysis_name = analysis_config[':analysis_name']
-        # Set common paths singleton.
-        cp = CommonPaths()
+
         # Setting paths to current context.
-        cp.set_analysis_info(analysis_id=str(uuid.uuid4()),
+        common_paths.set_analysis_info(analysis_id=str(uuid.uuid4()),
                              analysis_name=analysis_name,
                              local_output_folder=output_folder,
                              project_input_folder=analysis_input_folder)
+
         # Gets an AWSAnalysisJob from AWSBatch
         batch = AWSBatch(image_manager=AWSImageManager(image_name='btap_batch'),
                          compute_environment=AWSComputeEnvironment(name='btap_batch')
@@ -897,7 +899,7 @@ btap_batch_branch: dev
 os_standards_branch: nrcan
 
 # OpenStudio version used by analyses and built into the container environment. The E+ version used for simulations is determined by the OpenStudio version.
-openstudio_version: 3.9.0
+openstudio_version: 3.11.0
 
 # Location of weather files to download. 
 # If true, downloads from btap_weather. Else, downloads from Climate.OneBuilding.Org. 

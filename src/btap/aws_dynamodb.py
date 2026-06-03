@@ -2,7 +2,7 @@ import botocore
 import logging
 import os
 from decimal import Decimal
-from src.btap.common_paths import CommonPaths
+from src.btap.common_paths import common_paths
 import json
 import pandas
 import pathlib
@@ -14,7 +14,7 @@ from src.btap.aws_credentials import aws_credentials
 class AWSResultsTable():
     def __init__(self):
         self.table = None
-        self.table_name = f"{CommonPaths().get_build_env_name()}_results"
+        self.table_name = f"{common_paths.get_build_env_name()}_results"
         self.key_schema = [
             {'AttributeName': ':datapoint_id', 'KeyType': 'HASH'},  # Partition key
             {'AttributeName': ':analysis_name', 'KeyType': 'RANGE'}  # Sort key

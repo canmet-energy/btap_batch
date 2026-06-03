@@ -4,7 +4,7 @@ from src.btap.docker_image_manager import DockerImageManager
 from src.btap.aws_s3 import S3
 from src.btap.aws_iam_roles import IAMCodeBuildRole
 from src.btap.aws_batch import AWSBatch
-from src.btap.common_paths import CommonPaths
+from src.btap.common_paths import common_paths
 import time
 import logging
 from icecream import ic
@@ -55,7 +55,7 @@ class AWSImageManager(DockerImageManager):
         # Upload files to S3 using custom s3 class to a user folder.
         s3 = S3()
 
-        source_folder = CommonPaths().get_dockerfile_folder_path(image_name=self.image_name)
+        source_folder = common_paths.get_dockerfile_folder_path(image_name=self.image_name)
 
         s3.copy_folder_to_s3(self.bucket, source_folder, self.get_build_env_name() + '/' + self.image_name)
         s3_location = 's3://' + self.bucket + '/' + self.get_build_env_name() + '/' + self.image_name

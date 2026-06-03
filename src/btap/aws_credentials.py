@@ -7,10 +7,10 @@ from pathlib import Path
 import traceback
 
 
-class AWSCredentials:
-    # Initialize with required clients.
+class AWSCredentials():
 
-    def __init__(self):
+    # Initialize with required clients.
+    def set_credentials(self):
         # standard common aws configuration.
         self._aws_config = botocore.client.Config(
             region_name='ca-central-1',
