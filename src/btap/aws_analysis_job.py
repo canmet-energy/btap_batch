@@ -5,8 +5,8 @@ import sys
 import time
 import logging
 from random import random
-from src.btap.aws_credentials import AWSCredentials
-from src.btap.common_paths import CommonPaths
+from src.btap.aws_credentials import aws_credentials
+from src.btap.common_paths import common_paths
 import re
 from icecream import ic
 
@@ -17,17 +17,15 @@ class AWSAnalysisJob():
         self.cloud_job_id = None  # Set by AWS when job is submitted.
         self.job_id = job_id
         # update run_options
-        self.s3_bucket = AWSCredentials().account_id
+        self.s3_bucket = aws_credentials.account_id
         self.set_paths()
         self.batch = batch
         self.reference_run = reference_run
 
     def set_paths(self):
-        # Common object for paths.
-        self.cp = CommonPaths()
         # Used for copy_folder_to_s3
-        self.source = self.cp.get_project_input_folder()
-        self.target = self.cp.s3_analysis_name_folder()
+        self.source = common_paths.get_project_input_folder()
+        self.target = common_paths.s3_analysis_name_folder()
 
     def submit_job(self):
         # Timer start.
@@ -55,7 +53,7 @@ class AWSAnalysisJob():
         # ic(self.batch.job_queue_name)
         # ic(self.batch.job_def_name)
         # ic(self.container_command())
-        batch_client = AWSCredentials().batch_client
+        batch_client = aws_credentials.batch_client
         if len(self.aws_job_name()) > 128 or not re.match('^[\w-]+$', self.aws_job_name()):
             print(f"aws_job_name:{self.aws_job_name()} is either longer than 128 char or does not only contain alphanumeric, _ and - charecters.")
             exit(1)
@@ -81,11 +79,11 @@ class AWSAnalysisJob():
             return self.job_wrapper(n=n + 1)
 
     def container_command(self):
-        command = ["python3",
+        command = ["/btap_batch/venv/bin/python3",
                    "/btap_batch/bin/btap_batch.py",
                    "run",
                    "--project_folder",
-                   self.cp.s3_btap_batch_container_input_path(),
+                   common_paths.s3_btap_batch_container_input_path(),
                    "--compute_environment",
                    "local_managed_aws_workers"
                    ]

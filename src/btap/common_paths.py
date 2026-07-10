@@ -35,16 +35,7 @@ FUTURE_WEATHER_LIST_BTAP   = "https://github.com/canmet-energy/btap_weather/raw/
 HISTORIC_WEATHER_REPO_BTAP = "https://github.com/canmet-energy/btap_weather/raw/main/historic/"
 FUTURE_WEATHER_REPO_BTAP   = "https://github.com/canmet-energy/btap_weather/raw/main/future/"
 
-
-class CommonPaths(object):
-    _instance = None
-
-    def __new__(cls):
-        if cls._instance is None:
-            cls._instance = super(CommonPaths, cls).__new__(cls)
-            # Put any initialization here.
-        return cls._instance
-
+class CommonPaths():
     def set_analysis_info(self,
                           analysis_name=None,
                           analysis_id=None,
@@ -197,5 +188,4 @@ class CommonPaths(object):
         bucket = AWS_BUCKET
         return f"https://s3.console.aws.amazon.com/s3/buckets/{bucket}?region=ca-central-1&prefix={self.s3_datapoint_output_folder(job_id=job_id)}/"
 
-
-
+common_paths = CommonPaths()

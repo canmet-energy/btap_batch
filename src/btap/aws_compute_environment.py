@@ -11,8 +11,8 @@ import logging
 from random import random
 from src.btap.aws_iam_roles import IAMBatchServiceRole
 from src.btap.aws_ec2_info import AWS_EC2Info
-from src.btap.common_paths import CommonPaths
-from src.btap.aws_credentials import AWSCredentials
+from src.btap.common_paths import common_paths
+from src.btap.aws_credentials import aws_credentials
 from icecream import ic
 
 # Role to give permissions to jobs to run.
@@ -24,7 +24,7 @@ BATCH_SERVICE_ROLE = 'arn:aws:iam::834599497928:role/service-role/AWSBatchServic
 class AWSComputeEnvironment:
     def __init__(self, build_env_name = None, name =''):
         if build_env_name is None:
-            build_env_name = CommonPaths().get_build_env_name().replace('.', '_')
+            build_env_name = common_paths.get_build_env_name().replace('.', '_')
         self._compute_environment_name = f"{build_env_name}_{name}_compute_environment"
         self.launch_template_name = f'{build_env_name}_{name}_storage_template'
 
@@ -48,7 +48,7 @@ class AWSComputeEnvironment:
 
     # Short method that creates a template to increase the disk size of the containers. Default 100GB.
     def __add_storage_space_launch_template(self, sizegb=INSTANCE_STORAGE_SIZE_GB):
-        self.ec2 = AWSCredentials().ec2_client
+        self.ec2 = aws_credentials.ec2_client
 
         launch_template = self.ec2.describe_launch_templates()['LaunchTemplates']
         if next((item for item in launch_template if item["LaunchTemplateName"] == self.launch_template_name),
@@ -83,7 +83,7 @@ class AWSComputeEnvironment:
         return self.launch_template_name
 
     def __describe_compute_environments(self, compute_environment_name, n=0):
-        batch_client = AWSCredentials().batch_client
+        batch_client = aws_credentials.batch_client
         try:
             return batch_client.describe_compute_environments(computeEnvironments=[compute_environment_name])
         except:
@@ -113,7 +113,7 @@ class AWSComputeEnvironment:
             securityGroupIds = AWS_EC2Info().securityGroupIds
 
 
-        batch_client = AWSCredentials().batch_client
+        batch_client = aws_credentials.batch_client
         # Inform user starting to create CE.
         message = f'Creating Compute Environment {self._compute_environment_name}'
         print(message)
@@ -164,7 +164,7 @@ class AWSComputeEnvironment:
             self._compute_environment_name = computeEnvironmentName
         describe = self.__describe_compute_environments(self._compute_environment_name)
         if len(describe['computeEnvironments']) != 0:
-            batch_client = AWSCredentials().batch_client
+            batch_client = aws_credentials.batch_client
             # Inform user starting to create CE.
             message = f'Disable Compute Environment {self._compute_environment_name}'
             print(message)

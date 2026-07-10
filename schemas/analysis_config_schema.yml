@@ -39,7 +39,7 @@ This will select the algorithm to use in the analysis. \n\n
     [Scipy implementation](https://scikit-optimize.github.io/stable/auto_examples/sampler/initial-sampling-method.html)"
     type: integer
     minimum: 1
-    maximum: 5000
+    maximum: 10000
 
 
   :algorithm_lhs_type:

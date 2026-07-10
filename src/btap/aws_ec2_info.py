@@ -1,7 +1,7 @@
-from src.btap.aws_credentials import AWSCredentials
+from src.btap.aws_credentials import aws_credentials
 class AWS_EC2Info():
     def __init__(self):
-        self.ec2 = AWSCredentials().ec2_client
+        self.ec2 = aws_credentials.ec2_client
         # Store the subnets into a list. This was set up by NRCan.
         subnets = self.ec2.describe_subnets()['Subnets']
         self.subnet_id_list = [subnet['SubnetId'] for subnet in subnets]
