@@ -883,9 +883,6 @@ def generate_build_config(build_config_path = None):
 # This is the name of the build environment. This will prefix all images, s3 folders, and resources created on aws. Please ensure that it is 24 characters long or less, only uses numbers and lowercase letters, and includes no spaces or special characters aside from underscore. Use the underscore character instead of spaces.
 build_env_name: {USER.lower()}
 
-# Github Token. This must be set to build and run analyses. 
-git_api_token: null
-
 # Compute Environment used to build and run analyses. Options are
 #  local: Will run everything on your own computer. Recommended for running small analysis and testing ahead of using aws.
 #  aws: Run everything on Amazon infrastructure. You can turn off your computer after the analyses are all sent to Amazon. Recommended for large analyses.
@@ -893,7 +890,7 @@ git_api_token: null
 compute_environment: local
 
 # Branch of btap_batch to be used in aws compute_environment runs on AWS.
-btap_batch_branch: dev
+btap_batch_branch: main
 
 # Branch of openstudio-standards used in environment
 os_standards_branch: nrcan
@@ -948,7 +945,9 @@ build_btap_batch: True
 # Otherwise leave it as False.
 local_nrcan: False
 
-    """
+# GitHub Token. Not required, only necessary for select NRCan staff to run analyses using proprietary data.
+git_api_token: ''
+"""
 
     output_file = Path(build_config_path)
     output_file.parent.mkdir(exist_ok=True, parents=True)
