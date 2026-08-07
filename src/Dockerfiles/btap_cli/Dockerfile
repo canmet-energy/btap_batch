@@ -1,9 +1,8 @@
 ARG OPENSTUDIO_VERSION='3.11.0'
 FROM canmet/os_sdk_container:$OPENSTUDIO_VERSION
 
-ARG ENABLE_RSMEANS=''
+ARG BTAP_DECRYPTION_KEY=''
 ARG RSMEANS_YEAR=''
-ARG ENABLE_PROPRIETARY_CARBON=''
 ARG OS_STANDARDS_BRANCH='nrcan'
 ARG WEATHER_FILES=''
 ARG LOCALNRCAN=''
@@ -29,12 +28,13 @@ RUN if [ -n "$LOCALNRCAN" ] ; then \
       && git rev-parse --short HEAD;\
     fi
 
+
 # Install openstudio-standards under the root folder.
 WORKDIR /
 
 # Clone openstudio-standards into the container
 RUN echo "Creating Public CLI" \
-    && git clone https://$GIT_API_TOKEN:x-oauth-basic@github.com/${OS_STANDARDS_ORG}/openstudio-standards.git --depth 1 --branch ${OS_STANDARDS_BRANCH} --single-branch /openstudio-standards \
+    && git clone https://github.com/${OS_STANDARDS_ORG}/openstudio-standards.git --depth 1 --branch ${OS_STANDARDS_BRANCH} --single-branch /openstudio-standards \
     && cd /openstudio-standards \
     && bundle install \
     && echo 'standards revision' \
@@ -50,22 +50,22 @@ COPY $LOCAL_CARBON_OPAQUE_PATH* /openstudio-standards/lib/openstudio-standards/b
 COPY $LOCAL_CARBON_GLAZING_PATH* /openstudio-standards/lib/openstudio-standards/btap/common_resources/carbon_glazing.csv
 COPY $LOCAL_CARBON_FRAME_PATH* /openstudio-standards/lib/openstudio-standards/btap/common_resources/carbon_frame.csv
 
-RUN if [ -n "$ENABLE_RSMEANS" ] ; then \
-        echo "Overwriting placeholder costing data with RSMeans data (ENABLE_RSMEANS=$ENABLE_RSMEANS)" \
-        && curl -v https://$GIT_API_TOKEN:x-oauth-basic@raw.githubusercontent.com/canmet-energy/btap_costing_data_generation/refs/heads/main/resources/rsmeans_factors.csv \
-            -o /openstudio-standards/lib/openstudio-standards/btap/common_resources/costs_local_factors.csv \
-        && curl -v https://$GIT_API_TOKEN:x-oauth-basic@raw.githubusercontent.com/canmet-energy/btap_costing_data_generation/refs/heads/main/output/costing/$RSMEANS_YEAR/costs_rsmeans.csv \
-            -o /openstudio-standards/lib/openstudio-standards/btap/common_resources/costs.csv; \
-    fi
-
-RUN if [ -n "$ENABLE_PROPRIETARY_CARBON" ] ; then \
-        echo "Overwriting placeholder costing data with RSMeans data (ENABLE_PROPRIETARY_CARBON=$ENABLE_PROPRIETARY_CARBON)" \
-        && curl -v https://$GIT_API_TOKEN:x-oauth-basic@raw.githubusercontent.com/canmet-energy/btap_costing_data_generation/refs/heads/main/resources/carbon_opaque_proprietary.csv \
-            -o /openstudio-standards/lib/openstudio-standards/btap/common_resources/carbon_opaque.csv \
-        && curl -v https://$GIT_API_TOKEN:x-oauth-basic@raw.githubusercontent.com/canmet-energy/btap_costing_data_generation/refs/heads/main/resources/carbon_glazing_proprietary.csv \
-            -o /openstudio-standards/lib/openstudio-standards/btap/common_resources/carbon_glazing.csv \
-        && curl -v https://$GIT_API_TOKEN:x-oauth-basic@raw.githubusercontent.com/canmet-energy/btap_costing_data_generation/refs/heads/main/resources/carbon_frame_proprietary.csv \
-            -o /openstudio-standards/lib/openstudio-standards/btap/common_resources/carbon_frame.csv; \
+RUN if [ -n "$BTAP_DECRYPTION_KEY" ] ; then \
+        fetch_and_decrypt() { \
+            python3 -c "import base64, os, subprocess, sys; from cryptography.fernet import Fernet; source_path = sys.argv[1]; dest_path = sys.argv[2]; encrypted = subprocess.check_output(['aws', 'codecommit', 'get-file', '--repository-name', 'btap_data_tools', '--commit-specifier', 'main', '--file-path', source_path, '--query', 'fileContent', '--output', 'text'], text=True).strip(); decrypted = Fernet(os.environ['BTAP_DECRYPTION_KEY'].encode()).decrypt(base64.b64decode(encrypted)); open(dest_path, 'wb').write(decrypted)" "$1" "$2"; \
+        }; \
+        echo "Downloading and decrypting RSMeans data from AWS CodeCommit" \
+        && fetch_and_decrypt "api_retrieval/output/costing/$RSMEANS_YEAR/costs_proprietary.aes" \
+            "/openstudio-standards/lib/openstudio-standards/btap/common_resources/costs.csv" \
+        && fetch_and_decrypt "costing/output/factors_proprietary.aes" \
+            "/openstudio-standards/lib/openstudio-standards/btap/common_resources/costs_local_factors.csv" \
+        && echo "Downloading and decrypting proprietary carbon data from AWS CodeCommit" \
+        && fetch_and_decrypt "carbon/carbon_opaque_proprietary.aes" \
+            "/openstudio-standards/lib/openstudio-standards/btap/common_resources/carbon_opaque.csv" \
+        && fetch_and_decrypt "carbon/carbon_glazing_proprietary.aes" \
+            "/openstudio-standards/lib/openstudio-standards/btap/common_resources/carbon_glazing.csv" \
+        && fetch_and_decrypt "carbon/carbon_frame_proprietary.aes" \
+            "/openstudio-standards/lib/openstudio-standards/btap/common_resources/carbon_frame.csv"; \
     fi
 
 # Make folders that will map to host drives.

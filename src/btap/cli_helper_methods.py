@@ -292,9 +292,8 @@ def clean_up_local_database_file(filename: str) -> None:
         print(f"Warning: Could not clean up costing file: {e}")
 
 def build_and_configure_docker_and_aws(btap_batch_branch=None,
-                                       enable_rsmeans=False,
+                                       btap_decryption_key='',
                                        rsmeans_year=None,
-                                       enable_proprietary_carbon=False,
                                        local_costing_path='',
                                        local_factors_path='',
                                        local_carbon_opaque_path='',
@@ -328,9 +327,8 @@ def build_and_configure_docker_and_aws(btap_batch_branch=None,
     # build args for aws and btap_cli container.
     build_args_btap_cli = {
         'OPENSTUDIO_VERSION': openstudio_version,
-        'ENABLE_RSMEANS': 'True' if enable_rsmeans == True else '',
+        'BTAP_DECRYPTION_KEY': btap_decryption_key,
         'RSMEANS_YEAR': str(rsmeans_year) if rsmeans_year else RSMEANS_CURRENT_YEAR,
-        'ENABLE_PROPRIETARY_CARBON': 'True' if enable_proprietary_carbon == True else '',
         'OS_STANDARDS_ORG': os_standards_org,
         'OS_STANDARDS_BRANCH': os_standards_branch,
         'WEATHER_FILES': weather_locations,

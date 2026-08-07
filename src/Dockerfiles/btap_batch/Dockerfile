@@ -1,9 +1,7 @@
 FROM public.ecr.aws/ubuntu/ubuntu:24.04
 ARG BTAP_BATCH_BRANCH
-ARG GIT_API_TOKEN
 
 ENV BTAP_BATCH_BRANCH=$BTAP_BATCH_BRANCH
-ENV GIT_API_TOKEN=$GIT_API_TOKEN
 
 # Install BTAP Batch, python, git, and network related packages.
 RUN apt-get -y update
