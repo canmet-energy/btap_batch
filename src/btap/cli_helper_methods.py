@@ -372,6 +372,7 @@ def build_and_configure_docker_and_aws(btap_batch_branch=None,
     rsmeans_year = str(rsmeans_year) if rsmeans_year else RSMEANS_CURRENT_YEAR
 
     if use_proprietary_data:
+        print("Retrieving proprietary database files")
         aws_credentials.set_credentials()
         proprietary_file_paths = fetch_proprietary_database_files(rsmeans_year=rsmeans_year,
                                                                   btap_decryption_key=btap_decryption_key)
