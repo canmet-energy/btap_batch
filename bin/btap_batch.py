@@ -44,6 +44,8 @@ def credits():
 @btap.command(help=f"This will build the environment required to run an analysis. If running for the first time. A template configuration will be placed in your home folder here:{CONFIG_FOLDER} ")
 @click.option('--build_config_path', '-p', default=os.path.join(CONFIG_FOLDER, 'build_config.yml'),
               help=f'For advanced users. Define location of the build_config.yml file.  Default location is {CONFIG_FOLDER}')
+@click.option('--use_proprietary_data', is_flag=True,
+              help='Fetch and decrypt proprietary RSMeans and carbon files from AWS CodeCommit before building btap_cli.')
 
 def build(**kwargs):
     """
@@ -70,6 +72,7 @@ def build(**kwargs):
     """
 
     build_config_path = kwargs['build_config_path']
+    use_proprietary_data = kwargs['use_proprietary_data']
     config = load_config(build_config_path)
 
     btap_batch_branch = config['btap_batch_branch']
@@ -94,6 +97,7 @@ def build(**kwargs):
     
     build_and_configure_docker_and_aws(btap_batch_branch=btap_batch_branch,
                                        btap_decryption_key=btap_decryption_key,
+                                       use_proprietary_data=use_proprietary_data,
                                        rsmeans_year=rsmeans_year,
                                        compute_environment=compute_environment,
                                        openstudio_version=openstudio_version,

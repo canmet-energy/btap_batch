@@ -26,6 +26,7 @@ class AWSCredentials():
         self.s3_resource = boto3.resource('s3')
         self.ec2_client = boto3.client('ec2', config=self._aws_config)
         self.codebuild_client = boto3.client('codebuild', config=self._aws_config)
+        self.codecommit_client = boto3.client('codecommit', config=self._aws_config)
         self.ecr_client = boto3.client('ecr', config=self._aws_config)
         self.dynamodb_resource = boto3.resource('dynamodb', config=self._aws_config)
         self.dynamodb_client = boto3.client('dynamodb', config=self._aws_config)
