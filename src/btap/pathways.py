@@ -57,6 +57,7 @@ class Data:
             {'filter': 'geometry', 'label': 'ScaleX', 'col_name': ':scale_x'},
             {'filter': 'geometry', 'label': 'ScaleY', 'col_name': ':scale_y'},
             {'filter': 'geometry', 'label': 'ScaleZ', 'col_name': ':scale_z'},
+            {'filter': 'geometry', 'label': 'FootprintAspectRatio', 'col_name': ':footprint_aspect_ratio'},
 
             # Envelope metrics
             {'filter': 'envelope', 'label': 'RoofConductance',
