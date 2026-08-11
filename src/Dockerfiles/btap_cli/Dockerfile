@@ -43,11 +43,11 @@ WORKDIR /
 
 # Copy the local database files using the * wildcard which copies the file and 
 # doesn't throw an error if the file does not exist
-COPY $LOCAL_COSTING_PATH* /openstudio-standards/lib/openstudio-standards/btap/common_resources/costs.csv
-COPY $LOCAL_FACTORS_PATH* /openstudio-standards/lib/openstudio-standards/btap/common_resources/costs_local_factors.csv
-COPY $LOCAL_CARBON_OPAQUE_PATH* /openstudio-standards/lib/openstudio-standards/btap/common_resources/carbon_opaque.csv
-COPY $LOCAL_CARBON_GLAZING_PATH* /openstudio-standards/lib/openstudio-standards/btap/common_resources/carbon_glazing.csv
-COPY $LOCAL_CARBON_FRAME_PATH* /openstudio-standards/lib/openstudio-standards/btap/common_resources/carbon_frame.csv
+COPY $LOCAL_COSTING_PATH* /openstudio-standards/lib/openstudio-standards/btap/common/costs.csv
+COPY $LOCAL_FACTORS_PATH* /openstudio-standards/lib/openstudio-standards/btap/common/costs_local_factors.csv
+COPY $LOCAL_CARBON_OPAQUE_PATH* /openstudio-standards/lib/openstudio-standards/btap/common/carbon_opaque.csv
+COPY $LOCAL_CARBON_GLAZING_PATH* /openstudio-standards/lib/openstudio-standards/btap/common/carbon_glazing.csv
+COPY $LOCAL_CARBON_FRAME_PATH* /openstudio-standards/lib/openstudio-standards/btap/common/carbon_frame.csv
 
 # Make folders that will map to host drives.
 WORKDIR /openstudio-standards/utilities/btap_cli

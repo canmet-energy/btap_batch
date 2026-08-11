@@ -314,7 +314,7 @@ def fetch_proprietary_database_files(rsmeans_year: str, btap_decryption_key: str
             'costs.csv'
         ),
         'local_factors_path': (
-            'costing/output/factors_proprietary.aes',
+            f"costing/output/{rsmeans_year}/factors_proprietary.aes",
             'costs_local_factors.csv'
         ),
         'local_carbon_opaque_path': (
