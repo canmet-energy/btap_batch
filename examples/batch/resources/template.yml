@@ -35,6 +35,7 @@
 :scale_x: 'NECB_Default'
 :scale_y: 'NECB_Default'
 :scale_z: 'NECB_Default'
+:footprint_aspect_ratio: 'NECB_Default'
 :pv_ground_type: 'NECB_Default'
 :pv_ground_total_area_pv_panels_m2: null # Options: (1) nil/none/false, (2) 'NECB_Default' (i.e. building footprint), (3) area value (e.g. 50)
 :pv_ground_tilt_angle: 'NECB_Default' # Options: (1) 'NECB_Default' (i.e. latitude), (2) tilt angle value (e.g. 20)

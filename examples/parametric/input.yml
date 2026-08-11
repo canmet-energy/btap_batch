@@ -84,6 +84,8 @@
     - NECB_Default
   :scale_z:
     - NECB_Default
+  :footprint_aspect_ratio:
+    - NECB_Default
   :pv_ground_type:
     - NECB_Default
   :pv_ground_total_area_pv_panels_m2:

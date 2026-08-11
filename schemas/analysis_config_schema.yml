@@ -855,6 +855,21 @@ This will select the algorithm to use in the analysis. \n\n
             - type: number
               minimum: 0.01
               maximum: 100.0
+      :footprint_aspect_ratio:
+        description: "
+        Sets the ratio of the building's major horizontal bounding dimension to its minor horizontal bounding dimension.\n\n
+        * **NECB_Default**: Do not change the archetype footprint proportions.\n\n
+        * **1.0-10.0**: Transform the existing geometry to the requested ratio while preserving floor area and height.\n\n
+        Explicit scale_x, scale_y, and scale_z values are applied before the target footprint aspect ratio.
+        "
+        items:
+          anyOf:
+            - type: string
+              enum:
+                - NECB_Default
+            - type: number
+              minimum: 1.0
+              maximum: 10.0
 
       :pv_ground_type:
         description: ""
