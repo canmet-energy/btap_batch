@@ -1,9 +1,7 @@
 ARG OPENSTUDIO_VERSION='3.11.0'
 FROM canmet/os_sdk_container:$OPENSTUDIO_VERSION
 
-ARG ENABLE_RSMEANS=''
 ARG RSMEANS_YEAR=''
-ARG ENABLE_PROPRIETARY_CARBON=''
 ARG OS_STANDARDS_BRANCH='nrcan'
 ARG WEATHER_FILES=''
 ARG LOCALNRCAN=''
@@ -29,13 +27,15 @@ RUN if [ -n "$LOCALNRCAN" ] ; then \
       && git rev-parse --short HEAD;\
     fi
 
+
 # Install openstudio-standards under the root folder.
 WORKDIR /
 
 # Clone openstudio-standards into the container
 RUN echo "Creating Public CLI" \
-    && git clone https://$GIT_API_TOKEN:x-oauth-basic@github.com/${OS_STANDARDS_ORG}/openstudio-standards.git --depth 1 --branch ${OS_STANDARDS_BRANCH} --single-branch /openstudio-standards \
+    && git clone https://github.com/${OS_STANDARDS_ORG}/openstudio-standards.git --depth 1 --branch ${OS_STANDARDS_BRANCH} --single-branch /openstudio-standards \
     && cd /openstudio-standards \
+    && cp Gemfile.lock.$OPENSTUDIO_VERSION Gemfile.lock \
     && bundle install \
     && echo 'standards revision' \
     && git rev-parse --short HEAD;
@@ -44,29 +44,11 @@ WORKDIR /
 
 # Copy the local database files using the * wildcard which copies the file and 
 # doesn't throw an error if the file does not exist
-COPY $LOCAL_COSTING_PATH* /openstudio-standards/lib/openstudio-standards/btap/common_resources/costs.csv
-COPY $LOCAL_FACTORS_PATH* /openstudio-standards/lib/openstudio-standards/btap/common_resources/costs_local_factors.csv
-COPY $LOCAL_CARBON_OPAQUE_PATH* /openstudio-standards/lib/openstudio-standards/btap/common_resources/carbon_opaque.csv
-COPY $LOCAL_CARBON_GLAZING_PATH* /openstudio-standards/lib/openstudio-standards/btap/common_resources/carbon_glazing.csv
-COPY $LOCAL_CARBON_FRAME_PATH* /openstudio-standards/lib/openstudio-standards/btap/common_resources/carbon_frame.csv
-
-RUN if [ -n "$ENABLE_RSMEANS" ] ; then \
-        echo "Overwriting placeholder costing data with RSMeans data (ENABLE_RSMEANS=$ENABLE_RSMEANS)" \
-        && curl -v https://$GIT_API_TOKEN:x-oauth-basic@raw.githubusercontent.com/canmet-energy/btap_costing_data_generation/refs/heads/main/resources/rsmeans_factors.csv \
-            -o /openstudio-standards/lib/openstudio-standards/btap/common_resources/costs_local_factors.csv \
-        && curl -v https://$GIT_API_TOKEN:x-oauth-basic@raw.githubusercontent.com/canmet-energy/btap_costing_data_generation/refs/heads/main/output/costing/$RSMEANS_YEAR/costs_rsmeans.csv \
-            -o /openstudio-standards/lib/openstudio-standards/btap/common_resources/costs.csv; \
-    fi
-
-RUN if [ -n "$ENABLE_PROPRIETARY_CARBON" ] ; then \
-        echo "Overwriting placeholder costing data with RSMeans data (ENABLE_PROPRIETARY_CARBON=$ENABLE_PROPRIETARY_CARBON)" \
-        && curl -v https://$GIT_API_TOKEN:x-oauth-basic@raw.githubusercontent.com/canmet-energy/btap_costing_data_generation/refs/heads/main/resources/carbon_opaque_proprietary.csv \
-            -o /openstudio-standards/lib/openstudio-standards/btap/common_resources/carbon_opaque.csv \
-        && curl -v https://$GIT_API_TOKEN:x-oauth-basic@raw.githubusercontent.com/canmet-energy/btap_costing_data_generation/refs/heads/main/resources/carbon_glazing_proprietary.csv \
-            -o /openstudio-standards/lib/openstudio-standards/btap/common_resources/carbon_glazing.csv \
-        && curl -v https://$GIT_API_TOKEN:x-oauth-basic@raw.githubusercontent.com/canmet-energy/btap_costing_data_generation/refs/heads/main/resources/carbon_frame_proprietary.csv \
-            -o /openstudio-standards/lib/openstudio-standards/btap/common_resources/carbon_frame.csv; \
-    fi
+COPY $LOCAL_COSTING_PATH* /openstudio-standards/lib/openstudio-standards/btap/common/costs.csv
+COPY $LOCAL_FACTORS_PATH* /openstudio-standards/lib/openstudio-standards/btap/common/costs_local_factors.csv
+COPY $LOCAL_CARBON_OPAQUE_PATH* /openstudio-standards/lib/openstudio-standards/btap/common/carbon_opaque.csv
+COPY $LOCAL_CARBON_GLAZING_PATH* /openstudio-standards/lib/openstudio-standards/btap/common/carbon_glazing.csv
+COPY $LOCAL_CARBON_FRAME_PATH* /openstudio-standards/lib/openstudio-standards/btap/common/carbon_frame.csv
 
 # Make folders that will map to host drives.
 WORKDIR /openstudio-standards/utilities/btap_cli

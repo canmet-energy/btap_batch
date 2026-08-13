@@ -44,6 +44,7 @@ from icecream import ic
 from src.btap.aws_dynamodb import AWSResultsTable
 import math
 import yaml
+from cryptography.fernet import Fernet
 
 
 
@@ -291,10 +292,63 @@ def clean_up_local_database_file(filename: str) -> None:
     except Exception as e:
         print(f"Warning: Could not clean up costing file: {e}")
 
+
+def stage_database_file_in_build_context(filename: str, file_content: bytes) -> str:
+    build_context_file_path = os.path.join(DOCKERFILES_FOLDER, 'btap_cli', filename)
+    try:
+        with open(build_context_file_path, 'wb') as handle:
+            handle.write(file_content)
+        print(f"Staged database file in build context: {build_context_file_path}")
+        return filename
+    except Exception as e:
+        raise Exception(f"Error: Could not stage database file in build context {build_context_file_path}: {e}")
+
+
+def fetch_proprietary_database_files(rsmeans_year: str, btap_decryption_key: str) -> dict:
+    if not btap_decryption_key:
+        raise Exception("Error: btap_decryption_key is required when using proprietary CodeCommit data.")
+
+    proprietary_files = {
+        'local_costing_path': (
+            f"api_retrieval/output/costing/{rsmeans_year}/costs_proprietary.aes",
+            'costs.csv'
+        ),
+        'local_factors_path': (
+            f"costing/output/{rsmeans_year}/factors_proprietary.aes",
+            'costs_local_factors.csv'
+        ),
+        'local_carbon_opaque_path': (
+            'carbon/carbon_opaque_proprietary.aes',
+            'carbon_opaque.csv'
+        ),
+        'local_carbon_glazing_path': (
+            'carbon/carbon_glazing_proprietary.aes',
+            'carbon_glazing.csv'
+        ),
+        'local_carbon_frame_path': (
+            'carbon/carbon_frame_proprietary.aes',
+            'carbon_frame.csv'
+        )
+    }
+
+    decrypted_file_paths = {}
+    fernet = Fernet(btap_decryption_key.encode())
+
+    for config_key, (codecommit_path, build_context_filename) in proprietary_files.items():
+        response = aws_credentials.codecommit_client.get_file(
+            repositoryName='btap_data_tools',
+            commitSpecifier='main',
+            filePath=codecommit_path
+        )
+        decrypted_content = fernet.decrypt(response['fileContent'])
+        decrypted_file_paths[config_key] = stage_database_file_in_build_context(build_context_filename, decrypted_content)
+
+    return decrypted_file_paths
+
 def build_and_configure_docker_and_aws(btap_batch_branch=None,
-                                       enable_rsmeans=False,
+                                       btap_decryption_key='',
+                                       use_proprietary_data=False,
                                        rsmeans_year=None,
-                                       enable_proprietary_carbon=False,
                                        local_costing_path='',
                                        local_factors_path='',
                                        local_carbon_opaque_path='',
@@ -315,11 +369,24 @@ def build_and_configure_docker_and_aws(btap_batch_branch=None,
     # Get the weather locations from the weather list
     weather_locations = get_weather_locations(btap_weather, weather_list)
 
-    local_costing_path        = process_local_database_path(local_costing_path)
-    local_factors_path        = process_local_database_path(local_factors_path)
-    local_carbon_opaque_path  = process_local_database_path(local_carbon_opaque_path)
-    local_carbon_glazing_path = process_local_database_path(local_carbon_glazing_path)
-    local_carbon_frame_path   = process_local_database_path(local_carbon_frame_path)
+    rsmeans_year = str(rsmeans_year) if rsmeans_year else RSMEANS_CURRENT_YEAR
+
+    if use_proprietary_data:
+        print("Retrieving proprietary database files")
+        aws_credentials.set_credentials()
+        proprietary_file_paths = fetch_proprietary_database_files(rsmeans_year=rsmeans_year,
+                                                                  btap_decryption_key=btap_decryption_key)
+        local_costing_path = proprietary_file_paths['local_costing_path']
+        local_factors_path = proprietary_file_paths['local_factors_path']
+        local_carbon_opaque_path = proprietary_file_paths['local_carbon_opaque_path']
+        local_carbon_glazing_path = proprietary_file_paths['local_carbon_glazing_path']
+        local_carbon_frame_path = proprietary_file_paths['local_carbon_frame_path']
+    else:
+        local_costing_path = process_local_database_path(local_costing_path)
+        local_factors_path = process_local_database_path(local_factors_path)
+        local_carbon_opaque_path = process_local_database_path(local_carbon_opaque_path)
+        local_carbon_glazing_path = process_local_database_path(local_carbon_glazing_path)
+        local_carbon_frame_path = process_local_database_path(local_carbon_frame_path)
 
     # Set os_standards_org to NREL if not provided
     if os_standards_org == '':
@@ -328,9 +395,7 @@ def build_and_configure_docker_and_aws(btap_batch_branch=None,
     # build args for aws and btap_cli container.
     build_args_btap_cli = {
         'OPENSTUDIO_VERSION': openstudio_version,
-        'ENABLE_RSMEANS': 'True' if enable_rsmeans == True else '',
-        'RSMEANS_YEAR': str(rsmeans_year) if rsmeans_year else RSMEANS_CURRENT_YEAR,
-        'ENABLE_PROPRIETARY_CARBON': 'True' if enable_proprietary_carbon == True else '',
+        'RSMEANS_YEAR': rsmeans_year,
         'OS_STANDARDS_ORG': os_standards_org,
         'OS_STANDARDS_BRANCH': os_standards_branch,
         'WEATHER_FILES': weather_locations,
@@ -945,7 +1010,10 @@ build_btap_batch: True
 # Otherwise leave it as False.
 local_nrcan: False
 
-# GitHub Token. Not required, only necessary for select NRCan staff to run analyses using proprietary data.
+# Decryption key for proprietary RSMeans and carbon files fetched from AWS CodeCommit.
+# Only used with the --use_proprietary_data build flag.
+btap_decryption_key: ''
+
 git_api_token: ''
 """
 
