@@ -35,6 +35,7 @@ WORKDIR /
 RUN echo "Creating Public CLI" \
     && git clone https://github.com/${OS_STANDARDS_ORG}/openstudio-standards.git --depth 1 --branch ${OS_STANDARDS_BRANCH} --single-branch /openstudio-standards \
     && cd /openstudio-standards \
+    && cp Gemfile.lock.$OPENSTUDIO_VERSION Gemfile.lock \
     && bundle install \
     && echo 'standards revision' \
     && git rev-parse --short HEAD;
