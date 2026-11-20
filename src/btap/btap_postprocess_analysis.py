@@ -97,9 +97,9 @@ class PostProcessResults():
             logging.info(message)
             bin_folder = os.path.join(self.results_folder, filename)
             os.makedirs(bin_folder, exist_ok=True)
-            s3 = boto3.resource('s3')
-            func = partial(self.download_file, bin_folder, extension, file_path, s3)
             files = self.btap_data_df['datapoint_output_url'].tolist()
+            s3 = boto3.resource('s3') if any(str(url).startswith('https://s3') for url in files) else None
+            func = partial(self.download_file, bin_folder, extension, file_path, s3)
             failed_downloads = []
 
             with tqdm.tqdm(desc=f"Downloading {filename} files", total=len(self.btap_data_df.index),
