@@ -115,7 +115,7 @@ class DockerImageManager:
                 f"Could not access Docker Daemon. Either it is not running, or you do not have permissions to run docker. {err}. Could not get number of cpus used in Docker.")
             exit(1)
         # Return number of cpus minus 2 to give a bit of slack.
-        return int(docker.from_env().containers.run(image='alpine', command='nproc --all', remove=True)) - 2
+        return os.cpu_count() - 2
 
     # Common
     # gets docker run command with proper volume mounts as a string.
