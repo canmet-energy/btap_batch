@@ -136,9 +136,9 @@ def run(**kwargs):
 
     Examples.
 
-        python ./bin/btap_batch.py run-analysis-project  --project_folder examples\optimization
+        python ./bin/btap_batch.py run-analysis-project  --project_folder examples\\optimization
 
-        python ./bin/btap_batch.py run-analysis-project  --project_folder examples\parametric
+        python ./bin/btap_batch.py run-analysis-project  --project_folder examples\\parametric
     """
 
     build_config_path = kwargs['build_config_path']
