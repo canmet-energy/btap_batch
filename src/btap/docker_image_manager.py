@@ -106,15 +106,6 @@ class DockerImageManager:
 
     # Common
     def get_threads(self):
-        # Try to access the docker daemon. If we cannot.. ask user to turn it on and then exit.
-        self.check_docker()
-        try:
-            docker.from_env()
-        except DockerException as err:
-            logging.error(
-                f"Could not access Docker Daemon. Either it is not running, or you do not have permissions to run docker. {err}. Could not get number of cpus used in Docker.")
-            exit(1)
-        # Return number of cpus minus 2 to give a bit of slack.
         return os.cpu_count() - 2
 
     # Common
