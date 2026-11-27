@@ -18,8 +18,6 @@ from src.btap.common_paths import common_paths
 from src.btap.aws_compute_environment import AWSComputeEnvironment
 from src.btap.common_paths  import SCHEMA_FOLDER
 import jsonschema
-from src.btap.aws_dynamodb import AWSResultsTable
-from icecream import ic
 
 
 # Parent Analysis class from with all analysis inherit
