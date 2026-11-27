@@ -1,43 +1,49 @@
-## Requirements
-* Windows 10 Professional version 1909 or greater 
+# Requirements
+
+* Windows 10 Professional version 1909 or greater.
 * [Docker](https://docs.docker.com/desktop/install/windows-install/) running on your computer. Ensure that you complete creating the docker-users group on your system.
 * [uv](https://docs.astral.sh/uv/getting-started/installation/). uv installs Python 3.10 automatically the first time you use `uv run`.
 * [Git client](https://git-scm.com/downloads)
 * A high speed internet connection.
-* A computer with at least 8GB+ ram and 4 or more cores (8+ threads). Preferably a powerful multi-core computer to run simulations fast locally. (24 core/48 thread with 32GB+) 
-* [OpenStudio 3.9.0](https://github.com/NatLabRockies/OpenStudio/releases/tag/v3.9.0) (optional) Required to use the OpenStudio App to edit osm files.
-* [OpenStudio Application 1.9.0](https://github.com/openstudiocoalition/OpenStudioApplication/releases/tag/v1.9.0) (optional) Required to use the OpenStudio App to edit osm files. Note that you will have to make a free account with the OpenStudio Coalition to access the installers.
+* A computer with at least 8GB+ ram and 4 or more cores (8+ threads). Preferably a powerful multi-core computer to run simulations fast locally. (24 core/48 thread with 32GB+)
+* [OpenStudio 3.11.0](https://github.com/NatLabRockies/OpenStudio/releases/tag/v3.11.0) (optional) Required to use the OpenStudio App to edit osm files.
+* [OpenStudio Application 1.12-rc2](https://github.com/openstudiocoalition/OpenStudioApplication/releases#release-v1.12.0-rc2) (optional) Required to use the OpenStudio App to edit osm files. Note that you will have to make a free account with the OpenStudio Coalition to access the installers.
 * Refer to the [costing documentation](costing.md) for how to use costing in BTAP.
-### Amazon only:
+
+## Amazon only
+
 * [AWS CLI version 2 on Windows](https://docs.aws.amazon.com/cli/latest/userguide/install-cliv2-windows.html).
-* [Set Up AWS credentials file](https://docs.aws.amazon.com/cli/latest/userguide/cli-configure-files.html) . 
+* [Set Up AWS credentials file](https://docs.aws.amazon.com/cli/latest/userguide/cli-configure-files.html).
 
+## Validation
 
-# Validation
-
-This section is to ensure that you have installed the above requirements correctly. 
+This section is to ensure that you have installed the above requirements correctly.
 
 ## Git
-To ensure that git is installed. run the following command. 
-```
+
+To ensure that git is installed. run the following command.
+
+```shell-session
 git --version
 ```
 
-You should get something like this. 
-```
+You should get something like this:
+
+```shell-session
 git version 2.51.0.windows.1
 ```
 
 ## Docker
-Ensure that docker desktop is running on your system.  You should see it present in your windows task tray.  Then run the following command. 
 
-```
+Ensure that docker desktop is running on your system. You should see it present in your windows task tray. Then run the following command:
+
+```shell-session
 docker run  hello-world
 ```
 
 You should see the following output.
 
-```
+```shell-session
 Unable to find image 'hello-world:latest' locally
 latest: Pulling from library/hello-world
 c1ec31eb5944: Pull complete
@@ -66,24 +72,30 @@ For more examples and ideas, visit:
  https://docs.docker.com/get-started/
 ```
 
-## uv
-To ensure that uv is installed correctly, try to get the version of uv via this command. 
-```
+## `uv`
+
+To ensure that uv is installed correctly, try to get the version of uv via this command:
+
+```shell-session
 uv --version
 ```
-You should get a result similar to: 
-```
+
+You should get a result similar to:
+
+```shell-session
 uv 0.12.16 (761ff1379 2026-09-17 x86_64-pc-windows-msvc)
 ```
-## AWS-CLI
-To ensure that you have installed AWS-CLI, try to get the version. 
 
-```
+## AWS-CLI
+
+To ensure that you have installed AWS-CLI, try to get the version:
+
+```shell-session
 aws --version
 ```
 
-This should then show the version similar to: 
+This should then show the version similar to:
 
-```
+```shell-session
 aws-cli/2.13.22 Python/3.11.5 Windows/10 exe/AMD64 prompt/off
 ```
