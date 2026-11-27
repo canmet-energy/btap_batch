@@ -4,8 +4,6 @@ FROM canmet/os_sdk_container:$OPENSTUDIO_VERSION
 ARG RSMEANS_YEAR=''
 ARG OS_STANDARDS_BRANCH='nrcan'
 ARG WEATHER_FILES=''
-ARG LOCALNRCAN=''
-ARG LOCALNRCAN_BRANCH='ruby_3.2'
 ARG LOCAL_COSTING_PATH=''
 ARG LOCAL_FACTORS_PATH=''
 ARG LOCAL_CARBON_OPAQUE_PATH=''
@@ -16,17 +14,6 @@ ARG GIT_API_TOKEN='nothing'
 ARG OS_STANDARDS_ORG='NREL'
 
 LABEL author="Phylroy Lopez phylroy.lopez@canada.ca, Chris Kirney chris.kirney@nrcan-rncan.gc.ca, Nicholas Pneumaticos nicholas.pneumaticos@nrcan-rncan.gc.ca"
-
-#Be root and install nrcan_certs under the root folder if LOCALNRCAN is set.
-WORKDIR /
-RUN if [ -n "$LOCALNRCAN" ] ; then \
-      echo "Cloning install_nrcan_certs repository" \
-      && git clone https://$GIT_API_TOKEN:x-oauth-basic@github.com/canmet-energy/linux_nrcan_certs.git --depth 1 --branch ${LOCALNRCAN_BRANCH} --single-branch /linux_nrcan_certs \
-      && cd /linux_nrcan_certs \
-      && ./install_nrcan_certs.sh \
-      && git rev-parse --short HEAD;\
-    fi
-
 
 # Install openstudio-standards under the root folder.
 WORKDIR /

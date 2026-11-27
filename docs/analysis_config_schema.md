@@ -992,7 +992,7 @@ Note: Costs for ERV systems are comparably the same according to RSMeans there i
 
  * **1.0-10.0**: Transform the existing geometry to the requested ratio while preserving floor area and height.
 
- Explicit scale_x, scale_y, and scale_z values are applied before the target footprint aspect ratio.
+ Explicit scale_x, scale_y, and scale_z values are applied before the target footprint aspect ratio. 
 
 ### <a name=":options_:pv_ground_type"></a>14.44. Property `analysis_options > :options > :pv_ground_type`
 
@@ -1218,4 +1218,4 @@ Note: Costs for ERV systems are comparably the same according to RSMeans there i
 **Description:**  Choose the year for single year utility price estimates.  NOTE, this will not affect NPV calculations.  For NEB utility pricing you can select from 2005 to 2050.  For OERCD pricing, you can select from 2020 to 2100. NECB Default will set this to 2020. 
 
 ----------------------------------------------------------------------------------------------------------------------------
-Generated using [json-schema-for-humans](https://github.com/coveooss/json-schema-for-humans) on 2026-02-10 at 13:25:00 -0500
+Generated using [json-schema-for-humans](https://github.com/coveooss/json-schema-for-humans) on 2026-11-27 at 11:18:31 -0500

@@ -8,18 +8,16 @@
 - [6. Property `root > openstudio_version`](#openstudio_version)
 - [7. Property `root > btap_weather`](#btap_weather)
 - [8. Property `root > weather_list`](#weather_list)
-- [9. Property `root > enable_rsmeans`](#enable_rsmeans)
+- [9. Property `root > btap_decryption_key`](#btap_decryption_key)
 - [10. Property `root > rsmeans_year`](#rsmeans_year)
-- [11. Property `root > enable_proprietary_carbon`](#enable_proprietary_carbon)
-- [12. Property `root > local_costing_path`](#local_costing_path)
-- [13. Property `root > local_factors_path`](#local_factors_path)
-- [14. Property `root > local_carbon_opaque_path`](#local_carbon_opaque_path)
-- [15. Property `root > local_carbon_glazing_path`](#local_carbon_glazing_path)
-- [16. Property `root > local_carbon_frame_path`](#local_carbon_frame_path)
-- [17. Property `root > build_btap_cli`](#build_btap_cli)
-- [18. Property `root > build_btap_batch`](#build_btap_batch)
-- [19. Property `root > local_nrcan`](#local_nrcan)
-- [20. Property `root > compute_environment`](#compute_environment)
+- [11. Property `root > local_costing_path`](#local_costing_path)
+- [12. Property `root > local_factors_path`](#local_factors_path)
+- [13. Property `root > local_carbon_opaque_path`](#local_carbon_opaque_path)
+- [14. Property `root > local_carbon_glazing_path`](#local_carbon_glazing_path)
+- [15. Property `root > local_carbon_frame_path`](#local_carbon_frame_path)
+- [16. Property `root > build_btap_cli`](#build_btap_cli)
+- [17. Property `root > build_btap_batch`](#build_btap_batch)
+- [18. Property `root > compute_environment`](#compute_environment)
 
 |                           |             |
 | ------------------------- | ----------- |
@@ -37,9 +35,8 @@
 | + [openstudio_version](#openstudio_version )               | No      | enum (of string)  | No         | -          | Valid version of the OpenStudio SDK to build with.                                                                                                                                                                                                                                                                                                                                                                                                     |
 | - [btap_weather](#btap_weather )                           | No      | boolean           | No         | -          | Location of weather files to download. If true, downloads from [btap_weather](https://github.com/canmet-energy/btap_weather). Else, downloads from Climate.OneBuilding.Org.                                                                                                                                                                                                                                                                            |
 | + [weather_list](#weather_list )                           | No      | object            | No         | -          | List of Weather files to build included in the build environment. Only .epw files , and <100 files. Other weather locations are available. However, you have to define the ones you want to use when creating your environment.  The other locations that you can use can be found in [here](https://climate.onebuilding.org/)<br /><br /><br />Here is an example:<br /><br />                                                                        |
-| - [enable_rsmeans](#enable_rsmeans )                       | No      | boolean           | No         | -          | **ADVANCED** for NRCan use only.                                                                                                                                                                                                                                                                                                                                                                                                                       |
+| - [btap_decryption_key](#btap_decryption_key )             | No      | string            | No         | -          | **ADVANCED** for NRCan use only. Fernet decryption key for proprietary RSMeans and carbon files fetched from AWS CodeCommit. Leave blank to skip proprietary data.                                                                                                                                                                                                                                                                                     |
 | - [rsmeans_year](#rsmeans_year )                           | No      | enum (of integer) | No         | -          | **ADVANCED** for NRCan use only.                                                                                                                                                                                                                                                                                                                                                                                                                       |
-| - [enable_proprietary_carbon](#enable_proprietary_carbon ) | No      | boolean           | No         | -          | **ADVANCED** for NRCan use only.                                                                                                                                                                                                                                                                                                                                                                                                                       |
 | - [local_costing_path](#local_costing_path )               | No      | string            | No         | -          | Path to the local costs.csv costing file.  The default is '<this btap_batch local repository location>/resources/costing/costs.csv'. If you are using a custom costing file, you can set the path. here<br /><br /> Ignore this if you are not using costing or are content with the default costing_database.json costing file.<br /><br />                                                                                                           |
 | - [local_factors_path](#local_factors_path )               | No      | string            | No         | -          | Path to the local costs_local_factors.csv costing localization factors file.  The default is '<this btap_batch local repository location>/resources/costing/costs_local_factors.csv'. If you are using<br /><br /> a custom costing localization factors file, you can set the path here<br /><br /> Ignore this if you are not using costing or are content with the default costing_local_factors.csv costing localization factors file.<br /><br /> |
 | - [local_carbon_opaque_path](#local_carbon_opaque_path )   | No      | string            | No         | -          | Path to the local costs_local_factors.csv carbon database file.  The default is '<this btap_batch local repository location>/resources/carbon/carbon_opaque.csv'. If you are using<br /><br /> a custom carbon file, you can set the path here<br /><br /> Ignore this if you are not using embodied carbon or are content with the defaults.<br /><br />                                                                                              |
@@ -47,7 +44,6 @@
 | - [local_carbon_frame_path](#local_carbon_frame_path )     | No      | string            | No         | -          | Path to the local costs_local_factors.csv costing localization factors file.  The default is '<this btap_batch local repository location>/resources/carbon/carbon_frame.csv'. If you are using<br /><br /> a custom carbon file, you can set the path here<br /><br /> Ignore this if you are not using embodied carbon or are content with the defaults.<br /><br />                                                                                  |
 | + [build_btap_cli](#build_btap_cli )                       | No      | boolean           | No         | -          | **ADVANCED** Build most recent btap_cli always. Set to false to save time if standards and costing branches have not changed.                                                                                                                                                                                                                                                                                                                          |
 | + [build_btap_batch](#build_btap_batch )                   | No      | boolean           | No         | -          | **ADVANCED** Build most recent btap_batch always. Set to false to save time if standards and costing branches have not changed.                                                                                                                                                                                                                                                                                                                        |
-| + [local_nrcan](#local_nrcan )                             | No      | boolean           | No         | -          | **NRCan only** Set this to True if you intend to build your environment locally on a computer connected to the NRCan network.  Otherwise leave it as False.                                                                                                                                                                                                                                                                                            |
 | + [compute_environment](#compute_environment )             | No      | enum (of string)  | No         | -          | Select which environment to build and where to run analyses.<br /><br /> **local**: will use docker on your local computer.<br /><br /> **aws**: will manage and run eveything on AWS. You can turn off your local computer after the analysis is submitted<br /><br /> **local_managed_aws_workers**: **ADVANCED** will manage the analysis on a local computer and run the simulations on aws.<br /><br />                                           |
 
 ## <a name="build_env_name"></a>1. Property `root > build_env_name`
@@ -155,15 +151,15 @@ weather_list:
 
 ```
 
-## <a name="enable_rsmeans"></a>9. Property `root > enable_rsmeans`
+## <a name="btap_decryption_key"></a>9. Property `root > btap_decryption_key`
 
-|              |           |
-| ------------ | --------- |
-| **Type**     | `boolean` |
-| **Required** | No        |
-| **Default**  | `false`   |
+|              |          |
+| ------------ | -------- |
+| **Type**     | `string` |
+| **Required** | No       |
+| **Default**  | `""`     |
 
-**Description:** **ADVANCED** for NRCan use only.
+**Description:** **ADVANCED** for NRCan use only. Fernet decryption key for proprietary RSMeans and carbon files fetched from AWS CodeCommit. Leave blank to skip proprietary data.
 
 ## <a name="rsmeans_year"></a>10. Property `root > rsmeans_year`
 
@@ -178,17 +174,7 @@ Must be one of:
 * 2024
 * 2025
 
-## <a name="enable_proprietary_carbon"></a>11. Property `root > enable_proprietary_carbon`
-
-|              |           |
-| ------------ | --------- |
-| **Type**     | `boolean` |
-| **Required** | No        |
-| **Default**  | `false`   |
-
-**Description:** **ADVANCED** for NRCan use only.
-
-## <a name="local_costing_path"></a>12. Property `root > local_costing_path`
+## <a name="local_costing_path"></a>11. Property `root > local_costing_path`
 
 |              |                                 |
 | ------------ | ------------------------------- |
@@ -200,7 +186,7 @@ Must be one of:
 
  Ignore this if you are not using costing or are content with the default costing_database.json costing file.
 
-## <a name="local_factors_path"></a>13. Property `root > local_factors_path`
+## <a name="local_factors_path"></a>12. Property `root > local_factors_path`
 
 |              |                                               |
 | ------------ | --------------------------------------------- |
@@ -214,7 +200,7 @@ Must be one of:
 
  Ignore this if you are not using costing or are content with the default costing_local_factors.csv costing localization factors file.
 
-## <a name="local_carbon_opaque_path"></a>14. Property `root > local_carbon_opaque_path`
+## <a name="local_carbon_opaque_path"></a>13. Property `root > local_carbon_opaque_path`
 
 |              |                                        |
 | ------------ | -------------------------------------- |
@@ -228,7 +214,7 @@ Must be one of:
 
  Ignore this if you are not using embodied carbon or are content with the defaults.
 
-## <a name="local_carbon_glazing_path"></a>15. Property `root > local_carbon_glazing_path`
+## <a name="local_carbon_glazing_path"></a>14. Property `root > local_carbon_glazing_path`
 
 |              |                                         |
 | ------------ | --------------------------------------- |
@@ -242,7 +228,7 @@ Must be one of:
 
  Ignore this if you are not using embodied carbon or are content with the defaults.
 
-## <a name="local_carbon_frame_path"></a>16. Property `root > local_carbon_frame_path`
+## <a name="local_carbon_frame_path"></a>15. Property `root > local_carbon_frame_path`
 
 |              |                                       |
 | ------------ | ------------------------------------- |
@@ -256,7 +242,7 @@ Must be one of:
 
  Ignore this if you are not using embodied carbon or are content with the defaults.
 
-## <a name="build_btap_cli"></a>17. Property `root > build_btap_cli`
+## <a name="build_btap_cli"></a>16. Property `root > build_btap_cli`
 
 |              |           |
 | ------------ | --------- |
@@ -266,7 +252,7 @@ Must be one of:
 
 **Description:** **ADVANCED** Build most recent btap_cli always. Set to false to save time if standards and costing branches have not changed.
 
-## <a name="build_btap_batch"></a>18. Property `root > build_btap_batch`
+## <a name="build_btap_batch"></a>17. Property `root > build_btap_batch`
 
 |              |           |
 | ------------ | --------- |
@@ -276,17 +262,7 @@ Must be one of:
 
 **Description:** **ADVANCED** Build most recent btap_batch always. Set to false to save time if standards and costing branches have not changed.
 
-## <a name="local_nrcan"></a>19. Property `root > local_nrcan`
-
-|              |           |
-| ------------ | --------- |
-| **Type**     | `boolean` |
-| **Required** | Yes       |
-| **Default**  | `false`   |
-
-**Description:** **NRCan only** Set this to True if you intend to build your environment locally on a computer connected to the NRCan network.  Otherwise leave it as False.
-
-## <a name="compute_environment"></a>20. Property `root > compute_environment`
+## <a name="compute_environment"></a>18. Property `root > compute_environment`
 
 |              |                    |
 | ------------ | ------------------ |
@@ -307,4 +283,4 @@ Must be one of:
 * "aws"
 
 ----------------------------------------------------------------------------------------------------------------------------
-Generated using [json-schema-for-humans](https://github.com/coveooss/json-schema-for-humans) on 2026-02-10 at 13:25:00 -0500
+Generated using [json-schema-for-humans](https://github.com/coveooss/json-schema-for-humans) on 2026-11-27 at 11:18:30 -0500

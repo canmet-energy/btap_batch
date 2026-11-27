@@ -128,12 +128,6 @@ properties:
     type: boolean
     default: true
 
-  local_nrcan:
-    description: "**NRCan only** Set this to True if you intend to build your environment locally on a computer connected to 
-    the NRCan network.  Otherwise leave it as False."
-    type: boolean
-    default: false
-
   compute_environment:
     description: "Select which environment to build and where to run analyses.\n\n 
     **local**: will use docker on your local computer.\n\n
@@ -155,7 +149,6 @@ required:
   - weather_list
   - build_btap_cli
   - build_btap_batch
-  - local_nrcan
   - compute_environment
 additionalProperties: false
 
