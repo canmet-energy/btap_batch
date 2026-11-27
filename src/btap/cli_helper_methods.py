@@ -1,4 +1,5 @@
-import pip_system_certs.wrapt_requests
+import truststore
+truststore.inject_into_ssl()
 from src.btap.constants import WORKER_CONTAINER_MEMORY, WORKER_CONTAINER_VCPU
 from src.btap.constants import MANAGER_CONTAINER_VCPU, MANAGER_CONTAINER_MEMORY
 from src.btap.constants import MAX_AWS_VCPUS

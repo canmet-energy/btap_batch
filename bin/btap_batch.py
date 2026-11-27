@@ -6,7 +6,6 @@ import sys
 # Avoid having to add PYTHONPATH to env.
 PROJECT_ROOT = str(Path(os.path.dirname(os.path.realpath(__file__))).parent.absolute())
 sys.path.append(PROJECT_ROOT)
-from src.btap.cli_helper_methods import build_and_configure_docker_and_aws, load_config
 from src.btap.common_paths import PROJECT_FOLDER, EXAMPLE_FOLDER, OUTPUT_FOLDER, CONFIG_FOLDER,HOME
 CONTEXT_SETTINGS = dict(help_option_names=['-h', '--help'])
 
@@ -71,6 +70,7 @@ def build(**kwargs):
 
     """
 
+    from src.btap.cli_helper_methods import build_and_configure_docker_and_aws, load_config
     build_config_path = kwargs['build_config_path']
     use_proprietary_data = kwargs['use_proprietary_data']
     config = load_config(build_config_path)
@@ -154,6 +154,7 @@ def run(**kwargs):
 
 
 def get_build_config(build_config_path):
+    from src.btap.cli_helper_methods import load_config
     build_config = None
     if os.path.exists(build_config_path):
         build_config = load_config(build_config_path)
@@ -223,7 +224,7 @@ def aws_kill(**kwargs):
 @click.option('--build_env_name', '-n',  help='name of aws build_environment to delete, if not set, it will use the '
                                               'build_env_name in your build_cofig.yml file', default='none')
 def aws_rm_build(**kwargs):
-    from src.btap.cli_helper_methods import delete_aws_build_env
+    from src.btap.cli_helper_methods import delete_aws_build_env, load_config
     if kwargs['build_env_name'] == 'none':
         config = load_config(build_config_path=kwargs["build_config_path"])
         name = config['build_env_name']

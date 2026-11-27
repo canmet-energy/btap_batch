@@ -19,7 +19,6 @@ dependencies = [
     "tqdm==4.67.1",
     "docker==7.1.0",
     "openpyxl==3.1.5",
-    "pip_system_certs==5.3",
     "click==8.3.1",
     "cloudpathlib==0.23.0",
     "colorama==0.4.6",
@@ -31,6 +30,7 @@ dependencies = [
     "dataframe_image==0.2.7",
     "seaborn==0.13.2",
     "pyarrow==22.0.0",
+    "truststore==0.10.5",
 ]
 
 [dependency-groups]
