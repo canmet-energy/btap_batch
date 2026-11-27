@@ -16,14 +16,14 @@ properties:
 
   os_standards_org:
     description: "**ADVANCED** The GitHub organization name containing the OpenStudio-standards repository. This is the fork used to build the btap_cli environment. 
-    The default is NREL."
+    The default is NatLabRockies (National Laboratory of the Rockies)."
     type: string
-    default: NREL
+    default: NatLabRockies
 
   os_standards_branch:
-    description: "Branch of NREL's Openstudio-standards repository to use to build environment. The default branch to use is 'nrcan' This 
+    description: "Branch of the National Laboratory of the Rockies' Openstudio-standards repository to use to build environment. The default branch to use is 'nrcan' This 
     branch is only accessible for authorized users. You can review available branches
-    [here](https://github.com/nrel/openstudio-standards)"
+    [here](https://github.com/NatLabRockies/openstudio-standards)"
     type: string
     default: nrcan
 

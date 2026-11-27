@@ -140,7 +140,7 @@ This will select the algorithm to use in the analysis. \n\n
         description: "This allows you to select either a pre-configured geometry in our library, or a custom geometry developed by a user.\n\n
          The Geometry files are OpenStudio OSM files that have geometry and spacetypes defined as per NECB2011, but nothing else as BTAP will poplate the rest based
           on the template and options selected. A full list of built-in models are available. They are listed
-          (here)[https://github.com/NREL/openstudio-standards/tree/nrcan/lib/openstudio-standards/standards/necb/NECB2011/data/geometry]
+          (here)[https://github.com/NatLabRockies/openstudio-standards/tree/nrcan/lib/openstudio-standards/standards/necb/NECB2011/data/geometry]
           You would add the geometry name without the '.osm' extension. \n\n
           Please note that the context is important.  Having two or more building types makes perfect sense for a parametric or sample_lhs analysis.
           But for for sensitvity and nsga2, it will not work as expected. If you minimize cost and energy. The optimizer will look
@@ -234,7 +234,7 @@ This will select the algorithm to use in the analysis. \n\n
         * **Occupancy_based_DCV** 	Uses Occupancy Sensors to determine ventilation\n\n
         * **CO2_based_DCV**	Uses CO2 Sensors to detect ventilation needs\n\n
         * **No_DCV**	No Strategy (Same as NECB_Default)\n\n
-        See [documentation](https://github.com/NREL/openstudio-standards/blob/nrcan/lib/openstudio-standards/standards/necb/NECB2011/demand_controlled_ventilation.md)
+        See [documentation](https://github.com/NatLabRockies/openstudio-standards/blob/nrcan/lib/openstudio-standards/standards/necb/NECB2011/demand_controlled_ventilation.md)
         for more information.
 "
         items:
@@ -251,7 +251,7 @@ This will select the algorithm to use in the analysis. \n\n
         Sets the light type for the building. CFLs are the default for NECB 2011 to 2017. NECB2020 uses LEDs.
         * **NECB_Default**:	Uses 240V wiring and Compact Florescent Tubes\n\n
         * **LED**:	Uses 120V wiring and LED Lights.\n\n
-        LED Documentation is [here](https://github.com/NREL/openstudio-standards/blob/nrcan/lib/openstudio-standards/standards/necb/NECB2011/led_lighting.md)
+        LED Documentation is [here](https://github.com/NatLabRockies/openstudio-standards/blob/nrcan/lib/openstudio-standards/standards/necb/NECB2011/led_lighting.md)
         "
         items:
           type: string

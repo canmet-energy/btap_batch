@@ -388,9 +388,9 @@ def build_and_configure_docker_and_aws(btap_batch_branch=None,
         local_carbon_glazing_path = process_local_database_path(local_carbon_glazing_path)
         local_carbon_frame_path = process_local_database_path(local_carbon_frame_path)
 
-    # Set os_standards_org to NREL if not provided
+    # Set os_standards_org to NatLabRockies if not provided
     if os_standards_org == '':
-        os_standards_org = 'NREL'
+        os_standards_org = 'NatLabRockies'
 
     # build args for aws and btap_cli container.
     build_args_btap_cli = {

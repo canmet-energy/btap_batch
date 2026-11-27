@@ -28,8 +28,8 @@
 | ---------------------------------------------------------- | ------- | ----------------- | ---------- | ---------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
 | + [build_env_name](#build_env_name )                       | No      | string            | No         | -          | :Prefix used to identify images, folders and other items specific to a build environment. Only lowercase, numbers and underscore and <24 chars.                                                                                                                                                                                                                                                                                                        |
 | + [btap_batch_branch](#btap_batch_branch )                 | No      | string            | No         | -          | Branch of btap_batch to use to build environment. For general users the 'main' branch should be used. You can review available branches [here](https://github.com/canmet-energy/btap_batch) if you are a developer.                                                                                                                                                                                                                                    |
-| - [os_standards_org](#os_standards_org )                   | No      | string            | No         | -          | **ADVANCED** The GitHub organization name containing the OpenStudio-standards repository. This is the fork used to build the btap_cli environment. The default is NREL.                                                                                                                                                                                                                                                                                |
-| + [os_standards_branch](#os_standards_branch )             | No      | string            | No         | -          | Branch of NREL's Openstudio-standards repository to use to build environment. The default branch to use is 'nrcan' This branch is only accessible for authorized users. You can review available branches [here](https://github.com/nrel/openstudio-standards)                                                                                                                                                                                         |
+| - [os_standards_org](#os_standards_org )                   | No      | string            | No         | -          | **ADVANCED** The GitHub organization name containing the OpenStudio-standards repository. This is the fork used to build the btap_cli environment. The default is NatLabRockies (National Laboratory of the Rockies).                                                                                                                                                                                                                                  |
+| + [os_standards_branch](#os_standards_branch )             | No      | string            | No         | -          | Branch of the National Laboratory of the Rockies' Openstudio-standards repository to use to build environment. The default branch to use is 'nrcan' This branch is only accessible for authorized users. You can review available branches [here](https://github.com/NatLabRockies/openstudio-standards)                                                                                                                                               |
 | + [openstudio_version](#openstudio_version )               | No      | enum (of string)  | No         | -          | Valid version of the OpenStudio SDK to build with.                                                                                                                                                                                                                                                                                                                                                                                                     |
 | - [btap_weather](#btap_weather )                           | No      | boolean           | No         | -          | Location of weather files to download. If true, downloads from [btap_weather](https://github.com/canmet-energy/btap_weather). Else, downloads from Climate.OneBuilding.Org.                                                                                                                                                                                                                                                                            |
 | + [weather_list](#weather_list )                           | No      | object            | No         | -          | List of Weather files to build included in the build environment. Only .epw files , and <100 files. Other weather locations are available. However, you have to define the ones you want to use when creating your environment.  The other locations that you can use can be found in [here](https://climate.onebuilding.org/)<br /><br /><br />Here is an example:<br /><br />                                                                        |
@@ -70,13 +70,13 @@
 
 ## <a name="os_standards_org"></a>3. Property `root > os_standards_org`
 
-|              |          |
-| ------------ | -------- |
-| **Type**     | `string` |
-| **Required** | No       |
-| **Default**  | `"NREL"` |
+|              |                   |
+| ------------ | ----------------- |
+| **Type**     | `string`          |
+| **Required** | No                |
+| **Default**  | `"NatLabRockies"` |
 
-**Description:** **ADVANCED** The GitHub organization name containing the OpenStudio-standards repository. This is the fork used to build the btap_cli environment. The default is NREL.
+**Description:** **ADVANCED** The GitHub organization name containing the OpenStudio-standards repository. This is the fork used to build the btap_cli environment. The default is NatLabRockies (National Laboratory of the Rockies).
 
 ## <a name="os_standards_branch"></a>4. Property `root > os_standards_branch`
 
@@ -86,7 +86,7 @@
 | **Required** | Yes       |
 | **Default**  | `"nrcan"` |
 
-**Description:** Branch of NREL's Openstudio-standards repository to use to build environment. The default branch to use is 'nrcan' This branch is only accessible for authorized users. You can review available branches [here](https://github.com/nrel/openstudio-standards)
+**Description:** Branch of the National Laboratory of the Rockies' Openstudio-standards repository to use to build environment. The default branch to use is 'nrcan' This branch is only accessible for authorized users. You can review available branches [here](https://github.com/NatLabRockies/openstudio-standards)
 
 ## <a name="openstudio_version"></a>5. Property `root > openstudio_version`
 
@@ -272,4 +272,4 @@ Must be one of:
 * "aws"
 
 ----------------------------------------------------------------------------------------------------------------------------
-Generated using [json-schema-for-humans](https://github.com/coveooss/json-schema-for-humans) on 2026-11-27 at 11:24:46 -0500
+Generated using [json-schema-for-humans](https://github.com/coveooss/json-schema-for-humans) on 2026-11-27 at 11:28:36 -0500

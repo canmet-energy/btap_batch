@@ -8,8 +8,8 @@ operational carbon and relative capital costs for all scenarios where possible.
 Some unique features of BTAP:
 * NECB Rulesets allow quick generation of NECB models for all locations and NaturalGas, Electricity and HP baseline systems.
 * Dynamic Costing that automatically accounts for load/sizing change costs for heating and cooling equipment.  Using RSMeans 2020 data. 
-* Operational GHG accounting using rate from [Portolio Manager 2020](https://github.com/NREL/openstudio-standards/blob/master/lib/openstudio-standards/standards/necb/common/btap_data.rb#L1899)
-* Utility Costs using Canada Energy Board 2021 [rates](https://github.com/NREL/openstudio-standards/blob/master/lib/openstudio-standards/standards/necb/common/neb_end_use_prices.csv).
+* Operational GHG accounting using rate from [Portolio Manager 2020](https://github.com/NatLabRockies/openstudio-standards/blob/master/lib/openstudio-standards/standards/necb/common/btap_data.rb#L1899)
+* Utility Costs using Canada Energy Board 2021 [rates](https://github.com/NatLabRockies/openstudio-standards/blob/master/lib/openstudio-standards/standards/necb/common/neb_end_use_prices.csv).
 
 The most common used cases for BTAP is to:
 * quickly generate NECB archetypes for 2011 through 2020 for any building type and location.
