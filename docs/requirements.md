@@ -1,7 +1,7 @@
 ## Requirements
 * Windows 10 Professional version 1909 or greater 
 * [Docker](https://docs.docker.com/desktop/install/windows-install/) running on your computer. Ensure that you complete creating the docker-users group on your system.
-* [Python 3.10](https://www.python.org/ftp/python/3.10.10/python-3.10.10-amd64.exe) and Pip installed.  Ensure you check to install python in your PATH!
+* [uv](https://docs.astral.sh/uv/getting-started/installation/). uv installs Python 3.10 automatically the first time you use `uv run`.
 * [Git client](https://git-scm.com/downloads)
 * A high speed internet connection.
 * A github account and [git-token](https://docs.github.com/en/github/authenticating-to-github/creating-a-personal-access-token)
@@ -67,14 +67,14 @@ For more examples and ideas, visit:
  https://docs.docker.com/get-started/
 ```
 
-## Python
-To ensure that python is installed correctly, try to get the version of python via this command. 
+## uv
+To ensure that uv is installed correctly, try to get the version of uv via this command. 
 ```
-python --version
+uv --version
 ```
 You should get a result similar to: 
 ```
-Python 3.10.11
+uv 0.12.16 (761ff1379 2026-09-17 x86_64-pc-windows-msvc)
 ```
 ## AWS-CLI
 To ensure that you have installed AWS-CLI, try to get the version. 

@@ -36,7 +36,7 @@ Some examples of items it will not cost are:
 ## Interface
 BTAP Batch has a command line interface.  You can use the (help) -h switch to reveal all the commands. Here is an example of the help output.
 ```bash
-(venv) PS C:\btap_batch> python ./bin/btap_batch.py -h    
+PS C:\btap_batch> uv run bin/btap_batch.py -h    
 Usage: btap_batch.py [OPTIONS] COMMAND [ARGS]...
 
 Options:

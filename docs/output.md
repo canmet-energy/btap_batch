@@ -56,7 +56,7 @@ There are at least three ways you can download the results files from S3. You ca
 [aws cli](https://docs.aws.amazon.com/cli/latest/reference/s3/cp.html). You can use the AWS web console to download 
 individual files, or you can use btap_batch's  aws-download command. Below is a the cli help message descibing the usage.
 ```
-(venv) PS C:\Users\plopez\PycharmProjects\btap_batch> python ./bin/btap_batch.py aws-download -h
+PS C:\Users\plopez\PycharmProjects\btap_batch> uv run bin/btap_batch.py aws-download -h
 Usage: btap_batch.py aws-download [OPTIONS]
 
   Download results from 1 or more analyses performed on Amazon's S3 bucket.

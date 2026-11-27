@@ -10,7 +10,7 @@ You can create an sandbox build environment that will have all dependancies auto
 of OpenStudio and EnergyPlus.  You can accomplish this by editing your build_conf.yml file and running the **build** command. 
 
 ```bash
-(venv) PS C:\Users\plopez\PycharmProjects\btap_batch> python ./bin/btap_batch.py build -h
+PS C:\Users\plopez\PycharmProjects\btap_batch> uv run bin/btap_batch.py build -h
 Usage: btap_batch.py build [OPTIONS]
 
   This will build the environment required to run an analysis. If running for
@@ -27,7 +27,7 @@ Options:
 
 You can generate a template of the build_config.yml file by trying to build and environment for the first time.
 ```
-python ./bin/btap_batch.py build
+uv run bin/btap_batch.py build
 ```
 It will create a file under your home folder. For example if your computer username was plopez. It should create a file at the location below. 
 
@@ -44,7 +44,7 @@ To build, or rebuild the build environment simply type. It should take about 10m
 the environment either locally or on AWS. It may take much longer if you have a slow internet connection. 
 
 ```
-python ./bin/btap_batch.py build
+uv run bin/btap_batch.py build
 ```
 
 :warning: **Do not cancel this process. Let it run to completion**

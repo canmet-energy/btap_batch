@@ -5,12 +5,14 @@ ENV BTAP_BATCH_BRANCH=$BTAP_BATCH_BRANCH
 
 # Install BTAP Batch, python, git, and network related packages.
 RUN apt-get -y update
-RUN apt-get install -y python3-pip python3-venv git ca-certificates curl wget
+RUN apt-get install -y git ca-certificates curl wget
+COPY --from=ghcr.io/astral-sh/uv:0.12.16 /uv /uvx /bin/
 RUN echo "Cloning btap_batch"
 RUN git clone https://$GIT_API_TOKEN:x-oauth-basic@github.com/canmet-energy/btap_batch.git --depth 1 --branch ${BTAP_BATCH_BRANCH} --single-branch /btap_batch
 RUN cd /btap_batch && echo 'btap_batch revision' && git rev-parse --short HEAD
-RUN python3 -m venv /btap_batch/venv
-RUN /btap_batch/venv/bin/pip install -r /btap_batch/requirements.txt
+# Keep the venv at /btap_batch/venv, which aws_analysis_job.py expects.
+ENV UV_PROJECT_ENVIRONMENT=/btap_batch/venv
+RUN cd /btap_batch && uv sync --frozen --no-dev
 
 # Install Docker-related packages by retrieving and signing the appropriate
 # package list.

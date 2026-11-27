@@ -1,0 +1,42 @@
+[project]
+name = "btap_batch"
+version = "0.1.0"
+description = "Batch simulation and analysis tool for OpenStudio Standards."
+readme = "README.md"
+requires-python = ">=3.12"
+dependencies = [
+    "icecream==2.1.8",
+    "scikit-learn==1.7.2",
+    "pymoo==0.6.1.6",
+    "pyyaml==6.0.3",
+    "boto3==1.42.4",
+    "botocore[crt]==1.42.4",
+    "cryptography==46.0.3",
+    "pandas==2.3.3",
+    "scikit-optimize==0.10.2",
+    "openstudio==3.9.0",
+    "numpy==2.2.6",
+    "tqdm==4.67.1",
+    "docker==7.1.0",
+    "openpyxl==3.1.5",
+    "pip_system_certs==5.3",
+    "click==8.3.1",
+    "cloudpathlib==0.23.0",
+    "colorama==0.4.6",
+    "pyfiglet==1.0.4",
+    "requests==2.32.5",
+    "plotly==6.5.0",
+    "matplotlib==3.10.7",
+    "fpdf2==2.8.5",
+    "dataframe_image==0.2.7",
+    "seaborn==0.13.2",
+    "pyarrow==22.0.0",
+]
+
+[dependency-groups]
+dev = [
+    "json_schema_for_humans==1.5.1",
+]
+
+[tool.uv]
+package = false

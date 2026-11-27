@@ -15,17 +15,7 @@ Before running btap_batch, ensure that you have [downloaded btap_batch and insta
 
 Also ensure that you are in btap_batch folder. 
 
-If you do not see the '(venv)' prefix in your command prompt. Something like this.  
-
-```bash
-(venv)C:\btap_batch> 
-```
-
-You are not in your python virtual environment (venv). You can fix this by running 
-
-```bash
-venv\Scripts\activate.bat
-````
+Run all btap_batch commands with `uv run`, which automatically syncs the python dependencies.
 
 
 # 1. Configure Parametric Options

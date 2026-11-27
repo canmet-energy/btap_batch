@@ -12,17 +12,17 @@ them with the help '-h' switch.
 To run a project 'example/optimization' analysis for example, on the compute environment indicated in your build_config.yml 
 file, and have the results go to the default output folder. Execute this command. 
 ```
-python ./bin/btap_batch.py run -p ./examples/optimization 
+uv run bin/btap_batch.py run -p ./examples/optimization 
 ```
 To specify an output folder, you can optionally use the '-o' switch with the full path where you wish to save the output. 
 ```
-python ./bin/btap_batch.py run -p ./examples/optimization -o C:\MyOutputFolder
+uv run bin/btap_batch.py run -p ./examples/optimization -o C:\MyOutputFolder
 ```
 
 ## Local
 If running **local**. You should see output like this.
 ```
-(venv) PS C:\Users\plopez\PycharmProjects\btap_batch> python ./bin/btap_batch.py run -p C:\Users\plopez\PycharmProjects\btap_batch\examples\optimization
+PS C:\Users\plopez\PycharmProjects\btap_batch> uv run bin/btap_batch.py run -p C:\Users\plopez\PycharmProjects\btap_batch\examples\optimization
 Using build_env_name from build_config.yml: plopez
 running on local
 analyses_folder is:C:\Users\plopez\PycharmProjects\btap_batch\output
@@ -41,7 +41,7 @@ AWS Batch web console. This will delete any data on the S3 folder if you ran thi
 :analysis_name and build_env_name. See the AWS section in [output](output.md) for more details.
 
 ```bash
-(venv) PS C:\Users\plopez\PycharmProjects\btap_batch> python.exe ./bin./btap_batch.py run -p .\examples\optimization 
+PS C:\Users\plopez\PycharmProjects\btap_batch> uv run bin/btap_batch.py run -p .\examples\optimization 
 Using build_env_name from build_config.yml: plopez
 Deleting old files in S3 folder plopez\optimization_example/
 Deleting...plopez\optimization_example/ from bucket 834599497928 on S3
@@ -73,7 +73,7 @@ hits to cancel the local run. You will need to delete any partially completed ou
 ## Kill AWS
 To cancel a set of jobs sent to AWS issue the command
 ```
- python ./bin/btap_batch.py aws-kill
+ uv run bin/btap_batch.py aws-kill
 ```
 This will use the aws build_env name defined in your build_config.yml to kill all jobs issued to aws under your build_env_name. You must ensure 
 that you use the same build_env_name that you used when you started the analysis.   
