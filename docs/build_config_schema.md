@@ -1,23 +1,22 @@
 # Schema Docs
 
 - [1. Property `root > build_env_name`](#build_env_name)
-- [2. Property `root > git_api_token`](#git_api_token)
-- [3. Property `root > btap_batch_branch`](#btap_batch_branch)
-- [4. Property `root > os_standards_org`](#os_standards_org)
-- [5. Property `root > os_standards_branch`](#os_standards_branch)
-- [6. Property `root > openstudio_version`](#openstudio_version)
-- [7. Property `root > btap_weather`](#btap_weather)
-- [8. Property `root > weather_list`](#weather_list)
-- [9. Property `root > btap_decryption_key`](#btap_decryption_key)
-- [10. Property `root > rsmeans_year`](#rsmeans_year)
-- [11. Property `root > local_costing_path`](#local_costing_path)
-- [12. Property `root > local_factors_path`](#local_factors_path)
-- [13. Property `root > local_carbon_opaque_path`](#local_carbon_opaque_path)
-- [14. Property `root > local_carbon_glazing_path`](#local_carbon_glazing_path)
-- [15. Property `root > local_carbon_frame_path`](#local_carbon_frame_path)
-- [16. Property `root > build_btap_cli`](#build_btap_cli)
-- [17. Property `root > build_btap_batch`](#build_btap_batch)
-- [18. Property `root > compute_environment`](#compute_environment)
+- [2. Property `root > btap_batch_branch`](#btap_batch_branch)
+- [3. Property `root > os_standards_org`](#os_standards_org)
+- [4. Property `root > os_standards_branch`](#os_standards_branch)
+- [5. Property `root > openstudio_version`](#openstudio_version)
+- [6. Property `root > btap_weather`](#btap_weather)
+- [7. Property `root > weather_list`](#weather_list)
+- [8. Property `root > btap_decryption_key`](#btap_decryption_key)
+- [9. Property `root > rsmeans_year`](#rsmeans_year)
+- [10. Property `root > local_costing_path`](#local_costing_path)
+- [11. Property `root > local_factors_path`](#local_factors_path)
+- [12. Property `root > local_carbon_opaque_path`](#local_carbon_opaque_path)
+- [13. Property `root > local_carbon_glazing_path`](#local_carbon_glazing_path)
+- [14. Property `root > local_carbon_frame_path`](#local_carbon_frame_path)
+- [15. Property `root > build_btap_cli`](#build_btap_cli)
+- [16. Property `root > build_btap_batch`](#build_btap_batch)
+- [17. Property `root > compute_environment`](#compute_environment)
 
 |                           |             |
 | ------------------------- | ----------- |
@@ -28,7 +27,6 @@
 | Property                                                   | Pattern | Type              | Deprecated | Definition | Title/Description                                                                                                                                                                                                                                                                                                                                                                                                                                      |
 | ---------------------------------------------------------- | ------- | ----------------- | ---------- | ---------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
 | + [build_env_name](#build_env_name )                       | No      | string            | No         | -          | :Prefix used to identify images, folders and other items specific to a build environment. Only lowercase, numbers and underscore and <24 chars.                                                                                                                                                                                                                                                                                                        |
-| + [git_api_token](#git_api_token )                         | No      | string            | No         | -          | The authorization token to access Github. You are required to have a github account and generate a classic personal access token. Instructions to generate one are [here](https://docs.github.com/en/authentication/keeping-your-account-and-data-secure/managing-your-personal-access-tokens)                                                                                                                                                         |
 | + [btap_batch_branch](#btap_batch_branch )                 | No      | string            | No         | -          | Branch of btap_batch to use to build environment. For general users the 'main' branch should be used. You can review available branches [here](https://github.com/canmet-energy/btap_batch) if you are a developer.                                                                                                                                                                                                                                    |
 | - [os_standards_org](#os_standards_org )                   | No      | string            | No         | -          | **ADVANCED** The GitHub organization name containing the OpenStudio-standards repository. This is the fork used to build the btap_cli environment. The default is NREL.                                                                                                                                                                                                                                                                                |
 | + [os_standards_branch](#os_standards_branch )             | No      | string            | No         | -          | Branch of NREL's Openstudio-standards repository to use to build environment. The default branch to use is 'nrcan' This branch is only accessible for authorized users. You can review available branches [here](https://github.com/nrel/openstudio-standards)                                                                                                                                                                                         |
@@ -61,16 +59,7 @@
 | **Max length**                    | 24                                                                                      |
 | **Must match regular expression** | ```^[a-z0-9_\\s]*$``` [Test](https://regex101.com/?regex=%5E%5Ba-z0-9_%5C%5Cs%5D%2A%24) |
 
-## <a name="git_api_token"></a>2. Property `root > git_api_token`
-
-|              |          |
-| ------------ | -------- |
-| **Type**     | `string` |
-| **Required** | Yes      |
-
-**Description:** The authorization token to access Github. You are required to have a github account and generate a classic personal access token. Instructions to generate one are [here](https://docs.github.com/en/authentication/keeping-your-account-and-data-secure/managing-your-personal-access-tokens)
-
-## <a name="btap_batch_branch"></a>3. Property `root > btap_batch_branch`
+## <a name="btap_batch_branch"></a>2. Property `root > btap_batch_branch`
 
 |              |          |
 | ------------ | -------- |
@@ -79,7 +68,7 @@
 
 **Description:** Branch of btap_batch to use to build environment. For general users the 'main' branch should be used. You can review available branches [here](https://github.com/canmet-energy/btap_batch) if you are a developer. 
 
-## <a name="os_standards_org"></a>4. Property `root > os_standards_org`
+## <a name="os_standards_org"></a>3. Property `root > os_standards_org`
 
 |              |          |
 | ------------ | -------- |
@@ -89,7 +78,7 @@
 
 **Description:** **ADVANCED** The GitHub organization name containing the OpenStudio-standards repository. This is the fork used to build the btap_cli environment. The default is NREL.
 
-## <a name="os_standards_branch"></a>5. Property `root > os_standards_branch`
+## <a name="os_standards_branch"></a>4. Property `root > os_standards_branch`
 
 |              |           |
 | ------------ | --------- |
@@ -99,7 +88,7 @@
 
 **Description:** Branch of NREL's Openstudio-standards repository to use to build environment. The default branch to use is 'nrcan' This branch is only accessible for authorized users. You can review available branches [here](https://github.com/nrel/openstudio-standards)
 
-## <a name="openstudio_version"></a>6. Property `root > openstudio_version`
+## <a name="openstudio_version"></a>5. Property `root > openstudio_version`
 
 |              |                    |
 | ------------ | ------------------ |
@@ -114,7 +103,7 @@ Must be one of:
 * "3.9.0"
 * "3.11.0"
 
-## <a name="btap_weather"></a>7. Property `root > btap_weather`
+## <a name="btap_weather"></a>6. Property `root > btap_weather`
 
 |              |           |
 | ------------ | --------- |
@@ -124,7 +113,7 @@ Must be one of:
 
 **Description:** Location of weather files to download. If true, downloads from [btap_weather](https://github.com/canmet-energy/btap_weather). Else, downloads from Climate.OneBuilding.Org.
 
-## <a name="weather_list"></a>8. Property `root > weather_list`
+## <a name="weather_list"></a>7. Property `root > weather_list`
 
 |                           |                  |
 | ------------------------- | ---------------- |
@@ -151,7 +140,7 @@ weather_list:
 
 ```
 
-## <a name="btap_decryption_key"></a>9. Property `root > btap_decryption_key`
+## <a name="btap_decryption_key"></a>8. Property `root > btap_decryption_key`
 
 |              |          |
 | ------------ | -------- |
@@ -161,7 +150,7 @@ weather_list:
 
 **Description:** **ADVANCED** for NRCan use only. Fernet decryption key for proprietary RSMeans and carbon files fetched from AWS CodeCommit. Leave blank to skip proprietary data.
 
-## <a name="rsmeans_year"></a>10. Property `root > rsmeans_year`
+## <a name="rsmeans_year"></a>9. Property `root > rsmeans_year`
 
 |              |                     |
 | ------------ | ------------------- |
@@ -174,7 +163,7 @@ Must be one of:
 * 2024
 * 2025
 
-## <a name="local_costing_path"></a>11. Property `root > local_costing_path`
+## <a name="local_costing_path"></a>10. Property `root > local_costing_path`
 
 |              |                                 |
 | ------------ | ------------------------------- |
@@ -186,7 +175,7 @@ Must be one of:
 
  Ignore this if you are not using costing or are content with the default costing_database.json costing file.
 
-## <a name="local_factors_path"></a>12. Property `root > local_factors_path`
+## <a name="local_factors_path"></a>11. Property `root > local_factors_path`
 
 |              |                                               |
 | ------------ | --------------------------------------------- |
@@ -200,7 +189,7 @@ Must be one of:
 
  Ignore this if you are not using costing or are content with the default costing_local_factors.csv costing localization factors file.
 
-## <a name="local_carbon_opaque_path"></a>13. Property `root > local_carbon_opaque_path`
+## <a name="local_carbon_opaque_path"></a>12. Property `root > local_carbon_opaque_path`
 
 |              |                                        |
 | ------------ | -------------------------------------- |
@@ -214,7 +203,7 @@ Must be one of:
 
  Ignore this if you are not using embodied carbon or are content with the defaults.
 
-## <a name="local_carbon_glazing_path"></a>14. Property `root > local_carbon_glazing_path`
+## <a name="local_carbon_glazing_path"></a>13. Property `root > local_carbon_glazing_path`
 
 |              |                                         |
 | ------------ | --------------------------------------- |
@@ -228,7 +217,7 @@ Must be one of:
 
  Ignore this if you are not using embodied carbon or are content with the defaults.
 
-## <a name="local_carbon_frame_path"></a>15. Property `root > local_carbon_frame_path`
+## <a name="local_carbon_frame_path"></a>14. Property `root > local_carbon_frame_path`
 
 |              |                                       |
 | ------------ | ------------------------------------- |
@@ -242,7 +231,7 @@ Must be one of:
 
  Ignore this if you are not using embodied carbon or are content with the defaults.
 
-## <a name="build_btap_cli"></a>16. Property `root > build_btap_cli`
+## <a name="build_btap_cli"></a>15. Property `root > build_btap_cli`
 
 |              |           |
 | ------------ | --------- |
@@ -252,7 +241,7 @@ Must be one of:
 
 **Description:** **ADVANCED** Build most recent btap_cli always. Set to false to save time if standards and costing branches have not changed.
 
-## <a name="build_btap_batch"></a>17. Property `root > build_btap_batch`
+## <a name="build_btap_batch"></a>16. Property `root > build_btap_batch`
 
 |              |           |
 | ------------ | --------- |
@@ -262,7 +251,7 @@ Must be one of:
 
 **Description:** **ADVANCED** Build most recent btap_batch always. Set to false to save time if standards and costing branches have not changed.
 
-## <a name="compute_environment"></a>18. Property `root > compute_environment`
+## <a name="compute_environment"></a>17. Property `root > compute_environment`
 
 |              |                    |
 | ------------ | ------------------ |
@@ -283,4 +272,4 @@ Must be one of:
 * "aws"
 
 ----------------------------------------------------------------------------------------------------------------------------
-Generated using [json-schema-for-humans](https://github.com/coveooss/json-schema-for-humans) on 2026-11-27 at 11:18:30 -0500
+Generated using [json-schema-for-humans](https://github.com/coveooss/json-schema-for-humans) on 2026-11-27 at 11:24:46 -0500

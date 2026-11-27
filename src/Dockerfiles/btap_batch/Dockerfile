@@ -8,7 +8,7 @@ RUN apt-get -y update
 RUN apt-get install -y git ca-certificates curl wget
 COPY --from=ghcr.io/astral-sh/uv:0.12.16 /uv /uvx /bin/
 RUN echo "Cloning btap_batch"
-RUN git clone https://$GIT_API_TOKEN:x-oauth-basic@github.com/canmet-energy/btap_batch.git --depth 1 --branch ${BTAP_BATCH_BRANCH} --single-branch /btap_batch
+RUN git clone https://github.com/canmet-energy/btap_batch.git --depth 1 --branch ${BTAP_BATCH_BRANCH} --single-branch /btap_batch
 RUN cd /btap_batch && echo 'btap_batch revision' && git rev-parse --short HEAD
 # Keep the venv at /btap_batch/venv, which aws_analysis_job.py expects.
 ENV UV_PROJECT_ENVIRONMENT=/btap_batch/venv
@@ -30,7 +30,7 @@ CMD ["/bin/bash"]
 
 # Sample invocation commands
 # aws ecr get-login-password --region ca-central-1 | docker login --username AWS --password-stdin 834599497928.dkr.ecr.ca-central-1.amazonaws.com
-# docker build -t --no-cache --build-arg GIT_API_TOKEN=$GIT_API_TOKEN --build-arg BUILD_ENV_NAME=$BUILD_ENV_NAME --build-arg  BTAP_BATCH_BRANCH=$BTAP_BATCH_BRANCH .
+# docker build -t --no-cache --build-arg BUILD_ENV_NAME=$BUILD_ENV_NAME --build-arg  BTAP_BATCH_BRANCH=$BTAP_BATCH_BRANCH .
 # Test locally.
 # docker run -it --rm -v "//var/run/docker.sock:/var/run/docker.sock" -v "//c/Users/plopez/.aws:/root/.aws"  btap_batch /bin/bash
 

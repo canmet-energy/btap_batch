@@ -10,7 +10,6 @@ ARG LOCAL_CARBON_OPAQUE_PATH=''
 ARG LOCAL_CARBON_GLAZING_PATH=''
 ARG LOCAL_CARBON_FRAME_PATH=''
 
-ARG GIT_API_TOKEN='nothing'
 ARG OS_STANDARDS_ORG='NREL'
 
 LABEL author="Phylroy Lopez phylroy.lopez@canada.ca, Chris Kirney chris.kirney@nrcan-rncan.gc.ca, Nicholas Pneumaticos nicholas.pneumaticos@nrcan-rncan.gc.ca"

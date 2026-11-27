@@ -1003,8 +1003,6 @@ build_btap_batch: True
 # Decryption key for proprietary RSMeans and carbon files fetched from AWS CodeCommit.
 # Only used with the --use_proprietary_data build flag.
 btap_decryption_key: ''
-
-git_api_token: ''
 """
 
     output_file = Path(build_config_path)

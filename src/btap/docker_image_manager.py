@@ -41,7 +41,6 @@ class DockerImageManager:
     # Common
     def _get_image_build_args(self):
         build_args = self.build_args
-        build_args['GIT_API_TOKEN'] = os.environ['GIT_API_TOKEN']
         build_args['BUILD_ENV_NAME'] = common_paths.get_build_env_name()
         return build_args
 

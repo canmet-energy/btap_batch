@@ -91,7 +91,6 @@ def build(**kwargs):
     build_btap_cli = config['build_btap_cli']
     build_btap_batch = config['build_btap_batch']
     os.environ['BUILD_ENV_NAME'] = config['build_env_name']
-    os.environ['GIT_API_TOKEN'] = config['git_api_token']
     compute_environment = config['compute_environment']
     
     build_and_configure_docker_and_aws(btap_batch_branch=btap_batch_branch,

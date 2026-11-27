@@ -9,12 +9,6 @@ properties:
     minLength: 1
     maxLength: 24
 
-  git_api_token:
-    description: "The authorization token to access Github. You are required to have a github account and generate a 
-    classic personal access token. Instructions to generate one are 
-    [here](https://docs.github.com/en/authentication/keeping-your-account-and-data-secure/managing-your-personal-access-tokens)"
-    type: string
-
   btap_batch_branch:
     description: "Branch of btap_batch to use to build environment. For general users the 'main' branch should be used. 
     You can review available branches [here](https://github.com/canmet-energy/btap_batch) if you are a developer. "
@@ -142,7 +136,6 @@ properties:
 
 required:
   - build_env_name
-  - git_api_token
   - btap_batch_branch
   - os_standards_branch
   - openstudio_version

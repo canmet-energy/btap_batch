@@ -4,7 +4,6 @@
 * [uv](https://docs.astral.sh/uv/getting-started/installation/). uv installs Python 3.10 automatically the first time you use `uv run`.
 * [Git client](https://git-scm.com/downloads)
 * A high speed internet connection.
-* A github account and [git-token](https://docs.github.com/en/github/authenticating-to-github/creating-a-personal-access-token)
 * A computer with at least 8GB+ ram and 4 or more cores (8+ threads). Preferably a powerful multi-core computer to run simulations fast locally. (24 core/48 thread with 32GB+) 
 * [OpenStudio 3.9.0](https://github.com/NREL/OpenStudio/releases/tag/v3.9.0) (optional) Required to use the OpenStudio App to edit osm files.
 * [OpenStudio Application 1.9.0](https://github.com/openstudiocoalition/OpenStudioApplication/releases/tag/v1.9.0) (optional) Required to use the OpenStudio App to edit osm files. Note that you will have to make a free account with the OpenStudio Coalition to access the installers.
